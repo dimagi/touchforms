@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% block content %}
+<table>
+{% for xform in object_list %}
+    {% if forloop.first %}
+	<thead>
+		<th>Name</th>
+		<th>Namespace</th>
+		<th>Created</th>
+        <th>Version</th>
+		<th>UI Version</th>
+		<th>File</th>
+		<th>Play</th>
+    </thead>
+	{% endif %}	
+    <tr class="{% cycle "odd" "even" %}">
+    	<td>{{ xform.name }}</td>
+    	<td>{{ xform.namespace }}</td>
+        <td>{{ xform.created }}</td>
+        <td>{{ xform.version }}</td>
+        <td>{{ xform.uiversion }}</td>
+		<td><a href="#">download</a></td>
+		<td><a href="{% url xform_play xform.id %}">fill out</a></td>
+	</tr>
+{% empty %} 
+    <tr>Sorry, no patients here.</tr>
+{% endfor %} 
+
+<tr></tr>
+</table>
+{% endblock %} 

@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+{% block content %}
+<h3>Playing {{ xform.name }}</h3>
+<p class="notice">We don't currently have an xform player.  Click the button below to generate a fake instance.</p>
+<form method="POST">
+<input type="hidden" name="xform_id" value="{{ xform.id }}" />
+<input type="submit" value="Fake it!" />
+</form>
+{% endblock %} 
