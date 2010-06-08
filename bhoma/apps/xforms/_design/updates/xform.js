@@ -43,8 +43,8 @@ function(doc, req) {
     // NOTE: should this be a file?  Not sure how this will do with multipart, we 
     // probably want to be smarter.
     doc["#xml"] = req.body
-    
+    doc["#doc_type"] = "XForm"
     var resp =  {"headers" : {"Content-Type" : "text/plain"},
-                 "body" : "Thanks for submitting! Id is: " + uuid };
+                 "body" : uuid.toString()};
     return [doc, resp];
 }

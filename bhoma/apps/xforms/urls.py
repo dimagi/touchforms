@@ -7,6 +7,6 @@ xform_info = {
 }
 
 urlpatterns = patterns('',
-    (r'^$', list_detail.object_list, xform_info),
+    url(r'^$', list_detail.object_list, xform_info, name="xform_list"),
     url(r'^enter/(?P<xform_id>.*)$', 'bhoma.apps.xforms.views.play', name='xform_play'),
 )
