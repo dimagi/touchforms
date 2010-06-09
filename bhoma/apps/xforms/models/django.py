@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.db import models
 from django.conf import settings
 from django.core.files import File
@@ -6,6 +7,7 @@ from bhoma.apps.djangoplus.fields import PickledObjectField
 from xml.etree import ElementTree
 import re
 import os
+import logging
 
 VERSION_KEY = "version"
 UIVERSION_KEY = "uiVersion" 
@@ -27,6 +29,9 @@ class XForm(models.Model):
     def __unicode__(self):
         return "%s (%s)" % (self.name, self.namespace)
     
+    class Meta:
+        app_label = 'xforms'
+
     @classmethod
     def from_file(cls, filename, name=None):
         """Create an xform from the original xml/xhtml file"""
@@ -74,11 +79,25 @@ class XForm(models.Model):
 
 class XFormCallback(models.Model):
     
-    xform = models.ForeignKey(XForm)
+    xform = models.ForeignKey(XForm, related_name="callbacks")
     callback = models.CharField(max_length=255, 
-                                help_text="Name of Python callback function")
-    # should be a pickled set
-    callback_args = PickledObjectField(null=True, blank=True)
-    # should be a pickled dictionary
-    callback_kwargs = PickledObjectField(null=True, blank=True)
+                                help_text="Name of Python callback function.  " \
+                                          "This function should take a single " \
+                                          "argument, which is the filled out " \
+                                          "document.")
     
+    class Meta:
+        app_label = 'xforms'
+
+    def call(self, document):
+        """Call the function associated with this."""
+        try:
+            # call the callback function
+            module, callback = self.callback.rsplit(".", 1)
+            module = __import__(module, globals(), locals(), [callback])
+            callback = getattr(module, callback)
+            return callback(document)
+        except ImportError:
+            logging.error("Bad callback method %s. It could not be imported." % \
+                          self.callback)
+            return False
