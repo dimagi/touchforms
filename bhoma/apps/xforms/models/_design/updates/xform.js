@@ -1,6 +1,4 @@
 function(doc, req) {
-    log("test");
-    log("ping!")
     var e4xmlJsonClass = require("util/jsone4xml").e4xmlJsonClass;
     e4xmlJsonClass.hello()
     if (doc) {
@@ -39,10 +37,16 @@ function(doc, req) {
     log("id: " + uuid);
     doc["_id"] = uuid.toString();
     
-    // attach the raw xml 
+    // attach the raw xml as a file called "form.xml"
+    // except this doesn't work.  so stick it in a field called "#xml" instead.
+    // This apparently has to be base64 encoded to store properly in couch.
+    // var attachments = { "form.xml" : { "content_type":"text/xml", "data": req.body } };      
+    // doc["_attachments"] = attachments;
+    
     // NOTE: should this be a file?  Not sure how this will do with multipart, we 
     // probably want to be smarter.
-    doc["#xml"] = req.body
+    doc["#xml"] = req.body;
+    
     doc["#doc_type"] = "XForm"
     var resp =  {"headers" : {"Content-Type" : "text/plain"},
                  "body" : uuid.toString()};
