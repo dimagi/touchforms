@@ -1,6 +1,7 @@
 import sys
 import os
 from datetime import datetime
+import threading
 
 from java.util import Date
 from java.util import Vector
@@ -35,11 +36,52 @@ def to_vect(it):
     return v
 
 
-instances = {}
-instance_id_counter= 0
+class global_state_mgr:
+  instances = {}
+  instance_id_counter = 0
 
-session_cache = {}
-session_id_counter = 0
+  session_cache = {}
+  session_id_counter = 0
+  
+  def __init__(self):
+    self.lock = threading.Lock()
+  
+  def new_session(self, xfsess):
+    self.lock.acquire()
+    self.session_id_counter += 1
+    self.session_cache[self.session_id_counter] = xfsess
+    self.lock.release()
+    return self.session_id_counter
+  
+  def get_session(self, session_id):
+    self.lock.acquire()
+    try:
+      return self.session_cache[session_id]
+    except KeyError:
+      return None
+    finally:
+      self.lock.release()
+    
+  #todo: we're not calling this currently, but should, or else xform sessions will hang around in memory forever    
+  def destroy_session(self, session_id):
+    self.lock.acquire()
+    try:
+      del self.session_cache[session_id]
+    except KeyError:
+      pass
+    self.lock.release()
+    
+  def save_instance(self, data):        
+    self.lock.acquire()
+    self.instance_id_counter += 1
+    self.instances[self.instance_id_counter] = data
+    self.lock.release()
+    return self.instance_id_counter
+
+  #todo: add ways to get xml, delete xml, and option not to save xml at all
+
+global_state = global_state_mgr()
+  
 
 def load_form(xform, instance=None):
     form = XFormParser.getFormDef(StringReader(xform))
@@ -198,19 +240,14 @@ def open_form (form_name):
         return {'error': 'no form found at %s' % form_name}
 
     xfsess = XFormSession(xform_path=form_name)
-    global session_id_counter
-    session_id_counter += 1
-    session_cache[session_id_counter] = xfsess
-
+    sess_id = global_state.new_session(xfsess)
     first_event = xfsess.next_event()
-
-    return {'session_id': session_id_counter, 'event': first_event}
+    return {'session_id': sess_id, 'event': first_event}
 
 def answer_question (session_id, answer):
-    try:
-        xfsess = session_cache[session_id]
-    except KeyError:
-        return {'error': 'invalid session id'}
+    xfsess = global_state.get_session(session_id)
+    if xfsess == None:
+      return {'error': 'invalid session id'}
 
     result = xfsess.answer_question(answer)
     if result['status'] == 'success':
@@ -220,18 +257,16 @@ def answer_question (session_id, answer):
         return result
 
 def skip_next (session_id):
-    try:
-        xfsess = session_cache[session_id]
-    except KeyError:
-        return {'error': 'invalid session id'}
+    xfsess = global_state.get_session(session_id)
+    if xfsess == None:
+      return {'error': 'invalid session id'}
 
     return {'event': next_event(xfsess)}
 
 def go_back (session_id):
-    try:
-        xfsess = session_cache[session_id]
-    except KeyError:
-        return {'error': 'invalid session id'}
+    xfsess = global_state.get_session(session_id)
+    if xfsess == None:
+      return {'error': 'invalid session id'}
 
     (at_start, event) = prev_event(xfsess)
     return {'event': event, 'at-start': at_start}
@@ -254,9 +289,5 @@ def prev_event (xfsess):
 
 def save_form (xfsess):
     xml = xfsess.output()
-
-    global instance_id_counter
-    instance_id_counter += 1
-    instances[instance_id_counter] = xml
-
-    return (instance_id_counter, xml)
+    instance_id = global_state.save_instance(xml)
+    return (instance_id, xml)
