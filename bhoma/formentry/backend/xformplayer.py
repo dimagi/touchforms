@@ -6,7 +6,7 @@ from java.util import Date
 from java.util import Vector
 from java.io import StringReader
 
-from xformserver import BHOMA_BASE
+BHOMA_BASE = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 def init_classpath():
     for jar in ('javarosa-libraries.jar', 'kxml2-2.3.0.jar'):

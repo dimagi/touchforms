@@ -148,9 +148,13 @@ function redraw () {
     <div id="viewport" style="position: absolute; left: 0px; top: 50px; width: 1024px; height: 768px; background-color: red; margin: 15px;"></div>
 
    
-    <button onClick="freeEntryKeyboard.content = numPad; redraw();">numeric entry</button>
-    <button onClick="freeEntryKeyboard.content = kbd; redraw();">text entry</button>
-    <button onClick="freeEntryKeyboard.content = choice; redraw();">multiple choice</button>
+    <button onClick="answerBar.content = freeTextAnswer; freeEntryKeyboard.content = numPad; redraw();">numeric entry</button>
+    <button onClick="answerBar.content = freeTextAnswer; freeEntryKeyboard.content = kbd; redraw();">text entry</button>
+    <button onClick="answerBar.content = freeTextAnswer; freeEntryKeyboard.content = choice; redraw();">multiple choice</button>
+    <button onClick="answerBar.content = dateAnswer; freeEntryKeyboard.content = cdecade; redraw();">date: year 1/2</button>
+    <button onClick="answerBar.content = dateAnswer; freeEntryKeyboard.content = cyear; redraw();">date: year 2/2</button>
+    <button onClick="answerBar.content = dateAnswer; freeEntryKeyboard.content = cmonth; redraw();">date: month</button>
+    <button onClick="answerBar.content = dateAnswer; freeEntryKeyboard.content = cday; redraw();">date: day</button>
   </body>
 </html>
 
