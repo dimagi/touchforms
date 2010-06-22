@@ -4,9 +4,11 @@ from django.conf import settings
 from bhoma.apps.xforms.models import XForm
 from bhoma.apps.xforms.util import get_xform_instance
 from bhoma.utils.post import post_data
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse,\
+    HttpResponseServerError
 from django.core.urlresolvers import reverse
 from bhoma.apps.xforms.models.couch import CXFormInstance
+
 
 
 def play(request, xform_id):
@@ -42,6 +44,13 @@ def play(request, xform_id):
             raise Exception(errors)
         
         # process post event hooks... how?
-
-    return render_to_response(request, "xforms/play_xform.html",
+    return render_to_response(request, "xforms/xform_player.html",
                               {"xform": xform})
+
+def player_proxy(request):
+    """Proxy to an xform player, to avoid cross-site scripting issues"""
+    data = request.raw_post_data if request.POST else None
+    response, errors = post_data(data, settings.XFORMS_PLAYER_URL, content_type="text/json")
+    if errors:  
+        return HttpResponseServerError(errors)
+    return HttpResponse(response)
