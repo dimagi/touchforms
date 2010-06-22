@@ -1,0 +1,49 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml"
+        xmlns="http://www.w3.org/2002/xforms"
+	  xmlns:ev="http://www.w3.org/2001/xml-events"
+	  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	  xmlns:jr="http://openrosa.org/javarosa">
+<h:head>
+    <h:title>test</h:title>
+    <model>
+
+		<instance>
+			<test xmlns="">
+        <a />
+        <b />
+        <c />
+        <d />
+        <e />
+        <f />
+			</test>
+		</instance>
+		
+	<bind nodeset="b"  type="int"  required="true()"/>
+	<bind nodeset="c"  type="date" constraint=". <= today()" jr:constraintMsg="must be in past" />
+	<bind nodeset="d"  type="decimal" />
+	</model>
+</h:head>			
+<h:body>
+
+  <input ref="a"><label>this is a text question</label></input>
+  <input ref="b"><label>this is a numeric question</label></input>
+  <input ref="c"><label>this is a date question</label></input>
+  <input ref="d"><label>this is a decimal question</label></input>
+	
+  <select1 ref="e">
+    <label>this is a single-select question</label>
+    <item><label>choice1</label><value>c1</value></item>
+    <item><label>choice2</label><value>c2</value></item>
+    <item><label>choice3</label><value>c3</value></item>
+  </select1>
+
+  <select ref="f">
+    <label>this is a multi-select question</label>
+    <item><label>choice1</label><value>c1</value></item>
+    <item><label>choice2</label><value>c2</value></item>
+    <item><label>choice3</label><value>c3</value></item>
+  </select>
+
+  
+</h:body>
+</h:html>
