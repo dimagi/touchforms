@@ -26,12 +26,11 @@ function init () {
   $("done").style.display = 'none';
 }
 
-function loadForm (formID) {
+function loadForm (formName) {
   $("start").style.display = 'none';
   $("question").style.display = 'block';
   $("done").style.display = 'none';
-  
-  jQuery.post(XFORM_URL, JSON.stringify({'action': 'new-form', 'form-id': formID}), function (resp) {
+  jQuery.post(XFORM_URL, JSON.stringify({'action': 'new-form', 'form-name': formName}), function (resp) {
     gSessionID = resp["session_id"];
     renderEvent(resp["event"], true);
   }, "json");
@@ -163,8 +162,8 @@ function formComplete (event) {
     <div id="inside" style="margin: 30px; display: table; width: 100%; height: 100%">
   
     <div id="start" style="vertical-align: middle; text-align: center">
-      <button onClick="loadForm(+document.getElementById('formid').value)" style="width: 200px; height: 100px; font-size: xx-large; font-weight: bold">START</button><br>
-      Form ID: <input id="formid" value="1"></input>
+      <button onClick="loadForm(document.getElementById('formname').value)" style="width: 200px; height: 100px; font-size: xx-large; font-weight: bold">START</button><br>
+      Form: {{xform.name}}<input id="formname" value="{{xform.file.path}}" type="hidden"></input>
     </div>
   
     <div id="question" style="height: 100%; width: 100%;">

@@ -10,12 +10,10 @@ from django.core.urlresolvers import reverse
 from bhoma.apps.xforms.models.couch import CXFormInstance
 
 
-
 def play(request, xform_id):
     """Play an XForm"""
     xform = get_object_or_404(XForm, id=xform_id)
     redirect_url = request.GET.get('redirect_url', '')
-    
     if request.POST:
         # get the instance
         instance = get_xform_instance()
@@ -45,8 +43,8 @@ def play(request, xform_id):
         
         # process post event hooks... how?
     return render_to_response(request, "xforms/xform_player.html",
-                              {"xform": xform})
-
+                              {"xform": xform })
+                               
 def player_proxy(request):
     """Proxy to an xform player, to avoid cross-site scripting issues"""
     data = request.raw_post_data if request.POST else None

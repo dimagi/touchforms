@@ -34,14 +34,6 @@ def to_vect(it):
         v.addElement(e)
     return v
 
-form_list = {
-  1: 'test.xhtml',
-  2: 'imci.xml'
-}
-
-
-def get_path (form_id):
-    return os.path.join(BHOMA_BASE, "formentry", "testforms", form_list[form_id])
 
 instances = {}
 instance_id_counter= 0
@@ -201,13 +193,11 @@ class XFormSession:
 
 
 
-def open_form (form_id):
-    try:
-        xfpath = get_path(form_id)
-    except KeyError:
-        return {'error': 'no form with that identifier'}
+def open_form (form_name):
+    if not os.path.exists(form_name):
+        return {'error': 'no form found at %s' % form_name}
 
-    xfsess = XFormSession(xform_path=xfpath)
+    xfsess = XFormSession(xform_path=form_name)
     global session_id_counter
     session_id_counter += 1
     session_cache[session_id_counter] = xfsess
