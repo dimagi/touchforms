@@ -27,15 +27,21 @@ KEYBUTTON_COLOR = '#118';
 function init () {
   questionCaption = new Indirect();
   questionEntry = new Indirect();
-
+  progressBar = new Indirect();
+  
   gSceneGraph = new Layout('main', 3, 1, '*', [HEADER_HEIGHT, '*', FOOTER_HEIGHT], SCREEN_BORDER, 0, MAIN_COLOR, BORDER_COLOR, null, [
-    new Layout('header', 1, 1, '*', '*', [SCREEN_MARGIN, SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN], 0, HEADER_COLOR, HEADER_COLOR, HEADER_COLOR, [questionCaption]),
+    new Layout('header', 1, 1, '*', '*', [SCREEN_MARGIN, SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN], 0, HEADER_COLOR, HEADER_COLOR, HEADER_COLOR, [
+      new Layout('top-bar', 1, 2, ['*', 50], '*', 0, 5, null, null, null, [
+        questionCaption,
+        new TextButton('help-button', '#aaa', BUTTON_TEXT_COLOR, null, null, '?', 1., null)
+      ])
+    ]),
     new Layout('entry', 1, 1, '*', '*', [SCREEN_MARGIN, SCREEN_MARGIN, 0, 0], 0, null, null, null, [questionEntry]),
     new Layout('footer', 1, 4, [FOOTER_BUTTON_WIDTH, FOOTER_BUTTON_WIDTH, '*', FOOTER_BUTTON_WIDTH], '*',
                [SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN, SCREEN_MARGIN], FOOTER_BUTTON_SPACING, FOOTER_COLOR, FOOTER_COLOR, FOOTER_COLOR, [
       new TextButton('back-button', '#6ad', BUTTON_TEXT_COLOR, null, null, 'BACK', 1., null),
-      new TextButton('quit-button', '#d23', BUTTON_TEXT_COLOR, null, null, 'QUIT', 1., null),
-      null, /* progress bar? */
+      new TextButton('quit-button', '#d23', BUTTON_TEXT_COLOR, null, null, 'MENU', 1., null),
+      progressBar,
       new TextButton('next-button', '#1a3', BUTTON_TEXT_COLOR, null, null, 'NEXT', 1.2, null)
     ]),
   ]);
@@ -81,6 +87,11 @@ function init () {
   }
   choice = new Layout('ch', 4, 2, 400, 100, [30, '*', '*', '*'], 20, null, null, null, [
     ckb('Apple'), ckb('Orange'), ckb('Pear'), ckb('Guava'), ckb('Lychee'), null, ckb('Banana'), null
+  ]);
+  
+  progressBar.content = new Layout('progress-bar', 1, 2, ['30%', '*'], '*', [10, 10, 15, 15], 0, null, null, null, [
+    new Layout('pb0', 1, 1, '*', '*', 0, 0, '#4d6', null, null, [null]),   
+    new Layout('pb0', 1, 1, '*', '*', 0, 0, HEADER_COLOR, null, null, [null])   
   ]);
   
   questionCaption.content = new TextCaption('q-caption', TEXT_COLOR, 'What are your symptoms?', 1., 'left', 'top');
