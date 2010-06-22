@@ -5,10 +5,11 @@ import threading
 import logging
 import jsonhack as json  #todo: replace with real json library
 import xformplayer
+import os
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
-BHOMA_BASE = 'C:\\eclipse\\bhoma\\bhoma\\'
+BHOMA_BASE = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
   pass

@@ -1,4 +1,5 @@
 import sys
+import os
 from datetime import datetime
 
 from java.util import Date
@@ -8,9 +9,10 @@ from java.io import StringReader
 from xformserver import BHOMA_BASE
 
 def init_classpath():
-  for jar in ('javarosa-libraries.jar', 'kxml2-2.3.0.jar'):
-    if jar not in sys.path:
-      sys.path.append(BHOMA_BASE + 'formentry\\jrlib\\' + jar)
+    for jar in ('javarosa-libraries.jar', 'kxml2-2.3.0.jar'):
+        if jar not in sys.path:
+            sys.path.append(os.path.join(BHOMA_BASE, "formentry", "jrlib", jar))
+
 init_classpath()
 
 from org.javarosa.xform.parse import XFormParser
@@ -34,11 +36,12 @@ def to_vect(it):
 
 form_list = {
   1: 'test.xhtml',
-  2: 'imci.xml',
+  2: 'imci.xml'
 }
 
+
 def get_path (form_id):
-  return BHOMA_BASE + 'formentry\\testforms\\' + form_list[form_id]
+    return os.path.join(BHOMA_BASE, "formentry", "testforms", form_list[form_id])
 
 instances = {}
 instance_id_counter= 0
