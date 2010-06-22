@@ -8,6 +8,8 @@ import xformplayer
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
+BHOMA_BASE = 'C:\\eclipse\\bhoma\\bhoma\\'
+
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
   pass
 
@@ -23,9 +25,13 @@ class XFormHTTPGateway(threading.Thread):
     self.server.shutdown()
     
 class XFormRequestHandler(BaseHTTPRequestHandler):
-  def do_GET(self): #hack!!!
+  def do_GET(self):
+    #this is a hack - due to cross-site request limitations, the static webpage
+    #and the ajax requests need to use the same server
+    #ideally, the client should communicate only with a real web server, which
+    #serves the pages, and proxies the ajax requests to here
     try:
-      WWW_ROOT = 'C:\\Documents and Settings\\Drew Roos\\Desktop\\cidrz'
+      WWW_ROOT = BHOMA_BASE + 'formentry\\client\\'
       requestpath = self.path.split('?')[0]
       filepath = WWW_ROOT + '\\'.join(requestpath.split('/'))
       content = open(filepath, 'rb').read()

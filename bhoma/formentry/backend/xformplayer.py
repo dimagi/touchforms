@@ -5,10 +5,12 @@ from java.util import Date
 from java.util import Vector
 from java.io import StringReader
 
+from xformserver import BHOMA_BASE
+
 def init_classpath():
   for jar in ('javarosa-libraries.jar', 'kxml2-2.3.0.jar'):
     if jar not in sys.path:
-      sys.path.append(jar)
+      sys.path.append(BHOMA_BASE + 'formentry\\jrlib\\' + jar)
 init_classpath()
 
 from org.javarosa.xform.parse import XFormParser
@@ -34,6 +36,9 @@ form_list = {
   1: 'test.xhtml',
   2: 'imci.xml',
 }
+
+def get_path (form_id):
+  return BHOMA_BASE + 'formentry\\testforms\\' + form_list[form_id]
 
 instances = {}
 instance_id_counter= 0
@@ -195,7 +200,7 @@ class XFormSession:
   
 def open_form (form_id):
   try:
-    xfpath = form_list[form_id]
+    xfpath = get_path(form_id)
   except KeyError:
     return {'error': 'no form with that identifier'}
   
