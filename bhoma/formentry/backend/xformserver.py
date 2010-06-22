@@ -66,10 +66,10 @@ def handle_request (content):
 
     action = content['action']
     if action == 'new-form':
-        if 'form-id' not in content:
+        if 'form-name' not in content:
             return {'error': 'form identifier required'}
 
-        return xformplayer.open_form(content['form-id'])
+        return xformplayer.open_form(content['form-name'])
 
     elif action == 'edit-form':
         return {'error': 'unsupported'}
