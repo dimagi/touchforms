@@ -155,6 +155,15 @@ function daySelect (monthLength) {
 function redraw () {
   render_viewport('viewport', gSceneGraph);
 }
+
+function type_ (c) {  
+  var evt = document.createEvent("KeyboardEvent");
+  evt.initKeyEvent("keypress", true, true, window,
+                   0, 0, 0, 0,
+                   0, c.charCodeAt(0)) 
+  elem = document.getElementsByTagName('input')[0];
+  elem.dispatchEvent(evt);
+}
   
     </script>
     
@@ -169,6 +178,7 @@ function redraw () {
     <button onClick="answerBar.content = dateAnswer; freeEntryKeyboard.content = yearSelect(1990); redraw();">date: year 2/2</button>
     <button onClick="answerBar.content = dateAnswer; freeEntryKeyboard.content = cmonth; redraw();">date: month</button>
     <button onClick="answerBar.content = dateAnswer; freeEntryKeyboard.content = daySelect(29); redraw();">date: day</button>
+    <button onClick="type_('e')">type</button>
   </body>
 </html>
 

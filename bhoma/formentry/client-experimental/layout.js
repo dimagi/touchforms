@@ -136,9 +136,9 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing) {
   this.spacing = spacing;
   
   this.render = function (parent_div) {
-    parent_div.id = uid(this.id);
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td valign="middle"><input></input></td></tr></table>'
     inp = parent_div.getElementsByTagName('input')[0];
+    inp.id = uid(this.id);
     
     set_color(parent_div, this.bgcolor, parent_div.style.backgroundColor);
     inp.style.backgroundColor = (this.bgcolor != null ? this.bgcolor : parent_div.style.backgroundColor);
