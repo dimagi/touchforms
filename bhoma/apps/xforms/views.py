@@ -17,10 +17,10 @@ def play(request, xform_id):
     redirect_url = request.GET.get('redirect_url', '')
     if request.POST:
         # get the instance
-        instance = get_xform_instance()
+        instance = request.POST["output"]
         # post to couch
         response, errors = post_data(instance, settings.XFORMS_POST_URL)
-        if not errors:
+        if not errors and not "error" in response:
             doc_id = response
             doc = CXFormInstance.get_db().get(doc_id)
             for key, value in request.GET.items():
@@ -40,7 +40,7 @@ def play(request, xform_id):
             else:
                 return HttpResponseRedirect(reverse("xform_list"))
         else:
-            raise Exception(errors)
+            raise Exception("Problem POSTing form errors/response: %s/%s" % (errors, response))
         
         # process post event hooks... how?
     return render_to_response(request, "xforms/xform_player.html",
