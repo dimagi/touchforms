@@ -121,8 +121,38 @@ function TextCaption (id, color, caption, size_rel, align, valign) {
     span = parent_div.getElementsByTagName('span')[0];
     span.style.fontWeight = 'bold';
     span.style.fontSize = this.size_rel * 100. + '%';
-    span.style.color = this.text_color;
+    span.style.color = this.color;
     span.textContent = this.caption;
+  }
+}
+
+function TextInput (id, color, bgcolor, content, size_rel, align, spacing) {
+  this.id = id;
+  this.color = color;
+  this.bgcolor = bgcolor;
+  this.content = content;
+  this.size_rel = size_rel;
+  this.align = align;
+  this.spacing = spacing;
+  
+  this.render = function (parent_div) {
+    parent_div.id = uid(this.id);
+    parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td valign="middle"><input></input></td></tr></table>'
+    inp = parent_div.getElementsByTagName('input')[0];
+    
+    set_color(parent_div, this.bgcolor, parent_div.style.backgroundColor);
+    inp.style.backgroundColor = (this.bgcolor != null ? this.bgcolor : parent_div.style.backgroundColor);
+    inp.style.color = this.color;
+    inp.style.borderWidth = '0px';
+    inp.style.height = '100%';
+    inp.style.width = '100%';
+    inp.style.fontWeight = 'bold';
+    inp.style.fontSize = this.size_rel * 100. + '%';
+    inp.style.textAlign = this.align;
+    if (this.spacing != null) {
+      inp.style.letterSpacing = this.spacing + 'px';
+    }
+    inp.value = content;
   }
 }
 
