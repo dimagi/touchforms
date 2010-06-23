@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseServerError
 from django.core.urlresolvers import reverse
 from bhoma.apps.xforms.models.couch import CXFormInstance
+import logging
 
 
 def play(request, xform_id):
@@ -49,6 +50,7 @@ def player_proxy(request):
     """Proxy to an xform player, to avoid cross-site scripting issues"""
     data = request.raw_post_data if request.POST else None
     response, errors = post_data(data, settings.XFORMS_PLAYER_URL, content_type="text/json")
-    if errors:  
+    if errors:
+        logging.error("Error posting to xform player: %s" % errors)
         return HttpResponseServerError(errors)
     return HttpResponse(response)
