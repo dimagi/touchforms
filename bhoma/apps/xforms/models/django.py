@@ -8,6 +8,7 @@ from xml.etree import ElementTree
 import re
 import os
 import logging
+import hashlib
 
 VERSION_KEY = "version"
 UIVERSION_KEY = "uiVersion" 
@@ -24,6 +25,8 @@ class XForm(models.Model):
     namespace = models.CharField(max_length=255)
     version = models.IntegerField(null=True)
     uiversion = models.IntegerField(null=True)
+    checksum = models.CharField(help_text='Attachment SHA-1 Checksum',
+                                max_length=40, blank=True)
     file = models.FileField(upload_to="xforms", max_length=255)
     
     def __unicode__(self):
@@ -39,7 +42,7 @@ class XForm(models.Model):
         if name is None:
             name = os.path.basename(f.name)
         file_contents = f.read()
-        
+        checksum = hashlib.sha1(file_contents).hexdigest()
         # TODO: parsing is exremely brittle and we should use jad/jar javarosa 
         # stuff for it
         element = ElementTree.XML(file_contents)
@@ -71,7 +74,7 @@ class XForm(models.Model):
         
         instance = XForm.objects.create(name=name, namespace=namespace, 
                                         version=version, uiversion=uiversion,
-                                        file=f)           
+                                        checksum=checksum, file=f)           
         return instance
                         
 # I think we want some notion of signals against XForms.  Not sure 
@@ -101,3 +104,4 @@ class XFormCallback(models.Model):
             logging.error("Bad callback method %s. It could not be imported." % \
                           self.callback)
             return False
+
