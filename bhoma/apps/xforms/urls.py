@@ -11,4 +11,6 @@ urlpatterns = patterns('',
     url(r'^enter/(?P<xform_id>.*)$', 'bhoma.apps.xforms.views.play', name='xform_play'),
     url(r'^download/(?P<xform_id>.*)$', 'bhoma.apps.xforms.views.download', name='xform_download'),
     url(r'^player_proxy$', 'bhoma.apps.xforms.views.player_proxy', name='xform_player_proxy'),
+    url(r'^post/$', 'bhoma.apps.xforms.views.post', name='xform_post'),
+    
 )
