@@ -9,7 +9,16 @@ from django.core.urlresolvers import reverse
 from bhoma.apps.xforms.models.couch import CXFormInstance
 import logging
 
-
+def download(request, xform_id):
+    """
+    Download an xform
+    """
+    xform = get_object_or_404(XForm, id=xform_id)
+    response = HttpResponse(mimetype='application/xml')
+    response.write(xform.file.read()) 
+    return response
+    
+    
 def play(request, xform_id, callback=None):
     """
     Play an XForm.
@@ -27,7 +36,6 @@ def play(request, xform_id, callback=None):
         response = a valid http response
     """
     xform = get_object_or_404(XForm, id=xform_id)
-    redirect_url = request.GET.get('redirect_url', '')
     if request.POST:
         
         # get the instance
