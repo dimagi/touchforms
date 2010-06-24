@@ -163,8 +163,48 @@ function daySelect (monthLength) {
 }
 
 function choiceSelect (choices, selected) {
-  return new Layout('ch', 4, 2, 400, 100, [30, '*', 30, '*'], 20, null, null, null, 
-    kbs(['Apple', 'Orange', ['Pear', BUTTON_SELECTED_COLOR], 'Guava', 'Lychee', null, 'Banana', null], null, 1.8));
+  //analysis of choices to determine best layout here
+    
+  //for now, hard-coded for demo
+  var style = 'list'; //'list' or 'grid'
+  var rows = 4;
+  var cols = 2;
+  var width = 400;
+  var height = 100;
+  var text_scale = 1.8;
+  var spacing = 20;
+  
+  //render layout
+  
+  if (rows == cols) {
+    var dir = 'horiz'; //vert if long options?
+  } else {
+    var dir = (rows > cols ? 'vert' : 'horiz');
+  }
+  
+  if (style == 'list') {
+    var margins = [30, '*', 30, '*'];
+  } else if (style == 'grid') {
+    var margins = '*';
+  }
+  
+  var cells = [];
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      var i = (dir == 'horiz' ? cols * r + c : rows * c + r);
+      if (i > choices.length) {
+        var cell = null;
+      } else {
+        var cell = choices[i];
+        if (selected.indexOf(i) != -1) {
+          cell = [cell, BUTTON_SELECTED_COLOR];
+        }
+      }
+      cells.push(cell);
+    }
+  }
+
+  return new Layout('ch', rows, cols, width, height, margins, spacing, null, null, null, kbs(cells, null, text_scale, null));  
 }
 
 function redraw () {
