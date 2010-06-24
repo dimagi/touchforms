@@ -2,7 +2,6 @@ from bhoma.utils.render_to_response import render_to_response
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from bhoma.apps.xforms.models import XForm
-from bhoma.apps.xforms.util import get_xform_instance
 from bhoma.utils.post import post_data
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseServerError
