@@ -83,7 +83,7 @@ function Layout (id, num_rows, num_cols, widths, heights, margins, spacings, col
 }
 
 //todo: auto-sizing?
-function TextButton (id, color, text_color, selected_color, inactive_color, caption, size_rel, onclick) {
+function TextButton (id, color, text_color, selected_color, inactive_color, caption, size_rel, onclick, centered) {
   this.id = id;
   this.color = color;
   this.text_color = text_color;
@@ -92,17 +92,21 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
   this.caption = caption;
   this.size_rel = size_rel;
   this.onclick = onclick;
+  this.centered = (centered != null ? centered : true);  
   
   this.render = function (parent_div) {  
     parent_div.id = uid(this.id);
     set_color(parent_div, this.color, parent_div.style.backgroundColor);
-    parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td align="center" valign="center"><span></span></td></tr></table>'
+    parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td align="' + (this.centered ? 'center' : 'left') + '" valign="middle"><span></span></td></tr></table>'
     span = parent_div.getElementsByTagName('span')[0];
     span.style.fontWeight = 'bold';
     span.style.fontSize = this.size_rel * 100. + '%';
     span.style.color = this.text_color;
     span.textContent = this.caption;
     parent_div.onclick = this.onclick;
+    if (!this.centered) {
+      span.style.marginLeft = .25 * parent_div.clientHeight + 'px';
+    }
     
     parent_div.style.MozBorderRadius = '10px';
   }
