@@ -327,7 +327,7 @@ function choiceSelect (choices, selected) {
     spacing = spc;
   }
     
-  //render layout
+  //2) render choices according to layout parameters
   
   if (style == 'list') {
     var margins = [30, '*', 30, '*'];
@@ -384,8 +384,8 @@ function type_ (c) {
     </script>
     
   </head>
-  <!-- overflow: hidden; -->
-  <body id="body" onLoad="init();" style="cursor: crosshair;  font-family: sans-serif; font-size: xx-large;" oncontextmenu="return false;">
+
+  <body id="body" onLoad="init();" style="cursor: crosshair; overflow: hidden; font-family: sans-serif; font-size: xx-large;" oncontextmenu="return false;">
     <div id="viewport" style="-moz-user-select: -moz-none; position: absolute; left: 0px; top: 50px; width: 1024px; height: 768px; background-color: red; margin: 15px;"></div>
     
     <!-- an off-screen area to temporarily dump text and play with text sizing -->
