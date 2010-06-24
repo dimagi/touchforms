@@ -23,6 +23,9 @@ FOOTER_COLOR = '#abd';
 BUTTON_TEXT_COLOR = '#fff';
 TEXT_COLOR = '#000';
 KEYBUTTON_COLOR = '#118';
+BUTTON_SELECTED_COLOR = '#0bf';
+
+BACKSPACE_LABEL = '\u21d0';
 
 function init () {
   questionCaption = new Indirect();
@@ -54,18 +57,17 @@ function init () {
   ]);
 
   numPad = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', null, '0', ['\u21d0', '#aaa']], null, 2.));
+            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', null, '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
   
   kbd = new Layout('text-kbd', 4, 13, 68, 85, '*', 6, null, null, null, 
             kbs([
-  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', '7', '8', '9', ['\u21d0', '#aaa'],
+  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', '7', '8', '9', [BACKSPACE_LABEL, '#aaa'],
   'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '4', '5', '6', '',
   'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '.',
   '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', '!', '?', ','     
-            ], null, 1.5));
+            ], null, 1.5, type_));
   
-  choice = new Layout('ch', 4, 2, 400, 100, [30, '*', '*', '*'], 20, null, null, null, 
-    kbs(['Apple', 'Orange', 'Pear', 'Guava', 'Lychee', null, 'Banana', null], null, 1.8));
+  choiceEntry = choiceSelect(['Apple', 'Orange', 'Pear', 'Guava', 'Lychee', 'Banana'], [2]);
   
   progressBar.content = new Layout('progress-bar', 1, 2, ['30%', '*'], '*', [10, 10, 15, 15], 0, null, null, null, [
     new Layout('pb0', 1, 1, '*', '*', 0, 0, '#4d6', null, null, [null]),   
@@ -92,9 +94,9 @@ function init () {
   
   cdecade = new Layout('cdc', 5, 2, 300, 70, '*', 20, null, null, null, 
     kbs(['2000\u20142010', '1950\u20141959', '1990\u20141999', '1940\u20141949', '1980\u20141989',
-         '1930\u20141939', '1970\u20141979', '1920\u20141929', '1960\u20141969', '1910\u20141919'], null, 1.4));
+         '1930\u20141939', '1970\u20141979', '1920\u20141929', '1960\u20141969', '1910\u20141919'], null, 1.4, null));
   cmonth = new Layout('cm', 3, 4, 180, 120, '*', 30, null, null, null, 
-    kbs(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], null, 1.8));
+    kbs(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], null, 1.8, null));
 
   questionCaption.content = new TextCaption('q-caption', TEXT_COLOR, 'What are your symptoms?', 1., 'left', 'top');
   questionEntry.content = freeEntry;
@@ -102,15 +104,23 @@ function init () {
   answerBar.content = dateAnswer;
   
   redraw();
+  
+/*  
+  sn = document.getElementById('snippet');
+  for (k = 200; k < 1500; k += 50) {
+    document.getElementById('staging').style.width = k + 'px'; 
+    alert(k + " " + sn.offsetWidth + " " + sn.offsetHeight);
+  }
+*/
 }
 
-function kb (lab, sz, col) {
+function kb (lab, sz, col, onclick) {
   if (col == null)
     col = KEYBUTTON_COLOR;
-  return new TextButton('button-' + lab, col, BUTTON_TEXT_COLOR, null, null, lab, sz, null);
+  return new TextButton('button-' + lab, col, BUTTON_TEXT_COLOR, null, null, lab, sz, (onclick != null ? function () { onclick(lab); } : null));
 }
   
-function kbs (infos, def_color, def_sz) {
+function kbs (infos, def_color, def_sz, onclick) {
   var stuff = new Array();
   for (var i = 0; i < infos.length; i++) {
     var info = infos[i];
@@ -124,7 +134,7 @@ function kbs (infos, def_color, def_sz) {
         var col = def_color;
         var sz = def_sz;
       }
-      var st = kb(lab, sz, col);
+      var st = kb(lab, sz, col, onclick);
     } else {
       var st = null;
     }
@@ -139,7 +149,7 @@ function yearSelect (decade) {
   for (var i = 0; i < offsets.length; i++) {
     years.push(String(decade + offsets[i]));
   }
-  return new Layout('cy', 5, 2, 300, 70, '*', 20, null, null, null, kbs(years, null, 1.4));
+  return new Layout('cy', 5, 2, 300, 70, '*', 20, null, null, null, kbs(years, null, 1.4, null));
 }
 
 function daySelect (monthLength) {
@@ -149,7 +159,12 @@ function daySelect (monthLength) {
   for (var i = 1; i <= r * c; i++) {
     days.push(i <= monthLength ? i : null);
   }
-  return new Layout('cd', r, c, 85, 85, '*', 15, null, null, null, kbs(days, null, 1.6));
+  return new Layout('cd', r, c, 85, 85, '*', 15, null, null, null, kbs(days, null, 1.6, null));
+}
+
+function choiceSelect (choices, selected) {
+  return new Layout('ch', 4, 2, 400, 100, [30, '*', 30, '*'], 20, null, null, null, 
+    kbs(['Apple', 'Orange', ['Pear', BUTTON_SELECTED_COLOR], 'Guava', 'Lychee', null, 'Banana', null], null, 1.8));
 }
 
 function redraw () {
@@ -157,10 +172,24 @@ function redraw () {
 }
 
 function type_ (c) {  
+  if (c == BACKSPACE_LABEL) {
+    keyCode = 0x08;
+    charCode = 0;
+  } else {
+    if (c == '\u2012' || c == '\u2013' || c == '\u2014') {
+      c = '-';
+    } else if (c == '') {
+      c = ' ';
+    }
+    
+    keyCode = 0;
+    charCode = c.charCodeAt(0);
+  }
+
   var evt = document.createEvent("KeyboardEvent");
   evt.initKeyEvent("keypress", true, true, window,
                    0, 0, 0, 0,
-                   0, c.charCodeAt(0)) 
+                   keyCode, charCode) 
   elem = document.getElementsByTagName('input')[0];
   elem.dispatchEvent(evt);
 }
@@ -168,17 +197,22 @@ function type_ (c) {
     </script>
     
   </head>
-  <body id="body" onLoad="init();" style="cursor: crosshair; overflow: hidden; font-family: sans-serif; font-size: xx-large;" oncontextmenu="return false;">
+  <!-- overflow: hidden; -->
+  <body id="body" onLoad="init();" style="cursor: crosshair;  font-family: sans-serif; font-size: xx-large;" oncontextmenu="return false;">
     <div id="viewport" style="-moz-user-select: -moz-none; position: absolute; left: 0px; top: 50px; width: 1024px; height: 768px; background-color: red; margin: 15px;"></div>
+    
+    <!-- an off-screen area to temporarily dump text and play with text sizing -->
+    <div id="staging" style="position: absolute; left: 0px; top: 1000px; width: 1500px; height: 1500px; background-color: #ddd;">
+      <span id="snippet"></span>
+    </div>
    
-    <button onClick="answerBar.content = freeTextAnswer; freeEntryKeyboard.content = numPad; redraw();">numeric entry</button>
-    <button onClick="answerBar.content = freeTextAnswer; freeEntryKeyboard.content = kbd; redraw();">text entry</button>
-    <button onClick="answerBar.content = freeTextAnswer; freeEntryKeyboard.content = choice; redraw();">multiple choice</button>
-    <button onClick="answerBar.content = dateAnswer; freeEntryKeyboard.content = cdecade; redraw();">date: year 1/2</button>
-    <button onClick="answerBar.content = dateAnswer; freeEntryKeyboard.content = yearSelect(1990); redraw();">date: year 2/2</button>
-    <button onClick="answerBar.content = dateAnswer; freeEntryKeyboard.content = cmonth; redraw();">date: month</button>
-    <button onClick="answerBar.content = dateAnswer; freeEntryKeyboard.content = daySelect(29); redraw();">date: day</button>
-    <button onClick="type_('e')">type</button>
+    <button onClick="questionEntry.content = freeEntry; answerBar.content = freeTextAnswer; freeEntryKeyboard.content = numPad; redraw();">numeric entry</button>
+    <button onClick="questionEntry.content = freeEntry; answerBar.content = freeTextAnswer; freeEntryKeyboard.content = kbd; redraw();">text entry</button>
+    <button onClick="questionEntry.content = choiceEntry; redraw();">multiple choice</button>
+    <button onClick="questionEntry.content = freeEntry; answerBar.content = dateAnswer; freeEntryKeyboard.content = cdecade; redraw();">date: year 1/2</button>
+    <button onClick="questionEntry.content = freeEntry; answerBar.content = dateAnswer; freeEntryKeyboard.content = yearSelect(1990); redraw();">date: year 2/2</button>
+    <button onClick="questionEntry.content = freeEntry; answerBar.content = dateAnswer; freeEntryKeyboard.content = cmonth; redraw();">date: month</button>
+    <button onClick="questionEntry.content = freeEntry; answerBar.content = dateAnswer; freeEntryKeyboard.content = daySelect(29); redraw();">date: day</button>
   </body>
 </html>
 
