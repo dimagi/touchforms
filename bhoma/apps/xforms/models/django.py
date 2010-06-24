@@ -3,7 +3,6 @@ from django.db import models
 from django.conf import settings
 from django.core.files import File
 from datetime import datetime
-from bhoma.apps.djangoplus.fields import PickledObjectField
 from xml.etree import ElementTree
 import re
 import os

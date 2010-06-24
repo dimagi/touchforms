@@ -19,7 +19,7 @@
         <td>{{ xform.created }}</td>
         <td>{{ xform.version }}</td>
         <td>{{ xform.uiversion }}</td>
-		<td><a href="#">download</a></td>
+		<td><a href="{% url xform_download xform.id %}">download</a></td>
 		<td><a href="{% url xform_play xform.id %}">fill out</a></td>
 	</tr>
 {% empty %} 
