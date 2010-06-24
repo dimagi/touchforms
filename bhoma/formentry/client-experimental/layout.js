@@ -93,7 +93,7 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
   this.size_rel = size_rel;
   this.onclick = onclick;
   
-  this.render = function (parent_div) {
+  this.render = function (parent_div) {  
     parent_div.id = uid(this.id);
     set_color(parent_div, this.color, parent_div.style.backgroundColor);
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td align="center" valign="center"><span></span></td></tr></table>'
@@ -103,6 +103,8 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
     span.style.color = this.text_color;
     span.textContent = this.caption;
     parent_div.onclick = this.onclick;
+    
+    parent_div.style.MozBorderRadius = '10px';
   }
 }
 
