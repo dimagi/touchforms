@@ -10,6 +10,7 @@ from bhoma.apps.xforms.models.couch import CXFormInstance
 import logging
 from django.views.decorators.http import require_POST
 from bhoma.apps.xforms.util import post_xform_to_couch
+import json
 
 def download(request, xform_id):
     """
@@ -20,10 +21,10 @@ def download(request, xform_id):
     response.write(xform.file.read()) 
     return response
     
-def play_experimental(request, xform_id, callback=None):
-  return play(request, xform_id, callback, True)
+def play_experimental(request, xform_id, callback=None, preloader_data={}):
+  return play(request, xform_id, callback, preloader_data, True)
     
-def play(request, xform_id, callback=None, experimental=False):
+def play(request, xform_id, callback=None, preloader_data={}, experimental=False):
     """
     Play an XForm.
     
@@ -46,7 +47,6 @@ def play(request, xform_id, callback=None, experimental=False):
         instance = request.POST["output"]
         # post to couch
         doc = post_xform_to_couch(instance)
-        
         # call the callback, if there, otherwise route back to the 
         # xforms list
         if callback:
@@ -54,8 +54,10 @@ def play(request, xform_id, callback=None, experimental=False):
         else:
             return HttpResponseRedirect(reverse("xform_list"))
     
+    preloader_data_js = json.dumps(preloader_data)
     return render_to_response(request, "xforms/touchscreen.html" if experimental else "xforms/xform_player.html",
-                              {"xform": xform })
+                              {"xform": xform,
+                               "preloader_data": preloader_data_js })
                                     
 def player_proxy(request):
     """Proxy to an xform player, to avoid cross-site scripting issues"""
@@ -85,4 +87,3 @@ def post(request, callback=None):
     if callback:
         return callback(doc)
     return HttpResponse("Thanks! Your new xform id is: %s" % doc["_id"])
-        

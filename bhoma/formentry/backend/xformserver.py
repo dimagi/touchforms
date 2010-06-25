@@ -68,8 +68,8 @@ def handle_request (content):
     if action == 'new-form':
         if 'form-name' not in content:
             return {'error': 'form identifier required'}
-
-        return xformplayer.open_form(content['form-name'])
+        preload_data = content["preloader-data"] if "preloader-data" in content else {}
+        return xformplayer.open_form(content['form-name'], preload_data)
 
     elif action == 'edit-form':
         return {'error': 'unsupported'}

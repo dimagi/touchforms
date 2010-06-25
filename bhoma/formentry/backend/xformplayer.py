@@ -7,13 +7,9 @@ from java.util import Date
 from java.util import Vector
 from java.io import StringReader
 
-BHOMA_BASE = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-
-def init_classpath():
-    for jar in ('javarosa-libraries.jar', 'kxml2-2.3.0.jar'):
-        if jar not in sys.path:
-            sys.path.append(os.path.join(BHOMA_BASE, "formentry", "jrlib", jar))
-
+from preloadhandler import StaticPreloadHandler
+    
+from setup import init_classpath
 init_classpath()
 
 from org.javarosa.xform.parse import XFormParser
@@ -83,7 +79,7 @@ class global_state_mgr:
 global_state = global_state_mgr()
   
 
-def load_form(xform, instance=None):
+def load_form(xform, instance=None, preload_data={}):
     form = XFormParser.getFormDef(StringReader(xform))
     if instance != None:
     #todo: support hooking up a saved instance
@@ -91,11 +87,15 @@ def load_form(xform, instance=None):
 
     #todo: support registering preloaders
     #todo: suppoer registering function handlers (via evalContext)
+    #todo: fix circular import
+    handler = StaticPreloadHandler(preload_data)
+    form.getPreloader().addPreloadHandler(handler)
     form.initialize(instance == None)
     return form
 
 class XFormSession:
-    def __init__(self, xform_raw=None, xform_path=None, instance_raw=None, instance_path=None):
+    def __init__(self, xform_raw=None, xform_path=None, instance_raw=None, instance_path=None,
+                 preload_data={}):
         def content_or_path(content, path):
             if content != None:
                 return content
@@ -110,7 +110,7 @@ class XFormSession:
         if instance != None:
             raise ValueError('don\'t support loading saved forms yet')
 
-        self.form = load_form(xform, instance)
+        self.form = load_form(xform, instance, preload_data)
         self.fem = FormEntryModel(self.form)
         self.fec = FormEntryController(self.fem)
         self._parse_current_event()
@@ -235,11 +235,11 @@ class XFormSession:
 
 
 
-def open_form (form_name):
+def open_form (form_name, preload_data={}):
     if not os.path.exists(form_name):
         return {'error': 'no form found at %s' % form_name}
 
-    xfsess = XFormSession(xform_path=form_name)
+    xfsess = XFormSession(xform_path=form_name, preload_data=preload_data)
     sess_id = global_state.new_session(xfsess)
     first_event = xfsess.next_event()
     return {'session_id': sess_id, 'event': first_event}
@@ -247,7 +247,7 @@ def open_form (form_name):
 def answer_question (session_id, answer):
     xfsess = global_state.get_session(session_id)
     if xfsess == None:
-      return {'error': 'invalid session id'}
+        return {'error': 'invalid session id'}
 
     result = xfsess.answer_question(answer)
     if result['status'] == 'success':
@@ -259,14 +259,14 @@ def answer_question (session_id, answer):
 def skip_next (session_id):
     xfsess = global_state.get_session(session_id)
     if xfsess == None:
-      return {'error': 'invalid session id'}
+        return {'error': 'invalid session id'}
 
     return {'event': next_event(xfsess)}
 
 def go_back (session_id):
     xfsess = global_state.get_session(session_id)
     if xfsess == None:
-      return {'error': 'invalid session id'}
+        return {'error': 'invalid session id'}
 
     (at_start, event) = prev_event(xfsess)
     return {'event': event, 'at-start': at_start}
