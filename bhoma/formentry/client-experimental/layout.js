@@ -347,11 +347,11 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
   this.timeout_id = null;
   
   this.setActive = function (state, manual) {
-    if (this.active === state) {
-      return; //do nothing
-    } else {
-      this.active = state;
+    if (this.active && state) {
+      return; //do nothing if already active
     }
+    
+    this.active = state;
       
     if (state) {
       this.container.style.display = 'block';
