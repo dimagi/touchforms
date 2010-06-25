@@ -88,8 +88,9 @@ def load_form(xform, instance=None, preload_data={}):
     #todo: support registering preloaders
     #todo: suppoer registering function handlers (via evalContext)
     #todo: fix circular import
-    handler = StaticPreloadHandler(preload_data)
-    form.getPreloader().addPreloadHandler(handler)
+    for key, data_dict in preload_data.items():
+        handler = StaticPreloadHandler(key, data_dict)
+        form.getPreloader().addPreloadHandler(handler)
     form.initialize(instance == None)
     return form
 
