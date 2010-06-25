@@ -28,8 +28,8 @@ function initStaticWidgets () {
   nextButton = new TextButton('next-button', '#1a3', BUTTON_TEXT_COLOR, null, null, 'NEXT', 1.2, nextClicked);
   
   questionEntry = new Indirect();
-  progressBar = new Indirect(); //change to dedicated object?
-
+  progressBar = new Indirect();
+  
   overlay = new Overlay('#d66', FOOTER_COLOR, 3., 2., '');
   touchscreenUI = new Top(
     // main content
@@ -71,11 +71,11 @@ function initStaticWidgets () {
     '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', '!', '?', ','     
   ], null, 1.5, type_));
 
-  //progress bar is just static right now
-  progressBar.content = new Layout('progress-bar', 1, 2, ['30%', '*'], '*', [10, 10, 15, 15], 0, null, null, null, [
+  //progress bar is just static right now -- turn into a dedicated GUI object?
+  progressBar.update(new Layout('progress-bar', 1, 2, ['30%', '*'], '*', [10, 10, 15, 15], 0, null, null, null, [
     new Layout('pb0', 1, 1, '*', '*', 0, 0, '#4d6', null, null, [null]),   
     new Layout('pb0', 1, 1, '*', '*', 0, 0, HEADER_COLOR, null, null, [null])   
-  ]);
+  ]));
 
   answerText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.2, 'left', 2));
   freeTextAnswer = new Layout('answer-bar', 1, 2, ['7*', '*'], '*', [30, 30, 20, 20], 6, null, null, null, [

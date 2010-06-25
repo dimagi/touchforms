@@ -11,11 +11,18 @@ function render_viewport (vp, scene_graph) {
   scene_graph.render(viewport);
 }
 
-function Indirect () {
+function Indirect (key) {
+  this.key
+  this.parent = null;
   this.content = null;
   
-  this.render = function (parent) {
-    this.content.render(parent);
+  this.setParent = function (parent) {
+    this.parent = parent;
+  }
+  
+  this.update = function (content) {
+    this.content = content;
+    this.parent.update(this);
   }
 }
 
@@ -72,14 +79,109 @@ function Layout (id, num_rows, num_cols, widths, heights, margins, spacings, col
     this.v_spacing = spacings;
   }
   
+  this.content = content;
+  for (var i = 0; i < this.content.length; i++) {
+    if (this.content[i] instanceof Indirect) {
+      this.content[i].setParent(this);
+    }
+  }
+  
   this.color = color;
   this.margin_color = margin_color;
   this.spacing_color = spacing_color;
-  this.content = content;
 
+  this.container = null;
+  this.child_index = []; //[list of div for each child]
+  
+  this.update = function (ind) {
+    position = this.content.indexOf(ind);
+    
+    if (this.container == null)
+      return; //do nothing else if layout object has not been rendered yet
+    
+    subcontent = ind.content;
+    if (subcontent != null && subcontent.container != null) {
+      domNew = subcontent.container;
+    } else {
+      domOld = this.child_index[position];
+      r = Math.floor(position / this.num_cols);
+      c = position % this.num_cols;
+      x = domOld.offsetLeft;
+      y = domOld.offsetTop;
+      w = domOld.clientWidth;
+      h = domOld.clientHeight;
+      var domNew = new_div(subcontent != null ? subcontent.id : this.container.id + '-' + null + '-' + r + '-' + c, y, x, w, h);
+      set_color(domNew, this.color, this.container.style.backgroundColor);
+
+      if (subcontent != null) {
+        subcontent.render(domNew);
+      }
+    }
+    this.container.replaceChild(domNew, this.child_index[position]);
+    this.child_index[position] = domNew;
+  }
+  
   this.render = function (parent) {
     render_layout(this, parent);
   }
+}
+
+function render_layout (layout, parent_div) {
+  var widths = partition(parent_div.clientWidth, layout.widths, layout.l_margin, layout.r_margin, layout.h_spacing);
+  var heights = partition(parent_div.clientHeight, layout.heights, layout.t_margin, layout.b_margin, layout.v_spacing);
+  var woff = offsets(widths);
+  var hoff = offsets(heights);
+  var parent_color = parent_div.style.backgroundColor;
+  
+  if (has_margins(widths, heights)) {
+    var inner_area = new_div(parent_div.id + '-inner', hoff[1], woff[1], ainv(woff, -1) - widths[0], ainv(hoff, -1) - heights[0]);
+    parent_div.appendChild(inner_area);
+    set_color(parent_div, layout.margin_color, parent_color);
+  } else {
+    var inner_area = parent_div;
+  }
+  
+  if (has_spacing(widths, heights)) {
+    set_color(inner_area, layout.spacing_color, parent_color);
+  }
+  
+  for (var r = 0; r < layout.num_rows; r++) {
+    for (var c = 0; c < layout.num_cols; c++) {
+      var x = woff[2*c + 1];
+      var y = hoff[2*r + 1];
+      var w = widths[2*c + 1];
+      var h = heights[2*r + 1];
+      
+      layout.child_index = [];
+      var subcontent = layout.content[layout.num_cols * r + c];
+      if (subcontent instanceof Indirect) {
+        subcontent = subcontent.content;
+      }
+      
+      if (subcontent == null || subcontent.container == null) {
+        var subcell = new_div(subcontent != null ? subcontent.id : parent_div.id + '-' + null + '-' + r + '-' + c, y, x, w, h);
+        layout.child_index.push(subcell);
+      
+        set_color(subcell, layout.color, parent_color);
+        parent_div.appendChild(subcell);
+        if (subcontent != null) {
+          subcontent.render(subcell);
+        }
+      } else {
+        parent_div.appendChild(subcontent.container);
+      }
+    }
+  }
+  
+  layout.container = parent_div;
+}
+
+function has_margins (widths, heights) {
+  return widths[0] > 0 || ainv(widths, -1) > 0 || heights[0] > 0 || ainv(heights, -1) > 0;
+}
+
+function has_spacing (widths, heights) {
+  return (widths.length > 3 || heights.length > 3) && (widths[2] > 0 || heights[2] > 0);
 }
 
 //todo: auto-sizing?
@@ -271,51 +373,6 @@ function set_color (elem, color, fallback_color) {
 
 function ainv (arr, i) {
   return arr[arr.length - Math.abs(i)];
-}
-
-function render_layout (layout, parent_div) {
-  var widths = partition(parent_div.clientWidth, layout.widths, layout.l_margin, layout.r_margin, layout.h_spacing);
-  var heights = partition(parent_div.clientHeight, layout.heights, layout.t_margin, layout.b_margin, layout.v_spacing);
-  var woff = offsets(widths);
-  var hoff = offsets(heights);
-  var parent_color = parent_div.style.backgroundColor;
-  
-  if (has_margins(widths, heights)) {
-    var inner_area = new_div(parent_div.id + '-inner', hoff[1], woff[1], ainv(woff, -1) - widths[0], ainv(hoff, -1) - heights[0]);
-    parent_div.appendChild(inner_area);
-    set_color(parent_div, layout.margin_color, parent_color);
-  } else {
-    var inner_area = parent_div;
-  }
-  
-  if (has_spacing(widths, heights)) {
-    set_color(inner_area, layout.spacing_color, parent_color);
-  }
-  
-  for (var r = 0; r < layout.num_rows; r++) {
-    for (var c = 0; c < layout.num_cols; c++) {
-      var x = woff[2*c + 1];
-      var y = hoff[2*r + 1];
-      var w = widths[2*c + 1];
-      var h = heights[2*r + 1];
-      
-      var subcontent = layout.content[layout.num_cols * r + c];
-      var subcell = new_div(subcontent != null ? subcontent.id : parent_div.id + '-' + null + '-' + r + '-' + c, y, x, w, h);
-      set_color(subcell, layout.color, parent_color);
-      parent_div.appendChild(subcell);
-      if (subcontent != null) {
-        subcontent.render(subcell);
-      }
-    }
-  }
-}
-
-function has_margins (widths, heights) {
-  return widths[0] > 0 || ainv(widths, -1) > 0 || heights[0] > 0 || ainv(heights, -1) > 0;
-}
-
-function has_spacing (widths, heights) {
-  return (widths.length > 3 || heights.length > 3) && (widths[2] > 0 || heights[2] > 0);
 }
 
 function Top (main, overlay) {

@@ -1,6 +1,6 @@
 
 
-function $(elementID) {
+function _$(elementID) {
   return document.getElementById(elementID);
 }
 
@@ -11,15 +11,15 @@ function removeAllChildren (element) {
 }
 
 function init () {
-  $("start").style.display = 'table-cell';
-  $("question").style.display = 'none';
-  $("done").style.display = 'none';
+  _$("start").style.display = 'table-cell';
+  _$("question").style.display = 'none';
+  _$("done").style.display = 'none';
 }
 
 function loadForm (formName) {
-  $("start").style.display = 'none';
-  $("question").style.display = 'block';
-  $("done").style.display = 'none';
+  _$("start").style.display = 'none';
+  _$("question").style.display = 'block';
+  _$("done").style.display = 'none';
   jQuery.post(XFORM_URL, JSON.stringify({'action': 'new-form', 'form-name': formName}), function (resp) {
     gSessionID = resp["session_id"];
     renderEvent(resp["event"], true);
@@ -45,11 +45,11 @@ function renderEvent (event, dirForward) {
 }
 
 function renderQuestion (event) {
-  $("caption").textContent = event["caption"];
-  $("val-error").style.display = "none";
+  _$("caption").textContent = event["caption"];
+  _$("val-error").style.display = "none";
  
-  removeAllChildren($("control"));
-  $("control").setAttribute("datatype", event["datatype"]);
+  removeAllChildren(_$("control"));
+  _$("control").setAttribute("datatype", event["datatype"]);
   if (event["datatype"] == "str" ||
       event["datatype"] == "int" ||
       event["datatype"] == "float" ||
@@ -61,7 +61,7 @@ function renderQuestion (event) {
       input.value = event["answer"];
     }
     
-    $("control").appendChild(input);
+    _$("control").appendChild(input);
   } else if (event["datatype"] == "select" || event["datatype"] == "multiselect") {
     for (i = 0; i < event["choices"].length; i++) {
       ord = i + 1;
@@ -77,9 +77,9 @@ function renderQuestion (event) {
         input.checked = (event["datatype"] == "select" ? ord == event["answer"] : event["answer"].indexOf(ord) != -1);
       }
         
-      $("control").appendChild(caption);
-      $("control").appendChild(input);
-      $("control").appendChild(document.createElement("br"));
+      _$("control").appendChild(caption);
+      _$("control").appendChild(input);
+      _$("control").appendChild(document.createElement("br"));
     }
   } else if (event["datatype"] == "info") {
     //do nothing - caption only
@@ -89,9 +89,9 @@ function renderQuestion (event) {
 }
 
 function getQuestionAnswer () {
-  type = $("control").getAttribute("datatype");
+  type = _$("control").getAttribute("datatype");
   if (type == "str" || type == "int" || type == "float" || type == "date") {
-    return $("freetext").value;
+    return _$("freetext").value;
   } else if (type == "select" || type == "multiselect") {
     answer = [];
     choices = document.getElementsByName("select");
@@ -118,11 +118,11 @@ function answerQuestion () {
   jQuery.post(XFORM_URL, JSON.stringify({'action': 'answer', 'session-id': gSessionID, 'answer': answer}), function (resp) {
     if (resp["status"] == "validation-error") {
       if (resp["type"] == "required") {
-        $("val-error").textContent = "An answer is required";
+        _$("val-error").textContent = "An answer is required";
       } else if (resp["type"] == "constraint") {
-        $("val-error").textContent = resp["reason"];      
+        _$("val-error").textContent = resp["reason"];      
       }
-      $("val-error").style.display = "block";
+      _$("val-error").style.display = "block";
     } else {
       renderEvent(resp["event"], true);
     }
