@@ -228,6 +228,7 @@ function TextCaption (id, color, caption, size_rel, align, valign) {
   this.valign = valign;
   
   this.container = null;
+  this.span = null;
   this.render = function (parent_div) {
     this.container = parent_div;
     parent_div.id = uid(this.id);
@@ -237,6 +238,13 @@ function TextCaption (id, color, caption, size_rel, align, valign) {
     span.style.fontSize = this.size_rel * 100. + '%';
     span.style.color = this.color;
     span.textContent = this.caption;
+    this.span = span;
+  }
+  
+  this.setText = function (text) {
+    this.caption = text;
+    if (this.span != null)
+      this.span.textContent = text;
   }
 }
 
@@ -271,6 +279,12 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing) {
     }
     inp.value = content;
     this.control = inp;
+  }
+  
+  this.setText = function (text) {
+    this.content = text;
+    if (this.control != null)
+      this.control.value = text;
   }
 }
 
@@ -405,13 +419,17 @@ function Top (main, overlay) {
 function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
   this.mask_color = mask_color;
   this.bg_color = bg_color;
-  this.timeout = timeout * 1000.;
   this.fadeout = fadeout * 1000.;
   this.text = text_content;
   
   this.active = null;  
   this.container = null;
   this.timeout_id = null;
+  
+  this.setTimeout = function (to) {
+    this.timeout = to * 1000.;
+  }
+  this.setTimeout(timeout);
   
   this.setActive = function (state, manual) {
     if (this.active && state) {
@@ -442,6 +460,21 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     } 
   }
   
+  this.span = null;
+  this.mask = null;
+  
+  this.setText = function (text) {
+    this.text = text;
+    if (this.span != null)
+      this.span.textContent = text;
+  }
+  
+  this.setBgColor = function (color) {
+    this.mask_color = color;
+    if (this.mask != null)
+      this.mask.style.backgroundColor = color;
+  }
+  
   this.render = function (parent_div) {
     this.container = parent_div;
     self = this;
@@ -451,6 +484,7 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     mask.style.backgroundColor = this.mask_color;
     mask.style.opacity = .7;
     parent_div.appendChild(mask);
+    this.mask = mask;
     
     content = document.createElement('div');
     content.style.position = 'relative';
@@ -465,6 +499,7 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     span.style.backgroundColor = this.bg_color;
     span.textContent = this.text;
     //god damnit css!!!
+    this.span = span;
     
     content.appendChild(span);
     parent_div.appendChild(content);
@@ -496,6 +531,10 @@ function InputArea (id, border, border_color, padding, inside_color, child) {
     if (this.child instanceof TextInput) {
       this.child.control.style.backgroundColor = bg_color;
     }
+  }
+  
+  this.setText = function (text) {
+    this.child.setText(text);
   }
   
   this.render = function (parent_div) {

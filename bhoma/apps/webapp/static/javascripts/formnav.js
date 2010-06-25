@@ -25,24 +25,30 @@ function renderEvent (event, dirForward) {
   }
 }
 
+/*
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(freeTextAnswer); freeEntryKeyboard.update(numPad);">numeric entry</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(freeTextAnswer); freeEntryKeyboard.update(keyboard);">text entry</button>
+    <button onClick="questionEntry.update(choiceSelect(['Male', 'Female'], []));">multiple choice</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(decadeChoices);">date: year 1/2</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(yearSelect(1990));">date: year 2/2</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(monthChoices);">date: month</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(daySelect(29));">date: day</button>
+*/
+    
 function renderQuestion (event) {
-  _$("caption").textContent = event["caption"];
-  _$("val-error").style.display = "none";
+  activeQuestion = event;
+  questionCaption.setText(event["caption"]);
  
-  removeAllChildren(_$("control"));
-  _$("control").setAttribute("datatype", event["datatype"]);
   if (event["datatype"] == "str" ||
       event["datatype"] == "int" ||
-      event["datatype"] == "float" ||
-      event["datatype"] == "date") {
-    input = document.createElement("input");
-    input.id = "freetext";
+      event["datatype"] == "float") {
+    questionEntry.update(freeEntry);
+    answerBar.update(freeTextAnswer);
+    freeEntryKeyboard.update(event["datatype"] == 'str' ? keyboard : numPad);    
     
     if (event["answer"] != null) {
-      input.value = event["answer"];
+      answerText.setText(event["answer"]);
     }
-    
-    _$("control").appendChild(input);
   } else if (event["datatype"] == "select" || event["datatype"] == "multiselect") {
     for (i = 0; i < event["choices"].length; i++) {
       ord = i + 1;
@@ -63,16 +69,17 @@ function renderQuestion (event) {
       _$("control").appendChild(document.createElement("br"));
     }
   } else if (event["datatype"] == "info") {
-    //do nothing - caption only
+    questionEntry.update(null);
   } else {
     alert("unrecognized datatype [" + event["datatype"] + "]");
   }
 }
 
 function getQuestionAnswer () {
-  type = _$("control").getAttribute("datatype");
-  if (type == "str" || type == "int" || type == "float" || type == "date") {
-    return _$("freetext").value;
+  type = activeQuestion["datatype"];
+
+  if (type == "str" || type == "int" || type == "float") {
+    return answerText.child.control.value;
   } else if (type == "select" || type == "multiselect") {
     answer = [];
     choices = document.getElementsByName("select");
@@ -99,11 +106,10 @@ function answerQuestion () {
   jQuery.post(XFORM_URL, JSON.stringify({'action': 'answer', 'session-id': gSessionID, 'answer': answer}), function (resp) {
     if (resp["status"] == "validation-error") {
       if (resp["type"] == "required") {
-        _$("val-error").textContent = "An answer is required";
+        showError("An answer is required");
       } else if (resp["type"] == "constraint") {
-        _$("val-error").textContent = resp["reason"];      
+        showError(resp["reason"]);      
       }
-      _$("val-error").style.display = "block";
     } else {
       renderEvent(resp["event"], true);
     }

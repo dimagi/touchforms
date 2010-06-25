@@ -11,11 +11,13 @@
 
 XFORM_URL = "{% url xform_player_proxy %}";
 XFORM_NAME = "{{xform.name}}";
-XFORM_UID = "{{xform.file.path}}"
+XFORM_UID = null;
 
 gSessionID = -1;
 
 function init () {
+  XFORM_UID = $('#form-uid')[0].value;
+
   initStaticWidgets();
   render_clean();
   loadForm(XFORM_UID);
@@ -47,6 +49,9 @@ function init () {
     <div id="staging" style="position: absolute; left: 0px; top: 1000px; width: 1500px; height: 1500px; background-color: #ddd;">
       <span id="snippet"></span>
     </div>
+    
+    <!-- stick form uid here to aid with backslash escaping -->
+    <input id="form-uid" type="hidden" value="{{xform.file.path}}">
    
     <button onClick="questionEntry.update(freeEntry); answerBar.update(freeTextAnswer); freeEntryKeyboard.update(numPad);">numeric entry</button>
     <button onClick="questionEntry.update(freeEntry); answerBar.update(freeTextAnswer); freeEntryKeyboard.update(keyboard);">text entry</button>

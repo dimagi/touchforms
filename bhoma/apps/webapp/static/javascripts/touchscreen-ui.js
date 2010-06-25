@@ -30,7 +30,7 @@ function initStaticWidgets () {
   questionEntry = new Indirect();
   progressBar = new Indirect();
   
-  overlay = new Overlay('#d66', FOOTER_COLOR, 3., 2., '');
+  overlay = new Overlay('#d66', HEADER_COLOR, 3., 2., '');
   touchscreenUI = new Top(
     // main content
     new Layout('main', 3, 1, '*', [HEADER_HEIGHT, '*', FOOTER_HEIGHT], SCREEN_BORDER, 0, MAIN_COLOR, BORDER_COLOR, null, [
@@ -102,51 +102,61 @@ function initStaticWidgets () {
     kbs(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], null, 1.8, monthSelected));
 }
 
-function helpClicked (x) {
-  alert('help ' + x);
+function helpClicked (ev, x) {
+  overlay.setText('Here is some help text.');
+  overlay.setBgColor('#6d6');
+  overlay.setTimeout(15.);
+  overlay.setActive(true);
 }
 
-function backClicked (x) {
+function backClicked (ev, x) {
   alert('back ' + x);
 }
 
-function menuClicked (x) {
+function menuClicked (ev, x) {
   alert('menu ' + x);
 }
 
-function nextClicked (x) {
-  alert('next ' + x);
+function nextClicked (ev, x) {
+  answerQuestion();
 }
 
-function clearClicked (x) {
+function clearClicked (ev, x) {
   alert('clear ' + x);
 }
 
-function decadeSelected (x) {
+function decadeSelected (ev, x) {
   alert('decade ' + x);
 }
 
-function yearSelected (x) {
+function yearSelected (ev, x) {
   alert('year ' + x);
 }
 
-function monthSelected (x) {
+function monthSelected (ev, x) {
   alert('month ' + x);
 }
 
-function daySelected (x) {
+function daySelected (ev, x) {
   alert('day ' + x);
 }
 
-function choiceSelected (x) {
+function choiceSelected (ev, x) {
   alert('choice ' + x);
+}
+
+function showError (text) {
+  overlay.setText(text);
+  overlay.setBgColor('#d66');
+  overlay.setTimeout(3.);
+  overlay.setActive(true);
 }
 
 /* utility function to generate a single keyboard button */
 function kb (lab, sz, col, onclick, centered) {
   if (col == null)
     col = KEYBUTTON_COLOR;
-  return new TextButton('button-' + lab, col, BUTTON_TEXT_COLOR, null, null, lab, sz, (onclick != null ? function () { onclick(lab); } : null), centered);
+  return new TextButton('button-' + lab, col, BUTTON_TEXT_COLOR, null, null, lab, sz, (onclick != null ? function (ev) { onclick(ev, lab); } : null), centered);
 }
   
 /* utility function to generate an array of keybaord buttons for... a keyboard */
@@ -370,7 +380,7 @@ function render_clean () {
   render_viewport('viewport', touchscreenUI);
 }
 
-function type_ (c) {  
+function type_ (e, c) {  
   if (c == BACKSPACE_LABEL) {
     keyCode = 0x08;
     charCode = 0;
