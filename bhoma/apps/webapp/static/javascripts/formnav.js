@@ -1,25 +1,6 @@
 
 
-function _$(elementID) {
-  return document.getElementById(elementID);
-}
-
-function removeAllChildren (element) {
-  while (element.hasChildNodes()) {
-    element.removeChild(element.firstChild);
-  }
-}
-
-function init () {
-  _$("start").style.display = 'table-cell';
-  _$("question").style.display = 'none';
-  _$("done").style.display = 'none';
-}
-
 function loadForm (formName) {
-  _$("start").style.display = 'none';
-  _$("question").style.display = 'block';
-  _$("done").style.display = 'none';
   jQuery.post(XFORM_URL, JSON.stringify({'action': 'new-form', 'form-name': formName}), function (resp) {
     gSessionID = resp["session_id"];
     renderEvent(resp["event"], true);

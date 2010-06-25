@@ -250,6 +250,7 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing) {
   this.spacing = spacing;
   
   this.container = null;
+  this.control = null;
   this.render = function (parent_div) {
     this.container = parent_div;
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td valign="middle"><input></input></td></tr></table>'
@@ -269,6 +270,7 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing) {
       inp.style.letterSpacing = this.spacing + 'px';
     }
     inp.value = content;
+    this.control = inp;
   }
 }
 
@@ -482,15 +484,23 @@ function InputArea (id, border, border_color, padding, inside_color, child) {
   this.layout;
   this.container = null;
 
+  //yikes! this didn't turn out that well
   this.setBgColor = function (bg_color) {
     this.inside_color = bg_color;
-    this.layout.setBgColor(bg_color);
-    this.child.setBgColor(bg_color);
+    if (this.padding > 0) {
+      this.layout.child_index[0].style.backgroundColor = bg_color;
+      this.layout.content[0].child_index[0].style.backgroundColor = bg_color;
+    } else {
+      this.layout.child_index[0].style.backgroundColor = bg_color;
+    }
+    if (this.child instanceof TextInput) {
+      this.child.control.style.backgroundColor = bg_color;
+    }
   }
   
   this.render = function (parent_div) {
     if (this.padding > 0) {
-      inside = new Layout(id + '-inner', 1, 1, '*', '*', padding, 0, null, null, null, [this.child]);
+      inside = new Layout(id + '-padded', 1, 1, '*', '*', padding, 0, null, null, null, [this.child]);
     } else {
       inside = this.child;
     }

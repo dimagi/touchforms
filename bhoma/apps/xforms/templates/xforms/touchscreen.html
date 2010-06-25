@@ -13,10 +13,12 @@ XFORM_URL = "{% url xform_player_proxy %}";
 XFORM_NAME = "{{xform.name}}";
 XFORM_UID = "{{xform.file.path}}"
 
+gSessionID = -1;
+
 function init () {
   initStaticWidgets();
   render_clean();
-  //open form
+  loadForm(XFORM_UID);
 }
 
     </script>
@@ -54,6 +56,7 @@ function init () {
     <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(monthChoices);">date: month</button>
     <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(daySelect(29));">date: day</button>
     <button onclick="overlay.setActive(true);">overlay</button>
+    <button onclick="yearText.setBgColor('#fdd');"">toggle bg</button>
   </body>
 </html>
 
