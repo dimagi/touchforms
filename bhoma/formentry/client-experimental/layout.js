@@ -405,3 +405,30 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     this.setActive(false);
   }
 }
+
+function InputArea (id, border, border_color, padding, inside_color, child) {
+  this.id = id;
+  this.border = border;
+  this.border_color = border_color;
+  this.padding = padding;
+  this.inside_color = inside_color;
+  this.child = child;
+  
+  this.container = null;
+
+  this.setBgColor = function (bg_color) {
+    this.inside_color = bg_color;
+    this.container.setBgColor(bg_color);
+    this.child.setBgColor(bg_color);
+  }
+  
+  this.render = function (parent_div) {
+    if (this.padding > 0) {
+      inside = new Layout(id + '-inner', 1, 1, '*', '*', padding, 0, null, null, null, [this.child]);
+    } else {
+      inside = this.child;
+    }
+    this.container = new Layout(id, 1, 1, '*', '*', border, 0, this.inside_color, this.border_color, null, [inside]);
+    this.container.render(parent_div);
+  }
+}
