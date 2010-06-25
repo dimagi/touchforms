@@ -6,14 +6,33 @@
     <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/touchscreen-ui.js"></script>   
     <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/formnav.js"></script>   
     <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/jquery-1.4.2.min.js"></script>
+
+    <script language="javascript">
+
+XFORM_URL = "{% url xform_player_proxy %}";
+XFORM_NAME = "{{xform.name}}";
+XFORM_UID = "{{xform.file.path}}"
+
+function init () {
+  initStaticWidgets();
+  render_clean();
+  //open form
+}
+
+    </script>
+    
   </head>
 
-  XFORM_URL = "{% url xform_player_proxy %}"
-  {{xform.name}}
-  {{xform.file.path}}
-
-  <body id="body" onLoad="initStaticWidgets(); render_clean();" style="cursor: crosshair; overflow: hidden; font-family: sans-serif; font-size: xx-large;" oncontextmenu="return false;">
-    <div id="viewport" style="-moz-user-select: -moz-none; position: absolute; left: 0px; top: 50px; width: 1024px; height: 768px; background-color: red; margin: 15px;"></div>
+  <body id="body" onLoad="init();" style="
+    cursor: crosshair; /* change cursor */
+    overflow: hidden;  /* disable scrolling */
+    font-family: 
+    sans-serif; 
+    font-size: xx-large;"
+    oncontextmenu="return false;"> <!-- disable right-click -->
+    <div id="viewport" style="
+      -moz-user-select: -moz-none; /* disable ability to select static text */
+      position: absolute; left: 0px; top: 50px; width: 1024px; height: 768px; background-color: red; margin: 15px;"></div>
     
     <!-- an off-screen area to temporarily dump text and play with text sizing -->
     <div id="staging" style="position: absolute; left: 0px; top: 1000px; width: 1500px; height: 1500px; background-color: #ddd;">
@@ -22,7 +41,7 @@
    
     <button onClick="questionEntry.content = freeEntry; answerBar.content = freeTextAnswer; freeEntryKeyboard.content = numPad; redraw();">numeric entry</button>
     <button onClick="questionEntry.content = freeEntry; answerBar.content = freeTextAnswer; freeEntryKeyboard.content = kbd; redraw();">text entry</button>
-    <button onClick="questionEntry.content = choiceEntry; redraw();">multiple choice</button>
+    <button onClick="questionEntry.update(choiceSelect(['Male', 'Female'], []));">multiple choice</button>
     <button onClick="questionEntry.content = freeEntry; answerBar.content = dateAnswer; freeEntryKeyboard.content = cdecade; redraw();">date: year 1/2</button>
     <button onClick="questionEntry.content = freeEntry; answerBar.content = dateAnswer; freeEntryKeyboard.content = yearSelect(1990); redraw();">date: year 2/2</button>
     <button onClick="questionEntry.content = freeEntry; answerBar.content = dateAnswer; freeEntryKeyboard.content = cmonth; redraw();">date: month</button>

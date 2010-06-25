@@ -102,6 +102,7 @@ function Layout (id, num_rows, num_cols, widths, heights, margins, spacings, col
     subcontent = ind.content;
     if (subcontent != null && subcontent.container != null) {
       domNew = subcontent.container;
+      this.container.replaceChild(domNew, this.child_index[position]);
     } else {
       domOld = this.child_index[position];
       r = Math.floor(position / this.num_cols);
@@ -113,11 +114,11 @@ function Layout (id, num_rows, num_cols, widths, heights, margins, spacings, col
       var domNew = new_div(subcontent != null ? subcontent.id : this.container.id + '-' + null + '-' + r + '-' + c, y, x, w, h);
       set_color(domNew, this.color, this.container.style.backgroundColor);
 
+      this.container.replaceChild(domNew, this.child_index[position]);
       if (subcontent != null) {
         subcontent.render(domNew);
       }
     }
-    this.container.replaceChild(domNew, this.child_index[position]);
     this.child_index[position] = domNew;
   }
   
@@ -196,7 +197,9 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
   this.onclick = onclick;
   this.centered = (centered != null ? centered : true);  
   
+  this.container = null;
   this.render = function (parent_div) {  
+    this.container = parent_div;
     parent_div.id = uid(this.id);
     set_color(parent_div, this.color, parent_div.style.backgroundColor);
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td align="' + (this.centered ? 'center' : 'left') + '" valign="middle"><span></span></td></tr></table>'
@@ -223,7 +226,9 @@ function TextCaption (id, color, caption, size_rel, align, valign) {
   this.align = align;
   this.valign = valign;
   
+  this.container = null;
   this.render = function (parent_div) {
+    this.container = parent_div;
     parent_div.id = uid(this.id);
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td align="' + this.align + '" valign="' + this.valign + '"><span></span></td></tr></table>'
     span = parent_div.getElementsByTagName('span')[0];
@@ -243,7 +248,9 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing) {
   this.align = align;
   this.spacing = spacing;
   
+  this.container = null;
   this.render = function (parent_div) {
+    this.container = parent_div;
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td valign="middle"><input></input></td></tr></table>'
     inp = parent_div.getElementsByTagName('input')[0];
     inp.id = uid(this.id);
@@ -471,11 +478,12 @@ function InputArea (id, border, border_color, padding, inside_color, child) {
   this.inside_color = inside_color;
   this.child = child;
   
+  this.layout;
   this.container = null;
 
   this.setBgColor = function (bg_color) {
     this.inside_color = bg_color;
-    this.container.setBgColor(bg_color);
+    this.layout.setBgColor(bg_color);
     this.child.setBgColor(bg_color);
   }
   
@@ -485,7 +493,8 @@ function InputArea (id, border, border_color, padding, inside_color, child) {
     } else {
       inside = this.child;
     }
-    this.container = new Layout(id, 1, 1, '*', '*', border, 0, this.inside_color, this.border_color, null, [inside]);
-    this.container.render(parent_div);
+    this.layout = new Layout(id, 1, 1, '*', '*', border, 0, this.inside_color, this.border_color, null, [inside]);
+    this.layout.render(parent_div);
+    this.container = this.layout.container;
   }
 }
