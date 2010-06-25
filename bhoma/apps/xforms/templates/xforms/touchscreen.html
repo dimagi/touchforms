@@ -32,20 +32,27 @@ function init () {
     oncontextmenu="return false;"> <!-- disable right-click -->
     <div id="viewport" style="
       -moz-user-select: -moz-none; /* disable ability to select static text */
-      position: absolute; left: 0px; top: 50px; width: 1024px; height: 768px; background-color: red; margin: 15px;"></div>
+      position: absolute;
+      left: 0px;
+      top: 50px;
+      width: 1024px;
+      height: 768px;
+      background-color: red;
+      margin: 15px;">
+    </div>
     
     <!-- an off-screen area to temporarily dump text and play with text sizing -->
     <div id="staging" style="position: absolute; left: 0px; top: 1000px; width: 1500px; height: 1500px; background-color: #ddd;">
       <span id="snippet"></span>
     </div>
    
-    <button onClick="questionEntry.content = freeEntry; answerBar.content = freeTextAnswer; freeEntryKeyboard.content = numPad; redraw();">numeric entry</button>
-    <button onClick="questionEntry.content = freeEntry; answerBar.content = freeTextAnswer; freeEntryKeyboard.content = kbd; redraw();">text entry</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(freeTextAnswer); freeEntryKeyboard.update(numPad);">numeric entry</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(freeTextAnswer); freeEntryKeyboard.update(keyboard);">text entry</button>
     <button onClick="questionEntry.update(choiceSelect(['Male', 'Female'], []));">multiple choice</button>
-    <button onClick="questionEntry.content = freeEntry; answerBar.content = dateAnswer; freeEntryKeyboard.content = cdecade; redraw();">date: year 1/2</button>
-    <button onClick="questionEntry.content = freeEntry; answerBar.content = dateAnswer; freeEntryKeyboard.content = yearSelect(1990); redraw();">date: year 2/2</button>
-    <button onClick="questionEntry.content = freeEntry; answerBar.content = dateAnswer; freeEntryKeyboard.content = cmonth; redraw();">date: month</button>
-    <button onClick="questionEntry.content = freeEntry; answerBar.content = dateAnswer; freeEntryKeyboard.content = daySelect(29); redraw();">date: day</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(decadeChoices);">date: year 1/2</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(yearSelect(1990));">date: year 2/2</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(monthChoices);">date: month</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(daySelect(29));">date: day</button>
     <button onclick="overlay.setActive(true);">overlay</button>
   </body>
 </html>

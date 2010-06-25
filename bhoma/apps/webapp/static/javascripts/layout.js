@@ -146,6 +146,7 @@ function render_layout (layout, parent_div) {
     set_color(inner_area, layout.spacing_color, parent_color);
   }
   
+  layout.child_index = [];
   for (var r = 0; r < layout.num_rows; r++) {
     for (var c = 0; c < layout.num_cols; c++) {
       var x = woff[2*c + 1];
@@ -153,7 +154,6 @@ function render_layout (layout, parent_div) {
       var w = widths[2*c + 1];
       var h = heights[2*r + 1];
       
-      layout.child_index = [];
       var subcontent = layout.content[layout.num_cols * r + c];
       if (subcontent instanceof Indirect) {
         subcontent = subcontent.content;
@@ -169,6 +169,7 @@ function render_layout (layout, parent_div) {
           subcontent.render(subcell);
         }
       } else {
+        layout.child_index.push(subcontent.container);
         parent_div.appendChild(subcontent.container);
       }
     }
