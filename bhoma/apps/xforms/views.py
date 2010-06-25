@@ -20,7 +20,10 @@ def download(request, xform_id):
     response.write(xform.file.read()) 
     return response
     
-def play(request, xform_id, callback=None):
+def play_experimental(request, xform_id, callback=None):
+  return play(request, xform_id, callback, True)
+    
+def play(request, xform_id, callback=None, experimental=False):
     """
     Play an XForm.
     
@@ -51,7 +54,7 @@ def play(request, xform_id, callback=None):
         else:
             return HttpResponseRedirect(reverse("xform_list"))
     
-    return render_to_response(request, "xforms/xform_player.html",
+    return render_to_response(request, "xforms/touchscreen.html" if experimental else "xforms/xform_player.html",
                               {"xform": xform })
                                     
 def player_proxy(request):
