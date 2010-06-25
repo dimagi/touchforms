@@ -318,10 +318,90 @@ function has_spacing (widths, heights) {
   return (widths.length > 3 || heights.length > 3) && (widths[2] > 0 || heights[2] > 0);
 }
 
+function Top (main, overlay) {
+  this.main = main;
+  this.overlay = overlay;
+  
+  this.render = function (parent_div) {
+    var maindiv = new_div('main', 0, 0, parent_div.clientWidth, parent_div.clientHeight);
+    parent_div.appendChild(maindiv);
+    this.main.render(maindiv);
+    
+    if (this.overlay != null) {
+      var ovdiv = new_div('overlay', 0, 0, parent_div.clientWidth, parent_div.clientHeight);
+      parent_div.appendChild(ovdiv);  
+      this.overlay.render(ovdiv);
+    }
+  }
+}
 
-/*
-layout
-caption
-button
-textfield
-*/
+function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
+  this.mask_color = mask_color;
+  this.bg_color = bg_color;
+  this.timeout = timeout * 1000.;
+  this.fadeout = fadeout * 1000.;
+  this.text = text_content;
+  
+  this.active = null;  
+  this.container = null;
+  this.timeout_id = null;
+  
+  this.setActive = function (state, manual) {
+    if (this.active === state) {
+      return; //do nothing
+    } else {
+      this.active = state;
+    }
+      
+    if (state) {
+      this.container.style.display = 'block';
+      if (this.timeout != null && this.timeout > 0) {
+        self = this;
+        this.timeout_id = setTimeout(function () {
+          self.timeout_id = null;
+          if (self.fadeout != null && self.fadeout > 0) {
+            $(self.container).fadeOut(self.fadeout, function () {self.setActive(false);});
+          } else {
+            self.setActive(false);
+          } 
+        }, this.timeout);
+      }
+    } else {
+      if (manual)
+        $(this.container).stop(true, true);
+      this.container.style.display = 'none';
+      if (this.timeout_id != null)
+        clearTimeout(this.timeout_id);
+    } 
+  }
+  
+  this.render = function (parent_div) {
+    this.container = parent_div;
+    self = this;
+    parent_div.onclick = function () { self.setActive(false, true); };
+  
+    mask = new_div('mask', 0, 0, parent_div.clientWidth, parent_div.clientHeight);
+    mask.style.backgroundColor = this.mask_color;
+    mask.style.opacity = .7;
+    parent_div.appendChild(mask);
+    
+    content = document.createElement('div');
+    content.style.position = 'relative';
+    content.style.top = '150px';
+    content.style.width = '70%';
+    content.style.marginLeft = 'auto';
+    content.style.marginRight = 'auto';
+    
+    span = document.createElement('p');
+    span.style.border = '3px solid black';
+    span.style.padding = '20px';
+    span.style.backgroundColor = this.bg_color;
+    span.textContent = this.text;
+    //god damnit css!!!
+    
+    content.appendChild(span);
+    parent_div.appendChild(content);
+    
+    this.setActive(false);
+  }
+}

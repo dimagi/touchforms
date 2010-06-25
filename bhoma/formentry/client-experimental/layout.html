@@ -3,7 +3,7 @@
   <head>
     <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
     <script language="javascript" type="text/javascript" src="layout.js"></script>   
-    
+    <script src="jquery-1.4.2.min.js"></script>
     <script language="javascript">
     
 gSceneGraph = null;
@@ -32,8 +32,12 @@ function init () {
   questionEntry = new Indirect();
   progressBar = new Indirect();
   answerBar = new Indirect();
-  
-  gSceneGraph = new Layout('main', 3, 1, '*', [HEADER_HEIGHT, '*', FOOTER_HEIGHT], SCREEN_BORDER, 0, MAIN_COLOR, BORDER_COLOR, null, [
+
+  overlay = new Overlay('#d66', FOOTER_COLOR, 3., 2., 'you fuc aoijef oia ja  j  foiwaj aoie ;oiaf o;ijawe foijaw a oa aew jj o waoije foija oiwae f;oija weked up!!');
+  gSceneGraph = new Top(
+
+  // main content
+  new Layout('main', 3, 1, '*', [HEADER_HEIGHT, '*', FOOTER_HEIGHT], SCREEN_BORDER, 0, MAIN_COLOR, BORDER_COLOR, null, [
     new Layout('header', 1, 1, '*', '*', [SCREEN_MARGIN, SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN], 0, HEADER_COLOR, HEADER_COLOR, HEADER_COLOR, [
       new Layout('top-bar', 1, 2, ['*', 50], '*', 0, 5, null, null, null, [
         questionCaption,
@@ -48,7 +52,14 @@ function init () {
       progressBar,
       new TextButton('next-button', '#1a3', BUTTON_TEXT_COLOR, null, null, 'NEXT', 1.2, null)
     ]),
-  ]);
+  ])
+
+  ,
+  
+  //notifications overlay
+  overlay
+  
+  );
 
   freeEntryKeyboard = new Indirect();
   freeEntry = new Layout('free-entry', 2, 1, '*', [110, '*'], 0, 0, null, null, null, [
@@ -400,6 +411,7 @@ function type_ (c) {
     <button onClick="questionEntry.content = freeEntry; answerBar.content = dateAnswer; freeEntryKeyboard.content = yearSelect(1990); redraw();">date: year 2/2</button>
     <button onClick="questionEntry.content = freeEntry; answerBar.content = dateAnswer; freeEntryKeyboard.content = cmonth; redraw();">date: month</button>
     <button onClick="questionEntry.content = freeEntry; answerBar.content = dateAnswer; freeEntryKeyboard.content = daySelect(29); redraw();">date: day</button>
+    <button onclick="overlay.setActive(true);">overlay</button>
   </body>
 </html>
 
