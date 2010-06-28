@@ -9,7 +9,7 @@ function loadForm (formName) {
 
 function renderEvent (event, dirForward) {
   if (event["type"] == "question") {
-    renderQuestion(event);
+    renderQuestion(event, dirForward);
   } else if (event["type"] == "form-complete") {
     formComplete(event);
   } else if (event["type"] == "sub-group") {
@@ -25,17 +25,7 @@ function renderEvent (event, dirForward) {
   }
 }
 
-/*
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(freeTextAnswer); freeEntryKeyboard.update(numPad);">numeric entry</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(freeTextAnswer); freeEntryKeyboard.update(keyboard);">text entry</button>
-    <button onClick="questionEntry.update(choiceSelect(['Male', 'Female'], []));">multiple choice</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(decadeChoices);">date: year 1/2</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(yearSelect(1990));">date: year 2/2</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(monthChoices);">date: month</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(daySelect(29));">date: day</button>
-*/
-    
-function renderQuestion (event) {
+function renderQuestion (event, dir) {
   activeQuestion = event;
   questionCaption.setText(event["caption"]);
  
@@ -55,6 +45,9 @@ function renderQuestion (event) {
     chdata = choiceSelect(event["choices"], selections);
     questionEntry.update(chdata[0]);
     activeInputWidget = chdata[1];
+  } else if (event["datatype"] == "date") {
+    dateEntryContext = new DateWidgetContext(dir, event["answer"]);
+    dateEntryContext.refresh();
   } else if (event["datatype"] == "info") {
     questionEntry.update(null);
   } else {
@@ -84,6 +77,8 @@ function getQuestionAnswer () {
     } else {
       return selected;
     }
+  } else if (type == "date") {
+    return dateEntryContext.getDate();
   } else if (type == "info") {
     return null;
   }

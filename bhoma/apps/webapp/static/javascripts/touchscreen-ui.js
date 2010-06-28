@@ -130,6 +130,32 @@ function clearClicked (ev, x) {
   }
 }
 
+function DateWidgetContext (direction, answer) {
+  this.screen = null;
+  this.decade = null;
+  this.year = null;
+  this.month = null;
+  this.day = null;
+
+
+
+
+
+
+
+
+/*
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(decadeChoices);">date: year 1/2</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(yearSelect(1990));">date: year 2/2</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(monthChoices);">date: month</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(daySelect(29));">date: day</button>
+*/
+    
+
+
+
+}
+
 function decadeSelected (ev, x) {
   alert('decade ' + x);
 }
@@ -219,14 +245,28 @@ function kbs (infos, def_color, def_sz, onclick, centered) {
   return stuff;
 }
 
+function vertArrange (list, rows) {
+  var grid = [];
+  var cols = Math.ceil(list.length / rows);
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      grid.push(list[rows * c + r]);
+    }
+  }
+  return grid;
+}
+
 //todo: support ranges other than decade
 function yearSelect (minyear, maxyear) {
-  var offsets = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9];
-  var years = new Array();
-  for (var i = 0; i < offsets.length; i++) {
-    years.push(String(minyear + offsets[i]));
+  if (maxyear == null)
+    maxyear = minyear + 9;
+
+  var years = [];
+  for (var o = minyear; o <= maxyear; o++) {
+    years.push(o);
   }
-  return new Layout('cy', 5, 2, 350, 70, '*', 20, null, null, null, kbs(years, null, 1.4, yearSelected));
+  years = vertArrange(years, 5);
+  return new Layout('cy', 5, Math.ceil((maxyear - minyear + 1) / 5), (maxyear - minyear) > 9 ? 220 : 350, 70, '*', 20, null, null, null, kbs(years, null, 1.4, yearSelected));
 }
 
 function daySelect (monthLength) {
