@@ -84,9 +84,9 @@ function initStaticWidgets () {
     new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
   ]);
   
-  dayText = new InputArea('dayinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '06', 1.6, 'center', 'middle'));
-  monthText = new InputArea('monthinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, 'Oct', 1.6, 'center', 'middle'));
-  yearText = new InputArea('yearinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '20\u2022\u2022', 1.6, 'center', 'middle'));  
+  dayText = new InputArea('dayinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '06', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('day');});
+  monthText = new InputArea('monthinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, 'Oct', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('month');});
+  yearText = new InputArea('yearinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '20\u2022\u2022', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('year');});  
   dateAnswer = new Layout('date-bar', 1, 6, [90, 36, 130, 36, 160, 110], '*', ['*', '*', 20, 20], 6, null, null, null, [
     dayText,
     new TextCaption('q-caption', TEXT_COLOR, '\u2013', 1.7, 'center', 'middle'),
@@ -112,7 +112,11 @@ function helpClicked (ev, x) {
 }
 
 function backClicked (ev, x) {
-  prevQuestion();
+  if (activeQuestion["datatype"] == 'date') {
+    dateEntryContext.back();
+  } else {
+    prevQuestion();
+  }
 }
 
 function menuClicked (ev, x) {
@@ -120,7 +124,11 @@ function menuClicked (ev, x) {
 }
 
 function nextClicked (ev, x) {
-  answerQuestion();
+  if (activeQuestion["datatype"] == 'date') {
+    dateEntryContext.next();
+  } else {
+    answerQuestion();
+  }
 }
 
 function clearClicked (ev, x) {
@@ -130,7 +138,7 @@ function clearClicked (ev, x) {
   } else if (type == "select" || type == "multiselect") {
     //not handled yet
   } else if (type == "date") {
-
+    dateEntryContext.clear();
   }
 }
 
@@ -139,9 +147,6 @@ decades = ['2000\u20142010', '1990\u20141999', '1980\u20141989', '1970\u20141979
 	   '1950\u20141959', '1940\u20141949', '1930\u20141939', '1920\u20141929', '1910\u20141919'];
 function DateWidgetContext (dir, answer) {
   this.init = function (dir, answer) {
-    answer = '2004-01-03';
-
-
     this.screen = (dir || answer == null ? 'decade' : 'day');
     this.setDate(answer);
   }
@@ -224,7 +229,7 @@ function DateWidgetContext (dir, answer) {
 
       clearButtons();
       if (this.decade != null) {
-	getButtonByCaption(this.decade[0] + '\u2014' + this.decade[1]).setStatus('selected')
+	getButtonByCaption(this.decade[0] + '\u2014' + this.decade[1]).setStatus('selected');
       }
 
       yearText.setBgColor(HIGHLIGHT_COLOR);
@@ -237,7 +242,7 @@ function DateWidgetContext (dir, answer) {
 
       clearButtons();
       if (this.year != null) {
-	getButtonByCaption(this.year + '');
+	getButtonByCaption(this.year + '').setStatus('selected');
       }
 
       yearText.setBgColor(HIGHLIGHT_COLOR);
@@ -249,7 +254,7 @@ function DateWidgetContext (dir, answer) {
 
       clearButtons();
       if (this.month != null) {
-	getButtonByCaption(this.month);
+	getButtonByCaption(this.month).setStatus('selected');
       }
 
       yearText.setBgColor('#fff');
@@ -262,7 +267,7 @@ function DateWidgetContext (dir, answer) {
 
       clearButtons();
       if (this.day != null) {
-	getButtonByCaption((this.day < 10 ? '0' : '') + this.day);
+	getButtonByCaption(this.day + '').setStatus('selected');
       }
 
       yearText.setBgColor('#fff');
@@ -272,12 +277,26 @@ function DateWidgetContext (dir, answer) {
     freeEntryKeyboard.update(selectWidget);
   }
 
-
+  this.clear = function () {
+    this.decade = null;
+    this.year = null;
+    this.month = null;
+    this.day = null;
+    this.refresh();
+  }
     
-  //next
-  //back
-  //clear
+  this.next = function () {
+    alert('date next');
+  }
 
+  this.back = function () {
+    alert('date back');
+  }
+
+  this.goto_ = function (field) {
+    this.screen = (field == 'year' ? 'decade' : field);
+    this.refresh();
+  }
 
   this.init(dir, answer);
 }
@@ -408,13 +427,11 @@ function yearSelect (minyear, maxyear) {
 }
 
 function daySelect (monthLength) {
-  var r = 5;
-  var c = 7;
   var days = new Array();
-  for (var i = 1; i <= r * c; i++) {
-    days.push(i <= monthLength ? i + '' : null);
+  for (var i = 1; i <= monthLength; i++) {
+    days.push(i + '');
   }
-  return render_button_grid('grid', r, c, 85, 85, 15, 'horiz', days, [], daySelected, 1.4);
+  return render_button_grid('grid', 5, 7, 85, 85, 15, 'horiz', days, [], daySelected, 1.4);
 }
 
 function getTextExtent (text, size, bounding_width) {

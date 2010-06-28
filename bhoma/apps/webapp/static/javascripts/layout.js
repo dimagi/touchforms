@@ -535,14 +535,15 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
   }
 }
 
-function InputArea (id, border, border_color, padding, inside_color, child) {
+function InputArea (id, border, border_color, padding, inside_color, child, onclick) {
   this.id = id;
   this.border = border;
   this.border_color = border_color;
   this.padding = padding;
   this.inside_color = inside_color;
   this.child = child;
-  
+  this.onclick = onclick;
+
   this.layout;
   this.container = null;
 
@@ -573,5 +574,6 @@ function InputArea (id, border, border_color, padding, inside_color, child) {
     this.layout = new Layout(id, 1, 1, '*', '*', border, 0, this.inside_color, this.border_color, null, [inside]);
     this.layout.render(parent_div);
     this.container = this.layout.container;
+    this.container.onclick = this.onclick;
   }
 }
