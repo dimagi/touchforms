@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/layout.js"></script>   
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/touchscreen-ui.js"></script>   
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/formnav.js"></script>   
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/jquery-1.4.2.min.js"></script>
+
+    <script language="javascript">
+
+XFORM_URL = "{% url xform_player_proxy %}";
+XFORM_NAME = "{{xform.name}}";
+XFORM_UID = null;
+
+gSessionID = -1;
+
+function init () {
+  XFORM_UID = $('#form-uid')[0].value;
+
+  initStaticWidgets();
+  render_clean();
+  loadForm(XFORM_UID);
+}
+
+    </script>
+    
+  </head>
+
+  <body id="body" onLoad="init();" style="
+    cursor: crosshair; /* change cursor */
+    overflow: hidden;  /* disable scrolling */
+    font-family: 
+    sans-serif; 
+    font-size: xx-large;"
+    oncontextmenu="return false;"> <!-- disable right-click -->
+    <div id="viewport" style="
+      -moz-user-select: -moz-none; /* disable ability to select static text */
+      position: absolute;
+      left: 0px;
+      top: 50px;
+      width: 1024px;
+      height: 768px;
+      background-color: red;
+      margin: 15px;">
+    </div>
+    
+    <!-- an off-screen area to temporarily dump text and play with text sizing -->
+    <div id="staging" style="position: absolute; left: 0px; top: 1000px; width: 1500px; height: 1500px; background-color: #ddd;">
+      <span id="snippet"></span>
+    </div>
+    
+    <!-- stick form uid here to aid with backslash escaping -->
+    <input id="form-uid" type="hidden" value="{{xform.file.path}}">
+   
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(freeTextAnswer); freeEntryKeyboard.update(numPad);">numeric entry</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(freeTextAnswer); freeEntryKeyboard.update(keyboard);">text entry</button>
+    <button onClick="questionEntry.update(choiceSelect(['Male', 'Female'], []));">multiple choice</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(decadeChoices);">date: year 1/2</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(yearSelect(1990));">date: year 2/2</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(monthChoices);">date: month</button>
+    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(daySelect(29));">date: day</button>
+    <button onclick="overlay.setActive(true);">overlay</button>
+    <button onclick="yearText.setBgColor('#fdd');"">toggle bg</button>
+  </body>
+</html>
+

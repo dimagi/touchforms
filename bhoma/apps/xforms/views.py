@@ -21,7 +21,10 @@ def download(request, xform_id):
     response.write(xform.file.read()) 
     return response
     
-def play(request, xform_id, callback=None, preloader_data={}):
+def play_experimental(request, xform_id, callback=None, preloader_data={}):
+  return play(request, xform_id, callback, preloader_data, True)
+    
+def play(request, xform_id, callback=None, preloader_data={}, experimental=False):
     """
     Play an XForm.
     
@@ -52,7 +55,7 @@ def play(request, xform_id, callback=None, preloader_data={}):
             return HttpResponseRedirect(reverse("xform_list"))
     
     preloader_data_js = json.dumps(preloader_data)
-    return render_to_response(request, "xforms/xform_player.html",
+    return render_to_response(request, "xforms/touchscreen.html" if experimental else "xforms/xform_player.html",
                               {"xform": xform,
                                "preloader_data": preloader_data_js })
                                     

@@ -11,11 +11,18 @@ function render_viewport (vp, scene_graph) {
   scene_graph.render(viewport);
 }
 
-function Indirect () {
+function Indirect (key) {
+  this.key
+  this.parent = null;
   this.content = null;
   
-  this.render = function (parent) {
-    this.content.render(parent);
+  this.setParent = function (parent) {
+    this.parent = parent;
+  }
+  
+  this.update = function (content) {
+    this.content = content;
+    this.parent.update(this);
   }
 }
 
@@ -72,14 +79,111 @@ function Layout (id, num_rows, num_cols, widths, heights, margins, spacings, col
     this.v_spacing = spacings;
   }
   
+  this.content = content;
+  for (var i = 0; i < this.content.length; i++) {
+    if (this.content[i] instanceof Indirect) {
+      this.content[i].setParent(this);
+    }
+  }
+  
   this.color = color;
   this.margin_color = margin_color;
   this.spacing_color = spacing_color;
-  this.content = content;
 
+  this.container = null;
+  this.child_index = []; //[list of div for each child]
+  
+  this.update = function (ind) {
+    position = this.content.indexOf(ind);
+    
+    if (this.container == null)
+      return; //do nothing else if layout object has not been rendered yet
+    
+    subcontent = ind.content;
+    if (subcontent != null && subcontent.container != null) {
+      domNew = subcontent.container;
+      this.container.replaceChild(domNew, this.child_index[position]);
+    } else {
+      domOld = this.child_index[position];
+      r = Math.floor(position / this.num_cols);
+      c = position % this.num_cols;
+      x = domOld.offsetLeft;
+      y = domOld.offsetTop;
+      w = domOld.clientWidth;
+      h = domOld.clientHeight;
+      var domNew = new_div(subcontent != null ? subcontent.id : this.container.id + '-' + null + '-' + r + '-' + c, y, x, w, h);
+      set_color(domNew, this.color, this.container.style.backgroundColor);
+
+      this.container.replaceChild(domNew, this.child_index[position]);
+      if (subcontent != null) {
+        subcontent.render(domNew);
+      }
+    }
+    this.child_index[position] = domNew;
+  }
+  
   this.render = function (parent) {
     render_layout(this, parent);
   }
+}
+
+function render_layout (layout, parent_div) {
+  var widths = partition(parent_div.clientWidth, layout.widths, layout.l_margin, layout.r_margin, layout.h_spacing);
+  var heights = partition(parent_div.clientHeight, layout.heights, layout.t_margin, layout.b_margin, layout.v_spacing);
+  var woff = offsets(widths);
+  var hoff = offsets(heights);
+  var parent_color = parent_div.style.backgroundColor;
+  
+  if (has_margins(widths, heights)) {
+    var inner_area = new_div(parent_div.id + '-inner', hoff[1], woff[1], ainv(woff, -1) - widths[0], ainv(hoff, -1) - heights[0]);
+    parent_div.appendChild(inner_area);
+    set_color(parent_div, layout.margin_color, parent_color);
+  } else {
+    var inner_area = parent_div;
+  }
+  
+  if (has_spacing(widths, heights)) {
+    set_color(inner_area, layout.spacing_color, parent_color);
+  }
+  
+  layout.child_index = [];
+  for (var r = 0; r < layout.num_rows; r++) {
+    for (var c = 0; c < layout.num_cols; c++) {
+      var x = woff[2*c + 1];
+      var y = hoff[2*r + 1];
+      var w = widths[2*c + 1];
+      var h = heights[2*r + 1];
+      
+      var subcontent = layout.content[layout.num_cols * r + c];
+      if (subcontent instanceof Indirect) {
+        subcontent = subcontent.content;
+      }
+      
+      if (subcontent == null || subcontent.container == null) {
+        var subcell = new_div(subcontent != null ? subcontent.id : parent_div.id + '-' + null + '-' + r + '-' + c, y, x, w, h);
+        layout.child_index.push(subcell);
+      
+        set_color(subcell, layout.color, parent_color);
+        parent_div.appendChild(subcell);
+        if (subcontent != null) {
+          subcontent.render(subcell);
+        }
+      } else {
+        layout.child_index.push(subcontent.container);
+        parent_div.appendChild(subcontent.container);
+      }
+    }
+  }
+  
+  layout.container = parent_div;
+}
+
+function has_margins (widths, heights) {
+  return widths[0] > 0 || ainv(widths, -1) > 0 || heights[0] > 0 || ainv(heights, -1) > 0;
+}
+
+function has_spacing (widths, heights) {
+  return (widths.length > 3 || heights.length > 3) && (widths[2] > 0 || heights[2] > 0);
 }
 
 //todo: auto-sizing?
@@ -94,7 +198,9 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
   this.onclick = onclick;
   this.centered = (centered != null ? centered : true);  
   
+  this.container = null;
   this.render = function (parent_div) {  
+    this.container = parent_div;
     parent_div.id = uid(this.id);
     set_color(parent_div, this.color, parent_div.style.backgroundColor);
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td align="' + (this.centered ? 'center' : 'left') + '" valign="middle"><span></span></td></tr></table>'
@@ -121,7 +227,10 @@ function TextCaption (id, color, caption, size_rel, align, valign) {
   this.align = align;
   this.valign = valign;
   
+  this.container = null;
+  this.span = null;
   this.render = function (parent_div) {
+    this.container = parent_div;
     parent_div.id = uid(this.id);
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td align="' + this.align + '" valign="' + this.valign + '"><span></span></td></tr></table>'
     span = parent_div.getElementsByTagName('span')[0];
@@ -129,6 +238,13 @@ function TextCaption (id, color, caption, size_rel, align, valign) {
     span.style.fontSize = this.size_rel * 100. + '%';
     span.style.color = this.color;
     span.textContent = this.caption;
+    this.span = span;
+  }
+  
+  this.setText = function (text) {
+    this.caption = text;
+    if (this.span != null)
+      this.span.textContent = text;
   }
 }
 
@@ -141,7 +257,10 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing) {
   this.align = align;
   this.spacing = spacing;
   
+  this.container = null;
+  this.control = null;
   this.render = function (parent_div) {
+    this.container = parent_div;
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td valign="middle"><input></input></td></tr></table>'
     inp = parent_div.getElementsByTagName('input')[0];
     inp.id = uid(this.id);
@@ -159,6 +278,13 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing) {
       inp.style.letterSpacing = this.spacing + 'px';
     }
     inp.value = content;
+    this.control = inp;
+  }
+  
+  this.setText = function (text) {
+    this.content = text;
+    if (this.control != null)
+      this.control.value = text;
   }
 }
 
@@ -273,51 +399,6 @@ function ainv (arr, i) {
   return arr[arr.length - Math.abs(i)];
 }
 
-function render_layout (layout, parent_div) {
-  var widths = partition(parent_div.clientWidth, layout.widths, layout.l_margin, layout.r_margin, layout.h_spacing);
-  var heights = partition(parent_div.clientHeight, layout.heights, layout.t_margin, layout.b_margin, layout.v_spacing);
-  var woff = offsets(widths);
-  var hoff = offsets(heights);
-  var parent_color = parent_div.style.backgroundColor;
-  
-  if (has_margins(widths, heights)) {
-    var inner_area = new_div(parent_div.id + '-inner', hoff[1], woff[1], ainv(woff, -1) - widths[0], ainv(hoff, -1) - heights[0]);
-    parent_div.appendChild(inner_area);
-    set_color(parent_div, layout.margin_color, parent_color);
-  } else {
-    var inner_area = parent_div;
-  }
-  
-  if (has_spacing(widths, heights)) {
-    set_color(inner_area, layout.spacing_color, parent_color);
-  }
-  
-  for (var r = 0; r < layout.num_rows; r++) {
-    for (var c = 0; c < layout.num_cols; c++) {
-      var x = woff[2*c + 1];
-      var y = hoff[2*r + 1];
-      var w = widths[2*c + 1];
-      var h = heights[2*r + 1];
-      
-      var subcontent = layout.content[layout.num_cols * r + c];
-      var subcell = new_div(subcontent != null ? subcontent.id : parent_div.id + '-' + null + '-' + r + '-' + c, y, x, w, h);
-      set_color(subcell, layout.color, parent_color);
-      parent_div.appendChild(subcell);
-      if (subcontent != null) {
-        subcontent.render(subcell);
-      }
-    }
-  }
-}
-
-function has_margins (widths, heights) {
-  return widths[0] > 0 || ainv(widths, -1) > 0 || heights[0] > 0 || ainv(heights, -1) > 0;
-}
-
-function has_spacing (widths, heights) {
-  return (widths.length > 3 || heights.length > 3) && (widths[2] > 0 || heights[2] > 0);
-}
-
 function Top (main, overlay) {
   this.main = main;
   this.overlay = overlay;
@@ -338,13 +419,17 @@ function Top (main, overlay) {
 function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
   this.mask_color = mask_color;
   this.bg_color = bg_color;
-  this.timeout = timeout * 1000.;
   this.fadeout = fadeout * 1000.;
   this.text = text_content;
   
   this.active = null;  
   this.container = null;
   this.timeout_id = null;
+  
+  this.setTimeout = function (to) {
+    this.timeout = to * 1000.;
+  }
+  this.setTimeout(timeout);
   
   this.setActive = function (state, manual) {
     if (this.active && state) {
@@ -375,6 +460,21 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     } 
   }
   
+  this.span = null;
+  this.mask = null;
+  
+  this.setText = function (text) {
+    this.text = text;
+    if (this.span != null)
+      this.span.textContent = text;
+  }
+  
+  this.setBgColor = function (color) {
+    this.mask_color = color;
+    if (this.mask != null)
+      this.mask.style.backgroundColor = color;
+  }
+  
   this.render = function (parent_div) {
     this.container = parent_div;
     self = this;
@@ -384,6 +484,7 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     mask.style.backgroundColor = this.mask_color;
     mask.style.opacity = .7;
     parent_div.appendChild(mask);
+    this.mask = mask;
     
     content = document.createElement('div');
     content.style.position = 'relative';
@@ -398,10 +499,52 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     span.style.backgroundColor = this.bg_color;
     span.textContent = this.text;
     //god damnit css!!!
+    this.span = span;
     
     content.appendChild(span);
     parent_div.appendChild(content);
     
     this.setActive(false);
+  }
+}
+
+function InputArea (id, border, border_color, padding, inside_color, child) {
+  this.id = id;
+  this.border = border;
+  this.border_color = border_color;
+  this.padding = padding;
+  this.inside_color = inside_color;
+  this.child = child;
+  
+  this.layout;
+  this.container = null;
+
+  //yikes! this didn't turn out that well
+  this.setBgColor = function (bg_color) {
+    this.inside_color = bg_color;
+    if (this.padding > 0) {
+      this.layout.child_index[0].style.backgroundColor = bg_color;
+      this.layout.content[0].child_index[0].style.backgroundColor = bg_color;
+    } else {
+      this.layout.child_index[0].style.backgroundColor = bg_color;
+    }
+    if (this.child instanceof TextInput) {
+      this.child.control.style.backgroundColor = bg_color;
+    }
+  }
+  
+  this.setText = function (text) {
+    this.child.setText(text);
+  }
+  
+  this.render = function (parent_div) {
+    if (this.padding > 0) {
+      inside = new Layout(id + '-padded', 1, 1, '*', '*', padding, 0, null, null, null, [this.child]);
+    } else {
+      inside = this.child;
+    }
+    this.layout = new Layout(id, 1, 1, '*', '*', border, 0, this.inside_color, this.border_color, null, [inside]);
+    this.layout.render(parent_div);
+    this.container = this.layout.container;
   }
 }
