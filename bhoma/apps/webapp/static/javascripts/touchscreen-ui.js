@@ -85,7 +85,7 @@ function initStaticWidgets () {
   
   dayText = new InputArea('dayinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '', 1.7, 'center', 'middle'));
   monthText = new InputArea('monthinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '', 1.7, 'center', 'middle'));
-  yearText = new InputArea('yearinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '', 1.7, 'center', 'middle'));  
+  yearText = new InputArea('yearinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '19\u2022\u2022', 1.7, 'center', 'middle'));  
   dateAnswer = new Layout('date-bar', 1, 6, [90, 36, 130, 36, 160, 110], '*', ['*', '*', 20, 20], 6, null, null, null, [
     dayText,
     new TextCaption('q-caption', TEXT_COLOR, '\u2013', 1.7, 'center', 'middle'),
@@ -122,7 +122,12 @@ function nextClicked (ev, x) {
 }
 
 function clearClicked (ev, x) {
-  alert('clear ' + x);
+  type = activeQuestion["datatype"];
+  if (type == "str" || type == "int" || type == "float") {
+    activeInputWidget.setText('');
+  } else {
+ 
+  }
 }
 
 function decadeSelected (ev, x) {

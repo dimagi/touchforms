@@ -45,33 +45,21 @@ function renderQuestion (event) {
     questionEntry.update(freeEntry);
     answerBar.update(freeTextAnswer);
     freeEntryKeyboard.update(event["datatype"] == 'str' ? keyboard : numPad);    
+    activeInputWidget = answerText;
     
     if (event["answer"] != null) {
       answerText.setText(event["answer"]);
     }
   } else if (event["datatype"] == "select" || event["datatype"] == "multiselect") {
-    for (i = 0; i < event["choices"].length; i++) {
-      ord = i + 1;
-    
-      caption = document.createElement("span");
-      caption.textContent = event["choices"][i] + "   ";
-    
-      input = document.createElement("input");
-      input.type = (event["datatype"] == "select" ? "radio" : "checkbox");
-      input.name = "select";
-      input.value = ord;
-      if (event["answer"] != null) {
-        input.checked = (event["datatype"] == "select" ? ord == event["answer"] : event["answer"].indexOf(ord) != -1);
-      }
-        
-      _$("control").appendChild(caption);
-      _$("control").appendChild(input);
-      _$("control").appendChild(document.createElement("br"));
-    }
+    questionEntry.update(choiceSelect(event["choices"], []));
   } else if (event["datatype"] == "info") {
     questionEntry.update(null);
   } else {
     alert("unrecognized datatype [" + event["datatype"] + "]");
+  }
+
+  if (event["answer"] == null) {
+    clearClicked();
   }
 }
 
