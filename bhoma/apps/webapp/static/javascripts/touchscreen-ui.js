@@ -69,7 +69,7 @@ function initStaticWidgets () {
     'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '4', '5', '6', '',
     'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '.',
     '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', '!', '?', ','     
-  ], null, 1.5, type_));
+  ], null, 1.4, type_));
 
   //progress bar is just static right now -- turn into a dedicated GUI object?
   progressBar.update(new Layout('progress-bar', 1, 2, ['30%', '*'], '*', [10, 10, 15, 15], 0, null, null, null, [
@@ -77,15 +77,15 @@ function initStaticWidgets () {
     new Layout('pb0', 1, 1, '*', '*', 0, 0, HEADER_COLOR, null, null, [null])   
   ]));
 
-  answerText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.2, 'left', 2));
+  answerText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.2, 'left', 0));
   freeTextAnswer = new Layout('answer-bar', 1, 2, ['7*', '*'], '*', [30, 30, 20, 20], 6, null, null, null, [
     answerText,
     new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
   ]);
   
-  dayText = new InputArea('dayinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '', 1.7, 'center', 'middle'));
-  monthText = new InputArea('monthinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '', 1.7, 'center', 'middle'));
-  yearText = new InputArea('yearinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '19\u2022\u2022', 1.7, 'center', 'middle'));  
+  dayText = new InputArea('dayinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '06', 1.6, 'center', 'middle'));
+  monthText = new InputArea('monthinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, 'Oct', 1.6, 'center', 'middle'));
+  yearText = new InputArea('yearinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '2\u2022\u2022\u2022', 1.6, 'center', 'middle'));  
   dateAnswer = new Layout('date-bar', 1, 6, [90, 36, 130, 36, 160, 110], '*', ['*', '*', 20, 20], 6, null, null, null, [
     dayText,
     new TextCaption('q-caption', TEXT_COLOR, '\u2013', 1.7, 'center', 'middle'),
@@ -95,7 +95,7 @@ function initStaticWidgets () {
     new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
   ]);
   
-  decadeChoices = new Layout('cdc', 5, 2, 300, 70, '*', 20, null, null, null, 
+  decadeChoices = new Layout('cdc', 5, 2, 350, 70, '*', 20, null, null, null, 
     kbs(['2000\u20142010', '1950\u20141959', '1990\u20141999', '1940\u20141949', '1980\u20141989',
          '1930\u20141939', '1970\u20141979', '1920\u20141929', '1960\u20141969', '1910\u20141919'], null, 1.4, decadeSelected));
   monthChoices = new Layout('cm', 3, 4, 180, 120, '*', 30, null, null, null, 
@@ -188,13 +188,14 @@ function kbs (infos, def_color, def_sz, onclick, centered) {
   return stuff;
 }
 
-function yearSelect (decade) {
+//todo: support ranges other than decade
+function yearSelect (minyear, maxyear) {
   var offsets = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9];
   var years = new Array();
   for (var i = 0; i < offsets.length; i++) {
-    years.push(String(decade + offsets[i]));
+    years.push(String(minyear + offsets[i]));
   }
-  return new Layout('cy', 5, 2, 300, 70, '*', 20, null, null, null, kbs(years, null, 1.4, yearSelected));
+  return new Layout('cy', 5, 2, 350, 70, '*', 20, null, null, null, kbs(years, null, 1.4, yearSelected));
 }
 
 function daySelect (monthLength) {
@@ -204,7 +205,7 @@ function daySelect (monthLength) {
   for (var i = 1; i <= r * c; i++) {
     days.push(i <= monthLength ? i : null);
   }
-  return new Layout('cd', r, c, 85, 85, '*', 15, null, null, null, kbs(days, null, 1.6, daySelected));
+  return new Layout('cd', r, c, 85, 85, '*', 15, null, null, null, kbs(days, null, 1.4, daySelected));
 }
 
 function getTextExtent (text, size, bounding_width) {
