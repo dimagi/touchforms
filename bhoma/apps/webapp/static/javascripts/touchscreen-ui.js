@@ -96,8 +96,12 @@ function initStaticWidgets () {
     new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
   ]);
   
-  decadeChoices = new Layout('cdc', 5, 2, 350, 70, '*', 20, null, null, null, kbs(decades, null, 1.4, decadeSelected));
-  monthChoices = new Layout('cm', 3, 4, 180, 120, '*', 30, null, null, null, kbs(monthNames, null, 1.8, monthSelected));
+  tmp = render_button_grid('grid', 5, 2, 350, 70, 20, 'vert', decades, [], decadeSelected, 1.4);
+  decadeChoices = tmp[0];
+  decadeButtons = tmp[1];
+  tmp = render_button_grid('grid', 3, 4, 180, 120, 30, 'horiz', monthNames, [], monthSelected, 1.8);
+  monthChoices = tmp[0];
+  monthButtons = tmp[1];
 }
 
 function helpClicked (ev, x) {
@@ -131,11 +135,16 @@ function clearClicked (ev, x) {
 }
 
 monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-decades = ['2000\u20142010', '1950\u20141959', '1990\u20141999', '1940\u20141949', '1980\u20141989',
-           '1930\u20141939', '1970\u20141979', '1920\u20141929', '1960\u20141969', '1910\u20141919'];
+decades = ['2000\u20142010', '1990\u20141999', '1980\u20141989', '1970\u20141979', '1960\u20141969',
+	   '1950\u20141959', '1940\u20141949', '1930\u20141939', '1920\u20141929', '1910\u20141919'];
 function DateWidgetContext (dir, answer) {
-  this.screen = (dir || answer == null ? 'decade' : 'day');
-  this.setDate(answer);
+  this.init = function (dir, answer) {
+    answer = '2004-01-03';
+
+
+    this.screen = (dir || answer == null ? 'decade' : 'day');
+    this.setDate(answer);
+  }
 
   this.setDate = function (datestr) {
     if (datestr == null) {
@@ -146,7 +155,7 @@ function DateWidgetContext (dir, answer) {
     } else {
       this.year = +datestr.substring(0, 4);
       month = +datestr.substring(5, 7);
-      this.day = +datestr.substring(8, 9);
+      this.day = +datestr.substring(8, 10);
       this.month = monthNames[month - 1];
       this.decade = this.decadeForYear(this.year);
     }
@@ -211,25 +220,50 @@ function DateWidgetContext (dir, answer) {
 
     if (this.screen == 'decade') {
       selectWidget = decadeChoices;
+      activeInputWidget = decadeButtons;
 
+      clearButtons();
+      if (this.decade != null) {
+	getButtonByCaption(this.decade[0] + '\u2014' + this.decade[1]).setStatus('selected')
+      }
 
       yearText.setBgColor(HIGHLIGHT_COLOR);
       monthText.setBgColor('#fff');
       dayText.setBgColor('#fff');
     } else if (this.screen == 'year') {
-      selectWidget = yearSelect(this.decade[0], this.decade[1]);
+      tmp = yearSelect(this.decade[0], this.decade[1]);
+      selectWidget = tmp[0];
+      activeInputWidget = tmp[1];
+
+      clearButtons();
+      if (this.year != null) {
+	getButtonByCaption(this.year + '');
+      }
 
       yearText.setBgColor(HIGHLIGHT_COLOR);
       monthText.setBgColor('#fff');
       dayText.setBgColor('#fff');
     } else if (this.screen == 'month') {
       selectWidget = monthChoices;
+      activeInputWidget = monthButtons;
+
+      clearButtons();
+      if (this.month != null) {
+	getButtonByCaption(this.month);
+      }
 
       yearText.setBgColor('#fff');
       monthText.setBgColor(HIGHLIGHT_COLOR);
       dayText.setBgColor('#fff');
     } else if (this.screen == 'day') {
-      selectWidget = daySelect(daysInMonth(this.month, this.year));
+      tmp = daySelect(daysInMonth(this.month, this.year));
+      selectWidget = tmp[0];
+      activeInputWidget = tmp[1];
+
+      clearButtons();
+      if (this.day != null) {
+	getButtonByCaption((this.day < 10 ? '0' : '') + this.day);
+      }
 
       yearText.setBgColor('#fff');
       monthText.setBgColor('#fff');
@@ -245,7 +279,7 @@ function DateWidgetContext (dir, answer) {
   //clear
 
 
-
+  this.init(dir, answer);
 }
 
 function isLeap (year) {
@@ -301,15 +335,19 @@ function getButtonID (button) {
   return -1;
 }
 
+function clearButtons (except) {
+  for (i = 0; i < activeInputWidget.length; i++) {
+    if (activeInputWidget[i] != except) {
+      activeInputWidget[i].setStatus('default');
+    }
+  }
+}
+
 function choiceSelected (ev, x) {
   b = getButtonByCaption(x);
-  b.setStatus(b.status == 'default' ? 'selected' : 'default');
+  b.toggleStatus();
   if (activeQuestion["datatype"] == "select") {
-    for (i = 0; i < activeInputWidget.length; i++) {
-      if (activeInputWidget[i] != b) {
-	activeInputWidget[i].setStatus('default');
-      }
-    }
+    clearButtons(b);
   }
 }
 
@@ -356,17 +394,6 @@ function kbs (infos, def_color, def_sz, onclick, centered) {
   return stuff;
 }
 
-function vertArrange (list, rows) {
-  var grid = [];
-  var cols = Math.ceil(list.length / rows);
-  for (var r = 0; r < rows; r++) {
-    for (var c = 0; c < cols; c++) {
-      grid.push(list[rows * c + r]);
-    }
-  }
-  return grid;
-}
-
 //todo: support ranges other than decade
 function yearSelect (minyear, maxyear) {
   if (maxyear == null)
@@ -374,10 +401,10 @@ function yearSelect (minyear, maxyear) {
 
   var years = [];
   for (var o = minyear; o <= maxyear; o++) {
-    years.push(o);
+    years.push(o + '');
   }
-  years = vertArrange(years, 5);
-  return new Layout('cy', 5, Math.ceil((maxyear - minyear + 1) / 5), (maxyear - minyear) > 9 ? 220 : 350, 70, '*', 20, null, null, null, kbs(years, null, 1.4, yearSelected));
+
+  return render_button_grid('grid', 5, Math.ceil((maxyear - minyear + 1) / 5), (maxyear - minyear) > 9 ? 220 : 350, 70, 20, 'vert', years, [], yearSelected, 1.4);
 }
 
 function daySelect (monthLength) {
@@ -385,9 +412,9 @@ function daySelect (monthLength) {
   var c = 7;
   var days = new Array();
   for (var i = 1; i <= r * c; i++) {
-    days.push(i <= monthLength ? i : null);
+    days.push(i <= monthLength ? i + '' : null);
   }
-  return new Layout('cd', r, c, 85, 85, '*', 15, null, null, null, kbs(days, null, 1.4, daySelected));
+  return render_button_grid('grid', r, c, 85, 85, 15, 'horiz', days, [], daySelected, 1.4);
 }
 
 function getTextExtent (text, size, bounding_width) {
@@ -564,7 +591,7 @@ function render_button_grid (style, rows, cols, width, height, spacing, dir, cho
     }
   }
 
-  button_grid = kbs(cells, null, text_scale, choiceSelected, style == 'grid');
+  button_grid = kbs(cells, null, text_scale, func, style == 'grid');
   buttons = []
   for (var r = 0; r < rows; r++) {
     for (var c = 0; c < cols; c++) {

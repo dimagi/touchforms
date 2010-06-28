@@ -232,6 +232,12 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
     }
   }
 
+  this.toggleStatus = function () {
+    if (this.status != 'disabled') {
+      this.setStatus(this.status == 'default' ? 'selected' : 'default');
+    }
+  }
+
   this.setStatus = function (stat) {
     this.status = stat;
     if (this.container != null)
