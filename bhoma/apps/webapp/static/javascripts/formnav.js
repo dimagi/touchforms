@@ -51,7 +51,10 @@ function renderQuestion (event) {
       answerText.setText(event["answer"]);
     }
   } else if (event["datatype"] == "select" || event["datatype"] == "multiselect") {
-    questionEntry.update(choiceSelect(event["choices"], []));
+    selections = (event["datatype"] == "select" ? [event["answer"]] : event["answer"]);
+    chdata = choiceSelect(event["choices"], selections);
+    questionEntry.update(chdata[0]);
+    activeInputWidget = chdata[1];
   } else if (event["datatype"] == "info") {
     questionEntry.update(null);
   } else {
@@ -69,19 +72,17 @@ function getQuestionAnswer () {
   if (type == "str" || type == "int" || type == "float") {
     return answerText.child.control.value;
   } else if (type == "select" || type == "multiselect") {
-    answer = [];
-    choices = document.getElementsByName("select");
-    for (i = 0; i < choices.length; i++) {
-      choice = choices[i];
-      if (choice.checked) {
-        answer.push(choice.value);
+    selected = [];
+    for (i = 0; i < activeInputWidget.length; i++) {
+      if (activeInputWidget[i].status == 'selected') {
+        selected.push(getButtonID(activeInputWidget[i]));
       }
     }
     
     if (type == "select") {
-      return answer.length > 0 ? answer[0] : null;
+      return selected.length > 0 ? selected[0] : null;
     } else {
-      return answer;
+      return selected;
     }
   } else if (type == "info") {
     return null;

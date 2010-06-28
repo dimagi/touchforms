@@ -110,11 +110,11 @@ function helpClicked (ev, x) {
 }
 
 function backClicked (ev, x) {
-  alert('back ' + x);
+  prevQuestion();
 }
 
 function menuClicked (ev, x) {
-  alert('menu ' + x);
+  alert('show menu');
 }
 
 function nextClicked (ev, x) {
@@ -146,8 +146,34 @@ function daySelected (ev, x) {
   alert('day ' + x);
 }
 
+function getButtonByCaption (caption) {
+  for (i = 0; i < activeInputWidget.length; i++) {
+    if (activeInputWidget[i].caption == caption) {
+      return activeInputWidget[i];
+    }
+  }
+  return null;
+}
+
+function getButtonID (button) {
+  for (i = 0; i < activeInputWidget.length; i++) {
+    if (activeInputWidget[i] == button) {
+      return i + 1;
+    }
+  }
+  return -1;
+}
+
 function choiceSelected (ev, x) {
-  alert('choice ' + x);
+  b = getButtonByCaption(x);
+  b.setStatus(b.status == 'default' ? 'selected' : 'default');
+  if (activeQuestion["datatype"] == "select") {
+    for (i = 0; i < activeInputWidget.length; i++) {
+      if (activeInputWidget[i] != b) {
+	activeInputWidget[i].setStatus('default');
+      }
+    }
+  }
 }
 
 function showError (text) {
@@ -161,7 +187,7 @@ function showError (text) {
 function kb (lab, sz, col, onclick, centered) {
   if (col == null)
     col = KEYBUTTON_COLOR;
-  return new TextButton('button-' + lab, col, BUTTON_TEXT_COLOR, null, null, lab, sz, (onclick != null ? function (ev) { onclick(ev, lab); } : null), centered);
+  return new TextButton('button-' + lab, col, BUTTON_TEXT_COLOR, BUTTON_SELECTED_COLOR, null, lab, sz, (onclick != null ? function (ev) { onclick(ev, lab); } : null), centered);
 }
   
 /* utility function to generate an array of keybaord buttons for... a keyboard */
@@ -172,14 +198,19 @@ function kbs (infos, def_color, def_sz, onclick, centered) {
     if (info != null) {
       if (info instanceof Array) {
         var lab = info[0];
-        var col = info.length > 1 ? info[1] : def_color;
-        var sz = info.length > 2 ? info[2] : def_sz;
+        var col = info.length > 1 && info[1] != null ? info[1] : def_color;
+        var sz = info.length > 2 && info[2] != null ? info[2] : def_sz;
+        var selected = info.length > 3 ? info[3] : false;
       } else {
         var lab = info;
         var col = def_color;
         var sz = def_sz;
+        var selected = false;
       }
       var st = kb(lab, sz, col, onclick, centered);
+      if (selected) {
+        st.setStatus('selected');
+      }
     } else {
       var st = null;
     }
@@ -367,19 +398,31 @@ function choiceSelect (choices, selected) {
   for (var r = 0; r < rows; r++) {
     for (var c = 0; c < cols; c++) {
       var i = (dir == 'horiz' ? cols * r + c : rows * c + r);
-      if (i > choices.length) {
+      if (i >= choices.length) {
         var cell = null;
       } else {
         var cell = choices[i];
-        if (selected.indexOf(i) != -1) {
-          cell = [cell, BUTTON_SELECTED_COLOR];
-        }
+        if (selected != null && selected.indexOf(i + 1) != -1) {
+          cell = [cell, null, null, true];
+	}
       }
       cells.push(cell);
     }
   }
 
-  return new Layout('ch', rows, cols, width, height, margins, spacing, null, null, null, kbs(cells, null, text_scale, choiceSelected, style == 'grid'));  
+  button_grid = kbs(cells, null, text_scale, choiceSelected, style == 'grid');
+  buttons = []
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      var i = (dir == 'horiz' ? cols * r + c : rows * c + r);
+      if (i < choices.length) {
+        buttons[i] = button_grid[cols * r + c];
+      }
+    }
+  }  
+
+  layout_info = new Layout('ch', rows, cols, width, height, margins, spacing, null, null, null, button_grid);
+  return [layout_info, buttons];
 }
 
 function render_clean () {

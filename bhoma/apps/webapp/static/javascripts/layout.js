@@ -196,13 +196,14 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
   this.caption = caption;
   this.size_rel = size_rel;
   this.onclick = onclick;
-  this.centered = (centered != null ? centered : true);  
-  
+  this.centered = (centered != null ? centered : true);    
+  this.status = 'default';
+
   this.container = null;
   this.render = function (parent_div) {  
     this.container = parent_div;
     parent_div.id = uid(this.id);
-    set_color(parent_div, this.color, parent_div.style.backgroundColor);
+    this.setColor()
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td align="' + (this.centered ? 'center' : 'left') + '" valign="middle"><span></span></td></tr></table>'
     span = parent_div.getElementsByTagName('span')[0];
     span.style.fontWeight = 'bold';
@@ -215,6 +216,26 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
     }
     
     parent_div.style.MozBorderRadius = '10px';
+  }
+
+  this.setColor = function () {
+    if (this.status == 'default') {
+      set_color(this.container, this.color, this.container.style.backgroundColor);
+    } else if (this.status == 'selected') {
+      if (this.selected_color == null)
+        alert('no selected color set!');
+      set_color(this.container, this.selected_color, null);
+    } else if (this.status == 'disabled') {
+      if (this.inactive_color == null)
+        alert('no disabled color set!');
+      set_color(this.container, this.inactive_color, null);
+    }
+  }
+
+  this.setStatus = function (stat) {
+    this.status = stat;
+    if (this.container != null)
+      this.setColor();
   }
 }
 
