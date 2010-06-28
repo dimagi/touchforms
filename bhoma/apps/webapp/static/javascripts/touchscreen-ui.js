@@ -16,6 +16,7 @@ BUTTON_TEXT_COLOR = '#fff';
 TEXT_COLOR = '#000';
 KEYBUTTON_COLOR = '#118';
 BUTTON_SELECTED_COLOR = '#0bf';
+HIGHLIGHT_COLOR = '#ffc';
 
 BACKSPACE_LABEL = '\u21d0';
 
@@ -85,7 +86,7 @@ function initStaticWidgets () {
   
   dayText = new InputArea('dayinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '06', 1.6, 'center', 'middle'));
   monthText = new InputArea('monthinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, 'Oct', 1.6, 'center', 'middle'));
-  yearText = new InputArea('yearinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '2\u2022\u2022\u2022', 1.6, 'center', 'middle'));  
+  yearText = new InputArea('yearinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '20\u2022\u2022', 1.6, 'center', 'middle'));  
   dateAnswer = new Layout('date-bar', 1, 6, [90, 36, 130, 36, 160, 110], '*', ['*', '*', 20, 20], 6, null, null, null, [
     dayText,
     new TextCaption('q-caption', TEXT_COLOR, '\u2013', 1.7, 'center', 'middle'),
@@ -95,11 +96,8 @@ function initStaticWidgets () {
     new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
   ]);
   
-  decadeChoices = new Layout('cdc', 5, 2, 350, 70, '*', 20, null, null, null, 
-    kbs(['2000\u20142010', '1950\u20141959', '1990\u20141999', '1940\u20141949', '1980\u20141989',
-         '1930\u20141939', '1970\u20141979', '1920\u20141929', '1960\u20141969', '1910\u20141919'], null, 1.4, decadeSelected));
-  monthChoices = new Layout('cm', 3, 4, 180, 120, '*', 30, null, null, null, 
-    kbs(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], null, 1.8, monthSelected));
+  decadeChoices = new Layout('cdc', 5, 2, 350, 70, '*', 20, null, null, null, kbs(decades, null, 1.4, decadeSelected));
+  monthChoices = new Layout('cm', 3, 4, 180, 120, '*', 30, null, null, null, kbs(monthNames, null, 1.8, monthSelected));
 }
 
 function helpClicked (ev, x) {
@@ -125,35 +123,148 @@ function clearClicked (ev, x) {
   type = activeQuestion["datatype"];
   if (type == "str" || type == "int" || type == "float") {
     activeInputWidget.setText('');
-  } else {
- 
+  } else if (type == "select" || type == "multiselect") {
+    //not handled yet
+  } else if (type == "date") {
+
   }
 }
 
-function DateWidgetContext (direction, answer) {
-  this.screen = null;
-  this.decade = null;
-  this.year = null;
-  this.month = null;
-  this.day = null;
+monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+decades = ['2000\u20142010', '1950\u20141959', '1990\u20141999', '1940\u20141949', '1980\u20141989',
+           '1930\u20141939', '1970\u20141979', '1920\u20141929', '1960\u20141969', '1910\u20141919'];
+function DateWidgetContext (dir, answer) {
+  this.screen = (dir || answer == null ? 'decade' : 'day');
+  this.setDate(answer);
+
+  this.setDate = function (datestr) {
+    if (datestr == null) {
+      this.decade = null;
+      this.year = null;
+      this.month = null;
+      this.day = null;
+    } else {
+      this.year = +datestr.substring(0, 4);
+      month = +datestr.substring(5, 7);
+      this.day = +datestr.substring(8, 9);
+      this.month = monthNames[month - 1];
+      this.decade = this.decadeForYear(this.year);
+    }
+  }
+
+  this.decadeForYear = function (year) {
+    for (i = 0; i < decades.length; i++) {
+      startyear = +decades[i].substring(0, 4);
+      endyear = +decades[i].substring(5, 9);
+      if (startyear <= year && year <= endyear) {
+	return [startyear, endyear];
+      }
+    }
+    return null;
+  }
+
+  this.isFull = function () {
+    return (this.decade != null && this.year != null && this.month != null && this.day != null);
+  }
+
+  this.isValid = function () {
+    return (this.isFull() && this.day <= daysInMonth(this.month, this.year));
+  }
+
+  this.getDate = function () {
+    if (this.isFull()) {
+      dateout = year + '-';
+      monthnum = monthNames.indexOf(this.month) + 1;
+      dateout += (monthnum < 10 ? '0' : '') + monthnum;
+      dateout += (this.day < 10 ? '0' : '') + this.day;
+      return dateout;
+    } else {
+      return null;
+    }				   
+  }
+
+  this.refresh = function () {
+    questionEntry.update(freeEntry);
+    answerBar.update(dateAnswer);
+    if (this.year != null) {
+      yearText.setText(this.year + '');
+    } else if (this.decade != null) {
+      sstart = +this.decade[0];
+      send = +this.decade[1];
+      syear = '';
+      for (i = 0; i < 4; i++) {
+	if (sstart[i] == send[i]) {
+	  syear += sstart[i];
+	} else {
+	  break;
+	}
+      }
+      while (syear.length < 4) {
+	syear += '\u2022';
+      }
+      yearText.setText(syear);
+    } else {
+      yearText.setText('');
+    }
+    monthText.setText(this.month != null ? this.month : '');
+    dayText.setText(this.day != null ? (this.day < 10 ? '0' : '') + this.day : '');
+
+    if (this.screen == 'decade') {
+      selectWidget = decadeChoices;
 
 
+      yearText.setBgColor(HIGHLIGHT_COLOR);
+      monthText.setBgColor('#fff');
+      dayText.setBgColor('#fff');
+    } else if (this.screen == 'year') {
+      selectWidget = yearSelect(this.decade[0], this.decade[1]);
+
+      yearText.setBgColor(HIGHLIGHT_COLOR);
+      monthText.setBgColor('#fff');
+      dayText.setBgColor('#fff');
+    } else if (this.screen == 'month') {
+      selectWidget = monthChoices;
+
+      yearText.setBgColor('#fff');
+      monthText.setBgColor(HIGHLIGHT_COLOR);
+      dayText.setBgColor('#fff');
+    } else if (this.screen == 'day') {
+      selectWidget = daySelect(daysInMonth(this.month, this.year));
+
+      yearText.setBgColor('#fff');
+      monthText.setBgColor('#fff');
+      dayText.setBgColor(HIGHLIGHT_COLOR);
+    }
+    freeEntryKeyboard.update(selectWidget);
+  }
 
 
-
-
-
-
-/*
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(decadeChoices);">date: year 1/2</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(yearSelect(1990));">date: year 2/2</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(monthChoices);">date: month</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(daySelect(29));">date: day</button>
-*/
     
+  //next
+  //back
+  //clear
 
 
 
+}
+
+function isLeap (year) {
+  return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
+}
+
+function daysInMonth (month, year) {
+  if (month == null)
+    return 31;
+  if (year == null && month == 'Feb')
+    return 28;
+
+  if (month == 'Feb') {
+    return 28 + (isLeap(year) ? 1 : 0);
+  } else if (month == 'Apr' || month == 'Jun' || month == 'Sep' || month == 'Nov') {
+    return 30;
+  } else {
+    return 31;
+  }
 }
 
 function decadeSelected (ev, x) {
@@ -427,7 +538,10 @@ function choiceSelect (choices, selected) {
   }
     
   //2) render choices according to layout parameters
-  
+  return render_button_grid(style, rows, cols, width, height, spacing, dir, choices, selected, choiceSelected, text_scale);
+}
+
+function render_button_grid (style, rows, cols, width, height, spacing, dir, choices, selected, func, text_scale) {
   if (style == 'list') {
     var margins = [30, '*', 30, '*'];
   } else if (style == 'grid') {
