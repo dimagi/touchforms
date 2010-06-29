@@ -521,6 +521,7 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     content.style.marginRight = 'auto';
     
     span = document.createElement('p');
+    span.id = 'overlay-content';
     span.style.border = '3px solid black';
     span.style.padding = '20px';
     span.style.backgroundColor = this.bg_color;

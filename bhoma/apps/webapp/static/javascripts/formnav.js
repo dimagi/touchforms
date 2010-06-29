@@ -128,7 +128,17 @@ function post_to_url(path, params, method) {
     form.submit();
 }
 function formComplete (event) {
+  //for demo
+  overlay.setText(event["output"]);
+  overlay.setBgColor('#dd6');
+  overlay.setTimeout(null);
+  $('#overlay-content')[0].style.fontSize = '60%';
+  overlay.setActive(true);
+
+
+  /*
     // POST the response back to ourselves for further processing
     post_to_url("", event)
+  */
 }
 
