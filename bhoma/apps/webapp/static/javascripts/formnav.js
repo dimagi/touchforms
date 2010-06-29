@@ -127,18 +127,29 @@ function post_to_url(path, params, method) {
 
     form.submit();
 }
+
+function post_to_url(path, params, method) {
+    // hat tip: http://stackoverflow.com/questions/133925/javascript-post-request-like-a-form-submit
+    method = method || "post"; // Set method to post by default, if not specified.
+    // The rest of this code assumes you are not using a library.
+    // It can be made less wordy if you use one.
+    
+    var form = document.createElement("form");
+    form.setAttribute("method", method);
+    form.setAttribute("action", path);
+
+    for(var key in params) {
+        var hiddenField = document.createElement("input");
+        hiddenField.setAttribute("type", "hidden");
+        hiddenField.setAttribute("name", key);
+        hiddenField.setAttribute("value", params[key]);
+
+        form.appendChild(hiddenField);
+    }
+
+    form.submit();
+}
 function formComplete (event) {
-  //for demo
-  overlay.setText(event["output"]);
-  overlay.setBgColor('#dd6');
-  overlay.setTimeout(null);
-  $('#overlay-content')[0].style.fontSize = '60%';
-  overlay.setActive(true);
-
-
-  /*
     // POST the response back to ourselves for further processing
     post_to_url("", event)
-  */
 }
-

@@ -15,12 +15,13 @@ class StaticPreloadHandler(IPreloadHandler):
     
     _dict = {}
     
-    def __init__(self, dict, default=""):
+    def __init__(self, name, dict, default=""):
+        self._name = name
         self._dict = dict
         self._default = default
         
     def preloadHandled(self):
-        return "static"
+        return self._name
     
     def handlePreload(self, preloadParams):
         # TODO: support types other than strings?
