@@ -181,15 +181,19 @@ function DateWidgetContext (dir, answer) {
     return (this.decade != null && this.year != null && this.month != null && this.day != null);
   }
 
+  this.isEmpty = function () {
+    return (this.decade == null && this.year == null && this.month == null && this.day == null);
+  }
+
   this.isValid = function () {
     return (this.isFull() && this.day <= daysInMonth(this.month, this.year));
   }
 
   this.getDate = function () {
     if (this.isFull()) {
-      dateout = year + '-';
+      dateout = this.year + '-';
       monthnum = monthNames.indexOf(this.month) + 1;
-      dateout += (monthnum < 10 ? '0' : '') + monthnum;
+      dateout += (monthnum < 10 ? '0' : '') + monthnum + '-';
       dateout += (this.day < 10 ? '0' : '') + this.day;
       return dateout;
     } else {
@@ -203,8 +207,8 @@ function DateWidgetContext (dir, answer) {
     if (this.year != null) {
       yearText.setText(this.year + '');
     } else if (this.decade != null) {
-      sstart = +this.decade[0];
-      send = +this.decade[1];
+      sstart = this.decade[0] + '';
+      send = this.decade[1] + '';
       syear = '';
       for (i = 0; i < 4; i++) {
 	if (sstart[i] == send[i]) {
@@ -226,55 +230,40 @@ function DateWidgetContext (dir, answer) {
     if (this.screen == 'decade') {
       selectWidget = decadeChoices;
       activeInputWidget = decadeButtons;
-
-      clearButtons();
-      if (this.decade != null) {
-	getButtonByCaption(this.decade[0] + '\u2014' + this.decade[1]).setStatus('selected');
-      }
-
-      yearText.setBgColor(HIGHLIGHT_COLOR);
-      monthText.setBgColor('#fff');
-      dayText.setBgColor('#fff');
+      this.select(this.decade, this.decade != null ? this.decade[0] + '\u2014' + this.decade[1] : null);
+      this.highlight();
     } else if (this.screen == 'year') {
       tmp = yearSelect(this.decade[0], this.decade[1]);
       selectWidget = tmp[0];
       activeInputWidget = tmp[1];
-
-      clearButtons();
-      if (this.year != null) {
-	getButtonByCaption(this.year + '').setStatus('selected');
-      }
-
-      yearText.setBgColor(HIGHLIGHT_COLOR);
-      monthText.setBgColor('#fff');
-      dayText.setBgColor('#fff');
+      this.select(this.year);
+      this.highlight();
     } else if (this.screen == 'month') {
       selectWidget = monthChoices;
       activeInputWidget = monthButtons;
-
-      clearButtons();
-      if (this.month != null) {
-	getButtonByCaption(this.month).setStatus('selected');
-      }
-
-      yearText.setBgColor('#fff');
-      monthText.setBgColor(HIGHLIGHT_COLOR);
-      dayText.setBgColor('#fff');
+      this.select(this.month);
+      this.highlight();
     } else if (this.screen == 'day') {
       tmp = daySelect(daysInMonth(this.month, this.year));
       selectWidget = tmp[0];
       activeInputWidget = tmp[1];
-
-      clearButtons();
-      if (this.day != null) {
-	getButtonByCaption(this.day + '').setStatus('selected');
-      }
-
-      yearText.setBgColor('#fff');
-      monthText.setBgColor('#fff');
-      dayText.setBgColor(HIGHLIGHT_COLOR);
+      this.select(this.day);
+      this.highlight();
     }
     freeEntryKeyboard.update(selectWidget);
+  }
+
+  this.select = function (val, caption) {
+    clearButtons();
+    if (val != null) {
+      getButtonByCaption((caption != null ? caption : val) + '').setStatus('selected');
+    }
+  }
+
+  this.highlight = function () {
+    yearText.setBgColor(this.screen == 'decade' || this.screen == 'year' ? HIGHLIGHT_COLOR : '#fff');
+    monthText.setBgColor(this.screen == 'month' ? HIGHLIGHT_COLOR : '#fff');
+    dayText.setBgColor(this.screen == 'day' ? HIGHLIGHT_COLOR : '#fff');
   }
 
   this.clear = function () {
@@ -284,9 +273,88 @@ function DateWidgetContext (dir, answer) {
     this.day = null;
     this.refresh();
   }
-    
+
   this.next = function () {
-    alert('date next');
+    if (this.isEmpty() || this.isFull()) {
+      if (this.isValid()) {
+	answerQuestion();
+      } else {
+	showError('This is not a valid date.');
+      }
+    } else {
+      currentScreenVal = null;
+      for (i = 0; i < activeInputWidget.length; i++) {
+	if (activeInputWidget[i].status == 'selected') {
+	  currentScreenVal = activeInputWidget[i].caption;
+	  break;
+	}
+      }
+
+      if (currentScreenVal == null) {
+	showError('Please pick a ' + (this.screen == 'decade' ? 'year' : this.screen) + '. To skip this question and leave it blank, click \'CLEAR\' first.');
+	return;
+      } else {
+	this.screen = this.getEmptyScreen();
+      }
+      this.refresh();
+    }
+  }
+
+  this.getEmptyScreen = function () {
+    if (this.decade == null) {
+      return 'decade';
+    } else if (this.year == null) {
+      return 'year';
+    } else if (this.month == null) {
+      return 'month';
+    } else if (this.day == null) {
+      return 'day';
+    } else {
+      return null;
+    }
+  }
+
+  this.getNextScreen = function () {
+    if (this.screen == 'decade') {
+      return 'year';
+    } else if (this.screen == 'year') {
+      return 'month';
+    } else if (this.screen == 'month') {
+      return 'day';
+    } else {
+      return null;
+    }
+  }
+
+  this.selected = function (field, val) {
+    if (field == 'decade') {
+      olddecade = this.decade;
+      startyear = +val.substring(0, 4);
+      endyear = +val.substring(5, 9);
+      this.decade = [startyear, endyear];
+      if (this.decade != olddecade)
+	this.year = null;
+    } else if (field == 'year') {
+      this.year = val;
+      this.decade = this.decadeForYear(val);
+    } else if (field == 'month') {
+      this.month = val;
+    } else if (field == 'day') {
+      this.day = val;
+    }
+    this.select(val);
+
+    if (this.screen == 'day') {
+      if (!this.isFull()) {
+	this.screen = this.getEmptyScreen();
+      } else {
+	//stay on current screen; must click 'next' to advance question
+      }
+    } else {
+      this.screen = this.getNextScreen();
+    }
+
+    this.refresh();
   }
 
   this.back = function () {
@@ -321,19 +389,19 @@ function daysInMonth (month, year) {
 }
 
 function decadeSelected (ev, x) {
-  alert('decade ' + x);
+  dateEntryContext.selected('decade', x);
 }
 
 function yearSelected (ev, x) {
-  alert('year ' + x);
+  dateEntryContext.selected('year', x);
 }
 
 function monthSelected (ev, x) {
-  alert('month ' + x);
+  dateEntryContext.selected('month', x);
 }
 
 function daySelected (ev, x) {
-  alert('day ' + x);
+  dateEntryContext.selected('day', x);
 }
 
 function getButtonByCaption (caption) {
