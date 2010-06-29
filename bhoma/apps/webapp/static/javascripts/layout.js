@@ -196,13 +196,14 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
   this.caption = caption;
   this.size_rel = size_rel;
   this.onclick = onclick;
-  this.centered = (centered != null ? centered : true);  
-  
+  this.centered = (centered != null ? centered : true);    
+  this.status = 'default';
+
   this.container = null;
   this.render = function (parent_div) {  
     this.container = parent_div;
     parent_div.id = uid(this.id);
-    set_color(parent_div, this.color, parent_div.style.backgroundColor);
+    this.setColor()
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td align="' + (this.centered ? 'center' : 'left') + '" valign="middle"><span></span></td></tr></table>'
     span = parent_div.getElementsByTagName('span')[0];
     span.style.fontWeight = 'bold';
@@ -215,6 +216,32 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
     }
     
     parent_div.style.MozBorderRadius = '10px';
+  }
+
+  this.setColor = function () {
+    if (this.status == 'default') {
+      set_color(this.container, this.color, this.container.style.backgroundColor);
+    } else if (this.status == 'selected') {
+      if (this.selected_color == null)
+        alert('no selected color set!');
+      set_color(this.container, this.selected_color, null);
+    } else if (this.status == 'disabled') {
+      if (this.inactive_color == null)
+        alert('no disabled color set!');
+      set_color(this.container, this.inactive_color, null);
+    }
+  }
+
+  this.toggleStatus = function () {
+    if (this.status != 'disabled') {
+      this.setStatus(this.status == 'default' ? 'selected' : 'default');
+    }
+  }
+
+  this.setStatus = function (stat) {
+    this.status = stat;
+    if (this.container != null)
+      this.setColor();
   }
 }
 
@@ -494,6 +521,7 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     content.style.marginRight = 'auto';
     
     span = document.createElement('p');
+    span.id = 'overlay-content';
     span.style.border = '3px solid black';
     span.style.padding = '20px';
     span.style.backgroundColor = this.bg_color;
@@ -508,14 +536,15 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
   }
 }
 
-function InputArea (id, border, border_color, padding, inside_color, child) {
+function InputArea (id, border, border_color, padding, inside_color, child, onclick) {
   this.id = id;
   this.border = border;
   this.border_color = border_color;
   this.padding = padding;
   this.inside_color = inside_color;
   this.child = child;
-  
+  this.onclick = onclick;
+
   this.layout;
   this.container = null;
 
@@ -546,5 +575,6 @@ function InputArea (id, border, border_color, padding, inside_color, child) {
     this.layout = new Layout(id, 1, 1, '*', '*', border, 0, this.inside_color, this.border_color, null, [inside]);
     this.layout.render(parent_div);
     this.container = this.layout.container;
+    this.container.onclick = this.onclick;
   }
 }

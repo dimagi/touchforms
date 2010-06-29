@@ -16,6 +16,7 @@ BUTTON_TEXT_COLOR = '#fff';
 TEXT_COLOR = '#000';
 KEYBUTTON_COLOR = '#118';
 BUTTON_SELECTED_COLOR = '#0bf';
+HIGHLIGHT_COLOR = '#ffc';
 
 BACKSPACE_LABEL = '\u21d0';
 
@@ -69,7 +70,7 @@ function initStaticWidgets () {
     'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '4', '5', '6', '',
     'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '.',
     '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', '!', '?', ','     
-  ], null, 1.5, type_));
+  ], null, 1.4, type_));
 
   //progress bar is just static right now -- turn into a dedicated GUI object?
   progressBar.update(new Layout('progress-bar', 1, 2, ['30%', '*'], '*', [10, 10, 15, 15], 0, null, null, null, [
@@ -77,15 +78,15 @@ function initStaticWidgets () {
     new Layout('pb0', 1, 1, '*', '*', 0, 0, HEADER_COLOR, null, null, [null])   
   ]));
 
-  answerText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.2, 'left', 2));
+  answerText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.2, 'left', 0));
   freeTextAnswer = new Layout('answer-bar', 1, 2, ['7*', '*'], '*', [30, 30, 20, 20], 6, null, null, null, [
     answerText,
     new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
   ]);
   
-  dayText = new InputArea('dayinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '', 1.7, 'center', 'middle'));
-  monthText = new InputArea('monthinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '', 1.7, 'center', 'middle'));
-  yearText = new InputArea('yearinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '', 1.7, 'center', 'middle'));  
+  dayText = new InputArea('dayinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '06', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('day');});
+  monthText = new InputArea('monthinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, 'Oct', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('month');});
+  yearText = new InputArea('yearinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '20\u2022\u2022', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('year');});  
   dateAnswer = new Layout('date-bar', 1, 6, [90, 36, 130, 36, 160, 110], '*', ['*', '*', 20, 20], 6, null, null, null, [
     dayText,
     new TextCaption('q-caption', TEXT_COLOR, '\u2013', 1.7, 'center', 'middle'),
@@ -95,11 +96,12 @@ function initStaticWidgets () {
     new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
   ]);
   
-  decadeChoices = new Layout('cdc', 5, 2, 300, 70, '*', 20, null, null, null, 
-    kbs(['2000\u20142010', '1950\u20141959', '1990\u20141999', '1940\u20141949', '1980\u20141989',
-         '1930\u20141939', '1970\u20141979', '1920\u20141929', '1960\u20141969', '1910\u20141919'], null, 1.4, decadeSelected));
-  monthChoices = new Layout('cm', 3, 4, 180, 120, '*', 30, null, null, null, 
-    kbs(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], null, 1.8, monthSelected));
+  tmp = render_button_grid('grid', 5, 2, 350, 70, 20, 'vert', decades, [], decadeSelected, 1.4);
+  decadeChoices = tmp[0];
+  decadeButtons = tmp[1];
+  tmp = render_button_grid('grid', 3, 4, 180, 120, 30, 'horiz', monthNames, [], monthSelected, 1.8);
+  monthChoices = tmp[0];
+  monthButtons = tmp[1];
 }
 
 function helpClicked (ev, x) {
@@ -110,39 +112,359 @@ function helpClicked (ev, x) {
 }
 
 function backClicked (ev, x) {
-  alert('back ' + x);
+  if (activeQuestion["datatype"] == 'date') {
+    dateEntryContext.back();
+  } else {
+    prevQuestion();
+  }
 }
 
 function menuClicked (ev, x) {
-  alert('menu ' + x);
+  alert('show menu');
 }
 
 function nextClicked (ev, x) {
-  answerQuestion();
+  if (activeQuestion["datatype"] == 'date') {
+    dateEntryContext.next();
+  } else {
+    answerQuestion();
+  }
 }
 
 function clearClicked (ev, x) {
-  alert('clear ' + x);
+  type = activeQuestion["datatype"];
+  if (type == "str" || type == "int" || type == "float") {
+    activeInputWidget.setText('');
+  } else if (type == "select" || type == "multiselect") {
+    //not handled yet
+  } else if (type == "date") {
+    dateEntryContext.clear();
+  }
+}
+
+monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+decades = ['2000\u20142010', '1990\u20141999', '1980\u20141989', '1970\u20141979', '1960\u20141969',
+	   '1950\u20141959', '1940\u20141949', '1930\u20141939', '1920\u20141929', '1910\u20141919'];
+function DateWidgetContext (dir, answer) {
+  this.init = function (dir, answer) {
+    this.screen = (dir || answer == null ? 'decade' : 'day');
+    this.setDate(answer);
+  }
+
+  this.setDate = function (datestr) {
+    if (datestr == null) {
+      this.decade = null;
+      this.year = null;
+      this.month = null;
+      this.day = null;
+    } else {
+      this.year = +datestr.substring(0, 4);
+      month = +datestr.substring(5, 7);
+      this.day = +datestr.substring(8, 10);
+      this.month = monthNames[month - 1];
+      this.decade = this.decadeForYear(this.year);
+    }
+    this.changed = false;
+  }
+
+  this.decadeForYear = function (year) {
+    for (i = 0; i < decades.length; i++) {
+      startyear = +decades[i].substring(0, 4);
+      endyear = +decades[i].substring(5, 9);
+      if (startyear <= year && year <= endyear) {
+	return [startyear, endyear];
+      }
+    }
+    return null;
+  }
+
+  this.isFull = function () {
+    return (this.decade != null && this.year != null && this.month != null && this.day != null);
+  }
+
+  this.isEmpty = function () {
+    return (this.decade == null && this.year == null && this.month == null && this.day == null);
+  }
+
+  this.isValid = function () {
+    return (this.isFull() && this.day <= daysInMonth(this.month, this.year));
+  }
+
+  this.getDate = function () {
+    if (this.isFull()) {
+      dateout = this.year + '-';
+      monthnum = monthNames.indexOf(this.month) + 1;
+      dateout += (monthnum < 10 ? '0' : '') + monthnum + '-';
+      dateout += (this.day < 10 ? '0' : '') + this.day;
+      return dateout;
+    } else {
+      return null;
+    }				   
+  }
+
+  this.refresh = function () {
+    questionEntry.update(freeEntry);
+    answerBar.update(dateAnswer);
+    if (this.year != null) {
+      yearText.setText(this.year + '');
+    } else if (this.decade != null) {
+      sstart = this.decade[0] + '';
+      send = this.decade[1] + '';
+      syear = '';
+      for (i = 0; i < 4; i++) {
+	if (sstart[i] == send[i]) {
+	  syear += sstart[i];
+	} else {
+	  break;
+	}
+      }
+      while (syear.length < 4) {
+	syear += '\u2022';
+      }
+      yearText.setText(syear);
+    } else {
+      yearText.setText('');
+    }
+    monthText.setText(this.month != null ? this.month : '');
+    dayText.setText(this.day != null ? (this.day < 10 ? '0' : '') + this.day : '');
+
+    if (this.screen == 'decade') {
+      selectWidget = decadeChoices;
+      activeInputWidget = decadeButtons;
+      this.select(this.decade, this.decade != null ? this.decade[0] + '\u2014' + this.decade[1] : null);
+      this.highlight();
+    } else if (this.screen == 'year') {
+      tmp = yearSelect(this.decade[0], this.decade[1]);
+      selectWidget = tmp[0];
+      activeInputWidget = tmp[1];
+      this.select(this.year);
+      this.highlight();
+    } else if (this.screen == 'month') {
+      selectWidget = monthChoices;
+      activeInputWidget = monthButtons;
+      this.select(this.month);
+      this.highlight();
+    } else if (this.screen == 'day') {
+      tmp = daySelect(daysInMonth(this.month, this.year));
+      selectWidget = tmp[0];
+      activeInputWidget = tmp[1];
+      this.select(this.day);
+      this.highlight();
+    }
+    freeEntryKeyboard.update(selectWidget);
+  }
+
+  this.select = function (val, caption) {
+    clearButtons();
+    if (val != null) {
+      b = getButtonByCaption((caption != null ? caption : val) + '');
+      if (b != null) {
+	b.setStatus('selected');
+      }
+    }
+  }
+
+  this.highlight = function () {
+    yearText.setBgColor(this.screen == 'decade' || this.screen == 'year' ? HIGHLIGHT_COLOR : '#fff');
+    monthText.setBgColor(this.screen == 'month' ? HIGHLIGHT_COLOR : '#fff');
+    dayText.setBgColor(this.screen == 'day' ? HIGHLIGHT_COLOR : '#fff');
+  }
+
+  this.clear = function () {
+    if (this.getDate() != null)
+      this.changed = true;
+
+    this.decade = null;
+    this.year = null;
+    this.month = null;
+    this.day = null;
+    this.refresh();
+  }
+
+  this.next = function () {
+    if (this.isEmpty() || this.isFull()) {
+      if (this.isEmpty() || this.isValid()) {
+	answerQuestion();
+      } else {
+	showError('This is not a valid date.');
+      }
+    } else {
+      currentScreenVal = null;
+      for (i = 0; i < activeInputWidget.length; i++) {
+	if (activeInputWidget[i].status == 'selected') {
+	  currentScreenVal = activeInputWidget[i].caption;
+	  break;
+	}
+      }
+
+      if (currentScreenVal == null) {
+	showError('Please pick a ' + (this.screen == 'decade' ? 'year' : this.screen) + '. To skip this question and leave it blank, click \'CLEAR\' first.');
+	return;
+      } else {
+	this.screen = this.getEmptyScreen();
+      }
+      this.refresh();
+    }
+  }
+
+  this.getEmptyScreen = function () {
+    if (this.decade == null) {
+      return 'decade';
+    } else if (this.year == null) {
+      return 'year';
+    } else if (this.month == null) {
+      return 'month';
+    } else if (this.day == null) {
+      return 'day';
+    } else {
+      return null;
+    }
+  }
+
+  this.getNextScreen = function () {
+    screens = ['decade', 'year', 'month', 'day'];
+    i = screens.indexOf(this.screen) + 1;
+    return (i >= screens.length ? null : screens[i]);
+  }
+
+  this.getPrevScreen = function () {
+    screens = ['decade', 'year', 'month', 'day'];
+    i = screens.indexOf(this.screen) - 1;
+    return (i < 0 ? null : screens[i]);
+  }
+
+  this.selected = function (field, val) {
+    if (field == 'decade') {
+      olddecade = this.decade;
+      startyear = +val.substring(0, 4);
+      endyear = +val.substring(5, 9);
+      this.decade = [startyear, endyear];
+      if (olddecade == null || olddecade[0] != this.decade[0] || olddecade[1] != this.decade[1]) {
+	this.changed = true;
+	this.year = null;
+      }
+    } else if (field == 'year') {
+      oldyear = this.year;
+      this.year = val;
+      if (oldyear != this.year) {
+	this.changed = true;
+	this.decade = this.decadeForYear(val);
+      }
+    } else if (field == 'month') {
+      oldmonth = this.month;
+      this.month = val;
+      if (oldmonth != this.month)
+	this.changed = true;
+    } else if (field == 'day') {
+      oldday = this.day;
+      this.day = val;
+      if (oldday != this.day)
+	this.changed = true;
+    }
+    this.select(val);
+
+    if (this.screen == 'day') {
+      if (!this.isFull()) {
+	this.screen = this.getEmptyScreen();
+      } else {
+	//stay on current screen; must click 'next' to advance question
+      }
+    } else {
+      this.screen = this.getNextScreen();
+    }
+
+    this.refresh();
+  }
+
+  this.back = function () {
+    if (this.isEmpty() || (this.isFull() && !this.changed)) {
+      prevQuestion();
+    } else {
+      pscr = this.getPrevScreen();
+      if (pscr != null) {
+	this.screen = pscr;
+	this.refresh();
+      } else {
+	prevQuestion();
+      }
+    }
+  }
+
+  this.goto_ = function (field) {
+    this.screen = (field == 'year' ? 'decade' : field);
+    this.refresh();
+  }
+
+  this.init(dir, answer);
+}
+
+function isLeap (year) {
+  return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
+}
+
+function daysInMonth (month, year) {
+  if (month == null)
+    return 31;
+  if (year == null && month == 'Feb')
+    return 28;
+
+  if (month == 'Feb') {
+    return 28 + (isLeap(year) ? 1 : 0);
+  } else if (month == 'Apr' || month == 'Jun' || month == 'Sep' || month == 'Nov') {
+    return 30;
+  } else {
+    return 31;
+  }
 }
 
 function decadeSelected (ev, x) {
-  alert('decade ' + x);
+  dateEntryContext.selected('decade', x);
 }
 
 function yearSelected (ev, x) {
-  alert('year ' + x);
+  dateEntryContext.selected('year', x);
 }
 
 function monthSelected (ev, x) {
-  alert('month ' + x);
+  dateEntryContext.selected('month', x);
 }
 
 function daySelected (ev, x) {
-  alert('day ' + x);
+  dateEntryContext.selected('day', x);
+}
+
+function getButtonByCaption (caption) {
+  for (i = 0; i < activeInputWidget.length; i++) {
+    if (activeInputWidget[i].caption == caption) {
+      return activeInputWidget[i];
+    }
+  }
+  return null;
+}
+
+function getButtonID (button) {
+  for (i = 0; i < activeInputWidget.length; i++) {
+    if (activeInputWidget[i] == button) {
+      return i + 1;
+    }
+  }
+  return -1;
+}
+
+function clearButtons (except) {
+  for (i = 0; i < activeInputWidget.length; i++) {
+    if (activeInputWidget[i] != except) {
+      activeInputWidget[i].setStatus('default');
+    }
+  }
 }
 
 function choiceSelected (ev, x) {
-  alert('choice ' + x);
+  b = getButtonByCaption(x);
+  b.toggleStatus();
+  if (activeQuestion["datatype"] == "select") {
+    clearButtons(b);
+  }
 }
 
 function showError (text) {
@@ -156,7 +478,7 @@ function showError (text) {
 function kb (lab, sz, col, onclick, centered) {
   if (col == null)
     col = KEYBUTTON_COLOR;
-  return new TextButton('button-' + lab, col, BUTTON_TEXT_COLOR, null, null, lab, sz, (onclick != null ? function (ev) { onclick(ev, lab); } : null), centered);
+  return new TextButton('button-' + lab, col, BUTTON_TEXT_COLOR, BUTTON_SELECTED_COLOR, null, lab, sz, (onclick != null ? function (ev) { onclick(ev, lab); } : null), centered);
 }
   
 /* utility function to generate an array of keybaord buttons for... a keyboard */
@@ -167,14 +489,19 @@ function kbs (infos, def_color, def_sz, onclick, centered) {
     if (info != null) {
       if (info instanceof Array) {
         var lab = info[0];
-        var col = info.length > 1 ? info[1] : def_color;
-        var sz = info.length > 2 ? info[2] : def_sz;
+        var col = info.length > 1 && info[1] != null ? info[1] : def_color;
+        var sz = info.length > 2 && info[2] != null ? info[2] : def_sz;
+        var selected = info.length > 3 ? info[3] : false;
       } else {
         var lab = info;
         var col = def_color;
         var sz = def_sz;
+        var selected = false;
       }
       var st = kb(lab, sz, col, onclick, centered);
+      if (selected) {
+        st.setStatus('selected');
+      }
     } else {
       var st = null;
     }
@@ -183,23 +510,25 @@ function kbs (infos, def_color, def_sz, onclick, centered) {
   return stuff;
 }
 
-function yearSelect (decade) {
-  var offsets = [0, 5, 1, 6, 2, 7, 3, 8, 4, 9];
-  var years = new Array();
-  for (var i = 0; i < offsets.length; i++) {
-    years.push(String(decade + offsets[i]));
+//todo: support ranges other than decade
+function yearSelect (minyear, maxyear) {
+  if (maxyear == null)
+    maxyear = minyear + 9;
+
+  var years = [];
+  for (var o = minyear; o <= maxyear; o++) {
+    years.push(o + '');
   }
-  return new Layout('cy', 5, 2, 300, 70, '*', 20, null, null, null, kbs(years, null, 1.4, yearSelected));
+
+  return render_button_grid('grid', 5, Math.ceil((maxyear - minyear + 1) / 5), (maxyear - minyear) > 9 ? 220 : 350, 70, 20, 'vert', years, [], yearSelected, 1.4);
 }
 
 function daySelect (monthLength) {
-  var r = 5;
-  var c = 7;
   var days = new Array();
-  for (var i = 1; i <= r * c; i++) {
-    days.push(i <= monthLength ? i : null);
+  for (var i = 1; i <= monthLength; i++) {
+    days.push(i + '');
   }
-  return new Layout('cd', r, c, 85, 85, '*', 15, null, null, null, kbs(days, null, 1.6, daySelected));
+  return render_button_grid('grid', 5, 7, 85, 85, 15, 'horiz', days, [], daySelected, 1.4);
 }
 
 function getTextExtent (text, size, bounding_width) {
@@ -350,7 +679,10 @@ function choiceSelect (choices, selected) {
   }
     
   //2) render choices according to layout parameters
-  
+  return render_button_grid(style, rows, cols, width, height, spacing, dir, choices, selected, choiceSelected, text_scale);
+}
+
+function render_button_grid (style, rows, cols, width, height, spacing, dir, choices, selected, func, text_scale) {
   if (style == 'list') {
     var margins = [30, '*', 30, '*'];
   } else if (style == 'grid') {
@@ -361,19 +693,31 @@ function choiceSelect (choices, selected) {
   for (var r = 0; r < rows; r++) {
     for (var c = 0; c < cols; c++) {
       var i = (dir == 'horiz' ? cols * r + c : rows * c + r);
-      if (i > choices.length) {
+      if (i >= choices.length) {
         var cell = null;
       } else {
         var cell = choices[i];
-        if (selected.indexOf(i) != -1) {
-          cell = [cell, BUTTON_SELECTED_COLOR];
-        }
+        if (selected != null && selected.indexOf(i + 1) != -1) {
+          cell = [cell, null, null, true];
+	}
       }
       cells.push(cell);
     }
   }
 
-  return new Layout('ch', rows, cols, width, height, margins, spacing, null, null, null, kbs(cells, null, text_scale, choiceSelected, style == 'grid'));  
+  button_grid = kbs(cells, null, text_scale, func, style == 'grid');
+  buttons = []
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      var i = (dir == 'horiz' ? cols * r + c : rows * c + r);
+      if (i < choices.length) {
+        buttons[i] = button_grid[cols * r + c];
+      }
+    }
+  }  
+
+  layout_info = new Layout('ch', rows, cols, width, height, margins, spacing, null, null, null, button_grid);
+  return [layout_info, buttons];
 }
 
 function render_clean () {

@@ -9,7 +9,7 @@ function loadForm (formName) {
 
 function renderEvent (event, dirForward) {
   if (event["type"] == "question") {
-    renderQuestion(event);
+    renderQuestion(event, dirForward);
   } else if (event["type"] == "form-complete") {
     formComplete(event);
   } else if (event["type"] == "sub-group") {
@@ -25,17 +25,7 @@ function renderEvent (event, dirForward) {
   }
 }
 
-/*
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(freeTextAnswer); freeEntryKeyboard.update(numPad);">numeric entry</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(freeTextAnswer); freeEntryKeyboard.update(keyboard);">text entry</button>
-    <button onClick="questionEntry.update(choiceSelect(['Male', 'Female'], []));">multiple choice</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(decadeChoices);">date: year 1/2</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(yearSelect(1990));">date: year 2/2</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(monthChoices);">date: month</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(daySelect(29));">date: day</button>
-*/
-    
-function renderQuestion (event) {
+function renderQuestion (event, dir) {
   activeQuestion = event;
   questionCaption.setText(event["caption"]);
  
@@ -45,33 +35,27 @@ function renderQuestion (event) {
     questionEntry.update(freeEntry);
     answerBar.update(freeTextAnswer);
     freeEntryKeyboard.update(event["datatype"] == 'str' ? keyboard : numPad);    
+    activeInputWidget = answerText;
     
     if (event["answer"] != null) {
       answerText.setText(event["answer"]);
     }
   } else if (event["datatype"] == "select" || event["datatype"] == "multiselect") {
-    for (i = 0; i < event["choices"].length; i++) {
-      ord = i + 1;
-    
-      caption = document.createElement("span");
-      caption.textContent = event["choices"][i] + "   ";
-    
-      input = document.createElement("input");
-      input.type = (event["datatype"] == "select" ? "radio" : "checkbox");
-      input.name = "select";
-      input.value = ord;
-      if (event["answer"] != null) {
-        input.checked = (event["datatype"] == "select" ? ord == event["answer"] : event["answer"].indexOf(ord) != -1);
-      }
-        
-      _$("control").appendChild(caption);
-      _$("control").appendChild(input);
-      _$("control").appendChild(document.createElement("br"));
-    }
+    selections = (event["datatype"] == "select" ? [event["answer"]] : event["answer"]);
+    chdata = choiceSelect(event["choices"], selections);
+    questionEntry.update(chdata[0]);
+    activeInputWidget = chdata[1];
+  } else if (event["datatype"] == "date") {
+    dateEntryContext = new DateWidgetContext(dir, event["answer"]);
+    dateEntryContext.refresh();
   } else if (event["datatype"] == "info") {
     questionEntry.update(null);
   } else {
     alert("unrecognized datatype [" + event["datatype"] + "]");
+  }
+
+  if (event["answer"] == null) {
+    clearClicked();
   }
 }
 
@@ -81,20 +65,20 @@ function getQuestionAnswer () {
   if (type == "str" || type == "int" || type == "float") {
     return answerText.child.control.value;
   } else if (type == "select" || type == "multiselect") {
-    answer = [];
-    choices = document.getElementsByName("select");
-    for (i = 0; i < choices.length; i++) {
-      choice = choices[i];
-      if (choice.checked) {
-        answer.push(choice.value);
+    selected = [];
+    for (i = 0; i < activeInputWidget.length; i++) {
+      if (activeInputWidget[i].status == 'selected') {
+        selected.push(getButtonID(activeInputWidget[i]));
       }
     }
     
     if (type == "select") {
-      return answer.length > 0 ? answer[0] : null;
+      return selected.length > 0 ? selected[0] : null;
     } else {
-      return answer;
+      return selected;
     }
+  } else if (type == "date") {
+    return dateEntryContext.getDate();
   } else if (type == "info") {
     return null;
   }
@@ -144,7 +128,17 @@ function post_to_url(path, params, method) {
     form.submit();
 }
 function formComplete (event) {
+  //for demo
+  overlay.setText(event["output"]);
+  overlay.setBgColor('#dd6');
+  overlay.setTimeout(null);
+  $('#overlay-content')[0].style.fontSize = '60%';
+  overlay.setActive(true);
+
+
+  /*
     // POST the response back to ourselves for further processing
     post_to_url("", event)
+  */
 }
 

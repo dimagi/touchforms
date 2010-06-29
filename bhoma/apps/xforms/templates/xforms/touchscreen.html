@@ -30,38 +30,28 @@ function init () {
   <body id="body" onLoad="init();" style="
     cursor: crosshair; /* change cursor */
     overflow: hidden;  /* disable scrolling */
-    font-family: 
-    sans-serif; 
+    font-family: sans-serif; 
     font-size: xx-large;"
     oncontextmenu="return false;"> <!-- disable right-click -->
     <div id="viewport" style="
       -moz-user-select: -moz-none; /* disable ability to select static text */
       position: absolute;
       left: 0px;
-      top: 50px;
+      top: 0px;
       width: 1024px;
       height: 768px;
       background-color: red;
-      margin: 15px;">
+      margin: 0px;">
     </div>
     
     <!-- an off-screen area to temporarily dump text and play with text sizing -->
-    <div id="staging" style="position: absolute; left: 0px; top: 1000px; width: 1500px; height: 1500px; background-color: #ddd;">
+    <div id="staging" style="position: absolute; left: 0px; top: 1000px; width: 1500px; height: 1500px; background-color: #ddd; font-weight: bold;">
       <span id="snippet"></span>
     </div>
     
     <!-- stick form uid here to aid with backslash escaping -->
     <input id="form-uid" type="hidden" value="{{xform.file.path}}">
-   
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(freeTextAnswer); freeEntryKeyboard.update(numPad);">numeric entry</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(freeTextAnswer); freeEntryKeyboard.update(keyboard);">text entry</button>
-    <button onClick="questionEntry.update(choiceSelect(['Male', 'Female'], []));">multiple choice</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(decadeChoices);">date: year 1/2</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(yearSelect(1990));">date: year 2/2</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(monthChoices);">date: month</button>
-    <button onClick="questionEntry.update(freeEntry); answerBar.update(dateAnswer); freeEntryKeyboard.update(daySelect(29));">date: day</button>
-    <button onclick="overlay.setActive(true);">overlay</button>
-    <button onclick="yearText.setBgColor('#fdd');"">toggle bg</button>
+
   </body>
 </html>
 
