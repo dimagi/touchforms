@@ -164,6 +164,7 @@ function DateWidgetContext (dir, answer) {
       this.month = monthNames[month - 1];
       this.decade = this.decadeForYear(this.year);
     }
+    this.changed = false;
   }
 
   this.decadeForYear = function (year) {
@@ -256,7 +257,10 @@ function DateWidgetContext (dir, answer) {
   this.select = function (val, caption) {
     clearButtons();
     if (val != null) {
-      getButtonByCaption((caption != null ? caption : val) + '').setStatus('selected');
+      b = getButtonByCaption((caption != null ? caption : val) + '');
+      if (b != null) {
+	b.setStatus('selected');
+      }
     }
   }
 
@@ -267,6 +271,9 @@ function DateWidgetContext (dir, answer) {
   }
 
   this.clear = function () {
+    if (this.getDate() != null)
+      this.changed = true;
+
     this.decade = null;
     this.year = null;
     this.month = null;
@@ -276,7 +283,7 @@ function DateWidgetContext (dir, answer) {
 
   this.next = function () {
     if (this.isEmpty() || this.isFull()) {
-      if (this.isValid()) {
+      if (this.isEmpty() || this.isValid()) {
 	answerQuestion();
       } else {
 	showError('This is not a valid date.');
@@ -315,15 +322,15 @@ function DateWidgetContext (dir, answer) {
   }
 
   this.getNextScreen = function () {
-    if (this.screen == 'decade') {
-      return 'year';
-    } else if (this.screen == 'year') {
-      return 'month';
-    } else if (this.screen == 'month') {
-      return 'day';
-    } else {
-      return null;
-    }
+    screens = ['decade', 'year', 'month', 'day'];
+    i = screens.indexOf(this.screen) + 1;
+    return (i >= screens.length ? null : screens[i]);
+  }
+
+  this.getPrevScreen = function () {
+    screens = ['decade', 'year', 'month', 'day'];
+    i = screens.indexOf(this.screen) - 1;
+    return (i < 0 ? null : screens[i]);
   }
 
   this.selected = function (field, val) {
@@ -332,15 +339,27 @@ function DateWidgetContext (dir, answer) {
       startyear = +val.substring(0, 4);
       endyear = +val.substring(5, 9);
       this.decade = [startyear, endyear];
-      if (this.decade != olddecade)
+      if (olddecade == null || olddecade[0] != this.decade[0] || olddecade[1] != this.decade[1]) {
+	this.changed = true;
 	this.year = null;
+      }
     } else if (field == 'year') {
+      oldyear = this.year;
       this.year = val;
-      this.decade = this.decadeForYear(val);
+      if (oldyear != this.year) {
+	this.changed = true;
+	this.decade = this.decadeForYear(val);
+      }
     } else if (field == 'month') {
+      oldmonth = this.month;
       this.month = val;
+      if (oldmonth != this.month)
+	this.changed = true;
     } else if (field == 'day') {
+      oldday = this.day;
       this.day = val;
+      if (oldday != this.day)
+	this.changed = true;
     }
     this.select(val);
 
@@ -358,7 +377,17 @@ function DateWidgetContext (dir, answer) {
   }
 
   this.back = function () {
-    alert('date back');
+    if (this.isEmpty() || (this.isFull() && !this.changed)) {
+      prevQuestion();
+    } else {
+      pscr = this.getPrevScreen();
+      if (pscr != null) {
+	this.screen = pscr;
+	this.refresh();
+      } else {
+	prevQuestion();
+      }
+    }
   }
 
   this.goto_ = function (field) {
