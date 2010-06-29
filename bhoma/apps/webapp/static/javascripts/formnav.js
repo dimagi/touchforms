@@ -42,7 +42,7 @@ function renderQuestion (event, dir) {
     }
   } else if (event["datatype"] == "select" || event["datatype"] == "multiselect") {
     selections = (event["datatype"] == "select" ? [event["answer"]] : event["answer"]);
-    chdata = choiceSelect(event["choices"], selections);
+    chdata = choiceSelect(event["choices"], selections, event["datatype"] == "multiselect");
     questionEntry.update(chdata[0]);
     activeInputWidget = chdata[1];
   } else if (event["datatype"] == "date") {

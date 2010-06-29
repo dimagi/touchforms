@@ -433,9 +433,17 @@ function daySelected (ev, x) {
   dateEntryContext.selected('day', x);
 }
 
+function normcap (caption) {
+  if (caption.length >= 2 && (caption.substring(0, 1) == '\u2610' || caption.substring(0, 1) == '\u2612')) {
+    return caption.substring(2);
+  } else {
+    return caption;
+  }
+}
+
 function getButtonByCaption (caption) {
   for (i = 0; i < activeInputWidget.length; i++) {
-    if (activeInputWidget[i].caption == caption) {
+    if (normcap(activeInputWidget[i].caption) == normcap(caption)) {
       return activeInputWidget[i];
     }
   }
@@ -464,6 +472,8 @@ function choiceSelected (ev, x) {
   b.toggleStatus();
   if (activeQuestion["datatype"] == "select") {
     clearButtons(b);
+  } else {
+    b.setText((b.status == 'selected' ? '\u2612 ' : '\u2610 ') + b.caption.substring(2));
   }
 }
 
@@ -547,7 +557,13 @@ function buttonDimensions (textdim) {
   return [Math.round(1.1 * textdim[0] + 0.7 * textdim[1]), Math.round(textdim[1] * 1.5)];
 }
 
-function choiceSelect (choices, selected) {
+function choiceSelect (choices, selected, multi) {
+  if (multi) {
+    for (i = 0; i < choices.length; i++) {
+      choices[i] = '\u2610 ' + choices[i];
+    }
+  }
+
   //1) analysis of choices to determine optimum layout
 
   //available size of choice area (ideally we should determine this dynamically; too tough for now)
@@ -679,10 +695,10 @@ function choiceSelect (choices, selected) {
   }
     
   //2) render choices according to layout parameters
-  return render_button_grid(style, rows, cols, width, height, spacing, dir, choices, selected, choiceSelected, text_scale);
+  return render_button_grid(style, rows, cols, width, height, spacing, dir, choices, selected, choiceSelected, text_scale, multi);
 }
 
-function render_button_grid (style, rows, cols, width, height, spacing, dir, choices, selected, func, text_scale) {
+function render_button_grid (style, rows, cols, width, height, spacing, dir, choices, selected, func, text_scale, multi) {
   if (style == 'list') {
     var margins = [30, '*', 30, '*'];
   } else if (style == 'grid') {
@@ -696,9 +712,10 @@ function render_button_grid (style, rows, cols, width, height, spacing, dir, cho
       if (i >= choices.length) {
         var cell = null;
       } else {
-        var cell = choices[i];
         if (selected != null && selected.indexOf(i + 1) != -1) {
-          cell = [cell, null, null, true];
+          var cell = [(multi ? '\u2612' + choices[i].substring(1) : choices[i]), null, null, true];
+	} else {
+	  var cell = choices[i];
 	}
       }
       cells.push(cell);
