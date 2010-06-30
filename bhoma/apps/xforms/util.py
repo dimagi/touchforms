@@ -5,7 +5,7 @@ from bhoma.apps.xforms.models import CXFormInstance
 from bhoma.apps.xforms.exceptions import XFormException
 
 def get_xform_by_namespace(namespace):
-    matches = XForm.objects.filter(namespace=namespace).order_by("-version")
+    matches = XForm.objects.filter(namespace=namespace).order_by("-version", "-created")
     if matches.count() > 0:
         return matches[0]
     else:
