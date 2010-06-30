@@ -200,6 +200,7 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
   this.status = 'default';
 
   this.container = null;
+  this.span = null;
   this.render = function (parent_div) {  
     this.container = parent_div;
     parent_div.id = uid(this.id);
@@ -214,8 +215,15 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
     if (!this.centered) {
       span.style.marginLeft = .25 * parent_div.clientHeight + 'px';
     }
+    this.span = span;
     
     parent_div.style.MozBorderRadius = '10px';
+  }
+
+  this.setText = function (text) {
+    this.caption = text;
+    if (this.span != null)
+      this.span.textContent = text;
   }
 
   this.setColor = function () {
