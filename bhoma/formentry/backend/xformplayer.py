@@ -10,6 +10,7 @@ from java.io import StringReader
 from preloadhandler import StaticPreloadHandler
     
 from setup import init_classpath
+import logging
 init_classpath()
 
 from org.javarosa.xform.parse import XFormParser
@@ -90,6 +91,7 @@ def load_form(xform, instance=None, preload_data={}):
     #todo: fix circular import
     for key, data_dict in preload_data.items():
         handler = StaticPreloadHandler(key, data_dict)
+        logging.debug("Adding preloader for %s data: %s" % (key, data_dict))
         form.getPreloader().addPreloadHandler(handler)
     form.initialize(instance == None)
     return form

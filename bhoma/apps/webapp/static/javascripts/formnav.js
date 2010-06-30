@@ -1,7 +1,9 @@
 
 
-function loadForm (formName) {
-  jQuery.post(XFORM_URL, JSON.stringify({'action': 'new-form', 'form-name': formName}), function (resp) {
+function loadForm (formName, preloadData) {
+  jQuery.post(XFORM_URL, JSON.stringify({'action': 'new-form', 
+                                         'form-name': formName,
+                                         'preloader-data': preloadData }), function (resp) {
     gSessionID = resp["session_id"];
     renderEvent(resp["event"], true);
   }, "json");
@@ -143,13 +145,11 @@ function post_to_url(path, params, method) {
         hiddenField.setAttribute("type", "hidden");
         hiddenField.setAttribute("name", key);
         hiddenField.setAttribute("value", params[key]);
-
         form.appendChild(hiddenField);
     }
-
     form.submit();
 }
 function formComplete (event) {
     // POST the response back to ourselves for further processing
-    post_to_url("", event)
+    post_to_url("", event);
 }
