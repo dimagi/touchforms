@@ -36,7 +36,16 @@ function renderQuestion (event, dir) {
       event["datatype"] == "float") {
     questionEntry.update(freeEntry);
     answerBar.update(freeTextAnswer);
-    freeEntryKeyboard.update(event["datatype"] == 'str' ? keyboard : numPad);    
+
+    if (event["datatype"] == "str") {
+      kbd = keyboard;
+    } else if (event["datatype"] == "int") {
+      kbd = numPad;
+    } else if (event["datatype"] == "float") {
+      kbd = numPadDecimal;
+    }
+
+    freeEntryKeyboard.update(kbd);    
     activeInputWidget = answerText;
     
     if (event["answer"] != null) {

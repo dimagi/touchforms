@@ -64,6 +64,10 @@ function initStaticWidgets () {
 
   numPad = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
             kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', null, '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
+  numPadDecimal = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
+            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
+  numPadPhone = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
+            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
   
   keyboard = new Layout('text-kbd', 4, 13, 68, 85, '*', 6, null, null, null, kbs([
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', '7', '8', '9', [BACKSPACE_LABEL, '#aaa'],
@@ -126,6 +130,8 @@ function menuClicked (ev, x) {
 function nextClicked (ev, x) {
   if (activeQuestion["datatype"] == 'date') {
     dateEntryContext.next();
+  } else if (activeQuestion["datatype"] == 'float' && isNaN(+answerText.child.control.value)) {
+    showError("Not a valid number");
   } else {
     answerQuestion();
   }
