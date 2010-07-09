@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block content %}
+<span style="text-align:center">
+<div class="span-24">
+    <h2>Main Menu</h2>
+</div>
+<div class="span-12">
+    <h3><a href="{% url patient_search %}">Enter Data</a></h3>
+</div>
+<div class="span-12 last">
+    <h3><a href="{% url report_list %}">View Reports</a></div></h3>
+</span>
+{% endblock %}
