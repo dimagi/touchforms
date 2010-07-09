@@ -3,7 +3,7 @@
         <div class="span-12">
             <h1><a href="/">BHOMA</a></h1>
 		</div>
-        <div class="span-12 last"><br></div>
+        <div class="span-12 last" style="text-align:right">
             {% if user.is_authenticated %}        
                 Logged in as <strong>{{user}}</strong>&nbsp;&nbsp;|&nbsp;&nbsp;  
                 <a href="{% url bhoma.apps.webapp.views.logout %}">Log out</a>          
