@@ -1,5 +1,5 @@
 from bhoma.apps.xforms.models import XForm
-from bhoma.utils.post import post_data
+from bhoma.utils.post import post_data, post_authenticated_data
 from django.conf import settings
 from bhoma.apps.xforms.models import CXFormInstance
 from bhoma.apps.xforms.exceptions import XFormException
@@ -19,7 +19,13 @@ def post_xform_to_couch(instance):
     Returns the newly created document from couchdb, or raises an
     exception if anything goes wrong
     """
-    response, errors = post_data(instance, settings.XFORMS_POST_URL)
+    # check settings for authentication credentials
+    if settings.BHOMA_COUCH_USERNAME:
+        response, errors = post_authenticated_data(instance, settings.XFORMS_POST_URL, 
+                                                   settings.BHOMA_COUCH_USERNAME, 
+                                                   settings.BHOMA_COUCH_PASSWORD)
+    else:
+        response, errors = post_data(instance, settings.XFORMS_POST_URL)
     if not errors and not "error" in response:
         doc_id = response
         return CXFormInstance.get_db().get(doc_id)
