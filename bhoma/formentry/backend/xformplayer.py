@@ -134,6 +134,7 @@ class XFormSession:
             event['type'] = 'form-start'
         elif status == self.fec.EVENT_END_OF_FORM:
             event['type'] = 'form-complete'
+	    self.fem.getForm().postProcessInstance()
         elif status == self.fec.EVENT_QUESTION:
             event['type'] = 'question'
             self._parse_question(event)
