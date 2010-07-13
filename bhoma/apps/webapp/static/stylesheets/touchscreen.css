@@ -1,0 +1,127 @@
+#viewport {
+    cursor: crosshair; /* change cursor */
+    overflow: hidden;  /* disable scrolling */
+    font-family: sans-serif; 
+    font-size: xx-large;
+    -moz-user-select: -moz-none; 
+    
+    position: absolute; 
+    left: 0px; 
+    top: 0px; 
+    width: 1024px; 
+    height: 768px; 
+    background-color: red; 
+    margin: 0px;
+}
+
+#title {
+	display: block;
+    position: absolute; 
+    top: 0px; 
+    left: 0px; 
+    width: 929px; 
+    height: 44px; 
+    background-color: rgb(221, 221, 238);
+}
+
+#title td {
+    font-weight: bold; 
+    font-size: 100%; /* why doesn't this work? */ 
+    font-size: xx-large;
+    color: rgb(0, 0, 0);
+}
+
+#help-button {
+    position: absolute; 
+    top: 0px; 
+    left: 934px; 
+    width: 50px; 
+    height: 44px; 
+    background-color: rgb(170, 170, 170); 
+    -moz-border-radius: 10px 10px 10px 10px;
+}
+
+#footer {
+    position: absolute; 
+    top: 678px; 
+    left: 10px; 
+    width: 1004px; 
+    height: 80px; 
+    background-color: rgb(170, 187, 221);
+}
+
+#footer-inner {
+    position: absolute; 
+    top: 6px; 
+    left: 10px; 
+    width: 984px; 
+    height: 64px; 
+    background-color: rgb(170, 187, 221);
+}
+
+.footer-button {
+    width: 150px; 
+    height: 64px;
+    cursor: pointer;
+    -moz-border-radius: 10px 10px 10px 10px;  
+}
+
+
+.encounter-button {
+    width: 450px; 
+    height: 64px;
+    cursor: pointer;
+    -moz-border-radius: 10px 10px 10px 10px;
+    margin: 15px;
+    background-color: rgb(17, 17, 136);
+
+}
+.encounter-button td {
+    font-weight: bold; 
+    color: rgb(255, 255, 255);   
+    font-size: xx-large; 
+}
+
+.footer-button td {
+    font-weight: bold; 
+    font-size: 90%; 
+    color: rgb(255, 255, 255);
+}
+
+#back-button {
+    position: absolute; 
+    top: 6px; 
+    left: 10px; 
+    background-color: rgb(102, 170, 221); 
+}
+
+#menu-button {
+    position: absolute; 
+    top: 6px; 
+    left: 166px; 
+    background-color: rgb(221, 34, 51); 
+}
+
+#next-button {
+    position: absolute; 
+    top: 6px; 
+    left: 844px; 
+    background-color: rgb(17, 170, 51); 
+}
+
+#progress-bar {
+    position: absolute; 
+    top: 6px; 
+    left: 322px; 
+    background-color: rgb(170, 187, 221);
+}
+
+#progress-bar-inner {
+    position: absolute; 
+    top: 15px; 
+    left: 10px; 
+    width: 496px; 
+    height: 34px; 
+    background-color: rgb(170, 187, 221);
+}
+

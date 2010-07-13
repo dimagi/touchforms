@@ -1,0 +1,105 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+    <link rel="stylesheet" href="{{MEDIA_URL}}webapp/stylesheets/touchscreen.css" type="text/css" >
+  </head>
+<body>
+    <!-- disable right-click -->
+    <div id="viewport" >
+        <div style="position: absolute; top: 0px; left: 0px; width: 1024px; height: 768px; background-color: rgb(0, 0, 0);" id="main">
+            <div style="position: absolute; top: 10px; left: 10px; width: 1004px; height: 748px;" id="main-inner"></div>
+            <div style="position: absolute; top: 10px; left: 10px; width: 1004px; height: 60px; background-color: rgb(221, 221, 238);" id="header">
+                <div style="position: absolute; top: 10px; left: 10px; width: 984px; height: 44px;" id="header-inner"></div>
+                <div style="position: absolute; top: 10px; left: 10px; width: 984px; height: 44px; background-color: rgb(221, 221, 238);" id="top-bar">
+                    <div id="title">
+                        <table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%">
+                            <tbody>
+                                <tr>
+                                    <td align="left" valign="top">
+                                    {% block header %}
+                                        {{ options.header|default:"Your header goes here" }}
+                                    {% endblock %}    
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="help-button">
+                        <table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%">
+                            <tbody>
+                                <tr>
+                                    <td align="center" valign="middle"><span style="font-weight: bold; font-size: 100%; color: rgb(255, 255, 255);">?</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div style="position: absolute; top: 70px; left: 10px; width: 1004px; height: 608px; background-color: rgb(238, 238, 255);" id="entry">
+                <div style="position: absolute; top: 0px; left: 10px; width: 984px; height: 608px;" id="entry-inner">
+                    {% block touchscreen_content %}
+                    {% endblock %}
+                </div>
+            </div>
+            {% block footer %}
+            <div id="footer">
+                <div  id="footer-inner"></div>
+{% if options.backbutton.show %}
+                <div id="back-button" class="footer-button" onclick="location.href='{{options.backbutton.link|default:"#"}}'">
+                    <table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%">
+                        <tbody>
+                            <tr>
+                                <td align="center" valign="middle">{{ options.backbutton.text|default:"BACK" }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+{% endif %}
+{% if options.menubutton.show %}
+                <div id="menu-button" class="footer-button" onclick="location.href='{{options.menubutton.link|default:"#"}}'">
+                    <table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%">
+                        <tbody>
+                            <tr>
+                                <td align="center" valign="middle">{{ options.menubutton.text|default:"MENU" }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+{% endif %}
+                <!-- what goes here?
+                <div id="progress-bar">
+                    <div id="progress-bar-inner"></div>
+                    <div style="position: absolute; top: 15px; left: 10px; width: 155px; height: 34px; background-color: rgb(170, 187, 221);" id="pb0">
+                        <div style="position: absolute; top: 0px; left: 0px; width: 155px; height: 34px; background-color: rgb(68, 221, 102);" id="pb0-null-0-0"></div>
+                    </div>
+                    <div style="position: absolute; top: 15px; left: 165px; width: 341px; height: 34px; background-color: rgb(170, 187, 221);" id="pb0">
+                        <div style="position: absolute; top: 0px; left: 0px; width: 341px; height: 34px; background-color: rgb(221, 221, 238);" id="pb0-null-0-0"></div>
+                    </div>
+                </div>
+                -->
+{% if options.nextbutton.show %}
+                <div id="next-button" class="footer-button" onclick="location.href='{{options.nextbutton.link|default:"#"}}'">
+                    <table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%">
+                        <tbody>
+                            <tr>
+                                <td align="center" valign="middle">{{ options.nextbutton.text|default:"NEXT" }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+{% endif %}
+            </div>
+            {% endblock %}
+        </div>
+        <div style="position: absolute; top: 0px; left: 0px; width: 1024px; height: 768px; display: none;" id="overlay">
+            <div style="position: absolute; top: 0px; left: 0px; width: 1024px; height: 768px; background-color: rgb(221, 102, 102); opacity: 0.7;" id="mask"></div>
+            <div style="position: relative; top: 150px; width: 70%; margin-left: auto; margin-right: auto;">
+                <p style="border: 3px solid black; padding: 20px; background-color: rgb(221, 221, 238);" id="overlay-content"></p>
+            </div>
+        </div>
+    </div>
+    <!-- an off-screen area to temporarily dump text and play with text sizing -->
+    <div id="staging" style="position: absolute; left: 0px; top: 1000px; width: 1500px; height: 1500px; background-color: rgb(221, 221, 221); font-weight: bold;">
+      <span id="snippet"></span>
+    </div>
+</body>
