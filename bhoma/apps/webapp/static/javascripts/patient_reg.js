@@ -20,32 +20,36 @@ function wfGetPatient () {
                                         'Yes, but I don\'t have a registration form',
                                         'No'], true);
         yield q_reg_new;
-        var reg_new_ans = q_pat_id.value;
+        var reg_new_ans = q_reg_new.value;
         var reg_new = (reg_new_ans == 1 || reg_new_ans == 2);
         var has_reg_form = (reg_new_ans == 1);
       
         if (reg_new) {
         
           var patient_rec = {} //new Patient();
-          reg_form = ask_patient_info(patient_rec, has_reg_form);
-          for (q in reg_form) {
-            reg_form.send(yield q);
+          for (var q in  ask_patient_info(patient_rec, has_reg_form)) {
+            yield q;
           }
           patient_rec.id = patient_id;
         
-          candidate_duplicate = fuzzy_match(patient_rec);
+          var qr_dup_check = new wfQuery(function () { return fuzzy_match(patient_rec); });
+          yield qr_dup_check;
+          var candidate_duplicate = qr_dup_check.value;
+
           if (candidate_duplicate != null) {
-            q_merge_duplicate;
-            merge = yield q_merge_duplicate;
+            var q_merge_dup = new wfQuestion('Similar patient found! Is this the same patient?', 'select', null, 
+                                             ['Yes, these are the same person',
+                                              'No, this is a different person'], true);
+            yield q_merge_dup;
+            merge = (q_merge_dup == 1);
           } else {
             merge = false;
           }
         
-          register_new_patient(patient_rec);
+          data['new_patient'] = patient_rec;
           if (merge) {
-            merge_duplicate_records(patient_id, candidate_duplicate.id);
-            alert_consolidate_paper_records;
-            yield alert_consolidate_paper_records;
+            data['merge_with'] = candidate_duplicate.id;
+            yield wfAlert('Remember to merge the two paper records for this patient');
           }
         
           done = true;
@@ -114,8 +118,42 @@ function wfGetPatient () {
   return new Workflow(flow, onFinish);
 }
 
-function ask_patient_info (full_reg_form) {
+function ask_patient_info (pat_rec, full_reg_form) {
+   var q_fname = new wfQuestion('First Name', 'str', null, null, true);
+   yield q_fname;
+   pat_rec['fname'] = q_fname.value;
 
+   var q_lname = new wfQuestion('Last Name', 'str', null, null, true);
+   yield q_lname;
+   pat_rec['lname'] = q_lname.value;
+
+   var q_sex = new wfQuestion('Sex', 'select', null, ['Male', 'Female'], full_reg_form);
+   yield q_sex;
+   pat_rec['sex'] = q_sex.value;
+     
+   if (full_reg_form) {
+
+     var q_dob = new wfQuestion('Date of Birth', 'date', null, null, true);
+     yield q_dob;
+     pat_rec['dob'] = q_dob.value;
+     
+     var q_dob_est = new wfQuestion('Date of Birth Estimated?', 'select', null, ['Yes', 'No'], true);
+     yield q_dob_est;
+     pat_rec['dob_est'] = (q_dob_est.value == 'Yes');
+     
+     var q_village = new wfQuestion('Village', 'str', null, null, true);
+     yield q_village;
+     pat_rec['village'] = q_village.value;
+     
+     var q_contact = new wfQuestion('Contact Phone #', 'str', null, null, true);
+     yield q_contact;
+     pat_rec['phone'] = q_contact.value;
+
+   } else {
+
+     //ask age?
+
+   }
 }
 
 function lookup (pat_id) {
@@ -127,7 +165,11 @@ function lookup (pat_id) {
 }
 
 function fuzzy_match (patient_rec) {
-
+  if (+patient_rec.id == 33) {
+    return {'id': 25, 'fname': 'DUP'};
+  } else {
+    return null;
+  }
 }
 
 function register_new_patient (patient_rec) {

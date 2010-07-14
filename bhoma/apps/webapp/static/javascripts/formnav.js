@@ -138,9 +138,16 @@ function wfQuery (query) {
   }
 }
 
-//not used yet
-function wfAlert () {
+function wfAlert (message) {
+  this.message = message;
 
+  this.to_q = function () {
+    return {'caption': this.message,
+            'datatype': 'select',
+            'answer': null,
+            'choices': ['OK'],
+            'required': true};
+  }
 }
 
 function workflowAdapter (workflow, onCancel) {
@@ -215,7 +222,7 @@ function workflowAdapter (workflow, onCancel) {
       ev.eval();
       this._push_hist(ev.value, ev);
     } else if (ev instanceof wfAlert) {
-      //not handled
+      this._activateQuestion(ev, true); //hack
     }
   }
 
