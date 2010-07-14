@@ -90,27 +90,69 @@ function xformAjaxAdapter (formName, preloadData) {
 
 }
 
-function workflowQuestion () {
+function Workflow (flow, onFinish) {
+  this.flow = flow;
+  this.onFinish = onFinish;
+  this.data = null;
 
+  this.start = function () {
+    this.data = {}
+    return this.flow(this.data);
+  }
+
+  this.finish = function () {
+    this.onFinish(this.data);
+  }
 }
 
-function workflowQuery () {
+function workflowQuestion (caption, type, answer, choices, required, validation) {
+  this.caption = caption;
+  this.type = type;
+  this.value = answer || null;
+  this.choices = choices;
+  this.required = required || false;
+  this.validation = validation || function (ans) { return null; };
 
+  this.to_q = function () {
+    return {'caption': this.caption,
+            'datatype': this.type,
+            'answer': this.value,
+            'choices': this.choices,
+            'required': this.required};
+  }
+
+  this.validate = function () {
+    if (this.required && this.value == null) {
+      return "An answer is required";
+    } else {
+      return this.validation(this.value);
+    }
+  }
 }
 
+function workflowQuery (query) {
+  this.query = query;
+  this.value = null;
+  this.eval = function () {
+    this.value = this.query();
+  }
+}
+
+//not used yet
 function workflowAlert () {
 
 }
 
-function workflowAdapter (workflowGenerator) {
-  this.wf = workflowGenerator;
+function workflowAdapter (workflow, onCancel) {
+  this.wf = workflow;
+  this.onCancel = onCancel || function () {alert('backed out');}; //debug
 
   this.wf_inst = null;
   this.history = null;
   this.active_question = null;
 
   this.loadForm = function () {
-    this.wf_inst = this.wf();
+    this.wf_inst = this.wf.start();
     this.history = [];
     this.active_question = null;
 
@@ -118,26 +160,35 @@ function workflowAdapter (workflowGenerator) {
   }
 
   this.answerQuestion = function (answer) {
+    //type = this.active_question.type;
+    //if (type == 'date')
+    //  answer = new Date(answer);
+
     this.active_question.value = answer;
-    this.history.push(answer);
-    this._jumpNext();
+    var val_error = this.active_question.validate()
+    if (val_error == null) {
+      this.history.push(answer);
+      this._jumpNext();
+    } else {
+      showError(val_error);
+    }
   }
 
   this.prevQuestion = function () {
-    if (this.history.length == 0)
+    if (this.history.length == 0) {
+      this.onCancel();
       return;
+    }
 
-    this.wf_inst = this.wf();
+    this.wf_inst = this.wf.start();
     for (var i = 0; i < this.history.length; i++) {
       ev = this._getNext();
-      if (i < this.history.length - 1) {
-        ev.value = this.history[i];
-      } else {
-        ev.defaultAnswer = this.history[i];
-        renderQuestion(ev, false);
+      ev.value = this.history[i];
+      if (i == this.history.length - 1) {
+        this._activateQuestion(ev, false);
       }
-      this.history.pop();
     }
+    this.history.pop();
   }
 
   this._getNext = function () {
@@ -153,8 +204,7 @@ function workflowAdapter (workflowGenerator) {
     if (ev == null) {
       this._formComplete();
     } else if (ev instanceof workflowQuestion) {
-      this.active_question = ev;
-      renderQuestion(ev, true);
+      this._activateQuestion(ev, true);
     } else if (ev instanceof workflowQuery) {
       ev.eval();
       this.history.push(ev.value);
@@ -164,8 +214,13 @@ function workflowAdapter (workflowGenerator) {
     }
   }
 
-  this._formComplete () {
-    alert("i'm done!");
+  this._activateQuestion = function (ev, dir) {
+    this.active_question = ev;
+    renderQuestion(ev.to_q(), dir);
+  }
+
+  this._formComplete = function () {
+    this.wf.finish();
   }
 }
 
@@ -216,7 +271,14 @@ function getQuestionAnswer () {
   type = activeQuestion["datatype"];
 
   if (type == "str" || type == "int" || type == "float") {
-    return answerText.child.control.value;
+    var val = answerText.child.control.value;
+    if (val == "") {
+      return null;
+    } else if (type == "str") {
+      return val;
+    } else {
+      return +val;
+    }
   } else if (type == "select" || type == "multiselect") {
     selected = [];
     for (i = 0; i < activeInputWidget.length; i++) {
@@ -241,4 +303,6 @@ function answerQuestion () {
   gFormAdapter.answerQuestion(getQuestionAnswer());
 }
 
-
+function prevQuestion () {
+  gFormAdapter.prevQuestion();
+}
