@@ -66,9 +66,23 @@
     -moz-border-radius: 10px 10px 10px 10px;  
 }
 
+.really-big-button {
+    width: 550px; 
+    height: 128px;
+    cursor: pointer;
+    -moz-border-radius: 10px 10px 10px 10px;
+    margin: 30px;
+    background-color: rgb(17, 17, 136);
 
-.encounter-button {
-    width: 450px; 
+}
+.really-big-button td {
+    font-weight: bold; 
+    color: rgb(255, 255, 255);   
+    font-size: xx-large; 
+}
+
+.big-button {
+    width: 550px; 
     height: 64px;
     cursor: pointer;
     -moz-border-radius: 10px 10px 10px 10px;
@@ -76,7 +90,7 @@
     background-color: rgb(17, 17, 136);
 
 }
-.encounter-button td {
+.big-button td {
     font-weight: bold; 
     color: rgb(255, 255, 255);   
     font-size: xx-large; 
