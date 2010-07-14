@@ -105,7 +105,7 @@ function Workflow (flow, onFinish) {
   }
 }
 
-function workflowQuestion (caption, type, answer, choices, required, validation) {
+function wfQuestion (caption, type, answer, choices, required, validation) {
   this.caption = caption;
   this.type = type;
   this.value = answer || null;
@@ -130,7 +130,7 @@ function workflowQuestion (caption, type, answer, choices, required, validation)
   }
 }
 
-function workflowQuery (query) {
+function wfQuery (query) {
   this.query = query;
   this.value = null;
   this.eval = function () {
@@ -139,7 +139,7 @@ function workflowQuery (query) {
 }
 
 //not used yet
-function workflowAlert () {
+function wfAlert () {
 
 }
 
@@ -167,28 +167,34 @@ function workflowAdapter (workflow, onCancel) {
     this.active_question.value = answer;
     var val_error = this.active_question.validate()
     if (val_error == null) {
-      this.history.push(answer);
-      this._jumpNext();
+      this._push_hist(answer, this.active_question);
     } else {
       showError(val_error);
     }
   }
 
   this.prevQuestion = function () {
-    if (this.history.length == 0) {
+    hist_length = this.history.length;
+    while (hist_length > 0 && !this.history[hist_length - 1][0]) {
+      hist_length--;
+    }
+
+    if (hist_length == 0) {
       this.onCancel();
       return;
     }
 
     this.wf_inst = this.wf.start();
-    for (var i = 0; i < this.history.length; i++) {
+    for (var i = 0; i < hist_length; i++) {
       ev = this._getNext();
-      ev.value = this.history[i];
-      if (i == this.history.length - 1) {
+      ev.value = this.history[i][1];
+      if (i == hist_length - 1) {
         this._activateQuestion(ev, false);
       }
     }
-    this.history.pop();
+
+    while (this.history.length > hist_length - 1)
+      this.history.pop();
   }
 
   this._getNext = function () {
@@ -203,13 +209,12 @@ function workflowAdapter (workflow, onCancel) {
     ev = this._getNext();
     if (ev == null) {
       this._formComplete();
-    } else if (ev instanceof workflowQuestion) {
+    } else if (ev instanceof wfQuestion) {
       this._activateQuestion(ev, true);
-    } else if (ev instanceof workflowQuery) {
+    } else if (ev instanceof wfQuery) {
       ev.eval();
-      this.history.push(ev.value);
-      this._jumpNext();
-    } else if (ev instanceof workflowAlert) {
+      this._push_hist(ev.value, ev);
+    } else if (ev instanceof wfAlert) {
       //not handled
     }
   }
@@ -217,6 +222,11 @@ function workflowAdapter (workflow, onCancel) {
   this._activateQuestion = function (ev, dir) {
     this.active_question = ev;
     renderQuestion(ev.to_q(), dir);
+  }
+
+  this._push_hist = function (answer, ev) {
+    this.history.push([ev instanceof wfQuestion, answer]);
+    this._jumpNext();
   }
 
   this._formComplete = function () {

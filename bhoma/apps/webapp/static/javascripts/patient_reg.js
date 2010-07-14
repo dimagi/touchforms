@@ -2,41 +2,31 @@
 
 function wfGetPatient () {
   var flow = function (data) {
-    done = false;
-    //    while (!done) {
-    for(var i = 0; i < 2; i++) {
+    var done = false;
+    while (!done) {
  
-      q1 = new workflowQuestion('q1', 'int', 5, null, true, function (x) { console.log('a'+x); return x < 15 ? "NO!" : null;});
-      yield q1;
-      
-      if (q1.value < 10)
-        yield new workflowQuestion('q2', 'str', 'drew');
-      else
-        yield new workflowQuestion('q3', 'date', '2010-04-17');
-      
-      yield new workflowQuestion('q4', 'select', 2, ['a', 'b', 'c']);
-      yield new workflowQuestion('q5', 'multiselect', '2 3', ['a', 'b', 'c']);
-      
-      data['x'] = q1.value;
-      done = true;
-    }
-
-      /*
-      q_pat_id = Question();
+      var q_pat_id = new wfQuestion('Patient ID', 'str', null, null, true);
       yield q_pat_id;
-      patient_id = q_pat_id.value;
+      var patient_id = q_pat_id.value;
     
-      patient_rec = lookup(patient_id);
+      var qr_lookup_pat = new wfQuery(function () { return lookup(patient_id); });
+      yield qr_lookup_pat;
+      var patient_rec = qr_lookup_pat.value;
+
       if (patient_rec == null) {
       
-        q_reg_new;
-        reg_new_ans = yield q_reg_new;
-        reg_new = (reg_new_ans == 'yes-reg' || reg_new_ans == 'yes-noreg');
-        has_reg_form = (reg_new_ans == 'yes-reg');
+        var q_reg_new = new wfQuestion('Not found. Register new patient?', 'select', null, 
+                                       ['Yes, I have a registration form',
+                                        'Yes, but I don\'t have a registration form',
+                                        'No'], true);
+        yield q_reg_new;
+        var reg_new_ans = q_pat_id.value;
+        var reg_new = (reg_new_ans == 1 || reg_new_ans == 2);
+        var has_reg_form = (reg_new_ans == 1);
       
         if (reg_new) {
         
-          patient_rec = new Patient();
+          var patient_rec = {} //new Patient();
           reg_form = ask_patient_info(patient_rec, has_reg_form);
           for (q in reg_form) {
             reg_form.send(yield q);
@@ -115,8 +105,6 @@ function wfGetPatient () {
 
     //patient id
     //patient rec
-
-    */
   }
 
   var onFinish = function (data) {
@@ -131,7 +119,11 @@ function ask_patient_info (full_reg_form) {
 }
 
 function lookup (pat_id) {
-
+  if (+pat_id == 22) {
+    return {'id': pat_id, 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06'};
+  } else {
+    return null;
+  }
 }
 
 function fuzzy_match (patient_rec) {
