@@ -66,6 +66,12 @@
     -moz-border-radius: 10px 10px 10px 10px;  
 }
 
+.footer-button td {
+    font-weight: bold; 
+    font-size: 100%; 
+    color: rgb(255, 255, 255);
+}
+
 .really-big-button {
     width: 550px; 
     height: 128px;
@@ -96,11 +102,6 @@
     font-size: xx-large; 
 }
 
-.footer-button td {
-    font-weight: bold; 
-    font-size: 90%; 
-    color: rgb(255, 255, 255);
-}
 
 #back-button {
     position: absolute; 
@@ -123,19 +124,19 @@
     background-color: rgb(17, 170, 51); 
 }
 
-#progress-bar {
+#session-info {
     position: absolute; 
     top: 6px; 
     left: 322px; 
     background-color: rgb(170, 187, 221);
+    width: 500px; 
+    height: 64px;
+    -moz-border-radius: 10px 10px 10px 10px;
+    font-weight: bold; 
+    color: rgb(255, 255, 255);
 }
-
-#progress-bar-inner {
-    position: absolute; 
-    top: 15px; 
-    left: 10px; 
-    width: 496px; 
-    height: 34px; 
-    background-color: rgb(170, 187, 221);
+#session-info td {
+    font-weight: bold; 
+    font-size: 100%; 
+    color: rgb(255, 255, 255);
 }
-

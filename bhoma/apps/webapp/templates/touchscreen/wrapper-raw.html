@@ -66,17 +66,23 @@
                     </table>
                 </div>
 {% endif %}
-                <!-- what goes here?
-                <div id="progress-bar">
-                    <div id="progress-bar-inner"></div>
-                    <div style="position: absolute; top: 15px; left: 10px; width: 155px; height: 34px; background-color: rgb(170, 187, 221);" id="pb0">
-                        <div style="position: absolute; top: 0px; left: 0px; width: 155px; height: 34px; background-color: rgb(68, 221, 102);" id="pb0-null-0-0"></div>
-                    </div>
-                    <div style="position: absolute; top: 15px; left: 165px; width: 341px; height: 34px; background-color: rgb(170, 187, 221);" id="pb0">
-                        <div style="position: absolute; top: 0px; left: 0px; width: 341px; height: 34px; background-color: rgb(221, 221, 238);" id="pb0-null-0-0"></div>
-                    </div>
+                <!-- by default put clinic info where the progress bar normally is -->
+                <div id="session-info">
+                    <table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%">
+                        <tbody>
+                            <tr>
+                                <td align="center" valign="middle">
+                                    {{user}} @ {{ clinic.name }} | 
+	                                    {% if user.is_authenticated %}
+	                                        <a href="{% url bhoma.apps.webapp.views.logout %}">Log out</a></td>
+	                                    {% else %}
+	                                        <a href="{% url bhoma.apps.webapp.views.login %}">Log in</a>
+	                                    {% endif %}
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                -->
+                
 {% if options.nextbutton.show %}
                 <div id="next-button" class="footer-button" onclick="location.href='{{options.nextbutton.link|default:"#"}}'">
                     <table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%">
