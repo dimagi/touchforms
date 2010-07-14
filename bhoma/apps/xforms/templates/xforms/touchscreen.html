@@ -20,7 +20,11 @@ function init () {
 
   initStaticWidgets();
   render_clean();
-  loadForm(XFORM_UID, {{ preloader_data|safe }});
+
+  gFormAdapter = new xformAjaxAdapter(XFORM_UID, {{ preloader_data|safe }});
+
+
+  gFormAdapter.loadForm();
 }
 
     </script>

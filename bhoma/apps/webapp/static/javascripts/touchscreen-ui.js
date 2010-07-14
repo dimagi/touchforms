@@ -149,7 +149,7 @@ function clearClicked (ev, x) {
 }
 
 monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-decades = ['2000\u20142010', '1990\u20141999', '1980\u20141989', '1970\u20141979', '1960\u20141969',
+decades = ['2000\u2014' + ((new Date()).getFullYear() + 1), '1990\u20141999', '1980\u20141989', '1970\u20141979', '1960\u20141969',
 	   '1950\u20141959', '1940\u20141949', '1930\u20141939', '1920\u20141929', '1910\u20141919'];
 function DateWidgetContext (dir, answer) {
   this.init = function (dir, answer) {
