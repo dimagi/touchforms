@@ -1,0 +1,11 @@
+{% extends "touchscreen/wrapper-raw.html" %}
+{% block header %}
+Bad Configuration
+{% endblock %}
+{% block touchscreen_content %}
+<center>
+<h3 style="color: blue;">ERROR: {{ clinic_code }} is not a known clinic code.</h3>  
+<h4>Did you forget to configure your server?</h4>
+<h5>If you don't know what to do please contact CIDRZ for assistance</h5>
+</center>
+{% endblock %}
