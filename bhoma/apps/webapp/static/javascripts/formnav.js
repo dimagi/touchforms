@@ -207,8 +207,12 @@ function workflowAdapter (workflow, onCancel) {
   this._getNext = function () {
     try {
       return this.wf_inst.next();
-    } catch (e if e instanceof StopIteration) {
-      return null;
+    } catch (e) {
+      if (e instanceof StopIteration) {
+        return null;
+      } else {
+        throw e;
+      }
     }
   }
 
@@ -222,7 +226,7 @@ function workflowAdapter (workflow, onCancel) {
       ev.eval();
       this._push_hist(ev.value, ev);
     } else if (ev instanceof wfAlert) {
-      this._activateQuestion(ev, true); //hack
+      console.log('alert: ' + ev.message);
     }
   }
 
