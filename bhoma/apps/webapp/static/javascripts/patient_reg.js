@@ -2,13 +2,194 @@
 
 function wfGetPatient () {
   var flow = function (data) {
-    var done = false;
-    while (!done) {
  
-      var q_pat_id = new wfQuestion('Patient ID', 'str', null, null, true, function (x) { return x.length != 12 ? "A valid ID is 12 digits (this ID has " + x.length + ")" : null}, 'numeric');
-      yield q_pat_id;
-      var patient_id = q_pat_id.value;
+    var q_form_type = new wfQuestion('What type of form is this?', 'select', null, ['Registration form', 'Other form'], true);
+    yield q_form_type;
+    var is_reg_form = (q_form_type.value == 1);
+
+    var q_pat_id = new wfQuestion('Patient ID', 'str', null, null, true, function (x) { return x.length != 12 ? "A valid ID is 12 digits (this ID has " + x.length + ")" : null}, 'numeric');
+    var qr_lookup_pat = new wfQuery(function () { return lookup(patient_id); });
     
+    if (is_reg_form) {
+
+
+    } else {
+      var id_accepted = false;
+      while (!id_accepted) {
+        yield q_pat_id;
+        var patient_id = q_pat_id.value;
+
+        yield qr_lookup_pat;
+        var records_for_id = qr_lookup_pat.value;
+
+        var patient_rec = null;
+        if (records_for_id.length == 0) {
+          var q_no_record_found = new wfQuestion('No patient found for ID ' + patient_id, 'select', null,
+                                                 ['Register as new patient',
+                                                  'Wrong ID',
+                                                  'Start over'], true);
+          yield q_no_record_found;
+          var no_rec_ans = q_no_record_found.value;
+          
+          if (no_rec_ans == 3) {
+            return; //start over
+          } else if (no_rec_ans == 2) {
+            continue; //re-enter id
+          }
+        } else if (records_for_id.length == 1) {
+          var q_correct_patient = new wfQuestion('Is this the correct patient?', 'select', null, 
+                                                 ['Yes',
+                                                  'No, wrong ID',
+                                                  'No, register as new patient with the same ID',
+                                                  'No, start over'], true);
+          yield q_correct_patient;
+          var corr_pat_ans = q_correct_patient.value;
+
+          if (corr_pat_ans == 4) {
+            return; //start over
+          } else if (corr_pat_ans == 2) {
+            continue; //re-enter id
+          } else if (corr_pat_ans == 1) {
+            patient_rec = records_for_id[0];
+          }
+        } else {
+          ////
+          var choices = [];
+          for (patrec in Iterator(records_for_id)) {
+            patrec = patrec[1];
+            choices.push(patrec['fname'] + " " + patrec['lname'] + " " + patrec['sex'] + " " + patrec['dob']);
+          }
+          choices.push('None of these is the correct patient');
+          ////
+
+          var q_choose_patient = new wfQuestion('Multiple patients found with that ID! Choose the correct patient', 'select', null, choices, true);
+          var chosen = false;
+          while (!chosen) {
+            yield q_choose_patient;
+            var choose_pat_ans = q_choose_patient.value;
+            if (choose_pat_ans < q_choose_patient.choices.length) {
+              var q_correct_patient = new wfQuestion('Is this the correct patient?', 'select', null, 
+                                                     ['Yes',
+                                                      'No, back to list'], true);
+              yield q_correct_patient;
+              var corr_pat_ans = q_correct_patient.value;
+              if (corr_pat_ans == 1) {
+                patient_rec = records_for_id[corr_pat_ans - 1];
+                chosen = true;
+              }
+            } else {
+              chosen = true;
+            }
+          }
+
+          if (patient_rec == null) {
+            var q_not_found = new wfQuestion('Couldn\'t find correct patient for ID ' + patient_id, 'select', null,
+                                             ['Wrong ID',
+                                              'Register as new patient with the same ID',
+                                              'Start over'], true);
+            yield q_not_found;
+            var not_found_ans = q_not_found.value;
+            if (not_found_ans == 3) {
+              return; //start over
+            } else if (not_found_ans == 1) {
+              continue; //re-enter id
+            }
+          }
+        }
+        id_accepted = true;
+      }
+
+      var new_patient;
+      if (patient_rec == null) {
+        new_patient = true;
+
+        q_has_reg_form = new wfQuestion('Is there a registration form in the patient\'s file?', 'select', null, ['Yes', 'No'], true);
+        yield q_has_reg_form;
+        //...
+
+      } else {
+        new_patient = false;
+      }
+    }
+
+    data['patient'] = patient_rec;
+    data['new'] = new_patient;
+
+        //        if 
+
+
+
+
+
+
+    /*
+
+      var id_accepted = false;
+      while (!id_accepted) {
+
+        yield q_pat_id;
+        var patient_id = q_pat_id.value;
+    
+        var qr_lookup_pat = new wfQuery(function () { return lookup(patient_id); });
+        yield qr_lookup_pat;
+        var records_for_id = qr_lookup_pat.value;
+
+        if (is_reg_form) {
+
+        } else {
+          id_accepted = true;
+        }
+
+      if (is_reg_form) {
+        var patient_rec = {} //new Patient();
+        for (var q in ask_patient_info(patient_rec, true)) {
+          yield q;
+        }
+
+
+        if (records_for_id.length > 0) {
+
+        }
+
+        get_reg_info_full;
+        
+        lookup_id
+        if num_id_matches > 0
+
+                          
+
+
+      }
+
+
+
+
+
+
+
+
+    */
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /*
+
+
+
+    while (true) {
+
+
+
       var qr_lookup_pat = new wfQuery(function () { return lookup(patient_id); });
       yield qr_lookup_pat;
       var patient_rec = qr_lookup_pat.value;
@@ -18,7 +199,7 @@ function wfGetPatient () {
         var q_reg_new = new wfQuestion('Not found. Register new patient?', 'select', null, 
                                        ['Yes, I have a registration form',
                                         'Yes, but I don\'t have a registration form',
-                                        'No'], true);
+                                        'No, start over'], true);
         yield q_reg_new;
         var reg_new_ans = q_reg_new.value;
         var reg_new = (reg_new_ans == 1 || reg_new_ans == 2);
@@ -101,7 +282,7 @@ function wfGetPatient () {
               yield new wfAlert('Remember to fix the IDs on these forms and put them in the correct patient file');
               done = true;
             } else {
-              q_use_current_patient_are_you_sure = new wfQuestion('Are you sure you want to file these forms on this patient\'s record?', 'select', null, ['Yes', 'No'], true);
+              q_use_current_patient_are_you_sure = new wfQuestion('Are you sure you want to file these forms on this patient\'s record?', 'select', null, ['Yes', 'No, start over'], true);
               yield q_use_current_patient_are_you_sure;
               are_you_sure = (q_use_current_patient_are_you_sure.value == 1);
 
@@ -120,6 +301,9 @@ function wfGetPatient () {
         }
       }
     }
+
+    */
+
   }
 
   var onFinish = function (data) {
@@ -144,7 +328,7 @@ function ask_patient_info (pat_rec, full_reg_form) {
      
    if (full_reg_form) {
 
-     var q_dob = new wfQuestion('Date of Birth', 'date', null, null, true);
+     var q_dob = new wfQuestion('Date of Birth', 'date', null, null, true, function (x) { return (new Date(x) - new Date()) > 1.5 * 86400000 ? "Cannot be in the future" : null });
      yield q_dob;
      pat_rec['dob'] = q_dob.value;
      
@@ -152,26 +336,30 @@ function ask_patient_info (pat_rec, full_reg_form) {
      yield q_dob_est;
      pat_rec['dob_est'] = (q_dob_est.value == 'Yes');
      
-     var q_village = new wfQuestion('Village', 'str', null, null, true, null, 'alpha');
+     var q_village = new wfQuestion('Village', 'str', null, null, false, null, 'alpha');
      yield q_village;
      pat_rec['village'] = q_village.value;
      
-     var q_contact = new wfQuestion('Contact Phone #', 'str', null, null, true, null, 'phone');
+     var q_contact = new wfQuestion('Contact Phone #', 'str', null, null, false, null, 'phone');
      yield q_contact;
      pat_rec['phone'] = q_contact.value;
 
    } else {
 
-     //ask age?
+     //ask age and deduce estimated birth date?
 
    }
 }
 
 function lookup (pat_id) {
-  if (+pat_id == '000000000022') {
-    return {'id': pat_id, 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'};
+  if (pat_id == '000000000022') {
+    return [{'id': pat_id, 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'}];
+  } else if (pat_id == '000000000023') {
+    return [{'id': pat_id, 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'},
+            {'id': pat_id, 'fname': 'GREG', 'lname': 'TRIFILO', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'},
+            {'id': pat_id, 'fname': 'ABBEY', 'lname': 'LOUTREC', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'f', 'village': 'SOMERVILLE', 'phone': '+19183739767'}];
   } else {
-    return null;
+    return [];
   }
 }
 

@@ -229,6 +229,7 @@ function workflowAdapter (workflow, onCancel) {
       this._push_hist(ev.value, ev);
     } else if (ev instanceof wfAlert) {
       console.log('alert: ' + ev.message);
+      this._jumpNext();
     }
   }
 
