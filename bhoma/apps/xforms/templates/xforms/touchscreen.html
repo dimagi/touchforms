@@ -7,22 +7,28 @@
     <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/formnav.js"></script>   
     <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/jquery-1.4.2.min.js"></script>
 
+
+    <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}webapp/javascripts/patient_reg.js"></script>   
+
+
+
     <script language="javascript">
 
 XFORM_URL = "{% url xform_player_proxy %}";
-XFORM_NAME = "{{xform.name}}";
+XFORM_NAME = "{{form.name}}";
 XFORM_UID = null;
 
-gSessionID = -1;
-
 function init () {
-  XFORM_UID = $('#form-uid')[0].value;
 
   initStaticWidgets();
   render_clean();
 
+{% ifequal mode 'xform' %} 
+  XFORM_UID = $('#form-uid')[0].value;
   gFormAdapter = new xformAjaxAdapter(XFORM_UID, {{ preloader_data|safe }});
-
+{% else %}
+  gFormAdapter = new workflowAdapter(new {{ form.wfobj }}());
+{% endifequal %}
 
   gFormAdapter.loadForm();
 }
@@ -54,7 +60,7 @@ function init () {
     </div>
     
     <!-- stick form uid here to aid with backslash escaping -->
-    <input id="form-uid" type="hidden" value="{{xform.file.path}}">
+    <input id="form-uid" type="hidden" value="{% ifequal mode 'xform' %}{{form.file.path}}{% endifequal %}">
 
   </body>
 </html>

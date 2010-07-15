@@ -5,7 +5,7 @@ function wfGetPatient () {
     var done = false;
     while (!done) {
  
-      var q_pat_id = new wfQuestion('Patient ID', 'str', null, null, true);
+      var q_pat_id = new wfQuestion('Patient ID', 'str', null, null, true, function (x) { return x.length != 12 ? "A valid ID is 12 digits (this ID has " + x.length + ")" : null}, 'numeric');
       yield q_pat_id;
       var patient_id = q_pat_id.value;
     
@@ -27,7 +27,7 @@ function wfGetPatient () {
         if (reg_new) {
         
           var patient_rec = {} //new Patient();
-          for (var q in  ask_patient_info(patient_rec, has_reg_form)) {
+          for (var q in ask_patient_info(patient_rec, has_reg_form)) {
             yield q;
           }
           patient_rec.id = patient_id;
@@ -41,7 +41,7 @@ function wfGetPatient () {
                                              ['Yes, these are the same person',
                                               'No, this is a different person'], true);
             yield q_merge_dup;
-            merge = (q_merge_dup == 1);
+            merge = (q_merge_dup.value == 1);
           } else {
             merge = false;
           }
@@ -49,7 +49,7 @@ function wfGetPatient () {
           data['new_patient'] = patient_rec;
           if (merge) {
             data['merge_with'] = candidate_duplicate.id;
-            yield wfAlert('Remember to merge the two paper records for this patient');
+            yield new wfAlert('Remember to merge the two paper records for this patient');
           }
         
           done = true;
@@ -58,43 +58,58 @@ function wfGetPatient () {
         }
       
       } else {
-        q_correct_patient;
-        correct_pat = yield q_correct_patient;
-      
+
+        q_correct_patient = new wfQuestion('Is this the correct patient?', 'select', null,
+                                           ['Yes, this is the patient',
+                                            'No, this is the wrong patient, but right ID',
+                                            'No, I mistyped the patient ID'], true);
+        yield q_correct_patient;                                                             
+        correct_pat = (q_correct_patient.value == 1);
+        correct_id_wrong_pat = (q_correct_patient.value == 2);
+
         if (correct_pat) {
+          data['use_patient'] = patient_rec;
           done = true;
         } else {
-          q_correct_id;
-          correct_id = yield q_correct_id;
+          if (correct_id_wrong_pat) {
+            q_has_reg_form = new wfQuestion('Is this a registration form?', 'select', null, ['Yes', 'No'], true);
+            yield q_has_reg_form;
+            has_reg_form = (q_has_reg_form.value == 1);
 
-          if (correct_id) {
-            q_has_reg_form;
-            has_reg_form = yield q_has_reg_form;
+            var cur_patient_rec = {} //new Patient();
+            for (var q in ask_patient_info(cur_patient_rec, has_reg_form)) {
+              yield q;
+            }
+            cur_patient_rec.id = patient_id;
 
-            cur_patient_rec = ask_patient_info(has_reg_form);
-            candidate_match = fuzzy_lookup(cur_patient_rec);
+            qr_match = new wfQuery(function () { return fuzzy_match(cur_patient_rec); });
+            yield qr_match;
+            candidate_match = qr_match.value;
 
             if (candidate_match != null) {
-              q_patient_instead;
-              used_other = yield q_patient_instead;
-
-              alert_fix_ids_on_paper;
-              yield alert_fix_ids_on_paper;
-
-              patient_rec = candidate_match;
-              patient_id = patient_rec.id;
+              q_patient_instead = new wfQuestion('A similar patient was found with a different ID. Use this patient instead?', 'select', null, ['Yes', 'No'], true);
+              yield q_patient_instead;
+              used_other = (q_patient_instead.value == 1);
             } else {
               used_other = false;
             }
 
             if (used_other) {
+              data['use_patient'] = candidate_match;
+              data['incorrect_id'] = patient_id;
+
+              yield new wfAlert('Remember to fix the IDs on these forms and put them in the correct patient file');
               done = true;
             } else {
-              q_use_current_patient_are_you_sure;
-              are_you_sure = yield q_use_current_patient_are_you_sure;
+              q_use_current_patient_are_you_sure = new wfQuestion('Are you sure you want to file these forms on this patient\'s record?', 'select', null, ['Yes', 'No'], true);
+              yield q_use_current_patient_are_you_sure;
+              are_you_sure = (q_use_current_patient_are_you_sure.value == 1);
 
               if (are_you_sure) {
-                log_patient_info_discrepancy(patient_id, patient_rec);
+                data['use_patient'] = patient_rec;
+                data['conflicting_patient_info'] = cur_patient_rec;
+                data['update_info'] = has_reg_form;
+                done = true;
               } else {
                 // fall through; go back to 'pat id' question
               }
@@ -104,11 +119,7 @@ function wfGetPatient () {
           }
         }
       }
-
     }
-
-    //patient id
-    //patient rec
   }
 
   var onFinish = function (data) {
@@ -119,17 +130,17 @@ function wfGetPatient () {
 }
 
 function ask_patient_info (pat_rec, full_reg_form) {
-   var q_fname = new wfQuestion('First Name', 'str', null, null, true);
+  var q_fname = new wfQuestion('First Name', 'str', null, null, true, null, 'alpha');
    yield q_fname;
    pat_rec['fname'] = q_fname.value;
 
-   var q_lname = new wfQuestion('Last Name', 'str', null, null, true);
+   var q_lname = new wfQuestion('Last Name', 'str', null, null, true, null, 'alpha');
    yield q_lname;
    pat_rec['lname'] = q_lname.value;
 
    var q_sex = new wfQuestion('Sex', 'select', null, ['Male', 'Female'], full_reg_form);
    yield q_sex;
-   pat_rec['sex'] = q_sex.value;
+   pat_rec['sex'] = (q_sex.value == 1 ? 'm' : 'f');
      
    if (full_reg_form) {
 
@@ -141,11 +152,11 @@ function ask_patient_info (pat_rec, full_reg_form) {
      yield q_dob_est;
      pat_rec['dob_est'] = (q_dob_est.value == 'Yes');
      
-     var q_village = new wfQuestion('Village', 'str', null, null, true);
+     var q_village = new wfQuestion('Village', 'str', null, null, true, null, 'alpha');
      yield q_village;
      pat_rec['village'] = q_village.value;
      
-     var q_contact = new wfQuestion('Contact Phone #', 'str', null, null, true);
+     var q_contact = new wfQuestion('Contact Phone #', 'str', null, null, true, null, 'phone');
      yield q_contact;
      pat_rec['phone'] = q_contact.value;
 
@@ -157,25 +168,17 @@ function ask_patient_info (pat_rec, full_reg_form) {
 }
 
 function lookup (pat_id) {
-  if (+pat_id == 22) {
-    return {'id': pat_id, 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06'};
+  if (+pat_id == '000000000022') {
+    return {'id': pat_id, 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'};
   } else {
     return null;
   }
 }
 
 function fuzzy_match (patient_rec) {
-  if (+patient_rec.id == 33) {
-    return {'id': 25, 'fname': 'DUP'};
+  if (patient_rec['fname'] == 'DREW' && patient_rec['lname'] == 'ROOS') {
+    return {'id': '000000000037', 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'};
   } else {
     return null;
   }
-}
-
-function register_new_patient (patient_rec) {
-
-}
-
-function log_patient_info_discrepancy () {
-
 }
