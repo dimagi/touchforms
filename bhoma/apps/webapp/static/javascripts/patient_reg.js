@@ -53,11 +53,11 @@ function wfGetPatient () {
             patient_rec = records_for_id[0];
           }
         } else {
-          ////
+          //// make me a function
           var choices = [];
           for (patrec in Iterator(records_for_id)) {
             patrec = patrec[1];
-            choices.push(patrec['fname'] + " " + patrec['lname'] + " " + patrec['sex'] + " " + patrec['dob']);
+            choices.push(patrec['fname'] + " " + patrec['lname'] + " " + Math.floor((new Date() - new Date(patrec['dob']))/(1000.*86400*365.2425)) + "/" + patrec['sex'].toUpperCase());
           }
           choices.push('None of these is the correct patient');
           ////
@@ -105,8 +105,29 @@ function wfGetPatient () {
 
         q_has_reg_form = new wfQuestion('Is there a registration form in the patient\'s file?', 'select', null, ['Yes', 'No'], true);
         yield q_has_reg_form;
-        //...
+        var has_reg_form = (q_has_reg_form.value == 1);
 
+        var patient_rec = {} //new Patient();
+        for (var q in ask_patient_info(patient_rec, has_reg_form)) {
+          yield q;
+        }
+        patient_rec.id = patient_id;
+        
+        var qr_dup_check = new wfQuery(function () { return fuzzy_match(patient_rec); });
+        yield qr_dup_check;
+        var candidate_duplicate = qr_dup_check.value;
+
+        if (candidate_duplicate != null) {
+          var q_merge_dup = new wfQuestion('Similar patient found! Is this the same patient?', 'select', null, 
+                                           ['Yes, these are the same person',
+                                            'No, this is a different person'], true);
+          yield q_merge_dup;
+          merge = (q_merge_dup.value == 1);
+          if (merge) {
+            data['merge_with'] = candidate_duplicate['uuid'];
+            yield new wfAlert('Remember to merge the two paper records for this patient');
+          }
+        }
       } else {
         new_patient = false;
       }
@@ -114,70 +135,6 @@ function wfGetPatient () {
 
     data['patient'] = patient_rec;
     data['new'] = new_patient;
-
-        //        if 
-
-
-
-
-
-
-    /*
-
-      var id_accepted = false;
-      while (!id_accepted) {
-
-        yield q_pat_id;
-        var patient_id = q_pat_id.value;
-    
-        var qr_lookup_pat = new wfQuery(function () { return lookup(patient_id); });
-        yield qr_lookup_pat;
-        var records_for_id = qr_lookup_pat.value;
-
-        if (is_reg_form) {
-
-        } else {
-          id_accepted = true;
-        }
-
-      if (is_reg_form) {
-        var patient_rec = {} //new Patient();
-        for (var q in ask_patient_info(patient_rec, true)) {
-          yield q;
-        }
-
-
-        if (records_for_id.length > 0) {
-
-        }
-
-        get_reg_info_full;
-        
-        lookup_id
-        if num_id_matches > 0
-
-                          
-
-
-      }
-
-
-
-
-
-
-
-
-    */
-
-
-
-
-
-
-
-
-
 
 
 
@@ -353,11 +310,11 @@ function ask_patient_info (pat_rec, full_reg_form) {
 
 function lookup (pat_id) {
   if (pat_id == '000000000022') {
-    return [{'id': pat_id, 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'}];
+    return [{'uuid': '03cf9a2b', 'id': pat_id, 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'}];
   } else if (pat_id == '000000000023') {
-    return [{'id': pat_id, 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'},
-            {'id': pat_id, 'fname': 'GREG', 'lname': 'TRIFILO', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'},
-            {'id': pat_id, 'fname': 'ABBEY', 'lname': 'LOUTREC', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'f', 'village': 'SOMERVILLE', 'phone': '+19183739767'}];
+    return [{'uuid': '03cf9a2b', 'id': pat_id, 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'},
+            {'uuid': '04cf9a2b', 'id': pat_id, 'fname': 'GREG', 'lname': 'TRIFILO', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'},
+            {'uuid': '05cf9a2b', 'id': pat_id, 'fname': 'ABBEY', 'lname': 'LOUTREC', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'f', 'village': 'SOMERVILLE', 'phone': '+19183739767'}];
   } else {
     return [];
   }
@@ -365,7 +322,7 @@ function lookup (pat_id) {
 
 function fuzzy_match (patient_rec) {
   if (patient_rec['fname'] == 'DREW' && patient_rec['lname'] == 'ROOS') {
-    return {'id': '000000000037', 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'};
+    return {'uuid': '03cf9aeb', 'id': '000000000037', 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'};
   } else {
     return null;
   }
