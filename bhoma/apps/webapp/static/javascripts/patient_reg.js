@@ -5,7 +5,7 @@ function wfGetPatient () {
     var done = false;
     while (!done) {
  
-      var q_pat_id = new wfQuestion('Patient ID', 'str', null, null, true);
+      var q_pat_id = new wfQuestion('Patient ID', 'str', null, null, true, function (x) { return x.length != 12 ? "A valid ID is 12 digits (this ID has " + x.length + ")" : null}, 'numeric');
       yield q_pat_id;
       var patient_id = q_pat_id.value;
     
@@ -130,11 +130,11 @@ function wfGetPatient () {
 }
 
 function ask_patient_info (pat_rec, full_reg_form) {
-   var q_fname = new wfQuestion('First Name', 'str', null, null, true);
+  var q_fname = new wfQuestion('First Name', 'str', null, null, true, null, 'alpha');
    yield q_fname;
    pat_rec['fname'] = q_fname.value;
 
-   var q_lname = new wfQuestion('Last Name', 'str', null, null, true);
+   var q_lname = new wfQuestion('Last Name', 'str', null, null, true, null, 'alpha');
    yield q_lname;
    pat_rec['lname'] = q_lname.value;
 
@@ -152,11 +152,11 @@ function ask_patient_info (pat_rec, full_reg_form) {
      yield q_dob_est;
      pat_rec['dob_est'] = (q_dob_est.value == 'Yes');
      
-     var q_village = new wfQuestion('Village', 'str', null, null, true);
+     var q_village = new wfQuestion('Village', 'str', null, null, true, null, 'alpha');
      yield q_village;
      pat_rec['village'] = q_village.value;
      
-     var q_contact = new wfQuestion('Contact Phone #', 'str', null, null, true);
+     var q_contact = new wfQuestion('Contact Phone #', 'str', null, null, true, null, 'phone');
      yield q_contact;
      pat_rec['phone'] = q_contact.value;
 
@@ -168,7 +168,7 @@ function ask_patient_info (pat_rec, full_reg_form) {
 }
 
 function lookup (pat_id) {
-  if (+pat_id == 22) {
+  if (+pat_id == '000000000022') {
     return {'id': pat_id, 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'};
   } else {
     return null;
@@ -177,7 +177,7 @@ function lookup (pat_id) {
 
 function fuzzy_match (patient_rec) {
   if (patient_rec['fname'] == 'DREW' && patient_rec['lname'] == 'ROOS') {
-    return {'id': 37, 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'};
+    return {'id': '000000000037', 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'};
   } else {
     return null;
   }

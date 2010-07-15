@@ -68,12 +68,19 @@ function initStaticWidgets () {
             kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
   numPadPhone = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
             kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
+  numPadBP = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
+            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '/', '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
   
   keyboard = new Layout('text-kbd', 4, 13, 68, 85, '*', 6, null, null, null, kbs([
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', '7', '8', '9', [BACKSPACE_LABEL, '#aaa'],
     'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '4', '5', '6', '',
     'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '.',
     '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', '!', '?', ','     
+  ], null, 1.4, type_));
+  keyboardAlphaOnly = new Layout('text-kbd', 3, 10, 68, 85, '*', 6, null, null, null, kbs([
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', [BACKSPACE_LABEL, '#aaa'],
+    'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '',
+    'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '\u2013', '\'',
   ], null, 1.4, type_));
 
   //progress bar is just static right now -- turn into a dedicated GUI object?

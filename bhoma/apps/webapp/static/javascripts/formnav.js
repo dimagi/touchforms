@@ -105,26 +105,28 @@ function Workflow (flow, onFinish) {
   }
 }
 
-function wfQuestion (caption, type, answer, choices, required, validation) {
+function wfQuestion (caption, type, answer, choices, required, validation, domain) {
   this.caption = caption;
   this.type = type;
   this.value = answer || null;
   this.choices = choices;
   this.required = required || false;
   this.validation = validation || function (ans) { return null; };
+  this.domain = domain;
 
   this.to_q = function () {
     return {'caption': this.caption,
             'datatype': this.type,
             'answer': this.value,
             'choices': this.choices,
-            'required': this.required};
+            'required': this.required,
+            'domain': this.domain};
   }
 
   this.validate = function () {
     if (this.required && this.value == null) {
       return "An answer is required";
-    } else {
+    } else if (this.value != null) {
       return this.validation(this.value);
     }
   }
@@ -256,7 +258,17 @@ function renderQuestion (event, dir) {
     answerBar.update(freeTextAnswer);
 
     if (event["datatype"] == "str") {
-      kbd = keyboard;
+      if (event["domain"] == "alpha") {
+        kbd = keyboardAlphaOnly;
+      } else if (event["domain"] == "numeric") {
+        kbd = numPad;
+      } else if (event["domain"] == "blood_pressure") {
+        kbd = numPadBP;
+      } else if (event["domain"] == "phone") {
+        kbd = numPadPhone;
+      } else {
+        kbd = keyboard;
+      }
     } else if (event["datatype"] == "int") {
       kbd = numPad;
     } else if (event["datatype"] == "float") {
