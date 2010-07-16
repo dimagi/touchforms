@@ -5,7 +5,7 @@
 		</div>
         <div class="span-12 last" style="text-align:right">
             {% if user.is_authenticated %}        
-                Logged in as <strong>{{user}}</strong>&nbsp;&nbsp;|&nbsp;&nbsp;  
+                Logged in as <strong>{{user}}@{{ clinic.name }}</strong>&nbsp;&nbsp;|&nbsp;&nbsp;  
                 <a href="{% url bhoma.apps.webapp.views.logout %}">Log out</a>          
             {% else %}
                 <a href="{% url bhoma.apps.webapp.views.login %}">Log in</a>
