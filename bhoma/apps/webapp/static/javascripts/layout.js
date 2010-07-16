@@ -586,3 +586,15 @@ function InputArea (id, border, border_color, padding, inside_color, child, oncl
     this.container.onclick = this.onclick;
   }
 }
+
+function CustomContent (id, content) {
+  this.id = id;
+  this.content = content;
+
+  this.container = null;
+
+  this.render = function (parent_div) {
+    this.container = parent_div;
+    parent_div.innerHTML = this.content;
+  }
+}

@@ -570,7 +570,7 @@ function buttonDimensions (textdim) {
   return [Math.round(1.1 * textdim[0] + 0.7 * textdim[1]), Math.round(textdim[1] * 1.5)];
 }
 
-function choiceSelect (choices, selected, multi) {
+function choiceSelect (choices, selected, multi, W_MAX, H_MAX) {
   if (multi) {
     for (i = 0; i < choices.length; i++) {
       choices[i] = '\u2610 ' + choices[i];
@@ -580,8 +580,8 @@ function choiceSelect (choices, selected, multi) {
   //1) analysis of choices to determine optimum layout
 
   //available size of choice area (ideally we should determine this dynamically; too tough for now)
-  W_MAX = 922;
-  H_MAX = 571;
+  W_MAX = W_MAX || 922;
+  H_MAX = H_MAX || 571;
 
   var MAX_TEXT_SIZE_GRID = 2.5;
   var MAX_TEXT_SIZE_LIST = 1.8;
@@ -692,7 +692,8 @@ function choiceSelect (choices, selected, multi) {
       rows = Math.floor((H_MAX + spc) / (bh + spc));
       cols = Math.ceil(choices.length / rows)
       w_total = (cols * bw + (cols - 1) * spc);
-      if (w_total <= W_MAX) {
+      h_total = (rows * bh + (rows - 1) * spc);
+      if (w_total <= W_MAX && h_total <= H_MAX) {
         fits = true;
         break;
       }

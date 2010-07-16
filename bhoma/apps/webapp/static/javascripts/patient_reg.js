@@ -2,6 +2,8 @@
 function wfGetPatient () {
   var flow = function (data) {
  
+    yield qSinglePatInfo('right patient?', ['fawe wfw ea', 'wef wb', 'cfwawef  wef we aw ewfe w a wefw']);
+
     var new_patient_rec = null;       //any new record created via registration form
     var existing_patient_rec = null;  //any existing record select by the user as belonging to the current patient
     //these fields are not mutually exclusive
@@ -189,6 +191,10 @@ function ask_patient_info (pat_rec, full_reg_form) {
    yield q_lname;
    pat_rec['lname'] = q_lname.value;
 
+   if (pat_rec['lname'] == "OTHER WHITE MEAT") {
+     yield qPork();
+   }
+
    var q_sex = new wfQuestion('Sex', 'select', null, ['Male', 'Female'], full_reg_form);
    yield q_sex;
    pat_rec['sex'] = (q_sex.value == 1 ? 'm' : 'f');
@@ -252,3 +258,40 @@ function qChooseAmongstPatients (records, qCaption, noneCaption) {
 function qSelectReqd (caption, choices) {
   return new wfQuestion(caption, 'select', null, choices, true);
 }
+
+function qSinglePatInfo (caption, choices, pat_content, selected) {
+  pat_content =  '<div align="center" style="font-size: 80%;"> \
+            <table border="0" style="max-width: 480px; border: 3px solid black; padding: 10px; background-color: white;"> \
+             <tr><td>ID:&nbsp;&nbsp;</td><td><b>343-534-23453-4</b></td></tr> \
+             <tr><td valign="top">Name:&nbsp;&nbsp;</td><td><b>JAWEeRGERGEFWECKSON, JOSERGSERGERGNATHAN</b></td></tr> \
+             <tr><td>Sex:&nbsp;&nbsp;</td><td><b>Male</b></td></tr> \
+             <tr><td>Birthdate:&nbsp;&nbsp;</td><td><b>06/10/83 (est)</b></td></tr> \
+             <tr><td>Age:&nbsp;&nbsp;</td><td><b>26 yrs</b></td></tr> \
+             <tr><td>Village:&nbsp;&nbsp;</td><td><b>SOMERVILLE</b></td></tr> \
+             <tr><td>Contact:&nbsp;&nbsp;</td><td><b>+26099435784</b></td></tr> \
+          </table> \
+        </div>';
+  selected = [1];
+  selected = selected || [];
+
+  var BUTTON_SECTION_HEIGHT = 260;
+  var choice_data = choiceSelect(choices, selected, false, 920, BUTTON_SECTION_HEIGHT - 20); //annoying we have to munge the dimensions manually
+  var markup = new Layout('patinfosplit', 2, 1, '*', ['*', 260], 15, 3, null, null, null, [
+      new CustomContent(null, pat_content),
+      choice_data[0]
+    ]);
+
+  return new wfQuestion(caption, 'select', null, null, false, null, null, function () {
+      questionEntry.update(markup);
+      activeInputWidget = choice_data[1];
+  });
+}
+
+function qPork () {
+  return new wfQuestion('PORK!', 'select', null, null, false, null, null, function () {
+      questionEntry.update(new CustomContent(null, '<table width="100%" height="100%"><tr><td align="center" valign="middle"><embed src="/static/webapp/352_pork3b.swf" \
+           quality="high" width="550" height="400" align="middle" allowScriptAccess="sameDomain" allowFullScreen="false" play="true" type="application/x-shockwave-flash" /></td></tr></table>'));
+      activeQuestionWidget = [];
+  });
+}
+

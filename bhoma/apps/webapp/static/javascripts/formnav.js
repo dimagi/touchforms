@@ -105,7 +105,7 @@ function Workflow (flow, onFinish) {
   }
 }
 
-function wfQuestion (caption, type, answer, choices, required, validation, domain) {
+function wfQuestion (caption, type, answer, choices, required, validation, domain, custom_layout) {
   this.caption = caption;
   this.type = type;
   this.value = answer || null;
@@ -113,6 +113,7 @@ function wfQuestion (caption, type, answer, choices, required, validation, domai
   this.required = required || false;
   this.validation = validation || function (ans) { return null; };
   this.domain = domain;
+  this.custom_layout = custom_layout;
 
   this.to_q = function () {
     return {'caption': this.caption,
@@ -120,7 +121,8 @@ function wfQuestion (caption, type, answer, choices, required, validation, domai
             'answer': this.value,
             'choices': this.choices,
             'required': this.required,
-            'domain': this.domain};
+            'domain': this.domain,
+            'customlayout': this.custom_layout};
   }
 
   this.validate = function () {
@@ -252,9 +254,11 @@ function renderQuestion (event, dir) {
   activeQuestion = event;
   questionCaption.setText(event["caption"]);
  
-  if (event["datatype"] == "str" ||
-      event["datatype"] == "int" ||
-      event["datatype"] == "float") {
+  if (event["customlayout"] != null) {
+    event["customlayout"]();
+  } else if (event["datatype"] == "str" ||
+             event["datatype"] == "int" ||
+             event["datatype"] == "float") {
     questionEntry.update(freeEntry);
     answerBar.update(freeTextAnswer);
 
@@ -291,7 +295,7 @@ function renderQuestion (event, dir) {
     dateEntryContext = new DateWidgetContext(dir, event["answer"]);
     dateEntryContext.refresh();
   } else if (event["datatype"] == "info") {
-    questionEntry.update(null);
+    questionEntry.update(null); //fixme
   } else {
     alert("unrecognized datatype [" + event["datatype"] + "]");
   }
