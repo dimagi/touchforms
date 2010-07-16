@@ -181,7 +181,7 @@ function wfGetPatient () {
   }
 
   var onFinish = function (data) {
-    alert('done! ' + JSON.stringify(data));
+    submit_redirect({result: JSON.stringify(data)}, '/patient/select/submit/')
   }
 
   return new Workflow(flow, onFinish);
