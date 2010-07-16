@@ -81,10 +81,10 @@ function wfGetPatient () {
       } else if (records_for_id.length > 1) {
         //if many matches for that ID, pick one or none
         if (is_reg_form) {
-          var q_choose_patient = qChooseAmongstPatients(records_for_id, 'Multiple patients found with that ID! Are any the same patient as the one you just registered?',
+          var q_choose_patient = qChooseAmongstPatients(records_for_id, 'Multiple patients found with that ID!',
                                                         'None of these is the same patient');
         } else {
-          var q_choose_patient = qChooseAmongstPatients(records_for_id, 'Multiple patients found with that ID! Choose the correct patient',
+          var q_choose_patient = qChooseAmongstPatients(records_for_id, 'Multiple patients found with that ID!',
                                                         'None of these is the correct patient');
         }        
 
@@ -291,15 +291,5 @@ function qPork () {
 }
 
 function get_server_content (template, params) {
-  return '<div align="center" style="font-size: 80%;"> \
-            <table border="0" style="max-width: 480px; border: 3px solid black; padding: 10px; background-color: white;"> \
-             <tr><td>ID:&nbsp;&nbsp;</td><td><b>343-534-23453-4</b></td></tr> \
-             <tr><td valign="top">Name:&nbsp;&nbsp;</td><td><b>JAWEeRGERGEFWECKSON, JOSERGSERGERGNATHAN</b></td></tr> \
-             <tr><td>Sex:&nbsp;&nbsp;</td><td><b>Male</b></td></tr> \
-             <tr><td>Birthdate:&nbsp;&nbsp;</td><td><b>06/10/83 (est)</b></td></tr> \
-             <tr><td>Age:&nbsp;&nbsp;</td><td><b>26 yrs</b></td></tr> \
-             <tr><td>Village:&nbsp;&nbsp;</td><td><b>SOMERVILLE</b></td></tr> \
-             <tr><td>Contact:&nbsp;&nbsp;</td><td><b>+26099435784</b></td></tr> \
-          </table> \
-        </div>';
+  return jQuery.ajax({url: '/patient/select/render/' + template + '/', type: 'POST', data: params, async: false}).responseText;
 }
