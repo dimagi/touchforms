@@ -236,7 +236,7 @@ function lookup (pat_id, callback) {
 }
 
 function fuzzy_match (patient_rec, callback) {
-  jQuery.post('/patient/select/match/', patient_rec, function (data) { alert(data);
+  jQuery.post('/patient/select/match/', patient_rec, function (data) {
       callback(data);
     }, "json");
 }
