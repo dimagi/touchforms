@@ -2,8 +2,6 @@
 function wfGetPatient () {
   var flow = function (data) {
  
-    yield qSinglePatInfo('right patient?', ['fawe wfw ea', 'wef wb', 'cfwawef  wef we aw ewfe w a wefw']);
-
     var new_patient_rec = null;       //any new record created via registration form
     var existing_patient_rec = null;  //any existing record select by the user as belonging to the current patient
     //these fields are not mutually exclusive
@@ -24,7 +22,7 @@ function wfGetPatient () {
       var patient_id = q_pat_id.value;
 
       //retrieve existing matches for that id
-      var qr_lookup_pat = new wfQuery(function () { return lookup(patient_id); }); 
+      var qr_lookup_pat = new wfQuery(function () { return lookup(patient_id); });
       yield qr_lookup_pat;
       var records_for_id = qr_lookup_pat.value;
  
@@ -55,18 +53,21 @@ function wfGetPatient () {
         }
       } else if (records_for_id.length == 1) {
         //if one match, verify match
+        patient_info = get_server_content('single_patient_info', {'uuid': records_for_id[0]['uuid']});
         if (is_reg_form) {
-          var q_correct_patient = qSelectReqd('A patient is already registered with this ID. Is this the same patient?',
-                                              ['Yes, this is the same patient',
-                                               'No, I entered the wrong ID',
-                                               'No, continue registering my new patient with this ID',
-                                               'No, start over']);
+          var q_correct_patient = qSinglePatInfo('A patient is already registered with this ID. Is this the same patient?',
+                                                 ['Yes, this is the same patient',
+                                                  'No, I entered the wrong ID',
+                                                  'No, continue registering my new patient with this ID',
+                                                  'No, start over'],
+                                                 patient_info);
         } else {
-          var q_correct_patient = qSelectReqd('Is this the correct patient?', 
-                                              ['Yes',
-                                               'No, I entered the wrong ID',
-                                               'No, I will register a new patient with the same ID',
-                                               'No, start over']);
+          var q_correct_patient = qSinglePatInfo('Is this the correct patient?', 
+                                                 ['Yes',
+                                                  'No, I entered the wrong ID',
+                                                  'No, I will register a new patient with the same ID',
+                                                  'No, start over'],
+                                                 patient_info);
         }
         yield q_correct_patient;
         var corr_pat_ans = q_correct_patient.value;
@@ -135,7 +136,7 @@ function wfGetPatient () {
 
       //for non-registration forms, optionally register the non-existent patient here
       if (new_patient_rec == null) {
-        q_has_reg_form = qSelectReqd('Is there a registration form in the patient\'s file?', ['Yes', 'No']);
+        q_has_reg_form = qSelectReqd('Is there a registration form in the patient\'s file?', ['Yes, I will use this registration form', 'No']);
         yield q_has_reg_form;
         var has_reg_form = (q_has_reg_form.value == 1);
         
@@ -229,8 +230,8 @@ function lookup (pat_id) {
     return [{'uuid': '03cf9a2b', 'id': pat_id, 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'}];
   } else if (pat_id == '000000000023') {
     return [{'uuid': '03cf9a2b', 'id': pat_id, 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'},
-            {'uuid': '04cf9a2b', 'id': pat_id, 'fname': 'GREG', 'lname': 'TRIFILO', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'},
-            {'uuid': '05cf9a2b', 'id': pat_id, 'fname': 'ABBEY', 'lname': 'LOUTREC', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'f', 'village': 'SOMERVILLE', 'phone': '+19183739767'}];
+            {'uuid': '04cf9a2b', 'id': pat_id, 'fname': 'GREG', 'lname': 'TRIFILO', 'dob': '1944-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'},
+            {'uuid': '05cf9a2b', 'id': pat_id, 'fname': 'ABBEY', 'lname': 'LOUTREC', 'dob': '2006-10-06', 'dob-est': false, 'sex': 'f', 'village': 'SOMERVILLE', 'phone': '+19183739767'}];
   } else {
     return [];
   }
@@ -260,28 +261,15 @@ function qSelectReqd (caption, choices) {
 }
 
 function qSinglePatInfo (caption, choices, pat_content, selected) {
-  pat_content =  '<div align="center" style="font-size: 80%;"> \
-            <table border="0" style="max-width: 480px; border: 3px solid black; padding: 10px; background-color: white;"> \
-             <tr><td>ID:&nbsp;&nbsp;</td><td><b>343-534-23453-4</b></td></tr> \
-             <tr><td valign="top">Name:&nbsp;&nbsp;</td><td><b>JAWEeRGERGEFWECKSON, JOSERGSERGERGNATHAN</b></td></tr> \
-             <tr><td>Sex:&nbsp;&nbsp;</td><td><b>Male</b></td></tr> \
-             <tr><td>Birthdate:&nbsp;&nbsp;</td><td><b>06/10/83 (est)</b></td></tr> \
-             <tr><td>Age:&nbsp;&nbsp;</td><td><b>26 yrs</b></td></tr> \
-             <tr><td>Village:&nbsp;&nbsp;</td><td><b>SOMERVILLE</b></td></tr> \
-             <tr><td>Contact:&nbsp;&nbsp;</td><td><b>+26099435784</b></td></tr> \
-          </table> \
-        </div>';
-  selected = [1];
-  selected = selected || [];
-
   var BUTTON_SECTION_HEIGHT = 260;
-  var choice_data = choiceSelect(choices, selected, false, 920, BUTTON_SECTION_HEIGHT - 20); //annoying we have to munge the dimensions manually
-  var markup = new Layout('patinfosplit', 2, 1, '*', ['*', 260], 15, 3, null, null, null, [
-      new CustomContent(null, pat_content),
-      choice_data[0]
-    ]);
 
-  return new wfQuestion(caption, 'select', null, null, false, null, null, function () {
+  return new wfQuestion(caption, 'select', selected, null, false, null, null, function (q) {
+      var choice_data = choiceSelect(choices, normalize_select_answer(q['answer'], false), false, 920, BUTTON_SECTION_HEIGHT - 20); //annoying we have to munge the dimensions manually
+      var markup = new Layout('patinfosplit', 2, 1, '*', ['*', 260], 15, 3, null, null, null, [
+          new CustomContent(null, pat_content),
+          choice_data[0]
+        ]);
+
       questionEntry.update(markup);
       activeInputWidget = choice_data[1];
   });
@@ -295,3 +283,16 @@ function qPork () {
   });
 }
 
+function get_server_content (template, params) {
+  return '<div align="center" style="font-size: 80%;"> \
+            <table border="0" style="max-width: 480px; border: 3px solid black; padding: 10px; background-color: white;"> \
+             <tr><td>ID:&nbsp;&nbsp;</td><td><b>343-534-23453-4</b></td></tr> \
+             <tr><td valign="top">Name:&nbsp;&nbsp;</td><td><b>JAWEeRGERGEFWECKSON, JOSERGSERGERGNATHAN</b></td></tr> \
+             <tr><td>Sex:&nbsp;&nbsp;</td><td><b>Male</b></td></tr> \
+             <tr><td>Birthdate:&nbsp;&nbsp;</td><td><b>06/10/83 (est)</b></td></tr> \
+             <tr><td>Age:&nbsp;&nbsp;</td><td><b>26 yrs</b></td></tr> \
+             <tr><td>Village:&nbsp;&nbsp;</td><td><b>SOMERVILLE</b></td></tr> \
+             <tr><td>Contact:&nbsp;&nbsp;</td><td><b>+26099435784</b></td></tr> \
+          </table> \
+        </div>';
+}

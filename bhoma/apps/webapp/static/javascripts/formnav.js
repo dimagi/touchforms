@@ -255,7 +255,7 @@ function renderQuestion (event, dir) {
   questionCaption.setText(event["caption"]);
  
   if (event["customlayout"] != null) {
-    event["customlayout"]();
+    event["customlayout"](event);
   } else if (event["datatype"] == "str" ||
              event["datatype"] == "int" ||
              event["datatype"] == "float") {
@@ -287,7 +287,7 @@ function renderQuestion (event, dir) {
       answerText.setText(event["answer"]);
     }
   } else if (event["datatype"] == "select" || event["datatype"] == "multiselect") {
-    selections = (event["datatype"] == "select" ? [event["answer"]] : event["answer"]);
+    selections = normalize_select_answer(event["answer"], event["datatype"] == "multiselect");
     chdata = choiceSelect(event["choices"], selections, event["datatype"] == "multiselect");
     questionEntry.update(chdata[0]);
     activeInputWidget = chdata[1];
@@ -333,6 +333,14 @@ function getQuestionAnswer () {
   } else if (type == "date") {
     return dateEntryContext.getDate();
   } else if (type == "info") {
+    return null;
+  }
+}
+
+function normalize_select_answer (ans, multi) {
+  if (ans != null) {
+    return (!multi ? [ans] : ans);
+  } else {
     return null;
   }
 }
