@@ -22,7 +22,7 @@ function wfGetPatient () {
       var patient_id = q_pat_id.value;
 
       //retrieve existing matches for that id
-      var qr_lookup_pat = new wfQuery(function () { return lookup(patient_id); });
+      var qr_lookup_pat = new wfAsyncQuery(function (callback) { lookup(patient_id, callback); });
       yield qr_lookup_pat;
       var records_for_id = qr_lookup_pat.value;
  
@@ -151,7 +151,7 @@ function wfGetPatient () {
       }
       
       //check for similar record under a different ID
-      var qr_dup_check = new wfQuery(function () { return fuzzy_match(new_patient_rec); });
+      var qr_dup_check = new wfAsyncQuery(function (callback) { fuzzy_match(new_patient_rec, callback); });
       yield qr_dup_check;
       var candidate_duplicate = qr_dup_check.value;
       
@@ -229,24 +229,16 @@ function ask_patient_info (pat_rec, full_reg_form) {
    }
 }
 
-function lookup (pat_id) {
-  if (pat_id == '000000000022') {
-    return [{'uuid': '03cf9a2b', 'id': pat_id, 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'}];
-  } else if (pat_id == '000000000023') {
-    return [{'uuid': '03cf9a2b', 'id': pat_id, 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'},
-            {'uuid': '04cf9a2b', 'id': pat_id, 'fname': 'GREG', 'lname': 'TRIFILO', 'dob': '1944-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'},
-            {'uuid': '05cf9a2b', 'id': pat_id, 'fname': 'ABBEY', 'lname': 'LOUTREC', 'dob': '2006-10-06', 'dob-est': false, 'sex': 'f', 'village': 'SOMERVILLE', 'phone': '+19183739767'}];
-  } else {
-    return [];
-  }
+function lookup (pat_id, callback) {
+  jQuery.get('/patient/select/lookup', {'id': pat_id}, function (data) {
+      callback(data);
+    }, "json");
 }
 
-function fuzzy_match (patient_rec) {
-  if (patient_rec['fname'] == 'DREW' && patient_rec['lname'] == 'ROOS') {
-    return {'uuid': '03cf9aeb', 'id': '000000000037', 'fname': 'DREW', 'lname': 'ROOS', 'dob': '1983-10-06', 'dob-est': false, 'sex': 'm', 'village': 'SOMERVILLE', 'phone': '+19183739767'};
-  } else {
-    return null;
-  }
+function fuzzy_match (patient_rec, callback) {
+  jQuery.post('/patient/select/match/', patient_rec, function (data) { alert(data);
+      callback(data);
+    }, "json");
 }
 
 function qChooseAmongstPatients (records, qCaption, noneCaption) {

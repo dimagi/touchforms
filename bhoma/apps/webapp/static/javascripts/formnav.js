@@ -142,6 +142,19 @@ function wfQuery (query) {
   }
 }
 
+function wfAsyncQuery (query) {
+  this.query = query;
+  this.value = null;
+
+  this.eval = function (callback) {
+    queryObj = this;
+    this.query(function (val) {
+        queryObj.value = val;
+        callback();
+      });
+  }
+}
+
 function wfAlert (message) {
   this.message = message;
 
@@ -154,9 +167,8 @@ function wfAlert (message) {
   }
 }
 
-function workflowAdapter (workflow, onCancel) {
+function workflowAdapter (workflow) {
   this.wf = workflow;
-  this.onCancel = onCancel || function () {alert('backed out');}; //debug
 
   this.wf_inst = null;
   this.history = null;
@@ -191,7 +203,8 @@ function workflowAdapter (workflow, onCancel) {
     }
 
     if (hist_length == 0) {
-      this.onCancel();
+      this.wf.start();
+      this.wf.finish();
       return;
     }
 
@@ -229,6 +242,9 @@ function workflowAdapter (workflow, onCancel) {
     } else if (ev instanceof wfQuery) {
       ev.eval();
       this._push_hist(ev.value, ev);
+    } else if (ev instanceof wfAsyncQuery) {
+      self = this;
+      ev.eval(function () { self._push_hist(ev.value, ev); });
     } else if (ev instanceof wfAlert) {
       console.log('alert: ' + ev.message);
       this._jumpNext();
