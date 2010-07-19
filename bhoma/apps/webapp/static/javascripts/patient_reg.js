@@ -235,13 +235,13 @@ function ask_patient_info (pat_rec, full_reg_form) {
 }
 
 function lookup (pat_id, callback) {
-  jQuery.get('/patient/select/lookup', {'id': pat_id}, function (data) {
+  jQuery.get('/patient/api/lookup', {'id': pat_id}, function (data) {
       callback(data);
     }, "json");
 }
 
 function fuzzy_match (patient_rec, callback) {
-  jQuery.post('/patient/select/match/', patient_rec, function (data) {
+  jQuery.post('/patient/api/match/', patient_rec, function (data) {
       callback(data);
     }, "json");
 }
@@ -257,13 +257,13 @@ function qChooseAmongstPatients (records, qCaption, noneCaption) {
 }
 
 function patLine (pat) {
-  var line = pat['fname'] + " " + pat['lname'] + " ";
-  if (pat['dob'] != null) {
-    line += Math.floor((new Date() - new Date(pat['dob']))/(1000.*86400*365.2425));
+  var line = pat['first_name'] + " " + pat['last_name'] + " ";
+  if (pat['birthdate'] != null) {
+    line += Math.floor((new Date() - new Date(pat['birthdate']))/(1000.*86400*365.2425));
   } else {
     line += '??';
   }
-  line += "/" + (pat['sex'] != null ? pat['sex'].toUpperCase() : "?");
+  line += "/" + (pat['gender'] != null ? pat['gender'].toUpperCase() : "?");
   return line
 }
 
@@ -272,7 +272,7 @@ function qSelectReqd (caption, choices) {
 }
 
 function qSinglePatInfo (caption, choices, pat_rec, selected) {
-  pat_content = get_server_content('single-patient', {'uuid': pat_rec['uuid']});
+  pat_content = get_server_content('single-patient', {'uuid': pat_rec['_id']});
   var BUTTON_SECTION_HEIGHT = 260;
 
   return new wfQuestion(caption, 'select', selected, null, false, null, null, function (q) {
@@ -296,5 +296,5 @@ function qPork () {
 }
 
 function get_server_content (template, params) {
-  return jQuery.ajax({url: '/patient/select/render/' + template + '/', type: 'POST', data: params, async: false}).responseText;
+  return jQuery.ajax({url: '/patient/render/' + template + '/', type: 'POST', data: params, async: false}).responseText;
 }
