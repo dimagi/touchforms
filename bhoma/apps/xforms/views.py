@@ -39,7 +39,7 @@ def play(request, xform_id, callback=None, preloader_data={}):
     """
     xform = get_object_or_404(XForm, id=xform_id)
     if request.method == "POST":
-        
+    
         # get the instance
         instance = request.POST["output"]
         # post to couch
@@ -57,9 +57,6 @@ def play(request, xform_id, callback=None, preloader_data={}):
                                "mode": 'xform',
                                "preloader_data": preloader_data_js })
                                     
-def patient_select(request):
-    return render_to_response(request, "xforms/touchscreen.html", {'form': {'name': 'patient reg', 'wfobj': 'wfGetPatient'}, 'mode': 'workflow'})
-
 def player_proxy(request):
     """Proxy to an xform player, to avoid cross-site scripting issues"""
     data = request.raw_post_data if request.method == "POST" else None

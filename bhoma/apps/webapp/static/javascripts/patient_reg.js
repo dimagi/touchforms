@@ -1,7 +1,6 @@
 
 function wfGetPatient () {
   var flow = function (data) {
- 
     var new_patient_rec = null;       //any new record created via registration form
     var existing_patient_rec = null;  //any existing record select by the user as belonging to the current patient
     //these fields are not mutually exclusive
@@ -168,7 +167,6 @@ function wfGetPatient () {
         }
       }
     }
-
     //summarize result of workflow
     data['new'] = (new_patient_rec != null);
     if (data['new']) {
@@ -181,7 +179,7 @@ function wfGetPatient () {
   }
 
   var onFinish = function (data) {
-    submit_redirect({result: JSON.stringify(data)}, '/patient/select/submit/')
+    submit_redirect({result: JSON.stringify(data)})
   }
 
   return new Workflow(flow, onFinish);
