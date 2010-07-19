@@ -24,7 +24,6 @@ function wfGetPatient () {
       var qr_lookup_pat = new wfAsyncQuery(function (callback) { lookup(patient_id, callback); });
       yield qr_lookup_pat;
       var records_for_id = qr_lookup_pat.value;
- 
       //for registration forms we always have them fill out the reg info upfront (but only once even if we re-ask patient id)
       if (need_to_fill_registration_upfront) {
         new_patient_rec = {} //new Patient();
@@ -34,7 +33,10 @@ function wfGetPatient () {
         new_patient_rec.id = patient_id;
         need_to_fill_registration_upfront = false;
       }
-        
+      // save ourselves from having to do null checks all over
+      if (records_for_id == null) {
+        records_for_id = [];
+      } 
       if (!is_reg_form && records_for_id.length == 0) {
         //if not a reg form, give them the option to bail if ID not found
 
