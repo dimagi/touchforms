@@ -189,44 +189,49 @@ function wfGetPatient () {
 
 function ask_patient_info (pat_rec, full_reg_form) {
   var q_fname = new wfQuestion('First Name', 'str', null, null, true, null, 'alpha');
-   yield q_fname;
-   pat_rec['fname'] = q_fname.value;
+  yield q_fname;
+  pat_rec['fname'] = q_fname.value;
 
-   var q_lname = new wfQuestion('Last Name', 'str', null, null, true, null, 'alpha');
-   yield q_lname;
-   pat_rec['lname'] = q_lname.value;
+  var q_lname = new wfQuestion('Last Name', 'str', null, null, true, null, 'alpha');
+  yield q_lname;
+  pat_rec['lname'] = q_lname.value;
+  
+  if (pat_rec['fname'] == "WHITE" && pat_rec['lname'] == "MEAT") {
+    yield qPork();
+  }
+  
+  var q_sex = new wfQuestion('Sex', 'select', null, ['Male', 'Female'], full_reg_form);
+  yield q_sex;
+  pat_rec['sex'] = (q_sex.value == 1 ? 'm' : 'f');
+  
+  if (full_reg_form) {
+    
+    var q_dob = new wfQuestion('Date of Birth', 'date', null, null, true, function (x) { return (new Date(x) - new Date()) > 1.5 * 86400000 ? "Cannot be in the future" : null });
+    yield q_dob;
+    pat_rec['dob'] = q_dob.value;
+    
+    var q_dob_est = new wfQuestion('Date of Birth Estimated?', 'select', null, ['Yes', 'No'], true);
+    yield q_dob_est;
+    pat_rec['dob_est'] = (q_dob_est.value == 'Yes');
+    
+    var q_village = new wfQuestion('Village', 'str', null, null, false, null, 'alpha');
+    yield q_village;
+    pat_rec['village'] = q_village.value;
+    
+    var q_contact = new wfQuestion('Contact Phone #', 'str', null, null, false, null, 'phone');
+    yield q_contact;
+    pat_rec['phone'] = q_contact.value;
+    
+    //todo: available zones vary based on clinic
+    var q_chwzone = new wfQuestion('CHW Zone', 'select', null, ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'Zone 5', 'Zone 6'], false);
+    yield q_chwzone;
+    pat_rec['chw_zone'] = q_chwzone.value;
 
-   if (pat_rec['fname'] == "WHITE" && pat_rec['lname'] == "MEAT") {
-     yield qPork();
-   }
+  } else {
 
-   var q_sex = new wfQuestion('Sex', 'select', null, ['Male', 'Female'], full_reg_form);
-   yield q_sex;
-   pat_rec['sex'] = (q_sex.value == 1 ? 'm' : 'f');
-     
-   if (full_reg_form) {
-
-     var q_dob = new wfQuestion('Date of Birth', 'date', null, null, true, function (x) { return (new Date(x) - new Date()) > 1.5 * 86400000 ? "Cannot be in the future" : null });
-     yield q_dob;
-     pat_rec['dob'] = q_dob.value;
-     
-     var q_dob_est = new wfQuestion('Date of Birth Estimated?', 'select', null, ['Yes', 'No'], true);
-     yield q_dob_est;
-     pat_rec['dob_est'] = (q_dob_est.value == 'Yes');
-     
-     var q_village = new wfQuestion('Village', 'str', null, null, false, null, 'alpha');
-     yield q_village;
-     pat_rec['village'] = q_village.value;
-     
-     var q_contact = new wfQuestion('Contact Phone #', 'str', null, null, false, null, 'phone');
-     yield q_contact;
-     pat_rec['phone'] = q_contact.value;
-
-   } else {
-
-     //ask age and deduce estimated birth date?
-
-   }
+    //ask age and deduce estimated birth date?
+    
+  }
 }
 
 function lookup (pat_id, callback) {
@@ -272,7 +277,7 @@ function qSinglePatInfo (caption, choices, pat_rec, selected) {
 
   return new wfQuestion(caption, 'select', selected, null, false, null, null, function (q) {
       var choice_data = choiceSelect(choices, normalize_select_answer(q['answer'], false), false, 920, BUTTON_SECTION_HEIGHT - 20); //annoying we have to munge the dimensions manually
-      var markup = new Layout('patinfosplit', 2, 1, '*', ['*', 260], 15, 3, null, null, null, [
+      var markup = new Layout('patinfosplit', 2, 1, '*', ['*', BUTTON_SECTION_HEIGHT], 15, 3, null, null, null, [
           new CustomContent(null, pat_content),
           choice_data[0]
         ]);
