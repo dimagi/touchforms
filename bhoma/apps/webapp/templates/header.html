@@ -8,7 +8,7 @@
                 Logged in as <strong>{{user}}@{{ clinic.name }}</strong>&nbsp;&nbsp;|&nbsp;&nbsp;  
                 <a href="{% url bhoma.apps.webapp.views.logout %}">Log out</a>          
             {% else %}
-                <a href="{% url bhoma.apps.webapp.views.login %}">Log in</a>
+                <a href="{% url bhoma.apps.webapp.views.bhoma_login %}">Log in</a>
             {% endif %}
        </div>
     </div><!-- End Container Class -->
