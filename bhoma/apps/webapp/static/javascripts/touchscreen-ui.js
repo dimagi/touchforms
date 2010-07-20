@@ -20,6 +20,8 @@ HIGHLIGHT_COLOR = '#ffc';
 
 BACKSPACE_LABEL = '\u21d0';
 
+AUTO_ADVANCE_DELAY = 150; //ms
+
 function initStaticWidgets () {
   questionCaption = new TextCaption('q-caption', TEXT_COLOR, '', 1., 'left', 'top');
   
@@ -185,7 +187,7 @@ function DateWidgetContext (dir, answer) {
       startyear = +decades[i].substring(0, 4);
       endyear = +decades[i].substring(5, 9);
       if (startyear <= year && year <= endyear) {
-	return [startyear, endyear];
+        return [startyear, endyear];
       }
     }
     return null;
@@ -225,14 +227,14 @@ function DateWidgetContext (dir, answer) {
       send = this.decade[1] + '';
       syear = '';
       for (i = 0; i < 4; i++) {
-	if (sstart[i] == send[i]) {
-	  syear += sstart[i];
-	} else {
-	  break;
-	}
+        if (sstart[i] == send[i]) {
+          syear += sstart[i];
+        } else {
+          break;
+        }
       }
       while (syear.length < 4) {
-	syear += '\u2022';
+        syear += '\u2022';
       }
       yearText.setText(syear);
     } else {
@@ -272,7 +274,7 @@ function DateWidgetContext (dir, answer) {
     if (val != null) {
       b = getButtonByCaption((caption != null ? caption : val) + '');
       if (b != null) {
-	b.setStatus('selected');
+        b.setStatus('selected');
       }
     }
   }
@@ -291,35 +293,36 @@ function DateWidgetContext (dir, answer) {
     this.year = null;
     this.month = null;
     this.day = null;
+    this.screen = 'decade';
     this.refresh();
   }
 
   this.next = function () {
     if (this.isEmpty() || this.isFull()) {
       if (this.isEmpty() || this.isValid()) {
-	answerQuestion();
+        answerQuestion();
       } else {
-	showError('This is not a valid date.');
+        showError('This is not a valid date.');
       }
     } else {
       currentScreenVal = null;
       for (i = 0; i < activeInputWidget.length; i++) {
-	if (activeInputWidget[i].status == 'selected') {
-	  currentScreenVal = activeInputWidget[i].caption;
-	  break;
-	}
+        if (activeInputWidget[i].status == 'selected') {
+          currentScreenVal = activeInputWidget[i].caption;
+          break;
+        }
       }
-
+      
       if (currentScreenVal == null) {
-	showError('Please pick a ' + (this.screen == 'decade' ? 'year' : this.screen) + '. To skip this question and leave it blank, click \'CLEAR\' first.');
-	return;
+        showError('Please pick a ' + (this.screen == 'decade' ? 'year' : this.screen) + '. To skip this question and leave it blank, click \'CLEAR\' first.');
+        return;
       } else {
-	this.screen = this.getEmptyScreen();
+        this.screen = this.getEmptyScreen();
       }
       this.refresh();
     }
   }
-
+  
   this.getEmptyScreen = function () {
     if (this.decade == null) {
       return 'decade';
@@ -353,52 +356,56 @@ function DateWidgetContext (dir, answer) {
       endyear = +val.substring(5, 9);
       this.decade = [startyear, endyear];
       if (olddecade == null || olddecade[0] != this.decade[0] || olddecade[1] != this.decade[1]) {
-	this.changed = true;
-	this.year = null;
+        this.changed = true;
+        this.year = null;
       }
     } else if (field == 'year') {
       oldyear = this.year;
       this.year = val;
       if (oldyear != this.year) {
-	this.changed = true;
-	this.decade = this.decadeForYear(val);
+        this.changed = true;
+        this.decade = this.decadeForYear(val);
       }
     } else if (field == 'month') {
       oldmonth = this.month;
       this.month = val;
       if (oldmonth != this.month)
-	this.changed = true;
+        this.changed = true;
     } else if (field == 'day') {
       oldday = this.day;
       this.day = val;
       if (oldday != this.day)
-	this.changed = true;
+        this.changed = true;
     }
     this.select(val);
-
+    
     if (this.screen == 'day') {
       if (!this.isFull()) {
-	this.screen = this.getEmptyScreen();
+        this.screen = this.getEmptyScreen();
       } else {
-	//stay on current screen; must click 'next' to advance question
+        //stay on current screen; must click 'next' to advance question
       }
     } else {
       this.screen = this.getNextScreen();
     }
-
+    
     this.refresh();
-  }
 
+    if (field == 'day' && this.isFull() && autoAdvance) {
+      doAutoAdvance();
+    }
+  }
+  
   this.back = function () {
     if (this.isEmpty() || (this.isFull() && !this.changed)) {
       prevQuestion();
     } else {
       pscr = this.getPrevScreen();
       if (pscr != null) {
-	this.screen = pscr;
-	this.refresh();
+        this.screen = pscr;
+        this.refresh();
       } else {
-	prevQuestion();
+        prevQuestion();
       }
     }
   }
@@ -482,12 +489,29 @@ function clearButtons (except) {
 
 function choiceSelected (ev, x) {
   b = getButtonByCaption(x);
+  oldstatus = b.status
+
   b.toggleStatus();
   if (activeQuestion["datatype"] == "select") {
     clearButtons(b);
   } else {
     b.setText((b.status == 'selected' ? '\u2612 ' : '\u2610 ') + b.caption.substring(2));
   }
+
+  if (autoAdvance && activeQuestion["datatype"] == "select" && oldstatus == "default") {
+    doAutoAdvance();
+  }
+}
+
+function doAutoAdvance () {
+  stopClicks = function (ev) { ev.stopPropagation(); return false; }
+  body = document.getElementById('body');
+
+  body.addEventListener('click', stopClicks, true);
+  setTimeout(function () {
+      body.removeEventListener('click', stopClicks, true);
+      nextClicked();
+    }, AUTO_ADVANCE_DELAY);
 }
 
 function showError (text) {
