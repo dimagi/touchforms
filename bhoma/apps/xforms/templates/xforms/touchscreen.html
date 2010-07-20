@@ -8,6 +8,7 @@
     <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/jquery-1.4.2.min.js"></script>
 
     {# we should really move these elsewhere #}
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/shortcut.js"></script>   
     <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}webapp/javascripts/patient_reg.js"></script>   
     <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}webapp/javascripts/login.js"></script>   
 
@@ -25,14 +26,27 @@ function init () {
 
   initStaticWidgets();
   render_clean();
+  
 
 {% ifequal mode 'xform' %} 
   XFORM_UID = $('#form-uid')[0].value;
   gFormAdapter = new xformAjaxAdapter(XFORM_UID, {{ preloader_data|safe }});
+  
 {% else %}
   gFormAdapter = new workflowAdapter(new {{ form.wfobj }}());
 {% endifequal %}
-
+  /* shortcuts for cory - a la firefox search */
+  shortcut_args = {
+    'type':'keydown',
+    'propagate':false,
+    'target':document
+  };
+  shortcut.add("Alt+N",function() { answerQuestion(); }, shortcut_args);
+  shortcut.add("Alt+P",function() { prevQuestion(); }, shortcut_args);
+  /* todo: for cancelling the validation popups 
+    shortcut.add("esc",function() { whatToCall(); }, shortcut_args);
+  */
+  
   gFormAdapter.loadForm();
 }
 
