@@ -5,8 +5,14 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.models import check_password, User
 
 def get_usernames(request):
-    pass
-    #return HttpResponse.
+    """
+    Gets a list of usernames for the login workflow
+    """
+    users = User.objects.values_list('username', flat=True).order_by('username')
+    # json doesn't like unicode markups
+    users = [str(usr) for usr in users]
+    return HttpResponse(json.dumps(users))
+    
 
 @require_POST
 def authenticate_user(request):

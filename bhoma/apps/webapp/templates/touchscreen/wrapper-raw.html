@@ -74,9 +74,9 @@
                                 <td align="center" valign="middle">
                                     {{user}} @ {{ clinic.name }} | 
 	                                    {% if user.is_authenticated %}
-	                                        <a href="{% url bhoma.apps.webapp.views.logout %}">Log out</a></td>
+	                                        <a href="{% url touchscreen_logout %}">Log out</a></td>
 	                                    {% else %}
-	                                        <a href="{% url bhoma.apps.webapp.views.login %}">Log in</a>
+	                                        <a href="{% url touchscreen_login %}">Log in</a>
 	                                    {% endif %}
                             </tr>
                         </tbody>
@@ -108,4 +108,4 @@
     <div id="staging" style="position: absolute; left: 0px; top: 1000px; width: 1500px; height: 1500px; background-color: rgb(221, 221, 221); font-weight: bold;">
       <span id="snippet"></span>
     </div>
-</body>
+</body> 

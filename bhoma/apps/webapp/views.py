@@ -14,6 +14,11 @@ from django.contrib.auth import authenticate, login
 def dashboard(req):
     return HttpResponseRedirect(reverse("patient_search"))
 
+def touchscreen_logout(req, template_name="auth/loggedout_ts.html"):
+    '''Logout of bhoma'''
+    return django_logout(req, **{"template_name" : template_name})
+
+
 def touchscreen_login(request):
     '''Login to bhoma via touchscreen'''
     if request.method == "POST":
@@ -37,11 +42,11 @@ def touchscreen_login(request):
 
 
 def bhoma_login(req, template_name="auth/login.html"):
-    '''Login to rapidsms'''
+    '''Login to bhoma, regular'''
     return django_login(req, **{"template_name" : template_name})
 
 def logout(req, template_name="auth/loggedout.html"):
-    '''Logout of rapidsms'''
+    '''Logout of bhoma, regular'''
     return django_logout(req, **{"template_name" : template_name})
 
 from api_views import *
