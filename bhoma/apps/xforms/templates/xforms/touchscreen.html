@@ -35,17 +35,15 @@ function init () {
 {% else %}
   gFormAdapter = new workflowAdapter(new {{ form.wfobj }}());
 {% endifequal %}
-  /* shortcuts for cory - a la firefox search */
   shortcut_args = {
     'type':'keydown',
     'propagate':false,
     'target':document
   };
+  /* shortcuts for cory - a la firefox search */
   shortcut.add("Alt+N",function() { answerQuestion(); }, shortcut_args);
   shortcut.add("Alt+P",function() { prevQuestion(); }, shortcut_args);
-  /* todo: for cancelling the validation popups 
-    shortcut.add("esc",function() { whatToCall(); }, shortcut_args);
-  */
+  shortcut.add("esc",function() { overlay.setActive(false); }, shortcut_args);
   
   gFormAdapter.loadForm();
 }
