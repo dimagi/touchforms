@@ -212,7 +212,7 @@ function ask_patient_info (pat_rec, full_reg_form) {
     
     var q_dob_est = new wfQuestion('Date of Birth Estimated?', 'select', null, ['Yes', 'No'], true);
     yield q_dob_est;
-    pat_rec['dob_est'] = (q_dob_est.value == 'Yes');
+    pat_rec['dob_est'] = (q_dob_est.value == 1);
     
     var q_village = new wfQuestion('Village', 'str', null, null, false, null, 'alpha');
     yield q_village;
