@@ -68,6 +68,7 @@
 
 .footer-button td {
     font-weight: bold; 
+    text-align: center;
     font-size: 100%; 
     color: rgb(255, 255, 255);
 }
@@ -82,13 +83,14 @@
 
 }
 .really-big-button td {
-    font-weight: bold; 
+    font-weight: bold;
+    text-align: center;
     color: rgb(255, 255, 255);   
     font-size: xx-large; 
 }
 
 .big-button {
-    width: 550px; 
+    width: 400px; 
     height: 64px;
     cursor: pointer;
     -moz-border-radius: 10px 10px 10px 10px;
@@ -97,7 +99,8 @@
 
 }
 .big-button td {
-    font-weight: bold; 
+    font-weight: bold;
+    text-align: center;  
     color: rgb(255, 255, 255);   
     font-size: xx-large; 
 }
@@ -137,6 +140,7 @@
 }
 #session-info td {
     font-weight: bold; 
-    font-size: 100%; 
+    font-size: 20px; 
+    text-align: center;  
     color: rgb(255, 255, 255);
 }

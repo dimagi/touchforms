@@ -1,3 +1,4 @@
+from django.conf import settings
 
 class Hideable(object):
     """Something that can be hidden or shown"""
@@ -13,7 +14,7 @@ class ButtonOptions(Hideable):
     link = "#"
     text = ""
     def __init__(self, show=True, link="#", text=""):
-        super(ButtonOptions, self).__init__()
+        super(ButtonOptions, self).__init__(show)
         self.link = link
         self.text = text
 
@@ -21,8 +22,8 @@ DEFAULT_HELP_OPTIONS = {"show":True, "text":"HELP"}
 # wacky javascrippt html handoffs here, but this is the
 # exception, not the rule
 DEFAULT_BACK_OPTIONS = {"show":True, "text":"BACK", "link":"javascript:history.go(-1)"} 
-DEFAULT_MENU_OPTIONS = {"show":True, "text":"MENU"}
-DEFAULT_NEXT_OPTIONS = {"show":True, "text":"NEXT"}
+DEFAULT_MENU_OPTIONS = {"show":True, "text":"HOME", "link":settings.LOGIN_REDIRECT_URL}
+DEFAULT_NEXT_OPTIONS = {"show":False, "text":"NEXT"}
 
 class TouchscreenOptions(object):
     """Options for our touchscreen layouts"""
