@@ -38,7 +38,7 @@ class Metadata(Document):
     def from_meta_block(cls, meta_block):
         instance = Metadata()
         if const.TAG_META_CLINIC_ID in meta_block:
-            instance.clinic_id = meta_block[const.TAG_META_CLINIC_ID]
+            instance.clinic_id = str(meta_block[const.TAG_META_CLINIC_ID])
         if const.TAG_META_TIMESTART in meta_block:
             instance.time_start = string_to_datetime(meta_block[const.TAG_META_TIMESTART])
         if const.TAG_META_TIMEEND in meta_block:

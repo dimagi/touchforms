@@ -28,6 +28,6 @@ def post_xform_to_couch(instance):
         response, errors = post_data(instance, settings.XFORMS_POST_URL)
     if not errors and not "error" in response:
         doc_id = response
-        return CXFormInstance.get_db().get(doc_id)
+        return CXFormInstance.get(doc_id)
     else:
         raise XFormException("Problem POSTing form to couch! errors/response: %s/%s" % (errors, response))

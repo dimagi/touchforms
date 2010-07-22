@@ -5,7 +5,7 @@ TAG_VERSION = "@version"
 TAG_UIVERSION = "@uiVersion"
 TAG_NAMESPACE = "@xmlns"
 
-TAG_META = "Meta"
+TAG_META = "meta"
 TAG_META_CLINIC_ID = "clinic_id"
 TAG_META_TIMESTART = "TimeStart"
 TAG_META_TIMEEND = "TimeEnd"
