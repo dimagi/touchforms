@@ -3,6 +3,7 @@ from bhoma.utils.post import post_data, post_authenticated_data
 from django.conf import settings
 from bhoma.apps.xforms.models import CXFormInstance
 from bhoma.apps.xforms.exceptions import XFormException
+from bhoma.utils.logging import log_exception
 
 def get_xform_by_namespace(namespace):
     matches = XForm.objects.filter(namespace=namespace).order_by("-version", "-created")
@@ -28,6 +29,10 @@ def post_xform_to_couch(instance):
         response, errors = post_data(instance, settings.XFORMS_POST_URL)
     if not errors and not "error" in response:
         doc_id = response
-        return CXFormInstance.get(doc_id)
+        try:
+            return CXFormInstance.get(doc_id)
+        except Exception, e:
+            log_exception(e)
+            raise
     else:
         raise XFormException("Problem POSTing form to couch! errors/response: %s/%s" % (errors, response))
