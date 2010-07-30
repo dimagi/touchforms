@@ -3,12 +3,13 @@ import json
 from django.views.decorators.http import require_POST
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import check_password, User
+from bhoma.apps.profile.models import BhomaUserProfile
 
 def get_usernames(request):
     """
     Gets a list of usernames for the login workflow
     """
-    users = User.objects.values_list('username', flat=True).order_by('username')
+    users = BhomaUserProfile.objects.filter(is_web_user=True).values_list('user__username', flat=True).order_by('user__username')
     # json doesn't like unicode markups
     users = [str(usr) for usr in users]
     return HttpResponse(json.dumps(users))
