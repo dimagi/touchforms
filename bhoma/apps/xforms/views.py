@@ -44,6 +44,13 @@ def play(request, xform_id, callback=None, preloader_data={}):
         instance = request.POST["output"]
         # post to couch
         doc = post_xform_to_couch(instance)
+        # do some post processing
+        if not hasattr(doc, "clinic_ids"):
+            doc.clinic_ids = []
+        if "clinic_id" in doc.meta and doc.meta["clinic_id"] not in doc.clinic_ids: 
+            doc.clinic_ids.append(doc.meta["clinic_id"])
+            doc.save()
+             
         # call the callback, if there, otherwise route back to the 
         # xforms list
         if callback:

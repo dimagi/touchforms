@@ -48,6 +48,12 @@ function(doc, req) {
     doc["#xml"] = req.body;
     
     doc["#doc_type"] = "XForm"
+    
+    // HACK / MAGIC - python couchdbkit ignores capital meta so always lowercase it
+    if (doc["Meta"]) {
+        doc["meta"] = doc["Meta"];
+        doc["Meta"] = null;
+    } 
     var resp =  {"headers" : {"Content-Type" : "text/plain"},
                  "body" : uuid.toString()};
     return [doc, resp];
