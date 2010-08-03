@@ -18,21 +18,39 @@ function xformAjaxAdapter (formName, preloadData) {
 
   this.answerQuestion = function (answer) {
     adapter = this;
-    jQuery.post(XFORM_URL, JSON.stringify({'action': 'answer',
-                                           'session-id': this.session_id,
-                                           'answer': answer}),
-      function (resp) {
-        if (resp["status"] == "validation-error") {
-          if (resp["type"] == "required") {
-            showError("An answer is required");
-          } else if (resp["type"] == "constraint") {
-            showError(resp["reason"]);      
+    if (activeQuestion["repeatable"]) {
+      if (answer == 1 && !activeQuestion["exists"]) {
+        //create repeat
+        jQuery.post(XFORM_URL, JSON.stringify({'action': 'add-repeat', 'session-id': this.session_id}),
+          function (resp) {
+            adapter._renderEvent(resp["event"], true);
+          },
+          "json");
+      } else if (answer == 2 && activeQuestion["exists"]) {
+        //delete repeat
+        alert('i should probably delete all the subsequent existing repeats here, but i don\'t support that currently. also, that\'s probably not the best user interaction');
+        this._step(true);
+      } else {
+        //nothing changed; advance
+        this._step(true);
+      }
+    } else {
+      jQuery.post(XFORM_URL, JSON.stringify({'action': 'answer',
+                                             'session-id': this.session_id,
+                                             'answer': answer}),
+        function (resp) {
+          if (resp["status"] == "validation-error") {
+            if (resp["type"] == "required") {
+              showError("An answer is required");
+            } else if (resp["type"] == "constraint") {
+              showError(resp["reason"]);      
+            }
+          } else {
+            adapter._renderEvent(resp["event"], true);
           }
-        } else {
-          adapter._renderEvent(resp["event"], true);
-        }
-      },
-      "json");
+        },
+        "json");
+    }
   }
 
   this.prevQuestion = function () {
@@ -46,10 +64,17 @@ function xformAjaxAdapter (formName, preloadData) {
       this._formComplete(event);
     } else if (event["type"] == "sub-group") {
       if (event["repeatable"]) {
-        alert("i can't support repeats right now!");
+        event["item"] = event["caption"];
+        event["caption"] = "Add a " + event["item"] + "?";
+        event["datatype"] = "select";
+        event["choices"] = ["Yes", "No"];
+        event["answer"] = (event["exists"] ? 1 : (dirForward ? null : 2));
+        event["required"] = true;
+
+        renderQuestion(event, dirForward);
+      } else {
+        this._step(dirForward);
       }
-      
-      this._step(dirForward);
     } else {
       alert("unrecognized event [" + event["type"] + "]");
     }
