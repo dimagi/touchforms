@@ -25,6 +25,9 @@ def touchscreen_login(request):
         username = request.POST["username"]
         password = request.POST["password"]
         user = authenticate(username=username, password=password)
+        if user is None:
+            # HACK try lowercase
+            user = authenticate(username=username, password=password.lower())
         if user is not None:
             if user.is_active:
                 login(request, user)

@@ -23,5 +23,7 @@ def authenticate_user(request):
     username = request.POST["username"]
     password = request.POST["password"]
     user = User.objects.get(username=username)
-    return HttpResponse(json.dumps({"result": check_password(password, user.password)}))
+    # HACK: try to authenticate first with the normal password, then with the lowercase password
+    success = check_password(password, user.password) or check_password(password.lower(), user.password)
+    return HttpResponse(json.dumps({"result": success}))
     
