@@ -6,14 +6,11 @@
     <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/touchscreen-ui.js"></script>   
     <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/formnav.js"></script>   
     <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/jquery-1.4.2.min.js"></script>
-
-    {# we should really move these elsewhere #}
-    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/shortcut.js"></script>   
-    <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}webapp/javascripts/patient_reg.js"></script>   
-    <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}webapp/javascripts/login.js"></script>   
-
-
-
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/shortcut.js"></script>
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/workflow.js"></script>
+{% for script in dynamic_scripts %}
+    <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}{{script}}"></script>   
+{% endfor %}
     <script language="javascript">
 
 XFORM_URL = "{% url xform_player_proxy %}";
