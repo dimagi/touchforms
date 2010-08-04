@@ -13,6 +13,8 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth import authenticate, login
 from django.core.context_processors import request
 from bhoma.apps.webapp.touchscreen.options import TouchscreenOptions
+from django.contrib.auth.models import User
+from bhoma.utils.parsing import string_to_boolean
 
 @require_GET
 def dashboard(req):
@@ -70,6 +72,26 @@ def new_user(request):
                                         'wfobj': 'wfNewUser'}, 
                                'mode':  'workflow', 
                                'dynamic_scripts': ["webapp/javascripts/user_reg.js",] })
+
+
+def delete_user(request):
+    if request.method == "POST":
+        if string_to_boolean(request.POST["confirm"]):
+            user = User.objects.get(username=request.POST["username"])
+            if request.user == user:
+                return render_to_response(request, "touchscreen/error.html", 
+                    {"error_text": "You can't delete the currently logged in user account. "
+                     "Please logout and log in as a different user",
+                     "options": TouchscreenOptions.default()})
+            else:
+                user.delete()
+        return HttpResponseRedirect(reverse("bhoma_admin"))
+                                  
+    return render_to_response(request, "xforms/touchscreen.html", 
+                              {'form': {'name':  'delete user', 
+                                        'wfobj': 'wfDeleteUser'}, 
+                               'mode':  'workflow', 
+                               'dynamic_scripts': ["webapp/javascripts/user_del.js",] })
 
 
 def bhoma_login(req, template_name="auth/login.html"):
