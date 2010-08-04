@@ -1,4 +1,5 @@
 {% extends "touchscreen/wrapper-raw.html" %}
+{% load touchscreen_tags %}
 {% block header %}
 User {{ new_user.username }} created!
 {% endblock %}
@@ -7,15 +8,13 @@ User {{ new_user.username }} created!
 {% if user.is_superuser %}
 <h4>What would you like to do next?</h4>
 <center>
-<div class="really-big-button" onclick="location.href='{% url bhoma_admin %}'">
-	<table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%">
-	    <tbody>
-	        <tr>
-	            <td align="center" valign="middle">Back to admin</td>
-	        </tr>
-	    </tbody>
-	</table>
-</div>
+
+{% url new_user as new_user_url %}
+{% ts_button "Create another user" new_user_url %}
+
+{% url bhoma_admin as b_admin_url %}
+{% ts_button "Back to administration" b_admin_url %}
+
 </center>
 {% else %}
 <center>
