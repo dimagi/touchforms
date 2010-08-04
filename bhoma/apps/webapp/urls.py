@@ -21,8 +21,10 @@ urlpatterns = patterns('',
          "extra_context": {"options": TouchscreenOptions.default() }},
          name="bhoma_admin"),
     url(r'^accounts/new/$', views.new_user, name="new_user"),
+    url(r'^accounts/delete/$', views.delete_user, name="delete_user"),
     
     url(r'^api/auth/$', views.authenticate_user),
     url(r'^api/usernames/$', views.get_usernames),
+    url(r'^api/user_exists/$', views.user_exists),
     
 )

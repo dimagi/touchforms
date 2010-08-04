@@ -1,17 +1,20 @@
 {% extends "touchscreen/wrapper-raw.html" %}
 {% load touchscreen_tags %}
 {% block header %}
-BHOMA Administration Menu
+User {{ new_user.username }} created!
 {% endblock %}
 {% block touchscreen_content %}
-{% if user.is_superuser %}
-<h4>What would you like to do?</h4>
-<center>
-{% url new_user as new_user_url %}
-{% ts_button "Add a new clinic user" new_user_url %}
 
-{% url delete_user as del_user_url %}
-{% ts_button "Delete a clinic user" del_user_url %}
+{% if user.is_superuser %}
+<h4>What would you like to do next?</h4>
+<center>
+
+{% url new_user as new_user_url %}
+{% ts_button "Create another user" new_user_url %}
+
+{% url bhoma_admin as b_admin_url %}
+{% ts_button "Back to administration" b_admin_url %}
+
 </center>
 {% else %}
 <center>

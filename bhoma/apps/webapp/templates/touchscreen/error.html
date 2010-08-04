@@ -1,0 +1,8 @@
+{% extends "touchscreen/wrapper-raw.html" %}
+{% block header %}
+{{ header|default:"BHOMA ERROR" }}
+{% endblock %}
+{% block touchscreen_content %}
+<br></br>
+<h4 style="color:blue;">{{ error_text|default:"Sorry, something went wrong. If this continues please contact CIDRZ for assistance" }}</h4>
+{% endblock %}
