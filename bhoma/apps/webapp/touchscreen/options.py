@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.urlresolvers import reverse
 
 class Hideable(object):
     """Something that can be hidden or shown"""
@@ -53,5 +54,17 @@ class TouchscreenOptions(object):
         return TouchscreenOptions("BHOMA", 
                                   helpbutton=ButtonOptions(**DEFAULT_HELP_OPTIONS),
                                   backbutton=ButtonOptions(**DEFAULT_BACK_OPTIONS),
+                                  menubutton=ButtonOptions(**DEFAULT_MENU_OPTIONS),
+                                  nextbutton=ButtonOptions(**DEFAULT_NEXT_OPTIONS))
+    @classmethod
+    def admin(cls):
+        """
+        Gets default admin options.
+        """
+        link = reverse("bhoma_admin")
+        admin_back_options = {"show":True, "text":"BACK", "link": link} 
+        return TouchscreenOptions("BHOMA", 
+                                  helpbutton=ButtonOptions(**DEFAULT_HELP_OPTIONS),
+                                  backbutton=ButtonOptions(**admin_back_options),
                                   menubutton=ButtonOptions(**DEFAULT_MENU_OPTIONS),
                                   nextbutton=ButtonOptions(**DEFAULT_NEXT_OPTIONS))

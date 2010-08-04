@@ -65,7 +65,7 @@ def new_user(request):
         user.save()
         return render_to_response(request, "auth/user_reg_complete.html", 
                                   {"new_user": user,
-                                   "options": TouchscreenOptions.default() }) 
+                                   "options": TouchscreenOptions.admin() }) 
                                   
     return render_to_response(request, "xforms/touchscreen.html", 
                               {'form': {'name':  'add user', 
@@ -82,7 +82,7 @@ def delete_user(request):
                 return render_to_response(request, "touchscreen/error.html", 
                     {"error_text": "You can't delete the currently logged in user account. "
                      "Please logout and log in as a different user",
-                     "options": TouchscreenOptions.default()})
+                     "options": TouchscreenOptions.admin()})
             else:
                 user.delete()
         return HttpResponseRedirect(reverse("bhoma_admin"))
