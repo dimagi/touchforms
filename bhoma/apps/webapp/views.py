@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # vim: ai ts=4 sts=4 et sw=4
 
+from datetime import datetime
 from django.conf import settings 
 from django.views.decorators.http import require_GET
 from django.contrib.auth.views import login as django_login
@@ -11,6 +12,7 @@ from django.http import HttpResponseRedirect, HttpResponseNotAllowed,\
 from django.core.urlresolvers import reverse
 from django.contrib.auth import authenticate, login
 from django.core.context_processors import request
+from bhoma.apps.webapp.touchscreen.options import TouchscreenOptions
 
 @require_GET
 def dashboard(req):
@@ -46,9 +48,26 @@ def touchscreen_login(request):
                                'dynamic_scripts': ["webapp/javascripts/login.js",] })
 
 def new_user(request):
+    if request.method == "POST":
+        user = User()
+        user.username = request.POST["username"]
+        user.set_password(request.POST["password"])
+        user.first_name = request.POST["fname"]
+        user.last_name  = request.POST["lname"]
+        user.email = ""
+        user.is_staff = False # Can't log in to admin site
+        user.is_active = True # Activated upon receipt of confirmation
+        user.is_superuser = False # Certainly not
+        user.last_login =  datetime(1970,1,1)
+        user.date_joined = datetime.utcnow()
+        user.save()
+        return render_to_response(request, "auth/user_reg_complete.html", 
+                                  {"new_user": user,
+                                   "options": TouchscreenOptions.default() }) 
+                                  
     return render_to_response(request, "xforms/touchscreen.html", 
-                              {'form': {'name':  'login', 
-                                        'wfobj': 'wfLogin'}, 
+                              {'form': {'name':  'add user', 
+                                        'wfobj': 'wfNewUser'}, 
                                'mode':  'workflow', 
                                'dynamic_scripts': ["webapp/javascripts/user_reg.js",] })
 

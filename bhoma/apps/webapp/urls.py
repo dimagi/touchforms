@@ -24,5 +24,6 @@ urlpatterns = patterns('',
     
     url(r'^api/auth/$', views.authenticate_user),
     url(r'^api/usernames/$', views.get_usernames),
+    url(r'^api/user_exists/$', views.user_exists),
     
 )

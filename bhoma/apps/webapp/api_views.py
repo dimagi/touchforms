@@ -4,6 +4,7 @@ from django.views.decorators.http import require_POST
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import check_password, User
 from bhoma.apps.profile.models import BhomaUserProfile
+from bhoma.utils.logging import log_exception
 
 def get_usernames(request):
     """
@@ -27,3 +28,10 @@ def authenticate_user(request):
     success = check_password(password, user.password) or check_password(password.lower(), user.password)
     return HttpResponse(json.dumps({"result": success}))
     
+def user_exists(request):
+    """
+    Gets a list of usernames for the login workflow
+    """
+    username = request.POST["username"]
+    exists = User.objects.filter(username__iexact=username).exists()
+    return HttpResponse(json.dumps({"result": exists}))
