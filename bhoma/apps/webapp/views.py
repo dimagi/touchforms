@@ -52,8 +52,9 @@ def touchscreen_login(request):
 def new_user(request):
     if request.method == "POST":
         user = User()
-        user.username = request.POST["username"]
-        user.set_password(request.POST["password"])
+        # HACK: all usernames and passwords are lowercased going into the db
+        user.username = request.POST["username"].lower()
+        user.set_password(request.POST["password"].lower())
         user.first_name = request.POST["fname"]
         user.last_name  = request.POST["lname"]
         user.email = ""

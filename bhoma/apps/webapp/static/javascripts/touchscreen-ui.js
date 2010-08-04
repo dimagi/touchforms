@@ -27,7 +27,7 @@ function initStaticWidgets () {
   
   helpButton = new TextButton('help-button', '#aaa', BUTTON_TEXT_COLOR, null, null, '?', 1., helpClicked);
   backButton = new TextButton('back-button', '#6ad', BUTTON_TEXT_COLOR, null, null, 'BACK', .9, backClicked);
-  menuButton = new TextButton('quit-button', '#d23', BUTTON_TEXT_COLOR, null, null, 'MENU', .9, menuClicked);
+  menuButton = new TextButton('quit-button', '#d23', BUTTON_TEXT_COLOR, null, null, 'HOME', .9, menuClicked);
   nextButton = new TextButton('next-button', '#1a3', BUTTON_TEXT_COLOR, null, null, 'NEXT', 1.2, nextClicked);
   
   questionEntry = new Indirect();
@@ -133,7 +133,7 @@ function backClicked (ev, x) {
 }
 
 function menuClicked (ev, x) {
-  alert('show menu');
+  location.href='/';
 }
 
 function nextClicked (ev, x) {
