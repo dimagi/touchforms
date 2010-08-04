@@ -82,6 +82,12 @@ def handle_request (content):
 
         return xformplayer.answer_question(content['session-id'], content['answer'])
 
+    elif action == 'add-repeat':
+        if 'session-id' not in content:
+            return {'error': 'session id required'}
+
+        return xformplayer.new_repetition(content['session-id'])
+
     elif action == 'next':
         if 'session-id' not in content:
             return {'error': 'session id required'}

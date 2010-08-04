@@ -1,11 +1,7 @@
 
 function wfLogin () {
   var flow = function (data) {
-    var qr_usernames = new wfAsyncQuery(function (callback) { get_usernames(callback); });
-    yield qr_usernames;
-    usernames = qr_usernames.value
-    // select username 
-    var q_username = qSelectReqd('Please select your username', usernames);
+    var q_username = qUsernameList();
     yield q_username;
     username = usernames[q_username.value - 1];
     
@@ -49,8 +45,3 @@ function wfLogin () {
   return new Workflow(flow, onFinish);
 }
 
-function get_usernames(patient_rec, callback) {
-  jQuery.get('/api/usernames/', patient_rec, function (data) {
-      callback(data);
-    }, "json");
-}

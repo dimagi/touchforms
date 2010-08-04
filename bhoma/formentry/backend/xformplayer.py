@@ -233,10 +233,10 @@ class XFormSession:
         elif result == self.fec.ANSWER_OK:
             return {'status': 'success'}
 
-    #def new_repetition ():
-    #  pass
-
-
+    def new_repetition (self):
+      #current in the form api this always succeeds, but theoretically there could
+      #be unsatisfied constraints that make it fail. how to handle them here?
+      self.fec.newRepeat(self.fem.getCurrentFormIndex())
 
 
 def open_form (form_name, preload_data={}):
@@ -259,6 +259,15 @@ def answer_question (session_id, answer):
     else:
         result['status'] = 'validation-error'
         return result
+
+def new_repetition (session_id):
+    xfsess = global_state.get_session(session_id)
+    if xfsess == None:
+        return {'error': 'invalid session id'}
+
+    #new repeat creation currently cannot fail, so just blindly proceed to the next event
+    xfsess.new_repetition()
+    return {'event': next_event(xfsess)}
 
 def skip_next (session_id):
     xfsess = global_state.get_session(session_id)

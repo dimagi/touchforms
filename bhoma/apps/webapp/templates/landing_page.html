@@ -1,27 +1,22 @@
 {% extends "touchscreen/wrapper-raw.html" %}
+{% load touchscreen_tags %}
 {% block header %}
 BHOMA Main Menu
 {% endblock %}
 {% block touchscreen_content %}
 <h4>What would you like to do?</h4>
 <center>
-<div class="really-big-button" onclick="location.href='{% url patient_select %}'">
-	<table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%">
-	    <tbody>
-	        <tr>
-	            <td align="center" valign="middle">Enter Data</td>
-	        </tr>
-	    </tbody>
-	</table>
-</div>
-<div class="really-big-button" onclick="location.href='{% url report_list %}'">
-    <table border="0" cellpadding="0" cellspacing="0" height="100%" width="100%">
-        <tbody>
-            <tr>
-                <td align="center" valign="middle">View Reports</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+{% url patient_select as pat_select_url %}
+{% ts_button "Enter Data" pat_select_url %}
+
+{% url report_list as rep_list_url %}
+{% ts_button "View Reports" rep_list_url %}
+
+{% if user.is_superuser %}
+
+{% url bhoma_admin as b_admin_url %}
+{% ts_button "Administration" b_admin_url %}
+
+{% endif %}
 </center>
 {% endblock %}

@@ -1,0 +1,23 @@
+{% extends "touchscreen/wrapper-raw.html" %}
+{% load touchscreen_tags %}
+{% block header %}
+BHOMA Administration Menu
+{% endblock %}
+{% block touchscreen_content %}
+{% if user.is_superuser %}
+<h4>What would you like to do?</h4>
+<center>
+{% url new_user as new_user_url %}
+{% ts_button "Add a new clinic user" new_user_url %}
+
+{% url delete_user as del_user_url %}
+{% ts_button "Delete a clinic user" del_user_url %}
+</center>
+{% else %}
+<center>
+<br></br>
+<h3>Sorry, administration permissions are required to access this content.</h3>
+</center>
+{% endif %}
+
+{% endblock %}
