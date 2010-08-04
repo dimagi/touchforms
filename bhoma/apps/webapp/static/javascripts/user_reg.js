@@ -13,17 +13,14 @@ function wfNewUser() {
 					              data: {'username': username}, 
 					              async: false,
 					              success: function(data, textStatus, request) {
-	                                    console.log("test if " + username + " exists.. success!");
-                                        json_res = JSON.parse(data);
-                                        console.log("jsno_res:" + json_res["result"]);
-					                    if (json_res["result"]) {
+	                                    json_res = JSON.parse(data);
+                                        if (json_res["result"]) {
 					                        request.result = fail_text;
 					                    } else {
 					                        request.result = null;
 					                    }
 					                },
 					              error: function(request, textStatus, errorThrown) {
-					                console.log("test if " + username + " exists.. fail!");
 					                request.result = error_text + textStatus + " " + errorThrown;
 					              }
 			});
