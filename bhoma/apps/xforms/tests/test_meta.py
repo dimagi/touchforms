@@ -2,8 +2,6 @@ import os
 from datetime import date
 from django.conf import settings
 from django.test import TestCase
-from bhoma.apps.case.tests.util import bhoma_case_from_xml
-import uuid
 from bhoma.utils.post import post_authenticated_data
 from bhoma.apps.xforms.models.couch import CXFormInstance
 
