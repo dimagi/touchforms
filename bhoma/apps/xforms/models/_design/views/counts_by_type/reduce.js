@@ -1,4 +1,3 @@
 function (keys, values) {
-    return values.length();
-    
+    return sum(values);
 }

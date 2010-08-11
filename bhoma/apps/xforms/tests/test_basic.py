@@ -26,5 +26,5 @@ class XFormTest(TestCase):
             older_kid = SchemaProperty(Pa)
             
         grandpa = GrandPa()
-        grandpa.save()
+        # grandpa.save()
         

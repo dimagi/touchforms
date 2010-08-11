@@ -97,8 +97,12 @@ class Metadata(object):
             self.clinic_id = str(meta_block[const.TAG_META_CLINIC_ID])
         if const.TAG_META_TIMESTART in meta_block:
             self.time_start = string_to_datetime(meta_block[const.TAG_META_TIMESTART])
+        elif "time_start" in meta_block:
+            self.time_start = string_to_datetime(meta_block["time_start"])
         if const.TAG_META_TIMEEND in meta_block:
             self.time_end = string_to_datetime(meta_block[const.TAG_META_TIMEEND])
+        elif "time_end" in meta_block:
+            self.time_end = string_to_datetime(meta_block["time_end"])
         if const.TAG_META_USERNAME in meta_block:
             self.username = meta_block[const.TAG_META_USERNAME]
         if const.TAG_META_USER_ID in meta_block:
