@@ -27,16 +27,17 @@ function wfNewUser() {
             return result.result;
         };
         
-        var q_username = new wfQuestion('Login Name', 'str', null, null, true, user_exists, null);
+        var q_username = new wfQuestion('Login Name', 'str', null, null, true, user_exists, 'alpha');
         yield q_username;
         data['username'] = q_username.value;
         
         var password_format = function (pass) {
-            re = new RegExp("^[a-z0-9]+$");
-            match = re.exec(pass);
-            return match == null ? "Your password should only contain letters and numbers.  No spaces or punctuation is allowed." : null
+            //re = new RegExp("^[a-z0-9]+$");
+            //  match = re.exec(pass);
+            //  return match == null ? "Your password should only contain letters and numbers.  No spaces or punctuation is allowed." : null
+            return (pass.length < 5 ? "Passwords must be at least 5 digits" : null);
         };
-        var q_password = new wfQuestion('Password', 'str', null, null, true, password_format, null);
+        var q_password = new wfQuestion('Password', 'str', null, null, true, password_format, 'numeric');
         yield q_password;
         data['password'] = q_password.value;
         
