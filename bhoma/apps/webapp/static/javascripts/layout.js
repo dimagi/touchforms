@@ -283,7 +283,7 @@ function TextCaption (id, color, caption, size_rel, align, valign) {
   }
 }
 
-function TextInput (id, color, bgcolor, content, size_rel, align, spacing) {
+function TextInput (id, color, bgcolor, content, size_rel, align, spacing, passwd) {
   this.id = id;
   this.color = color;
   this.bgcolor = bgcolor;
@@ -291,7 +291,8 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing) {
   this.size_rel = size_rel;
   this.align = align;
   this.spacing = spacing;
-  
+  this.passwd = passwd;  
+
   this.container = null;
   this.control = null;
   this.render = function (parent_div) {
@@ -313,6 +314,7 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing) {
       inp.style.letterSpacing = this.spacing + 'px';
     }
     inp.value = content;
+    inp.type = (this.passwd ? 'password' : 'text');
     this.control = inp;
   }
   

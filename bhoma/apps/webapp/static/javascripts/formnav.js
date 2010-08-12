@@ -280,11 +280,21 @@ function renderQuestion (event, dir) {
     event["customlayout"](event);
   } else if (event["datatype"] == "str" ||
              event["datatype"] == "int" ||
-             event["datatype"] == "float") {
+             event["datatype"] == "float" ||
+             event["datatype"] == "passwd") {
     questionEntry.update(freeEntry);
-    answerBar.update(freeTextAnswer);
 
-    if (event["datatype"] == "str") {
+    if (event["datatype"] == "passwd") {
+      answerWidget = passwdAnswer;
+      entryWidget = passwdText;
+    } else {
+      answerWidget = freeTextAnswer;
+      entryWidget = answerText;
+    }
+
+    answerBar.update(answerWidget);
+
+    if (event["datatype"] == "str" || event["datatype"] == "passwd") {
       if (event["domain"] == "alpha") {
         kbd = keyboardAlphaOnly;
       } else if (event["domain"] == "numeric") {
@@ -303,7 +313,7 @@ function renderQuestion (event, dir) {
     }
 
     freeEntryKeyboard.update(kbd);    
-    activeInputWidget = answerText;
+    activeInputWidget = entryWidget;
     
     if (event["answer"] != null) {
       answerText.setText(event["answer"]);
@@ -330,11 +340,11 @@ function renderQuestion (event, dir) {
 function getQuestionAnswer () {
   type = activeQuestion["datatype"];
 
-  if (type == "str" || type == "int" || type == "float") {
-    var val = answerText.child.control.value;
+  if (type == "str" || type == "int" || type == "float" || type == "passwd") {
+    var val = activeInputWidget.child.control.value;
     if (val == "") {
       return null;
-    } else if (type == "str") {
+    } else if (type == "str" || type == "passwd") {
       return val;
     } else {
       return +val;

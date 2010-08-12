@@ -96,6 +96,12 @@ function initStaticWidgets () {
     answerText,
     new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
   ]);
+
+  passwdText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.3, 'center', 0, true));
+  passwdAnswer = new Layout('answer-bar', 1, 2, ['3*', '*'], '*', [235, 235, 20, 20], 6, null, null, null, [
+    passwdText,
+    new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
+  ]);
   
   dayText = new InputArea('dayinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '06', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('day');});
   monthText = new InputArea('monthinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, 'Oct', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('month');});
@@ -148,7 +154,7 @@ function nextClicked (ev, x) {
 
 function clearClicked (ev, x) {
   type = activeQuestion["datatype"];
-  if (type == "str" || type == "int" || type == "float") {
+  if (type == "str" || type == "int" || type == "float" || type == "passwd") {
     activeInputWidget.setText('');
   } else if (type == "select" || type == "multiselect") {
     //not handled yet
