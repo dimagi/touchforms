@@ -39,7 +39,7 @@ function wfLogin () {
   }
 
   var onFinish = function (data) {
-    submit_redirect(data);
+    submit_redirect({result: JSON.stringify(data)});
   }
 
   return new Workflow(flow, onFinish);
