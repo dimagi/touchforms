@@ -23,7 +23,7 @@ function wfNewUser() {
 					              error: function(request, textStatus, errorThrown) {
 					                request.result = error_text + textStatus + " " + errorThrown;
 					              }
-			});
+	                   });
             return result.result;
         };
         
