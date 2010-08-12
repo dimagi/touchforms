@@ -28,7 +28,7 @@ function wfLogin () {
         return auth_res.result;
     }
     var q_password = new wfQuestion('Password', 'passwd', null, null, true, 
-                                    auth_validation, 'numeric');
+                                    auth_validation, null, 'numeric');
     yield q_password;
     
     data["username"] = username;

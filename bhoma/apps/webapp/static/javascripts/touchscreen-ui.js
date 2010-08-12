@@ -126,7 +126,7 @@ function initStaticWidgets () {
 }
 
 function helpClicked (ev, x) {
-  overlay.setText('Here is some help text.');
+  overlay.setText(activeQuestion["help"] || "There is no help text for this question.");
   overlay.setBgColor('#6d6');
   overlay.setTimeout(15.);
   overlay.setActive(true);

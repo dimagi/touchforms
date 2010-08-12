@@ -111,7 +111,7 @@ function Workflow (flow, onFinish) {
   }
 }
 
-function wfQuestion (caption, type, answer, choices, required, validation, domain, custom_layout) {
+function wfQuestion (caption, type, answer, choices, required, validation, helptext, domain, custom_layout) {
   this.caption = caption;
   this.type = type;
   this.value = answer || null;
@@ -120,6 +120,7 @@ function wfQuestion (caption, type, answer, choices, required, validation, domai
   this.validation = validation || function (ans) { return null; };
   this.domain = domain;
   this.custom_layout = custom_layout;
+  this.helptext = helptext;
 
   this.to_q = function () {
     return {'caption': this.caption,
@@ -127,6 +128,7 @@ function wfQuestion (caption, type, answer, choices, required, validation, domai
             'answer': this.value,
             'choices': this.choices,
             'required': this.required,
+            'help': this.helptext,
             'domain': this.domain,
             'customlayout': this.custom_layout};
   }

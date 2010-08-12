@@ -2,8 +2,8 @@
  * Common workflow methods/widgets go here.
  */ 
 
-function qSelectReqd (caption, choices) {
-  return new wfQuestion(caption, 'select', null, uniqifyChoices(choices), true);
+function qSelectReqd (caption, choices, help) {
+  return new wfQuestion(caption, 'select', null, uniqifyChoices(choices), true, null, help);
 }
 
 function uniqifyChoices (choices) {
