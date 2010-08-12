@@ -17,6 +17,8 @@ TEXT_COLOR = '#000';
 KEYBUTTON_COLOR = '#118';
 BUTTON_SELECTED_COLOR = '#0bf';
 HIGHLIGHT_COLOR = '#ffc';
+NUMPAD_COLOR = '#16c';
+SPC_COLOR = '#44e';
 
 BACKSPACE_LABEL = '\u21d0';
 
@@ -74,10 +76,10 @@ function initStaticWidgets () {
             kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '/', '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
   
   keyboard = new Layout('text-kbd', 4, 13, 68, 85, '*', 6, null, null, null, kbs([
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', '7', '8', '9', [BACKSPACE_LABEL, '#aaa'],
-    'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '4', '5', '6', '',
-    'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '.',
-    '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', '!', '?', ','     
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', ['7', NUMPAD_COLOR], ['8', NUMPAD_COLOR], ['9', NUMPAD_COLOR], [BACKSPACE_LABEL, '#aaa'],
+    'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', ['4', NUMPAD_COLOR], ['5', NUMPAD_COLOR], ['6', NUMPAD_COLOR], '.',
+    'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ['', SPC_COLOR], ['1', NUMPAD_COLOR], ['2', NUMPAD_COLOR], ['3', NUMPAD_COLOR], ',',
+    '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['0', NUMPAD_COLOR], '!', '?'     
   ], null, 1.4, type_));
   keyboardAlphaOnly = new Layout('text-kbd', 3, 10, 68, 85, '*', 6, null, null, null, kbs([
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', [BACKSPACE_LABEL, '#aaa'],
