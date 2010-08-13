@@ -157,6 +157,7 @@ class XFormSession:
         q = self.fem.getCurrentQuestionPrompt()
 
         event['caption'] = q.getLongText()
+        event['help'] = q.getHelpText()
 
         if q.getControlType() == Constants.CONTROL_TRIGGER:
             event['datatype'] = 'info'

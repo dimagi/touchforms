@@ -81,11 +81,17 @@ function xformAjaxAdapter (formName, preloadData) {
   }
 
   this._step = function (dirForward) {
+    BACK_AT_START_ABORTS = true;
+
     adapter = this;
     jQuery.post(XFORM_URL, JSON.stringify({'action': (dirForward ? 'next' : 'back'),
                                            'session-id': this.session_id}),
       function (resp) {
-        adapter._renderEvent(resp["event"], dirForward || resp["at-start"]);
+        if (!dirForward && resp["at-start"] && BACK_AT_START_ABORTS) {
+          adapter.abort();
+        } else {
+          adapter._renderEvent(resp["event"], dirForward || resp["at-start"]);
+        }
       },
       "json");
   }
@@ -94,6 +100,9 @@ function xformAjaxAdapter (formName, preloadData) {
     submit_redirect(params, path, method);
   }
 
+  this.abort = function () {
+    submit_redirect({type: 'form-aborted'});
+  }
 }
 
 function Workflow (flow, onFinish) {
@@ -109,9 +118,14 @@ function Workflow (flow, onFinish) {
   this.finish = function () {
     this.onFinish(this.data);
   }
+
+  this.abort = function () {
+    this.start();
+    this.finish();
+  }
 }
 
-function wfQuestion (caption, type, answer, choices, required, validation, domain, custom_layout) {
+function wfQuestion (caption, type, answer, choices, required, validation, helptext, domain, custom_layout) {
   this.caption = caption;
   this.type = type;
   this.value = answer || null;
@@ -120,6 +134,7 @@ function wfQuestion (caption, type, answer, choices, required, validation, domai
   this.validation = validation || function (ans) { return null; };
   this.domain = domain;
   this.custom_layout = custom_layout;
+  this.helptext = helptext;
 
   this.to_q = function () {
     return {'caption': this.caption,
@@ -127,6 +142,7 @@ function wfQuestion (caption, type, answer, choices, required, validation, domai
             'answer': this.value,
             'choices': this.choices,
             'required': this.required,
+            'help': this.helptext,
             'domain': this.domain,
             'customlayout': this.custom_layout};
   }
@@ -209,8 +225,7 @@ function workflowAdapter (workflow) {
     }
 
     if (hist_length == 0) {
-      this.wf.start();
-      this.wf.finish();
+      this.wf.abort();
       return;
     }
 
@@ -270,6 +285,10 @@ function workflowAdapter (workflow) {
   this._formComplete = function () {
     this.wf.finish();
   }
+
+  this.abort = function () {
+    this.wf.abort();
+  }
 }
 
 function renderQuestion (event, dir) {
@@ -280,11 +299,21 @@ function renderQuestion (event, dir) {
     event["customlayout"](event);
   } else if (event["datatype"] == "str" ||
              event["datatype"] == "int" ||
-             event["datatype"] == "float") {
+             event["datatype"] == "float" ||
+             event["datatype"] == "passwd") {
     questionEntry.update(freeEntry);
-    answerBar.update(freeTextAnswer);
 
-    if (event["datatype"] == "str") {
+    if (event["datatype"] == "passwd") {
+      answerWidget = passwdAnswer;
+      entryWidget = passwdText;
+    } else {
+      answerWidget = freeTextAnswer;
+      entryWidget = answerText;
+    }
+
+    answerBar.update(answerWidget);
+
+    if (event["datatype"] == "str" || event["datatype"] == "passwd") {
       if (event["domain"] == "alpha") {
         kbd = keyboardAlphaOnly;
       } else if (event["domain"] == "numeric") {
@@ -303,7 +332,7 @@ function renderQuestion (event, dir) {
     }
 
     freeEntryKeyboard.update(kbd);    
-    activeInputWidget = answerText;
+    activeInputWidget = entryWidget;
     
     if (event["answer"] != null) {
       answerText.setText(event["answer"]);
@@ -330,11 +359,11 @@ function renderQuestion (event, dir) {
 function getQuestionAnswer () {
   type = activeQuestion["datatype"];
 
-  if (type == "str" || type == "int" || type == "float") {
-    var val = answerText.child.control.value;
+  if (type == "str" || type == "int" || type == "float" || type == "passwd") {
+    var val = activeInputWidget.child.control.value;
     if (val == "") {
       return null;
-    } else if (type == "str") {
+    } else if (type == "str" || type == "passwd") {
       return val;
     } else {
       return +val;

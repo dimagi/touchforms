@@ -28,8 +28,12 @@ def touchscreen_logout(req, template_name="auth/loggedout_ts.html"):
 def touchscreen_login(request):
     '''Login to bhoma via touchscreen'''
     if request.method == "POST":
-        username = request.POST["username"]
-        password = request.POST["password"]
+        data = json.loads(request.POST.get('result'))
+        if not data:
+            return HttpResponseRedirect('/')  #TODO: where should this go? some sort of 'welcome' screen?
+
+        username = data.get("username")
+        password = data.get("password")
         user = authenticate(username=username, password=password)
         if user is None:
             # HACK try lowercase
@@ -51,12 +55,17 @@ def touchscreen_login(request):
 
 def new_user(request):
     if request.method == "POST":
+
+        data = json.loads(request.POST.get('result'))
+        if not data:
+            return HttpResponseRedirect(reverse('bhoma_admin'))
+
         user = User()
         # HACK: all usernames and passwords are lowercased going into the db
-        user.username = request.POST["username"].lower()
-        user.set_password(request.POST["password"].lower())
-        user.first_name = request.POST["fname"]
-        user.last_name  = request.POST["lname"]
+        user.username = data.get("username").lower()
+        user.set_password(data.get("password").lower())
+        user.first_name = data.get("fname")
+        user.last_name  = data.get("lname")
         user.email = ""
         user.is_staff = False # Can't log in to admin site
         user.is_active = True # Activated upon receipt of confirmation
@@ -77,8 +86,13 @@ def new_user(request):
 
 def delete_user(request):
     if request.method == "POST":
-        if string_to_boolean(request.POST["confirm"]):
-            user = User.objects.get(username=request.POST["username"])
+
+        data = json.loads(request.POST.get('result'))
+        if not data:
+            return HttpResponseRedirect(reverse('bhoma_admin'))
+
+        if string_to_boolean(data.get("confirm")):
+            user = User.objects.get(username=data.get("username"))
             if request.user == user:
                 return render_to_response(request, "touchscreen/error.html", 
                     {"error_text": "You can't delete the currently logged in user account. "
