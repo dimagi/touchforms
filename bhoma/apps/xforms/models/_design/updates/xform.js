@@ -17,18 +17,21 @@ function(doc, req) {
     // See: http://dispatchevent.org/roger/using-e4x-with-xhtml-watch-your-namespaces/
     var getUuid = function(doc) {
         // search for a uuid in some known places
+        // CZUE: stop using the uid from the form.  It creates all kinds of other problems
+        // with document update conflicts
+        /*
         var other_uuid = doc["uuid"];
         if (doc["uuid"]) return doc["uuid"];
         if (doc["Meta"] && doc["Meta"]["uid"]) return doc["Meta"]["uid"];
+        */
         var guid = function() {
             // http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
             // TODO: find a better guid generator / plug into couch uuid framework
             var S4 = function() { 
                 return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
             }
-            return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+            return (S4()+S4()+S4()+S4()+S4()+S4()+S4()+S4());   
         }
-        log("no uuid in form, generating one server side.");
         return guid();
     }
     
