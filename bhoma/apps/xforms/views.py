@@ -40,17 +40,21 @@ def play(request, xform_id, callback=None, preloader_data={}):
     xform = get_object_or_404(XForm, id=xform_id)
     if request.method == "POST":
     
-        # get the instance
-        instance = request.POST["output"]
-        # post to couch
-        doc = post_xform_to_couch(instance)
-        # do some post processing
-        if not hasattr(doc, "clinic_ids"):
-            doc.clinic_ids = []
-        if "clinic_id" in doc.meta and doc.meta["clinic_id"] not in doc.clinic_ids: 
-            doc.clinic_ids.append(doc.meta["clinic_id"])
-            doc.save()
-             
+        if request.POST["type"] == 'form-complete':
+            # get the instance
+            instance = request.POST["output"]
+
+            # post to couch
+            doc = post_xform_to_couch(instance)
+            # do some post processing
+            if not hasattr(doc, "clinic_ids"):
+                doc.clinic_ids = []
+            if "clinic_id" in doc.meta and doc.meta["clinic_id"] not in doc.clinic_ids: 
+                doc.clinic_ids.append(doc.meta["clinic_id"])
+                doc.save()
+        else:
+            doc = None
+
         # call the callback, if there, otherwise route back to the 
         # xforms list
         if callback:

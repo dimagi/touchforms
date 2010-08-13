@@ -81,11 +81,17 @@ function xformAjaxAdapter (formName, preloadData) {
   }
 
   this._step = function (dirForward) {
+    BACK_AT_START_ABORTS = true;
+
     adapter = this;
     jQuery.post(XFORM_URL, JSON.stringify({'action': (dirForward ? 'next' : 'back'),
                                            'session-id': this.session_id}),
       function (resp) {
-        adapter._renderEvent(resp["event"], dirForward || resp["at-start"]);
+        if (!dirForward && resp["at-start"] && BACK_AT_START_ABORTS) {
+          adapter.abort();
+        } else {
+          adapter._renderEvent(resp["event"], dirForward || resp["at-start"]);
+        }
       },
       "json");
   }
@@ -94,6 +100,9 @@ function xformAjaxAdapter (formName, preloadData) {
     submit_redirect(params, path, method);
   }
 
+  this.abort = function () {
+    submit_redirect({type: 'form-aborted'});
+  }
 }
 
 function Workflow (flow, onFinish) {
@@ -108,6 +117,11 @@ function Workflow (flow, onFinish) {
 
   this.finish = function () {
     this.onFinish(this.data);
+  }
+
+  this.abort = function () {
+    this.start();
+    this.finish();
   }
 }
 
@@ -211,8 +225,7 @@ function workflowAdapter (workflow) {
     }
 
     if (hist_length == 0) {
-      this.wf.start();
-      this.wf.finish();
+      this.wf.abort();
       return;
     }
 
@@ -271,6 +284,10 @@ function workflowAdapter (workflow) {
 
   this._formComplete = function () {
     this.wf.finish();
+  }
+
+  this.abort = function () {
+    this.wf.abort();
   }
 }
 

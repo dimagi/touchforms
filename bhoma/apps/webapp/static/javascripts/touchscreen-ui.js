@@ -29,7 +29,7 @@ function initStaticWidgets () {
   
   helpButton = new TextButton('help-button', '#aaa', BUTTON_TEXT_COLOR, null, null, '?', 1., helpClicked);
   backButton = new TextButton('back-button', '#6ad', BUTTON_TEXT_COLOR, null, null, 'BACK', .9, backClicked);
-  menuButton = new TextButton('quit-button', '#d23', BUTTON_TEXT_COLOR, null, null, 'HOME', .9, menuClicked);
+  homeButton = new TextButton('quit-button', '#d23', BUTTON_TEXT_COLOR, null, null, 'HOME', .9, homeClicked);
   nextButton = new TextButton('next-button', '#1a3', BUTTON_TEXT_COLOR, null, null, 'NEXT', 1.2, nextClicked);
   
   questionEntry = new Indirect();
@@ -49,7 +49,7 @@ function initStaticWidgets () {
       new Layout('footer', 1, 4, [FOOTER_BUTTON_WIDTH, FOOTER_BUTTON_WIDTH, '*', FOOTER_BUTTON_WIDTH], '*',
                  [SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN, SCREEN_MARGIN], FOOTER_BUTTON_SPACING, FOOTER_COLOR, FOOTER_COLOR, FOOTER_COLOR, [
         backButton, 
-        menuButton, 
+        homeButton, 
         progressBar,
         nextButton
       ]),
@@ -140,8 +140,15 @@ function backClicked (ev, x) {
   }
 }
 
-function menuClicked (ev, x) {
-  location.href='/';
+function homeClicked (ev, x) {
+  alert('should show a confirmation screen that you want to abandon the form here');
+
+  if (gFormAdapter.abort) {
+    gFormAdapter.abort();
+  } else {
+    console.log('warning: workflow has no abort() method; returning to root page');
+    location.href='/';
+  }
 }
 
 function nextClicked (ev, x) {
