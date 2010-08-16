@@ -81,11 +81,11 @@ function initStaticWidgets () {
     'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ['', SPC_COLOR], ['1', NUMPAD_COLOR], ['2', NUMPAD_COLOR], ['3', NUMPAD_COLOR], ',',
     '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['0', NUMPAD_COLOR], '!', '?'     
   ], null, 1.4, type_));
-  keyboardAlphaOnly = new Layout('text-kbd', 3, 10, 68, 85, '*', 6, null, null, null, kbs([
+  keyboardAlphaOnly = new Layout('text-kbd', 3, 10, 88, 110, '*', 8, null, null, null, kbs([
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', [BACKSPACE_LABEL, '#aaa'],
     'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '',
     'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '\u2013', '\'',
-  ], null, 1.4, type_));
+  ], null, 1.9, type_));
 
   //progress bar is just static right now -- turn into a dedicated GUI object?
   progressBar.update(new Layout('progress-bar', 1, 2, ['30%', '*'], '*', [10, 10, 15, 15], 0, null, null, null, [
