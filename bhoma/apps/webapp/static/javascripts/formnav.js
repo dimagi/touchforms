@@ -59,6 +59,9 @@ function xformAjaxAdapter (formName, preloadData) {
 
   this._renderEvent = function (event, dirForward) {
     if (event["type"] == "question") {
+      if (event["style"]["domain"])
+        event["domain"] = event["style"]["domain"];
+
       renderQuestion(event, dirForward);
     } else if (event["type"] == "form-complete") {
       this._formComplete(event);
@@ -319,7 +322,7 @@ function renderQuestion (event, dir) {
         kbd = keyboardAlphaOnly;
       } else if (event["domain"] == "numeric") {
         kbd = numPad;
-      } else if (event["domain"] == "blood_pressure") {
+      } else if (event["domain"] == "bp") {
         kbd = numPadBP;
       } else if (event["domain"] == "phone") {
         kbd = numPadPhone;

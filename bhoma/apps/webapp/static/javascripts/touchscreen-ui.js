@@ -154,11 +154,30 @@ function homeClicked (ev, x) {
 function nextClicked (ev, x) {
   if (activeQuestion["datatype"] == 'date') {
     dateEntryContext.next();
-  } else if (activeQuestion["datatype"] == 'float' && isNaN(+answerText.child.control.value)) {
+    return;
+  } else if (activeQuestion["datatype"] == 'float' && answerText.child.control.value != '' && isNaN(+answerText.child.control.value)) {
     showError("Not a valid number");
-  } else {
-    answerQuestion();
+    return;
+  } else if (activeQuestion["domain"] == 'phone' && answerText.child.control.value != '' && !(/^\+?[0-9]+$/.test(answerText.child.control.value))) {
+    showError("This does not appear to be a valid phone number");
+    return;
+  } else if (activeQuestion["domain"] == 'bp' && answerText.child.control.value != '') {
+    var val = answerText.child.control.value;
+    var match = /^([0-9]+)\/([0-9]+)$/.exec(val);
+    if (!match) {
+      showError("This does not appear to be a valid blood pressure reading. Blood pressure should look like: 120/80");
+      return;
+    }
+
+    syst = +match[1];
+    diast = +match[2];
+    if (syst > 300 || syst < 50 || diast > 200 || diast < 20) {
+      showError("Blood pressure must be between 50/20 and 300/200");
+      return;
+    }
   }
+
+  answerQuestion();
 }
 
 function clearClicked (ev, x) {

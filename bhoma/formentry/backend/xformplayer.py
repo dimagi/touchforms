@@ -156,12 +156,24 @@ class XFormSession:
     def _get_question_choices(self, q):
         return [choice(q, ch) for ch in q.getSelectChoices()]
 
+    def _parse_style_info(self, rawstyle):
+        info = {}
+
+        if rawstyle != None:
+            info['raw'] = rawstyle
+            try:
+                info.update([[p.strip() for p in f.split(':')][:2] for f in rawstyle.split(';') if f.strip()])
+            except ValueError:
+                pass
+
+        return info
+
     def _parse_question (self, event):
         q = self.fem.getQuestionPrompt()
 
         event['caption'] = q.getLongText()
         event['help'] = q.getHelpText()
-        event['style'] = q.getAppearanceHint()
+        event['style'] = self._parse_style_info(q.getAppearanceHint())
 
         if q.getControlType() == Constants.CONTROL_TRIGGER:
             event['datatype'] = 'info'
