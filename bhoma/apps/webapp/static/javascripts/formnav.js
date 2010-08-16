@@ -185,10 +185,7 @@ function wfAlert (message) {
 
   this.to_q = function () {
     return {'caption': this.message,
-            'datatype': 'select',
-            'answer': null,
-            'choices': ['OK'],
-            'required': true};
+            'datatype': 'info'};
   }
 }
 
@@ -213,7 +210,12 @@ function workflowAdapter (workflow) {
     //  answer = new Date(answer);
 
     this.active_question.value = answer;
-    var val_error = this.active_question.validate()
+
+    var val_error = null;
+    if (this.active_question instanceof wfQuestion) {
+      val_error = this.active_question.validate();
+    }
+
     if (val_error == null) {
       this._push_hist(answer, this.active_question);
     } else {
@@ -270,8 +272,7 @@ function workflowAdapter (workflow) {
       self = this;
       ev.eval(function () { self._push_hist(ev.value, ev); });
     } else if (ev instanceof wfAlert) {
-      console.log('alert: ' + ev.message);
-      this._jumpNext();
+      this._activateQuestion(ev, true);
     }
   }
 
@@ -296,6 +297,17 @@ function workflowAdapter (workflow) {
 
 function renderQuestion (event, dir) {
   activeQuestion = event;
+
+  SHOW_ALERTS_ON_BACK = false;
+  if (event["datatype"] == "info") {
+    if (dir || SHOW_ALERTS_ON_BACK) {
+      showAlert(event["caption"], dir ? nextClicked : backClicked);
+    } else {
+      backClicked();
+    }
+    return;
+  }
+
   questionCaption.setText(event["caption"]);
  
   if (event["customlayout"] != null) {
@@ -350,8 +362,6 @@ function renderQuestion (event, dir) {
   } else if (event["datatype"] == "date") {
     dateEntryContext = new DateWidgetContext(dir, event["answer"]);
     dateEntryContext.refresh();
-  } else if (event["datatype"] == "info") {
-    questionEntry.update(null); //fixme
   } else {
     alert("unrecognized datatype [" + event["datatype"] + "]");
   }

@@ -466,7 +466,8 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
   this.bg_color = bg_color;
   this.fadeout = fadeout * 1000.;
   this.text = text_content;
-  
+  this.ondismiss = null;
+
   this.active = null;  
   this.container = null;
   this.timeout_id = null;
@@ -502,6 +503,9 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
       this.container.style.display = 'none';
       if (this.timeout_id != null)
         clearTimeout(this.timeout_id);
+      if (this.ondismiss) {
+        this.ondismiss();
+      }
     } 
   }
   
@@ -520,6 +524,10 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
       this.mask.style.backgroundColor = color;
   }
   
+  this.setDismiss = function (ondismiss) {
+    this.ondismiss = ondismiss;
+  }
+
   this.render = function (parent_div) {
     this.container = parent_div;
     self = this;

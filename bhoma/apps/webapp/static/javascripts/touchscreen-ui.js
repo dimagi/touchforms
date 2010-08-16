@@ -129,6 +129,7 @@ function helpClicked (ev, x) {
   overlay.setText(activeQuestion["help"] || "There is no help text for this question.");
   overlay.setBgColor('#6d6');
   overlay.setTimeout(15.);
+  overlay.setDismiss(null);
   overlay.setActive(true);
 }
 
@@ -552,6 +553,15 @@ function showError (text) {
   overlay.setText(text);
   overlay.setBgColor('#d66');
   overlay.setTimeout(3.);
+  overlay.setDismiss(null);
+  overlay.setActive(true);
+}
+
+function showAlert (text, ondismiss) {
+  overlay.setText(text);
+  overlay.setBgColor('#dd6');
+  overlay.setTimeout(0.);
+  overlay.setDismiss(ondismiss);
   overlay.setActive(true);
 }
 
