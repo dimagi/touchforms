@@ -129,7 +129,7 @@ class XFormSession:
     def _parse_current_event (self):
         event = {}
 
-        status = self.fem.getCurrentEvent()
+        status = self.fem.getEvent()
         if status == self.fec.EVENT_BEGINNING_OF_FORM:
             event['type'] = 'form-start'
         elif status == self.fec.EVENT_END_OF_FORM:
@@ -140,7 +140,7 @@ class XFormSession:
             self._parse_question(event)
         else:
             event['type'] = 'sub-group'
-            event['caption'] = self.fem.getCurrentCaptionPrompt().getLongText()
+            event['caption'] = self.fem.getCaptionPrompt().getLongText()
             if status == self.fec.EVENT_GROUP:
                 event['repeatable'] = False
             elif status == self.fec.EVENT_REPEAT:
@@ -153,11 +153,15 @@ class XFormSession:
         self.cur_event = event
         return event
 
+    def _get_question_choices(self, q):
+        return [choice(q, ch) for ch in q.getSelectChoices()]
+
     def _parse_question (self, event):
-        q = self.fem.getCurrentQuestionPrompt()
+        q = self.fem.getQuestionPrompt()
 
         event['caption'] = q.getLongText()
         event['help'] = q.getHelpText()
+        event['style'] = q.getAppearanceHint()
 
         if q.getControlType() == Constants.CONTROL_TRIGGER:
             event['datatype'] = 'info'
@@ -173,7 +177,7 @@ class XFormSession:
             }[q.getDataType()]
 
             if event['datatype'] in ('select', 'multiselect'):
-                event['choices'] = list(q.getSelectChoices())
+                event['choices'] = self._get_question_choices(q)
 
             event['required'] = q.isRequired()
 
@@ -217,19 +221,19 @@ class XFormSession:
         elif datatype == 'date':
             ans = DateData(to_jdate(datetime.strptime(str(answer), '%Y-%m-%d').date()))
         elif datatype == 'select':
-            ans = SelectOneData(Selection(self.cur_event['choices'][int(answer) - 1]))
+            ans = SelectOneData(self.cur_event['choices'][int(answer) - 1].to_sel())
         elif datatype == 'multiselect':
             if hasattr(answer, '__iter__'):
                 ans_list = answer
             else:
                 ans_list = str(answer).split()
-            ans = SelectMultiData(to_vect(Selection(self.cur_event['choices'][int(k) - 1]) for k in ans_list))
+            ans = SelectMultiData(to_vect(self.cur_event['choices'][int(k) - 1].to_sel() for k in ans_list))
 
-        result = self.fec.answerCurrentQuestion(ans)
+        result = self.fec.answerQuestion(ans)
         if result == self.fec.ANSWER_REQUIRED_BUT_EMPTY:
             return {'status': 'error', 'type': 'required'}
         elif result == self.fec.ANSWER_CONSTRAINT_VIOLATED:
-            q = self.fem.getCurrentQuestionPrompt()
+            q = self.fem.getQuestionPrompt()
             return {'status': 'error', 'type': 'constraint', 'reason': q.getConstraintText()}
         elif result == self.fec.ANSWER_OK:
             return {'status': 'success'}
@@ -237,8 +241,18 @@ class XFormSession:
     def new_repetition (self):
       #current in the form api this always succeeds, but theoretically there could
       #be unsatisfied constraints that make it fail. how to handle them here?
-      self.fec.newRepeat(self.fem.getCurrentFormIndex())
+      self.fec.newRepeat(self.fem.getFormIndex())
 
+class choice(object):
+    def __init__(self, q, select_choice):
+        self.q = q
+        self.select_choice = select_choice
+
+    def to_sel(self):
+        return Selection(self.select_choice)
+
+    def to_json(self):
+        return self.q.getSelectChoiceText(self.select_choice)
 
 def open_form (form_name, preload_data={}):
     if not os.path.exists(form_name):
