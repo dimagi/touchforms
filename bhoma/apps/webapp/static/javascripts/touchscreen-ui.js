@@ -171,8 +171,8 @@ function nextClicked (ev, x) {
 
     syst = +match[1];
     diast = +match[2];
-    if (syst > 300 || syst < 50 || diast > 200 || diast < 20) {
-      showError("Blood pressure must be between 50/20 and 300/200");
+    if (syst > 300 || syst < 40 || diast > 210 || diast < 20) {
+      showError("Blood pressure must be between 40/20 and 300/210");
       return;
     }
   }
