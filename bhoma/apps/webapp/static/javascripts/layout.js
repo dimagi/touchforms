@@ -291,7 +291,8 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing, passw
   this.size_rel = size_rel;
   this.align = align;
   this.spacing = spacing;
-  this.passwd = passwd;  
+  this.passwd = passwd;
+  this.maxlen = -1;
 
   this.container = null;
   this.control = null;
@@ -322,6 +323,13 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing, passw
     this.content = text;
     if (this.control != null)
       this.control.value = text;
+  }
+
+  this.setMaxLen = function (maxlen) {
+    maxlen = maxlen || -1;
+    this.maxlen = maxlen;
+    if (this.control != null)
+      this.control.maxLength = maxlen;
   }
 }
 
@@ -576,6 +584,10 @@ function InputArea (id, border, border_color, padding, inside_color, child, oncl
     this.child.setText(text);
   }
   
+  this.setMaxLen = function (maxlen) {
+    this.child.setMaxLen(maxlen);
+  }
+
   this.render = function (parent_div) {
     if (this.padding > 0) {
       inside = new Layout(id + '-padded', 1, 1, '*', '*', padding, 0, null, null, null, [this.child]);

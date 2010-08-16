@@ -310,6 +310,7 @@ function renderQuestion (event, dir) {
       answerWidget = freeTextAnswer;
       entryWidget = answerText;
     }
+    entryWidget.setMaxLen(500);
 
     answerBar.update(answerWidget);
 
@@ -327,6 +328,7 @@ function renderQuestion (event, dir) {
       }
     } else if (event["datatype"] == "int") {
       kbd = numPad;
+      entryWidget.setMaxLen(9);
     } else if (event["datatype"] == "float") {
       kbd = numPadDecimal;
     }
@@ -335,7 +337,7 @@ function renderQuestion (event, dir) {
     activeInputWidget = entryWidget;
     
     if (event["answer"] != null) {
-      answerText.setText(event["answer"]);
+      entryWidget.setText(event["answer"]);
     }
   } else if (event["datatype"] == "select" || event["datatype"] == "multiselect") {
     selections = normalize_select_answer(event["answer"], event["datatype"] == "multiselect");
