@@ -81,11 +81,11 @@ function initStaticWidgets () {
     'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ['', SPC_COLOR], ['1', NUMPAD_COLOR], ['2', NUMPAD_COLOR], ['3', NUMPAD_COLOR], ',',
     '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['0', NUMPAD_COLOR], '!', '?'     
   ], null, 1.4, type_));
-  keyboardAlphaOnly = new Layout('text-kbd', 3, 10, 68, 85, '*', 6, null, null, null, kbs([
+  keyboardAlphaOnly = new Layout('text-kbd', 3, 10, 88, 110, '*', 8, null, null, null, kbs([
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', [BACKSPACE_LABEL, '#aaa'],
     'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '',
     'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '\u2013', '\'',
-  ], null, 1.4, type_));
+  ], null, 1.9, type_));
 
   //progress bar is just static right now -- turn into a dedicated GUI object?
   progressBar.update(new Layout('progress-bar', 1, 2, ['30%', '*'], '*', [10, 10, 15, 15], 0, null, null, null, [
@@ -129,6 +129,7 @@ function helpClicked (ev, x) {
   overlay.setText(activeQuestion["help"] || "There is no help text for this question.");
   overlay.setBgColor('#6d6');
   overlay.setTimeout(15.);
+  overlay.setDismiss(null);
   overlay.setActive(true);
 }
 
@@ -154,11 +155,30 @@ function homeClicked (ev, x) {
 function nextClicked (ev, x) {
   if (activeQuestion["datatype"] == 'date') {
     dateEntryContext.next();
-  } else if (activeQuestion["datatype"] == 'float' && isNaN(+answerText.child.control.value)) {
+    return;
+  } else if (activeQuestion["datatype"] == 'float' && answerText.child.control.value != '' && isNaN(+answerText.child.control.value)) {
     showError("Not a valid number");
-  } else {
-    answerQuestion();
+    return;
+  } else if (activeQuestion["domain"] == 'phone' && answerText.child.control.value != '' && !(/^\+?[0-9]+$/.test(answerText.child.control.value))) {
+    showError("This does not appear to be a valid phone number");
+    return;
+  } else if (activeQuestion["domain"] == 'bp' && answerText.child.control.value != '') {
+    var val = answerText.child.control.value;
+    var match = /^([0-9]+)\/([0-9]+)$/.exec(val);
+    if (!match) {
+      showError("This does not appear to be a valid blood pressure reading. Blood pressure should look like: 120/80");
+      return;
+    }
+
+    syst = +match[1];
+    diast = +match[2];
+    if (syst > 300 || syst < 40 || diast > 210 || diast < 20) {
+      showError("Blood pressure must be between 40/20 and 300/210");
+      return;
+    }
   }
+
+  answerQuestion();
 }
 
 function clearClicked (ev, x) {
@@ -533,6 +553,15 @@ function showError (text) {
   overlay.setText(text);
   overlay.setBgColor('#d66');
   overlay.setTimeout(3.);
+  overlay.setDismiss(null);
+  overlay.setActive(true);
+}
+
+function showAlert (text, ondismiss) {
+  overlay.setText(text);
+  overlay.setBgColor('#dd6');
+  overlay.setTimeout(0.);
+  overlay.setDismiss(ondismiss);
   overlay.setActive(true);
 }
 
