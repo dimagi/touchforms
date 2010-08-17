@@ -106,6 +106,14 @@ function xformAjaxAdapter (formName, preloadData) {
   this.abort = function () {
     submit_redirect({type: 'form-aborted'});
   }
+
+  this.quitWarning = function () {
+    return {
+      'main': 'This form isn\'t finished! If you go HOME, you will throw out this form.',
+      'quit': 'Go HOME; discard form',
+      'cancel': 'Stay and finish form'
+    }
+  }
 }
 
 function Workflow (flow, onFinish) {
@@ -293,6 +301,19 @@ function workflowAdapter (workflow) {
   this.abort = function () {
     this.wf.abort();
   }
+
+  this.quitWarning = function () {
+    if (this.wf.quitWarning) {
+      return this.wf.quitWarning();
+    } else {
+      return {
+        'main': 'You aren\'t finished yet. If you go HOME, you will throw out the answers you have entered so far.',
+        'quit': 'Go HOME',
+        'cancel': 'Stay and finish'
+      }
+    }
+  }
+
 }
 
 function renderQuestion (event, dir) {

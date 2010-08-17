@@ -142,8 +142,14 @@ function backClicked (ev, x) {
 }
 
 function homeClicked (ev, x) {
-  alert('should show a confirmation screen that you want to abandon the form here');
+  captions = gFormAdapter.quitWarning();
 
+  showActionableAlert(captions.main,
+                      [captions.quit, captions.cancel],
+                      [function () {goHome();}, null]);
+}
+
+function goHome () {
   if (gFormAdapter.abort) {
     gFormAdapter.abort();
   } else {
@@ -562,6 +568,13 @@ function showAlert (text, ondismiss) {
   overlay.setBgColor('#dd6');
   overlay.setTimeout(0.);
   overlay.setDismiss(ondismiss);
+  overlay.setActive(true);
+}
+
+function showActionableAlert (text, choices, actions) {
+  overlay.setText(text, choices, actions);
+  overlay.setBgColor('#dd6');
+  overlay.setTimeout(0.);
   overlay.setActive(true);
 }
 
