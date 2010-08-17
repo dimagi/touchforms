@@ -353,7 +353,7 @@ function renderQuestion (event, dir) {
     if (event["datatype"] == "str" || event["datatype"] == "passwd") {
       if (event["domain"] == "alpha") {
         kbd = keyboardAlphaOnly;
-      } else if (event["domain"] == "numeric") {
+      } else if (event["domain"] == "numeric" || event["domain"] == "pat-id") {
         kbd = numPad;
       } else if (event["domain"] == "bp") {
         kbd = numPadBP;
@@ -361,6 +361,10 @@ function renderQuestion (event, dir) {
         kbd = numPadPhone;
       } else {
         kbd = keyboard;
+      }
+
+      if (event["domain"] == "pat-id" && event["answer"] == null) {
+        event["answer"] = CLINIC_PREFIX;
       }
     } else if (event["datatype"] == "int") {
       kbd = numPad;
