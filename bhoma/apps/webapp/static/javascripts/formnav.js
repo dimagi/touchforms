@@ -106,6 +106,14 @@ function xformAjaxAdapter (formName, preloadData) {
   this.abort = function () {
     submit_redirect({type: 'form-aborted'});
   }
+
+  this.quitWarning = function () {
+    return {
+      'main': 'This form isn\'t finished! If you go HOME, you will throw out this form.',
+      'quit': 'Go HOME; discard form',
+      'cancel': 'Stay and finish form'
+    }
+  }
 }
 
 function Workflow (flow, onFinish) {
@@ -293,6 +301,19 @@ function workflowAdapter (workflow) {
   this.abort = function () {
     this.wf.abort();
   }
+
+  this.quitWarning = function () {
+    if (this.wf.quitWarning) {
+      return this.wf.quitWarning();
+    } else {
+      return {
+        'main': 'You aren\'t finished yet. If you go HOME, you will throw out the answers you have entered so far.',
+        'quit': 'Go HOME',
+        'cancel': 'Stay and finish'
+      }
+    }
+  }
+
 }
 
 function renderQuestion (event, dir) {
@@ -332,7 +353,7 @@ function renderQuestion (event, dir) {
     if (event["datatype"] == "str" || event["datatype"] == "passwd") {
       if (event["domain"] == "alpha") {
         kbd = keyboardAlphaOnly;
-      } else if (event["domain"] == "numeric") {
+      } else if (event["domain"] == "numeric" || event["domain"] == "pat-id") {
         kbd = numPad;
       } else if (event["domain"] == "bp") {
         kbd = numPadBP;
@@ -340,6 +361,10 @@ function renderQuestion (event, dir) {
         kbd = numPadPhone;
       } else {
         kbd = keyboard;
+      }
+
+      if (event["domain"] == "pat-id" && event["answer"] == null) {
+        event["answer"] = CLINIC_PREFIX;
       }
     } else if (event["datatype"] == "int") {
       kbd = numPad;

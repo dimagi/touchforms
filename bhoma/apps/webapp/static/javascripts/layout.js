@@ -461,12 +461,23 @@ function Top (main, overlay) {
   }
 }
 
+function htmlescape (raw) {
+  raw = raw.replace(/&/g, '&amp;');
+  raw = raw.replace(/</g, '&lt;');
+  raw = raw.replace(/>/g, '&gt;');
+  raw = raw.replace(/\'/g, '&apos;');
+  raw = raw.replace(/\"/g, '&quot;');
+  return raw;
+}
+
 function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
   this.mask_color = mask_color;
   this.bg_color = bg_color;
   this.fadeout = fadeout * 1000.;
   this.text = text_content;
   this.ondismiss = null;
+  this.choices = null;
+  this.actions = null;
 
   this.active = null;  
   this.container = null;
@@ -512,10 +523,13 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
   this.span = null;
   this.mask = null;
   
-  this.setText = function (text) {
+  this.setText = function (text, choices, actions) {
     this.text = text;
+    this.choices = choices;
+    this.actions = actions;
+
     if (this.span != null)
-      this.span.textContent = text;
+      this.renderContent();
   }
   
   this.setBgColor = function (color) {
@@ -528,10 +542,44 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     this.ondismiss = ondismiss;
   }
 
+  this.renderContent = function () {
+    var content = htmlescape(this.text);
+
+    if (!this.choices)
+      this.choices = [];
+
+    if (this.choices.length > 0) {
+      content += '<br><br>';
+      for (var i = 0; i < this.choices.length; i++) {
+        content += '<table id="alert-ch' + i + '" ' + (this.choices.length == 1 ? 'align="center" ' : '') + 'cellpadding="7" style="background: #118; color: white; -moz-border-radius: 10px; font-weight: bold; margin-bottom: 5px;">\
+          <tr><td><b>&nbsp;' + htmlescape(this.choices[i]) + '&nbsp;</b></td></tr></table>';
+      }
+    }
+
+    this.span.innerHTML = content;
+
+    if (this.choices.length > 0) {
+      for (var i = 0; i < this.choices.length; i++) {
+        document.getElementById('alert-ch' + i).onclick = this.omfg(i);
+      }
+      this.container.onclick = null;
+    } else {
+      var self = this;
+      this.container.onclick = function () {  self.setActive(false, true); };
+    }
+  }
+
+  //javascript has a HUGE gotcha if you try to define function closures inside a for loop
+  this.omfg = function (i) {
+    var self = this;
+    return function () {
+      self.setDismiss(self.actions[i]);
+      self.setActive(false, true);
+    };
+  }
+
   this.render = function (parent_div) {
     this.container = parent_div;
-    self = this;
-    parent_div.onclick = function () { self.setActive(false, true); };
   
     mask = new_div('mask', 0, 0, parent_div.clientWidth, parent_div.clientHeight);
     mask.style.backgroundColor = this.mask_color;
@@ -541,22 +589,22 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     
     content = document.createElement('div');
     content.style.position = 'relative';
-    content.style.top = '150px';
+    content.style.top = '175px';
     content.style.width = '70%';
     content.style.marginLeft = 'auto';
     content.style.marginRight = 'auto';
     
-    span = document.createElement('p');
+    span = document.createElement('div');
     span.id = 'overlay-content';
     span.style.border = '3px solid black';
     span.style.padding = '20px';
     span.style.backgroundColor = this.bg_color;
-    span.textContent = this.text;
     //god damnit css!!!
     this.span = span;
-    
+
     content.appendChild(span);
     parent_div.appendChild(content);
+    this.renderContent();
     
     this.setActive(false);
   }
