@@ -45,7 +45,7 @@ function wfNewUser() {
 
         
         var password_format = function (pass) {
-            return (pass.length < 5 ? "Passwords must be at least 5 digits" : null);
+            return (pass.length < 4 ? "Passwords must be at least 4 digits" : null);
         };
         var q_password = new wfQuestion('Password', 'str', null, null, true, password_format, null, 'numeric');
         yield q_password;

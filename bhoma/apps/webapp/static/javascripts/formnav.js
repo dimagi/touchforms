@@ -59,6 +59,9 @@ function xformAjaxAdapter (formName, preloadData) {
 
   this._renderEvent = function (event, dirForward) {
     if (event["type"] == "question") {
+      if (event["style"]["domain"])
+        event["domain"] = event["style"]["domain"];
+
       renderQuestion(event, dirForward);
     } else if (event["type"] == "form-complete") {
       this._formComplete(event);
@@ -102,6 +105,14 @@ function xformAjaxAdapter (formName, preloadData) {
 
   this.abort = function () {
     submit_redirect({type: 'form-aborted'});
+  }
+
+  this.quitWarning = function () {
+    return {
+      'main': 'This form isn\'t finished! If you go HOME, you will throw out this form.',
+      'quit': 'Go HOME; discard form',
+      'cancel': 'Stay and finish form'
+    }
   }
 }
 
@@ -182,10 +193,7 @@ function wfAlert (message) {
 
   this.to_q = function () {
     return {'caption': this.message,
-            'datatype': 'select',
-            'answer': null,
-            'choices': ['OK'],
-            'required': true};
+            'datatype': 'info'};
   }
 }
 
@@ -210,7 +218,12 @@ function workflowAdapter (workflow) {
     //  answer = new Date(answer);
 
     this.active_question.value = answer;
-    var val_error = this.active_question.validate()
+
+    var val_error = null;
+    if (this.active_question instanceof wfQuestion) {
+      val_error = this.active_question.validate();
+    }
+
     if (val_error == null) {
       this._push_hist(answer, this.active_question);
     } else {
@@ -267,8 +280,7 @@ function workflowAdapter (workflow) {
       self = this;
       ev.eval(function () { self._push_hist(ev.value, ev); });
     } else if (ev instanceof wfAlert) {
-      console.log('alert: ' + ev.message);
-      this._jumpNext();
+      this._activateQuestion(ev, true);
     }
   }
 
@@ -289,10 +301,34 @@ function workflowAdapter (workflow) {
   this.abort = function () {
     this.wf.abort();
   }
+
+  this.quitWarning = function () {
+    if (this.wf.quitWarning) {
+      return this.wf.quitWarning();
+    } else {
+      return {
+        'main': 'You aren\'t finished yet. If you go HOME, you will throw out the answers you have entered so far.',
+        'quit': 'Go HOME',
+        'cancel': 'Stay and finish'
+      }
+    }
+  }
+
 }
 
 function renderQuestion (event, dir) {
   activeQuestion = event;
+
+  SHOW_ALERTS_ON_BACK = false;
+  if (event["datatype"] == "info") {
+    if (dir || SHOW_ALERTS_ON_BACK) {
+      showAlert(event["caption"], dir ? nextClicked : backClicked);
+    } else {
+      backClicked();
+    }
+    return;
+  }
+
   questionCaption.setText(event["caption"]);
  
   if (event["customlayout"] != null) {
@@ -310,23 +346,29 @@ function renderQuestion (event, dir) {
       answerWidget = freeTextAnswer;
       entryWidget = answerText;
     }
+    entryWidget.setMaxLen(500);
 
     answerBar.update(answerWidget);
 
     if (event["datatype"] == "str" || event["datatype"] == "passwd") {
       if (event["domain"] == "alpha") {
         kbd = keyboardAlphaOnly;
-      } else if (event["domain"] == "numeric") {
+      } else if (event["domain"] == "numeric" || event["domain"] == "pat-id") {
         kbd = numPad;
-      } else if (event["domain"] == "blood_pressure") {
+      } else if (event["domain"] == "bp") {
         kbd = numPadBP;
       } else if (event["domain"] == "phone") {
         kbd = numPadPhone;
       } else {
         kbd = keyboard;
       }
+
+      if (event["domain"] == "pat-id" && event["answer"] == null) {
+        event["answer"] = CLINIC_PREFIX;
+      }
     } else if (event["datatype"] == "int") {
       kbd = numPad;
+      entryWidget.setMaxLen(9);
     } else if (event["datatype"] == "float") {
       kbd = numPadDecimal;
     }
@@ -335,7 +377,7 @@ function renderQuestion (event, dir) {
     activeInputWidget = entryWidget;
     
     if (event["answer"] != null) {
-      answerText.setText(event["answer"]);
+      entryWidget.setText(event["answer"]);
     }
   } else if (event["datatype"] == "select" || event["datatype"] == "multiselect") {
     selections = normalize_select_answer(event["answer"], event["datatype"] == "multiselect");
@@ -345,8 +387,6 @@ function renderQuestion (event, dir) {
   } else if (event["datatype"] == "date") {
     dateEntryContext = new DateWidgetContext(dir, event["answer"]);
     dateEntryContext.refresh();
-  } else if (event["datatype"] == "info") {
-    questionEntry.update(null); //fixme
   } else {
     alert("unrecognized datatype [" + event["datatype"] + "]");
   }
