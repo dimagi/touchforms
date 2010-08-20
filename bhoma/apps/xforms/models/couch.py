@@ -8,6 +8,7 @@ from bhoma.utils.parsing import string_to_datetime
 import copy
 from couchdbkit.schema.properties_proxy import SchemaListProperty
 from bhoma.utils.logging import log_exception
+from bhoma.utils.couch import safe_index
 
 """
 Couch models.  For now, we prefix them starting with C in order to 
@@ -148,3 +149,19 @@ class CXFormInstance(Document):
     
     def __unicode__(self):
         return "%s (%s)" % (self.type, self.namespace)
+
+    def xpath(self, path):
+        """
+        Evaluates an xpath expression like: path/to/node and returns the value 
+        of that element, or None if there is no value.
+        """
+        return safe_index(self, path.split("/"))
+    
+        
+    def found_in_multiselect_node(self, xpath, option):
+        """
+        Whether a particular value was found in a multiselect node, referenced
+        by path.
+        """
+        node = self.xpath(xpath)
+        return node and option in node.split(" ")
