@@ -165,3 +165,4 @@ class CXFormInstance(Document):
         """
         node = self.xpath(xpath)
         return node and option in node.split(" ")
+        

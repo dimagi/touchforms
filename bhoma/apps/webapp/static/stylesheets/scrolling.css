@@ -1,0 +1,26 @@
+#scroll-pane { 
+	float:left;
+	overflow: auto; 
+	width: 880px; 
+	height:530px;
+	position:relative;
+	border:1px solid gray;
+	margin:4px;
+	display:inline;
+	background-color: #f7f7f7;
+}
+#scroll-content {
+	position:absolute;
+	top:0;
+	left:0
+}
+.ui-slider-vertical {
+	width: 42px;
+	border: 1px solid gray;
+}
+
+.ui-slider-vertical .ui-state-default {
+    height: 40px;
+    width: 50px;
+    background-color: #aabbdd;
+}
