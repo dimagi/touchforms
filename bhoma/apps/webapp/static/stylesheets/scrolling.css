@@ -1,8 +1,8 @@
 #scroll-pane { 
 	float:left;
 	overflow: auto; 
-	width: 880px; 
-	height:530px;
+	width: 870px; 
+	height:544px;
 	position:relative;
 	border:1px solid gray;
 	margin:4px;
@@ -17,6 +17,10 @@
 .ui-slider-vertical {
 	width: 42px;
 	border: 1px solid gray;
+	height:514px; 
+	float: right; 
+	margin-top: 30px;
+	margin-right: 6px;
 }
 
 .ui-slider-vertical .ui-state-default {
