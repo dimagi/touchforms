@@ -12,13 +12,15 @@ def render_form_data(form):
         def is_hidden_field(field_key):
             SYSTEM_FIELD_NAMES = ("drugs_prescribed", "case", "meta", "clinic_ids", "drug_drill_down") 
             return field_key.startswith("#") or field_key.startswith("@") or field_key.startswith("_") \
-                   or field_key in SYSTEM_FIELD_NAMES
+                   or field_key.lower() in SYSTEM_FIELD_NAMES
                     
         def format_name(value):
             return str(value).replace("_", " ")
         
         def render_base_type(key, value):
+            if not value: return ""
             return "<li>%s: <b>%s</b></li>" % (format_name(key), format_name(value))
+            
         
         def is_base_type(value):
             return isinstance(value, basestring) or \
@@ -67,4 +69,4 @@ def render_form_data(form):
             else:
                 return render_base_type(nodekey, nodevalue)
     
-    return "<ul>%s</ul>" % "".join(render_node(key, val) for key, val in form.all_properties().items())
+    return "<ul>%s</ul>" % "".join(render_node(key, val) for key, val in form.top_level_tags().items())
