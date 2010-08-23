@@ -218,6 +218,8 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
     this.span = span;
     
     parent_div.style.MozBorderRadius = '10px';
+    parent_div.style.BorderRadius = '10px';
+    parent_div.style.WebkitBorderRadius = '10px';
   }
 
   this.setText = function (text) {
@@ -551,7 +553,7 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     if (this.choices.length > 0) {
       content += '<br><br>';
       for (var i = 0; i < this.choices.length; i++) {
-        content += '<table id="alert-ch' + i + '" ' + (this.choices.length == 1 ? 'align="center" ' : '') + 'cellpadding="7" style="background: #118; color: white; -moz-border-radius: 10px; font-weight: bold; margin-bottom: 5px;">\
+        content += '<table id="alert-ch' + i + '" ' + (this.choices.length == 1 ? 'align="center" ' : '') + 'cellpadding="7" style="background: #118; color: white; -moz-border-radius: 10px; border-radius: 10px; -webkit-border-radius: 10px; font-weight: bold; margin-bottom: 5px;">\
           <tr><td><b>&nbsp;' + htmlescape(this.choices[i]) + '&nbsp;</b></td></tr></table>';
       }
     }
