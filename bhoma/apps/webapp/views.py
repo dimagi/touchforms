@@ -16,6 +16,7 @@ from bhoma.apps.webapp.touchscreen.options import TouchscreenOptions
 from django.contrib.auth.models import User
 from bhoma.utils.parsing import string_to_boolean
 import logging
+from django.contrib.auth.decorators import permission_required
 
 @require_GET
 def dashboard(req):
@@ -54,6 +55,7 @@ def touchscreen_login(request):
                                'mode':  'workflow',
                                'dynamic_scripts': ["webapp/javascripts/login.js",] })
 
+@permission_required("webapp.bhoma_administer_clinic")
 def new_user(request):
     if request.method == "POST":
 
@@ -93,7 +95,7 @@ def new_user(request):
                                'mode':  'workflow', 
                                'dynamic_scripts': ["webapp/javascripts/user_reg.js",] })
 
-
+@permission_required("webapp.bhoma_administer_clinic")
 def delete_user(request):
     if request.method == "POST":
 

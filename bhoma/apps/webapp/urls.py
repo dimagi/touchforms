@@ -5,6 +5,7 @@ from django.conf.urls.defaults import *
 from . import views
 from django.views.generic.simple import direct_to_template
 from bhoma.apps.webapp.touchscreen.options import TouchscreenOptions
+from django.contrib.auth.decorators import permission_required
 
 urlpatterns = patterns('',
     url(r'^$', direct_to_template, {"template": "landing_page.html",
@@ -15,7 +16,8 @@ urlpatterns = patterns('',
     url(r'^accounts/logout_ts/$', views.touchscreen_logout, name="touchscreen_logout"),
     url(r'^accounts/login/$', views.bhoma_login, name="login"),
     url(r'^accounts/logout/$', views.logout, name="logout"),
-    url(r'^bhoma/admin$', direct_to_template, 
+    url(r'^bhoma/admin$',
+        direct_to_template, 
         {"template": "admin.html",
          "extra_context": {"options": TouchscreenOptions.default() }},
          name="bhoma_admin"),
