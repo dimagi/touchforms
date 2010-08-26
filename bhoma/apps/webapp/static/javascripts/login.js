@@ -8,12 +8,12 @@ function wfLogin () {
     //enter password
     var auth_validation = function(password) {
         auth_fail_text = "Sorry, that is not the right password for " + username + ". Please try again.";
-        error_text = "Sorry, something went wrong. I this keeps happening please contact CIDRZ.  Your message is: ";        
+        error_text = "Sorry, something went wrong. If this keeps happening please contact CIDRZ.  Your message is: ";        
         auth_res = jQuery.ajax({url: '/api/auth/', 
-                              type: 'POST', 
-                              data: {'username': username, 'password': password}, 
-                              async: false,
-                              success: function(data, textStatus, request) {
+                                type: 'POST', 
+                                data: {'username': username, 'password': password}, 
+                                async: false,
+                                success: function(data, textStatus, request) {
                                     json_res = JSON.parse(data);
                                     if (json_res["result"]) {
                                         request.result = null;
@@ -21,14 +21,14 @@ function wfLogin () {
                                         request.result = auth_fail_text;
                                     }
                                 },
-                              error: function(request, textStatus, errorThrown) {
-                                request.result = error_text + textStatus + " " + errorThrown;
-                              }
-                              });
+                                error: function(request, textStatus, errorThrown) {
+                                    request.result = error_text + textStatus + " " + errorThrown;
+                                }
+                               });
         return auth_res.result;
     }
-    var q_password = new wfQuestion('Password', 'str', null, null, true, 
-                                    auth_validation, null);
+    var q_password = new wfQuestion('Password', 'passwd', null, null, true, 
+                                    auth_validation, null, 'numeric');
     yield q_password;
     
     data["username"] = username;
@@ -39,7 +39,7 @@ function wfLogin () {
   }
 
   var onFinish = function (data) {
-    submit_redirect(data);
+    submit_redirect({result: JSON.stringify(data)});
   }
 
   return new Workflow(flow, onFinish);

@@ -2,9 +2,10 @@ from django.http import HttpResponseRedirect, HttpResponse
 import json
 from django.views.decorators.http import require_POST
 from django.core.urlresolvers import reverse
-from django.contrib.auth.models import check_password, User
+from django.contrib.auth.models import check_password, User, Group
 from bhoma.apps.profile.models import BhomaUserProfile
 from bhoma.utils.logging import log_exception
+from bhoma.apps.webapp.models import Permissions
 
 def get_usernames(request):
     """
@@ -35,3 +36,8 @@ def user_exists(request):
     username = request.POST["username"]
     exists = User.objects.filter(username__iexact=username).exists()
     return HttpResponse(json.dumps({"result": exists}))
+
+def get_roles(request):
+    # it makes more sense to call these roles but in django they're groups
+    return HttpResponse(json.dumps([str(grp) for grp in Group.objects.all().values_list("name", flat=True).order_by("name")]))
+    

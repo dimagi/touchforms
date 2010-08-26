@@ -6,17 +6,17 @@ BHOMA Main Menu
 {% block touchscreen_content %}
 <h4>What would you like to do?</h4>
 <center>
-{% url patient_select as pat_select_url %}
-{% ts_button "Enter Data" pat_select_url %}
+{% if perms.webapp.bhoma_enter_data %}
+    {% url patient_select as pat_select_url %}
+    {% ts_button "Enter Data" pat_select_url %}
+{% endif %}
 
 {% url report_list as rep_list_url %}
 {% ts_button "View Reports" rep_list_url %}
 
-{% if user.is_superuser %}
-
-{% url bhoma_admin as b_admin_url %}
-{% ts_button "Administration" b_admin_url %}
-
+{% if perms.webapp.bhoma_administer_clinic %}
+	{% url bhoma_admin as b_admin_url %}
+	{% ts_button "Administration" b_admin_url %}
 {% endif %}
 </center>
 {% endblock %}

@@ -17,6 +17,8 @@ TEXT_COLOR = '#000';
 KEYBUTTON_COLOR = '#118';
 BUTTON_SELECTED_COLOR = '#0bf';
 HIGHLIGHT_COLOR = '#ffc';
+NUMPAD_COLOR = '#16c';
+SPC_COLOR = '#44e';
 
 BACKSPACE_LABEL = '\u21d0';
 
@@ -27,7 +29,7 @@ function initStaticWidgets () {
   
   helpButton = new TextButton('help-button', '#aaa', BUTTON_TEXT_COLOR, null, null, '?', 1., helpClicked);
   backButton = new TextButton('back-button', '#6ad', BUTTON_TEXT_COLOR, null, null, 'BACK', .9, backClicked);
-  menuButton = new TextButton('quit-button', '#d23', BUTTON_TEXT_COLOR, null, null, 'HOME', .9, menuClicked);
+  homeButton = new TextButton('quit-button', '#d23', BUTTON_TEXT_COLOR, null, null, 'HOME', .9, homeClicked);
   nextButton = new TextButton('next-button', '#1a3', BUTTON_TEXT_COLOR, null, null, 'NEXT', 1.2, nextClicked);
   
   questionEntry = new Indirect();
@@ -47,7 +49,7 @@ function initStaticWidgets () {
       new Layout('footer', 1, 4, [FOOTER_BUTTON_WIDTH, FOOTER_BUTTON_WIDTH, '*', FOOTER_BUTTON_WIDTH], '*',
                  [SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN, SCREEN_MARGIN], FOOTER_BUTTON_SPACING, FOOTER_COLOR, FOOTER_COLOR, FOOTER_COLOR, [
         backButton, 
-        menuButton, 
+        homeButton, 
         progressBar,
         nextButton
       ]),
@@ -74,16 +76,16 @@ function initStaticWidgets () {
             kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '/', '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
   
   keyboard = new Layout('text-kbd', 4, 13, 68, 85, '*', 6, null, null, null, kbs([
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', '7', '8', '9', [BACKSPACE_LABEL, '#aaa'],
-    'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '4', '5', '6', '',
-    'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3', '.',
-    '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', '!', '?', ','     
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', ['7', NUMPAD_COLOR], ['8', NUMPAD_COLOR], ['9', NUMPAD_COLOR], [BACKSPACE_LABEL, '#aaa'],
+    'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', ['4', NUMPAD_COLOR], ['5', NUMPAD_COLOR], ['6', NUMPAD_COLOR], '.',
+    'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ['', SPC_COLOR], ['1', NUMPAD_COLOR], ['2', NUMPAD_COLOR], ['3', NUMPAD_COLOR], ',',
+    '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['0', NUMPAD_COLOR], '!', '?'     
   ], null, 1.4, type_));
-  keyboardAlphaOnly = new Layout('text-kbd', 3, 10, 68, 85, '*', 6, null, null, null, kbs([
+  keyboardAlphaOnly = new Layout('text-kbd', 3, 10, 88, 110, '*', 8, null, null, null, kbs([
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', [BACKSPACE_LABEL, '#aaa'],
     'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '',
     'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '\u2013', '\'',
-  ], null, 1.4, type_));
+  ], null, 1.9, type_));
 
   //progress bar is just static right now -- turn into a dedicated GUI object?
   progressBar.update(new Layout('progress-bar', 1, 2, ['30%', '*'], '*', [10, 10, 15, 15], 0, null, null, null, [
@@ -94,6 +96,12 @@ function initStaticWidgets () {
   answerText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.2, 'left', 0));
   freeTextAnswer = new Layout('answer-bar', 1, 2, ['7*', '*'], '*', [30, 30, 20, 20], 6, null, null, null, [
     answerText,
+    new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
+  ]);
+
+  passwdText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.3, 'center', 0, true));
+  passwdAnswer = new Layout('answer-bar', 1, 2, ['3*', '*'], '*', [235, 235, 20, 20], 6, null, null, null, [
+    passwdText,
     new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
   ]);
   
@@ -118,9 +126,10 @@ function initStaticWidgets () {
 }
 
 function helpClicked (ev, x) {
-  overlay.setText('Here is some help text.');
+  overlay.setText(activeQuestion["help"] || "There is no help text for this question.");
   overlay.setBgColor('#6d6');
   overlay.setTimeout(15.);
+  overlay.setDismiss(null);
   overlay.setActive(true);
 }
 
@@ -132,23 +141,55 @@ function backClicked (ev, x) {
   }
 }
 
-function menuClicked (ev, x) {
-  location.href='/';
+function homeClicked (ev, x) {
+  captions = gFormAdapter.quitWarning();
+
+  showActionableAlert(captions.main,
+                      [captions.quit, captions.cancel],
+                      [function () {goHome();}, null]);
+}
+
+function goHome () {
+  if (gFormAdapter.abort) {
+    gFormAdapter.abort();
+  } else {
+    console.log('warning: workflow has no abort() method; returning to root page');
+    location.href='/';
+  }
 }
 
 function nextClicked (ev, x) {
   if (activeQuestion["datatype"] == 'date') {
     dateEntryContext.next();
-  } else if (activeQuestion["datatype"] == 'float' && isNaN(+answerText.child.control.value)) {
+    return;
+  } else if (activeQuestion["datatype"] == 'float' && answerText.child.control.value != '' && isNaN(+answerText.child.control.value)) {
     showError("Not a valid number");
-  } else {
-    answerQuestion();
+    return;
+  } else if (activeQuestion["domain"] == 'phone' && answerText.child.control.value != '' && !(/^\+?[0-9]+$/.test(answerText.child.control.value))) {
+    showError("This does not appear to be a valid phone number");
+    return;
+  } else if (activeQuestion["domain"] == 'bp' && answerText.child.control.value != '') {
+    var val = answerText.child.control.value;
+    var match = /^([0-9]+)\/([0-9]+)$/.exec(val);
+    if (!match) {
+      showError("This does not appear to be a valid blood pressure reading. Blood pressure should look like: 120/80");
+      return;
+    }
+
+    syst = +match[1];
+    diast = +match[2];
+    if (syst > 300 || syst < 40 || diast > 210 || diast < 20) {
+      showError("Blood pressure must be between 40/20 and 300/210");
+      return;
+    }
   }
+
+  answerQuestion();
 }
 
 function clearClicked (ev, x) {
   type = activeQuestion["datatype"];
-  if (type == "str" || type == "int" || type == "float") {
+  if (type == "str" || type == "int" || type == "float" || type == "passwd") {
     activeInputWidget.setText('');
   } else if (type == "select" || type == "multiselect") {
     //not handled yet
@@ -518,6 +559,22 @@ function showError (text) {
   overlay.setText(text);
   overlay.setBgColor('#d66');
   overlay.setTimeout(3.);
+  overlay.setDismiss(null);
+  overlay.setActive(true);
+}
+
+function showAlert (text, ondismiss) {
+  overlay.setText(text);
+  overlay.setBgColor('#dd6');
+  overlay.setTimeout(0.);
+  overlay.setDismiss(ondismiss);
+  overlay.setActive(true);
+}
+
+function showActionableAlert (text, choices, actions) {
+  overlay.setText(text, choices, actions);
+  overlay.setBgColor('#dd6');
+  overlay.setTimeout(0.);
   overlay.setActive(true);
 }
 
