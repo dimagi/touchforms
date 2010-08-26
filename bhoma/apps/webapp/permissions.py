@@ -29,4 +29,4 @@ def init_groups():
             logging.error(("Tried to load one of permissions: %s but it didn't exist! "
                            "Not all BHOMA groups have been created!  To fix this "
                            "problem run syncdb again and make sure you don't see "
-                           "this error message") % perms)
+                           "this error message") % ",".join(perms))
