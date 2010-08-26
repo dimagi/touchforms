@@ -10,9 +10,9 @@ BHOMA_PERMISSIONS = (("bhoma_view_pi_reports", "Can view clinic performance indi
 
 GROUPS = (("Clinic Support Worker", ("bhoma_enter_data",)),
           ("Clinic In-Charge", ("bhoma_enter_data", "bhoma_view_pi_reports",
-                                "bhoma_add_users", "bhoma_delete_users")),
+                                "bhoma_administer_clinic")),
           ("District Manager", ("bhoma_enter_data", "bhoma_view_pi_reports",
-                                "bhoma_add_users", "bhoma_delete_users")),
+                                "bhoma_administer_clinic")),
           )
 
 def init_groups():
