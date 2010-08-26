@@ -8,9 +8,8 @@ from bhoma.apps.webapp.touchscreen.options import TouchscreenOptions
 from django.contrib.auth.decorators import permission_required
 
 urlpatterns = patterns('',
-    url(r'^$', direct_to_template, {"template": "landing_page.html",
-                                    "extra_context": {"options": TouchscreenOptions.default() }},   
-                                    name="landing_page"),
+    url(r'^$', views.landing_page, name="landing_page"),
+    url(r'^clinic/$', views.clinic_landing_page, name="clinic_landing_page"),
     
     url(r'^accounts/login_ts/$', views.touchscreen_login, name="touchscreen_login"),
     url(r'^accounts/logout_ts/$', views.touchscreen_logout, name="touchscreen_logout"),

@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block content %}
+<h3>What would you like to do?</h3>
+<ul>
+    <li><a href="{% url report_list %}">View Reports</a></li>
+    <li><a href="{% url manage_chws %}">Manage Community Health Workers</a></li>
+</ul>
+<br></br><br></br><br></br><br></br><br></br>
+{% if debug %}
+<h3>Debug</h3>
+<a href="{% url clinic_landing_page %}">Go to Clinic Landing Page</a>
+{% endif %}
+{% endblock %}
