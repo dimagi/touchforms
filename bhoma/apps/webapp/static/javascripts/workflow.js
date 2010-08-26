@@ -53,3 +53,23 @@ function qUsernameList(title) {
         title = "Please select your username";
     return qSelectReqd(title, usernames);
 }
+
+function get_roles() {
+    res = jQuery.ajax({url: '/api/roles/', 
+                              type: 'GET', 
+                              async: false,
+                              success: function(data, textStatus, request) {
+                                    json_res = JSON.parse(data);
+                                    request.result = json_res;
+                                },
+                       });
+    return res.result;
+}
+        
+
+function qRoleList(title) {
+    roles = get_roles();
+    if (title == null) 
+        title = "Please choose the user's role";
+    return qSelectReqd(title, roles);
+}

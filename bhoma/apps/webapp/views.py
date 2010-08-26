@@ -15,6 +15,7 @@ from django.core.context_processors import request
 from bhoma.apps.webapp.touchscreen.options import TouchscreenOptions
 from django.contrib.auth.models import User
 from bhoma.utils.parsing import string_to_boolean
+import logging
 
 @require_GET
 def dashboard(req):
@@ -73,6 +74,15 @@ def new_user(request):
         user.last_login =  datetime(1970,1,1)
         user.date_joined = datetime.utcnow()
         user.save()
+        # have to have an object before you're allowed to edit M2M fields
+        # so do groups/roles last
+        role = data.get("role")
+        if role:
+            try:
+                user.groups = [Group.objects.get(name=role)]
+            except Group.DoesNotExist:
+                logging.error("Unable to give role %s to %s -- permissions may " 
+                              "not work.  Did you forget to run syncdb recently?")
         return render_to_response(request, "auth/user_reg_complete.html", 
                                   {"new_user": user,
                                    "options": TouchscreenOptions.admin() }) 
