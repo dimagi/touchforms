@@ -5,6 +5,7 @@ from bhoma.apps.xforms.models import CXFormInstance
 from bhoma.apps.xforms.exceptions import XFormException
 from bhoma.utils.logging import log_exception
 import logging
+from bhoma.apps.xforms.signals import xform_saved
 
 def get_xform_by_namespace(namespace):
     matches = XForm.objects.filter(namespace=namespace).order_by("-version", "-created")
@@ -31,7 +32,10 @@ def post_xform_to_couch(instance):
     if not errors and not "error" in response:
         doc_id = response
         try:
-            return CXFormInstance.get(doc_id)
+            xform = CXFormInstance.get(doc_id)
+            # fire signals
+            xform_saved.send(sender="post", form=xform)
+            return xform
         except Exception, e:
             logging.error("Problem accessing %s" % doc_id)
             log_exception(e)
