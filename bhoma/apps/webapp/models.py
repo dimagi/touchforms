@@ -8,6 +8,5 @@ class Permissions(Model):
     """
        
     class Meta():
-        permissions = (('bhoma_view_pi_reports', "Can view clinic performance indicator reports."),
-                       ('bhoma_enter_data', "Can view and enter patient data"),)
+        permissions = BHOMA_PERMISSIONS
     

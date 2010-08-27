@@ -11,6 +11,8 @@ from bhoma.utils.logging import log_exception
 from bhoma.utils.couch import safe_index
 from xml.etree import ElementTree
 from django.utils.datastructures import SortedDict
+from couchdbkit.resource import ResourceNotFound
+import logging
 
 """
 Couch models.  For now, we prefix them starting with C in order to 
@@ -169,7 +171,12 @@ class CXFormInstance(Document):
         return node and option in node.split(" ")
     
     def get_xml(self):
-        return self["#xml"]
+        try:
+            # new way to get attachments
+            self.fetch_attachment("form.xml")
+        except ResourceNotFound:
+            logging.error("no xml found for %s, trying old attachment scheme." % self.get_id)
+            return self["#xml"]
     
     def top_level_tags(self):
         """

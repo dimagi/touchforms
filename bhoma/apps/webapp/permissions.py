@@ -26,7 +26,7 @@ def init_groups():
             group.permissions = [Permission.objects.get(codename=perm) for perm in perms]
             group.save()
         except Permission.DoesNotExist:
-            logging.error("Tried to load permission %s but it didn't exist! "
-                          "Not all BHOMA groups have been created!  To fix this "
-                          "problem run syncdb again and make sure you don't see "
-                          "this error message")
+            logging.error(("Tried to load one of permissions: %s but it didn't exist! "
+                           "Not all BHOMA groups have been created!  To fix this "
+                           "problem run syncdb again and make sure you don't see "
+                           "this error message") % ",".join(perms))
