@@ -1,3 +1,9 @@
 #inner {
     min-height: 100px
 }
+
+#footer .container {
+	margin-top: 10px;
+	padding-top: 10px;
+    border-top: 2px solid #eeeeff;
+}

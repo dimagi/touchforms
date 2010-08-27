@@ -4,7 +4,7 @@
 BHOMA Administration Menu
 {% endblock %}
 {% block touchscreen_content %}
-{% if user.is_superuser %}
+{% if perms.webapp.bhoma_administer_clinic %}
 <h4>What would you like to do?</h4>
 <center>
 {% url new_user as new_user_url %}

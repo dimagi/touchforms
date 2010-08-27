@@ -55,9 +55,14 @@ function wfNewUser() {
 	    yield q_fname;
 	    data['fname'] = q_fname.value;
     	
-      var q_lname = new wfQuestion('Last Name', 'str', null, null, true, null, null, 'alpha');
+	    var q_lname = new wfQuestion('Last Name', 'str', null, null, true, null, null, 'alpha');
 	    yield q_lname;
 	    data['lname'] = q_lname.value;
+	    
+	    var q_role = qRoleList();
+        yield q_role;
+        data['role'] = roles[q_role.value - 1];
+    
   }
 
   var onFinish = function (data) {
