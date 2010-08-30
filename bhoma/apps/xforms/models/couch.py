@@ -176,7 +176,7 @@ class CXFormInstance(Document):
             self.fetch_attachment("form.xml")
         except ResourceNotFound:
             logging.error("no xml found for %s, trying old attachment scheme." % self.get_id)
-            return self["#xml"]
+            return self[const.TAG_XML]
     
     def top_level_tags(self):
         """
