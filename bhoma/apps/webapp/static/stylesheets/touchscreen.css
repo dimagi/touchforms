@@ -188,3 +188,12 @@
     background-repeat:no-repeat;
     background-position:center;
 }
+
+
+.case_info .none {
+    color:grey;
+}
+
+.case_info .open {
+    font-weight:bold;
+}

@@ -1,8 +1,13 @@
 import types
 from datetime import date, datetime
 from django import template
+from bhoma.apps.xforms import util 
 
 register = template.Library()
+
+@register.simple_tag
+def value_for_display(value):
+    return util.value_for_display(value)
 
 @register.simple_tag
 def render_form_data(form):

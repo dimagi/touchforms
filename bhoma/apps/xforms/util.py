@@ -42,3 +42,12 @@ def post_xform_to_couch(instance):
             raise
     else:
         raise XFormException("Problem POSTing form to couch! errors/response: %s/%s" % (errors, response))
+
+def value_for_display(value, replacement_chars="_-"):
+    """
+    Formats an xform value for display, replacing the contents of the 
+    system characters with spaces
+    """
+    for char in replacement_chars:
+        value = str(value).replace(char, " ")
+    return value
