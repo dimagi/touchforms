@@ -190,4 +190,3 @@ class CXFormInstance(Document):
             key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag 
             to_return[key] = self.xpath(key)
         return to_return
-            
