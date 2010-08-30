@@ -10,7 +10,7 @@ def render_form_data(form):
     def render_node(nodekey, nodevalue):
         
         def is_hidden_field(field_key):
-            SYSTEM_FIELD_NAMES = ("drugs_prescribed", "case", "meta", "clinic_ids", "drug_drill_down") 
+            SYSTEM_FIELD_NAMES = ("drugs_prescribed", "case", "meta", "clinic_ids", "drug_drill_down", "tmp") 
             return field_key.startswith("#") or field_key.startswith("@") or field_key.startswith("_") \
                    or field_key.lower() in SYSTEM_FIELD_NAMES
                     
