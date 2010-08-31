@@ -176,3 +176,24 @@
 .touchscreen th {
     background-color: inherit;
 }
+
+.phone {
+    background-image:url('silk/phone.png');
+    background-repeat:no-repeat;
+    background-position:center center;
+}
+
+.clinic {
+    background-image:url('silk/monitor.png');
+    background-repeat:no-repeat;
+    background-position:center;
+}
+
+
+.case_info .none {
+    color:grey;
+}
+
+.case_info .open {
+    font-weight:bold;
+}
