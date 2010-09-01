@@ -7,6 +7,7 @@ from django.views.generic.simple import direct_to_template
 from bhoma.apps.webapp.touchscreen.options import TouchscreenOptions
 from django.contrib.auth.decorators import permission_required
 
+
 urlpatterns = patterns('',
     url(r'^$', views.landing_page, name="landing_page"),
     url(r'^clinic/$', views.clinic_landing_page, name="clinic_landing_page"),
