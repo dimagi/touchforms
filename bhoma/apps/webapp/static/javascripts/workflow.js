@@ -73,3 +73,14 @@ function qRoleList(title) {
         title = "Please choose the user's role";
     return qSelectReqd(title, roles);
 }
+
+function chwZoneChoices (num_zones) {
+  var choices = [];
+  for (var i = 1; i <= num_zones; i++) {
+    choices.push("Zone " + i);
+  }
+  choices.push("Lives outside catchment area");
+  choices.push("Don't know which zone");
+
+  return choices;
+}
