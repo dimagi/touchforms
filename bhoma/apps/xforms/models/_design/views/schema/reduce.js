@@ -1,12 +1,9 @@
 function(key, values) {
+    // these lines magically import our other javascript files.  DON'T REMOVE THEM!
+    // !code util/schema.js
+    
     var depth = 0;
-    function get_kind(obj) {
-        var c = uneval(obj)[0];
-        if (obj == null || obj == "") return 'null';
-        else if (c == '(') return 'dict';
-        else if (c == '[') return 'list';
-        else return "string";
-    }
+    
     function reconcile(type1, type2) {
         if (depth > 20)
             return log("Recursion depth too high!!!!");
@@ -61,6 +58,7 @@ function(key, values) {
         depth -= 1;
         return type;
     }
+    
     function reconcile_list(types) {
         var type = null;
         for(var i in types){
@@ -68,5 +66,6 @@ function(key, values) {
         }
         return type;
     }
+    
     return reconcile_list(values);
 }
