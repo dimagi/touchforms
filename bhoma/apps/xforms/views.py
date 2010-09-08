@@ -11,6 +11,17 @@ import logging
 from django.views.decorators.http import require_POST
 from bhoma.apps.xforms.util import post_xform_to_couch
 import json
+from collections import defaultdict
+from export import export_excel
+from StringIO import StringIO
+
+def xform_list(request):
+    forms_by_namespace = defaultdict(list)
+    for form in XForm.objects.all():
+        forms_by_namespace[form.namespace].append(form)
+    return render_to_response(request, "xforms/xform_list.html", {
+        'forms_by_namespace': dict(forms_by_namespace),
+    })
 
 def download(request, xform_id):
     """
@@ -20,7 +31,19 @@ def download(request, xform_id):
     response = HttpResponse(mimetype='application/xml')
     response.write(xform.file.read()) 
     return response
-    
+
+def download_excel(request, namespace):
+    """
+    Download all data for an xform
+    """
+    tmp = StringIO()
+    export_excel(namespace, tmp)
+    response = HttpResponse(mimetype='application/vnd.ms-excel')
+    response['Content-Disposition'] = 'attachment; filename=%s.xls' % namespace.split('/')[-1]
+    response.write(tmp.getvalue())
+    tmp.close()
+    return response
+
 def play(request, xform_id, callback=None, preloader_data={}):
     """
     Play an XForm.

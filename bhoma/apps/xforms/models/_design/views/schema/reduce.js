@@ -9,6 +9,7 @@ function(key, values) {
             return log("Recursion depth too high!!!!");
         depth += 1;
         var type;
+
         var kind1 = get_kind(type1);
         var kind2 = get_kind(type2);
 
@@ -64,8 +65,11 @@ function(key, values) {
             else if(kind1 == 'list') {
                 type = [reconcile(reconcile_list(type1), reconcile_list(type2))];
             }
+            else if(kind1 == 'null') {
+                type = null;
+            }
             else {
-                type = type1;
+                type = "string";
             }
         }
         if (depth > 10) {
@@ -75,6 +79,7 @@ function(key, values) {
             log(uneval(type));
         }
         depth -= 1;
+        if (typeof type == "undefined") log("type undefined");
         return type;
     }
     

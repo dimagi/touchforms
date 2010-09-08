@@ -27,7 +27,7 @@ function get_schema(doc) {
     else if (kind == 'null') {
         schema = null;
     }
-    
+
     return schema;
 }
     
