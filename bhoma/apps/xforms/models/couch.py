@@ -176,7 +176,7 @@ class CXFormInstance(Document):
             # new way to get attachments
             return self.fetch_attachment("form.xml")
         except ResourceNotFound:
-            logging.error("no xml found for %s, trying old attachment scheme." % self.get_id)
+            logging.warn("no xml found for %s, trying old attachment scheme." % self.get_id)
             return self[const.TAG_XML]
     
     def xml_md5(self):
