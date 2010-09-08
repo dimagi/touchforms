@@ -13,6 +13,7 @@ from xml.etree import ElementTree
 from django.utils.datastructures import SortedDict
 from couchdbkit.resource import ResourceNotFound
 import logging
+import hashlib
 
 """
 Couch models.  For now, we prefix them starting with C in order to 
@@ -177,6 +178,9 @@ class CXFormInstance(Document):
         except ResourceNotFound:
             logging.error("no xml found for %s, trying old attachment scheme." % self.get_id)
             return self[const.TAG_XML]
+    
+    def xml_md5(self):
+        return hashlib.md5(self.get_xml()).hexdigest()
     
     def top_level_tags(self):
         """
