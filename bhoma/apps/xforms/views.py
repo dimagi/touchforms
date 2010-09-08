@@ -32,10 +32,13 @@ def download(request, xform_id):
     response.write(xform.file.read()) 
     return response
 
-def download_excel(request, namespace):
+def download_excel(request):
     """
     Download all data for an xform
     """
+    namespace = request.GET.get("xmlns", "")
+    if not namespace:
+        raise Exception("You must specify a namespace to download!")
     tmp = StringIO()
     export_excel(namespace, tmp)
     response = HttpResponse(mimetype='application/vnd.ms-excel')

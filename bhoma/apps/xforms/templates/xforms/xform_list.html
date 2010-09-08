@@ -20,7 +20,7 @@
             <!--td>{{ xform.name }}</td-->
             {% if forloop.first %}
                 <td class="namespace" rowspan="{{ xforms|length }}">
-                    [<a href="{% url xform_download_excel namespace %}">excel</a>]
+                    [<a href="{% url xform_download_excel %}?xmlns={{namespace}}">excel</a>]
                     {{ namespace }}
                 </td>
             {% endif %}
