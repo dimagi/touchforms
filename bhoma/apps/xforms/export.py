@@ -2,13 +2,19 @@ from bhoma.utils.couch.database import get_db
 
 
 def export_excel(xmlns, file):
+    """
+    Exports data from forms matching a namespace to a file. 
+    Returns true if it finds data, otherwise nothing
+    """
     db = get_db()
     #xmlns = "http://cidrz.org/bhoma/chw_followup"
-    schema = db.view('xforms/schema', key=xmlns, group=True).one()['value']
+    schema_row = db.view('xforms/schema', key=xmlns, group=True).one()
+    if not schema_row: return None
+    schema = schema_row['value']
     docs = [result['value'] for result in db.view('xforms/by_xmlns', key=xmlns).all()]
     tables = format_tables(create_intermediate_tables(docs,schema))
     _export_excel(tables).save(file)
-
+    return True
 
 class Constant(object):
     def __init__(self, message):
