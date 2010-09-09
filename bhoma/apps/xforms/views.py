@@ -11,6 +11,17 @@ import logging
 from django.views.decorators.http import require_POST
 from bhoma.apps.xforms.util import post_xform_to_couch
 import json
+from collections import defaultdict
+from bhoma.apps.export.export import export_excel
+from StringIO import StringIO
+
+def xform_list(request):
+    forms_by_namespace = defaultdict(list)
+    for form in XForm.objects.all():
+        forms_by_namespace[form.namespace].append(form)
+    return render_to_response(request, "xforms/xform_list.html", {
+        'forms_by_namespace': dict(forms_by_namespace),
+    })
 
 def download(request, xform_id):
     """
@@ -20,7 +31,25 @@ def download(request, xform_id):
     response = HttpResponse(mimetype='application/xml')
     response.write(xform.file.read()) 
     return response
+
+def download_excel(request):
+    """
+    Download all data for an xform
+    """
+    namespace = request.GET.get("xmlns", "")
+    if not namespace:
+        raise Exception("You must specify a namespace to download!")
+    tmp = StringIO()
     
+    if export_excel(namespace, 'xforms/by_xmlns', tmp):
+        response = HttpResponse(mimetype='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=%s.xls' % namespace.split('/')[-1]
+        response.write(tmp.getvalue())
+        tmp.close()
+        return response
+    else:
+        return HttpResponse("Sorry, there was no data found for the namespace '%s'." % namespace)
+
 def play(request, xform_id, callback=None, preloader_data={}):
     """
     Play an XForm.
@@ -46,12 +75,6 @@ def play(request, xform_id, callback=None, preloader_data={}):
 
             # post to couch
             doc = post_xform_to_couch(instance)
-            # do some post processing
-            if not hasattr(doc, "clinic_ids"):
-                doc.clinic_ids = []
-            if "clinic_id" in doc.meta and doc.meta["clinic_id"] not in doc.clinic_ids: 
-                doc.clinic_ids.append(doc.meta["clinic_id"])
-                doc.save()
         else:
             doc = None
 
