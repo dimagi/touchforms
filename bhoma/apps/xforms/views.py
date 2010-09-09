@@ -12,7 +12,7 @@ from django.views.decorators.http import require_POST
 from bhoma.apps.xforms.util import post_xform_to_couch
 import json
 from collections import defaultdict
-from bhoma.apps.xforms.export import export_excel
+from bhoma.apps.export.export import export_excel
 from StringIO import StringIO
 
 def xform_list(request):
@@ -40,7 +40,8 @@ def download_excel(request):
     if not namespace:
         raise Exception("You must specify a namespace to download!")
     tmp = StringIO()
-    if export_excel(namespace, tmp):
+    
+    if export_excel(namespace, 'xforms/by_xmlns', tmp):
         response = HttpResponse(mimetype='application/vnd.ms-excel')
         response['Content-Disposition'] = 'attachment; filename=%s.xls' % namespace.split('/')[-1]
         response.write(tmp.getvalue())
