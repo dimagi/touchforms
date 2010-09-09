@@ -76,31 +76,3 @@ class XForm(models.Model):
                                         checksum=checksum, file=f)           
         return instance
                         
-# I think we want some notion of signals against XForms.  Not sure 
-# how this should work.
-
-class XFormCallback(models.Model):
-    
-    xform = models.ForeignKey(XForm, related_name="callbacks")
-    callback = models.CharField(max_length=255, 
-                                help_text="Name of Python callback function.  " \
-                                          "This function should take a single " \
-                                          "argument, which is the filled out " \
-                                          "document.")
-    
-    class Meta:
-        app_label = 'xforms'
-
-    def call(self, document):
-        """Call the function associated with this."""
-        try:
-            # call the callback function
-            module, callback = self.callback.rsplit(".", 1)
-            module = __import__(module, globals(), locals(), [callback])
-            callback = getattr(module, callback)
-            return callback(document)
-        except ImportError:
-            logging.error("Bad callback method %s. It could not be imported." % \
-                          self.callback)
-            return False
-
