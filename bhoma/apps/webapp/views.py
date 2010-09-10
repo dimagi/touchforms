@@ -85,7 +85,7 @@ def new_user(request):
                                   {"new_user": user,
                                    "options": TouchscreenOptions.admin() }) 
                                   
-    return render_to_response(request, "xforms/touchscreen.html", 
+    return render_to_response(request, "touchscreen.html", 
                               {'form': {'name':  'add user', 
                                         'wfobj': 'wfNewUser'}, 
                                'mode':  'workflow', 
@@ -110,7 +110,7 @@ def delete_user(request):
                 user.delete()
         return HttpResponseRedirect(reverse("bhoma_admin"))
                                   
-    return render_to_response(request, "xforms/touchscreen.html", 
+    return render_to_response(request, "touchscreen.html", 
                               {'form': {'name':  'delete user', 
                                         'wfobj': 'wfDeleteUser'}, 
                                'mode':  'workflow', 
@@ -139,7 +139,7 @@ def touchscreen_login(request):
         else:
             return HttpResponseForbidden("Sorry that wasn't the right username or password")
 
-    return render_to_response(request, "xforms/touchscreen.html", 
+    return render_to_response(request, "touchscreen.html", 
                               {'form': {'name':  'login', 
                                         'wfobj': 'wfLogin'}, 
                                'mode':  'workflow',
