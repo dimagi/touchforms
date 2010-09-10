@@ -32,7 +32,7 @@ class XForm(models.Model):
         return "%s (%s)" % (self.name, self.namespace)
     
     class Meta:
-        app_label = 'xforms'
+        app_label = 'xformplayer'
 
     @classmethod
     def from_file(cls, filename, name=None):

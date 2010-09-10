@@ -12,7 +12,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'sqlite3',             # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': 'xforms.db',             # Or path to database file if using sqlite3.
+        'NAME': 'xformplayer.db',             # Or path to database file if using sqlite3.
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
@@ -75,7 +75,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 )
 
-ROOT_URLCONF = 'xformplayer.urls'
+ROOT_URLCONF = 'xformplayerproject.urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -91,11 +91,11 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
-    'xforms'
+    'xformplayer'
 )
 
 import os
-STATIC_DOC_ROOT = os.path.join(os.path.dirname(__file__), "xforms", "static")
+STATIC_DOC_ROOT = os.path.join(os.path.dirname(__file__), "xformplayer", "static")
 XFORMS_FORM_BOOTSTRAP_PATH = "bootstrap/xforms"
 XFORMS_PATH = "data/xforms"
 XFORMS_PLAYER_URL = "http://localhost:444/"

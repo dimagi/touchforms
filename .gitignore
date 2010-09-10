@@ -2,7 +2,7 @@
 .project
 .pydevproject
 *localsettings.py
-xformplayer/data/*
+xformplayerproject/data/*
 *~
 *.class
 *.db

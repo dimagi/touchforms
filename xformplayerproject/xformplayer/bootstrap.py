@@ -3,7 +3,7 @@ import logging
 import hashlib
 from django.db import transaction
 from django.conf import settings
-from xforms.models import XForm
+from xformplayer.models import XForm
 
 def bootstrap():
     try:
@@ -30,7 +30,7 @@ def bootstrap():
                 
     except Exception, e:
         transaction.rollback_unless_managed()
-        logging.error(("Problem bootstrapping xforms: %s.  Ignoring.  If the " \
+        logging.error(("Problem bootstrapping xformplayer: %s.  Ignoring.  If the " \
                        "application seems broken, this is probably why") % e)
         
         return

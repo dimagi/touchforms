@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.conf import settings
-from xforms.models import XForm
+from xformplayer.models import XForm
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseServerError
 from django.core.urlresolvers import reverse
@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 import json
 from collections import defaultdict
 from StringIO import StringIO
-from xforms.signals import xform_received
+from xformplayer.signals import xform_received
 from django.template.context import RequestContext
 from django.shortcuts import render_to_response
 
@@ -21,7 +21,7 @@ def xform_list(request):
     forms_by_namespace = defaultdict(list)
     for form in XForm.objects.all():
         forms_by_namespace[form.namespace].append(form)
-    return render_to_response("xforms/xform_list.html", 
+    return render_to_response("xformplayer/xform_list.html", 
                               {'forms_by_namespace': dict(forms_by_namespace)},
                               context_instance=RequestContext(request))
                               
@@ -62,7 +62,7 @@ def play(request, xform_id, callback=None, preloader_data={}):
             xform_received.send(sender="player", instance=instance)
             
         # call the callback, if there, otherwise route back to the 
-        # xforms list
+        # xformplayer list
         if callback:
             return callback(xform, instance)
         else:

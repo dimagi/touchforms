@@ -1,4 +1,4 @@
 from django.contrib import admin
-from xforms.models import XForm
+from xformplayer.models import XForm
 
 admin.site.register(XForm)
