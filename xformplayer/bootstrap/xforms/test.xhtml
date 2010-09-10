@@ -1,0 +1,206 @@
+<h:html xmlns:h="http://www.w3.org/1999/xhtml"
+        xmlns="http://www.w3.org/2002/xforms"
+	  xmlns:ev="http://www.w3.org/2001/xml-events"
+	  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	  xmlns:jr="http://openrosa.org/javarosa">
+<h:head>
+    <h:title>test form</h:title>
+    <model>
+
+		<instance>
+			<test xmlns="http://openrosa.org/bhoma/test" version="1">
+<start /><end />
+
+        <q-str />
+        <q-str-req />
+        <q-int />
+        <q-int-req />
+        <q-date />
+        <q-date-req />
+	<q-sel />
+	<q-sel-req />
+	<q-multi />
+	<q-multi-req />
+
+	<ch1 />
+	<ch2 />
+	<ch3 />
+	<ch4 />
+	<ch5 />
+	<ch6 />
+	<ch7 />
+	<ch8 />
+        	</test>
+		</instance>
+		
+<bind nodeset="start" type="dateTime" jr:preload="timestamp" jr:preloadParams="start" />
+<bind nodeset="end" type="dateTime" jr:preload="timestamp" jr:preloadParams="end" />
+
+	<bind nodeset="q-str-req" required="true()" />
+	<bind nodeset="q-int-req" type="int" required="true()" />
+	<bind nodeset="q-date-req" type="date" required="true()" />
+	<bind nodeset="q-sel-req" required="true()" />
+	<bind nodeset="q-multi-req" required="true()" />
+
+	<bind nodeset="q-int" type="int" constraint=". &lt; 800" jr:constraintMsg="Value must be less than 800" />
+	<bind nodeset="q-date" type="date" constraint=". &lt;= today()" jr:constraintMsg="Value cannot be in the future" />
+
+
+	</model>
+</h:head>			
+<h:body>
+
+  <input ref="q-str"><label>This is a free-text question</label></input>
+  <input ref="q-str-req"><label>This is a (required) free-text question</label></input>
+  <input ref="q-int"><label>This is a numeric question</label></input>
+  <input ref="q-int-req"><label>This is a (required) numeric question</label></input>
+  <input ref="q-date"><label>This is a date question</label></input>
+  <input ref="q-date-req"><label>This is a (required) date question</label></input>
+	
+  <select1 ref="q-sel">
+    <label>This is a single-select question</label>
+    <item><label>choice1</label><value>c1</value></item>
+    <item><label>choice2</label><value>c2</value></item>
+    <item><label>choice3</label><value>c3</value></item>
+  </select1>
+  <select1 ref="q-sel-req">
+    <label>This is a (required) single-select question</label>
+    <item><label>choice1</label><value>c1</value></item>
+    <item><label>choice2</label><value>c2</value></item>
+    <item><label>choice3</label><value>c3</value></item>
+  </select1>
+
+  <select ref="q-multi">
+    <label>This is a multi-select question</label>
+    <item><label>choice1</label><value>c1</value></item>
+    <item><label>choice2</label><value>c2</value></item>
+    <item><label>choice3</label><value>c3</value></item>
+  </select>
+  <select ref="q-multi-req">
+    <label>This is a (required) multi-select question</label>
+    <item><label>choice1</label><value>c1</value></item>
+    <item><label>choice2</label><value>c2</value></item>
+    <item><label>choice3</label><value>c3</value></item>
+  </select>
+
+  <select1 ref="ch1">
+    <label>Q1</label>
+    <item><label>Yes</label><value>y</value></item>
+    <item><label>No</label><value>n</value></item>
+  </select1>
+
+  <select1 ref="ch2">
+    <label>Q2</label>
+    <item><label>Yes</label><value>y</value></item>
+    <item><label>No</label><value>n</value></item>
+    <item><label>Maybe</label><value>maybe</value></item>
+  </select1>
+
+  <select1 ref="ch3">
+    <label>Q3</label>
+    <item><label>Male</label><value>m</value></item>
+    <item><label>Female</label><value>f</value></item>
+  </select1>
+
+  <select1 ref="ch4">
+    <label>Q4</label>
+    <item><label>Peach</label><value>peach</value></item>
+    <item><label>Apple</label><value>apple</value></item>
+    <item><label>Pear</label><value>pear</value></item>
+    <item><label>Orange</label><value>orange</value></item>
+    <item><label>Guava</label><value>guava</value></item>
+    <item><label>Banana</label><value>banana</value></item>
+    <item><label>Lychee</label><value>lychee</value></item>
+    <item><label>Mango</label><value>mango</value></item>
+  </select1>
+
+  <select1 ref="ch5">
+    <label>Q5</label>
+    <item><label>Peach</label><value>peach</value></item>
+    <item><label>Apple</label><value>apple</value></item>
+    <item><label>Pear</label><value>pear</value></item>
+    <item><label>Orange</label><value>orange</value></item>
+    <item><label>Guava</label><value>guava</value></item>
+    <item><label>Banana</label><value>banana</value></item>
+    <item><label>Lychee</label><value>lychee</value></item>
+    <item><label>Mango</label><value>mango</value></item>
+    <item><label>Tomato</label><value>tomato</value></item>
+  </select1>
+
+  <select1 ref="ch6">
+    <label>Q6</label>
+<item><label>AK</label><value>ak</value></item>
+<item><label>AL</label><value>al</value></item>
+<item><label>AR</label><value>ar</value></item>
+<item><label>AZ</label><value>az</value></item>
+<item><label>CA</label><value>ca</value></item>
+<item><label>CO</label><value>co</value></item>
+<item><label>CT</label><value>ct</value></item>
+<item><label>DC</label><value>dc</value></item>
+<item><label>DE</label><value>de</value></item>
+<item><label>FL</label><value>fl</value></item>
+<item><label>GA</label><value>ga</value></item>
+<item><label>HI</label><value>hi</value></item>
+<item><label>IA</label><value>ia</value></item>
+<item><label>ID</label><value>id</value></item>
+<item><label>IL</label><value>il</value></item>
+<item><label>IN</label><value>in</value></item>
+<item><label>KS</label><value>ks</value></item>
+<item><label>KY</label><value>ky</value></item>
+<item><label>LA</label><value>la</value></item>
+<item><label>MA</label><value>ma</value></item>
+<item><label>MD</label><value>md</value></item>
+<item><label>ME</label><value>me</value></item>
+<item><label>MI</label><value>mi</value></item>
+<item><label>MN</label><value>mn</value></item>
+<item><label>MO</label><value>mo</value></item>
+<item><label>MS</label><value>ms</value></item>
+<item><label>MT</label><value>mt</value></item>
+<item><label>NC</label><value>nc</value></item>
+<item><label>ND</label><value>nd</value></item>
+<item><label>NE</label><value>ne</value></item>
+<item><label>NH</label><value>nh</value></item>
+<item><label>NJ</label><value>nj</value></item>
+<item><label>NM</label><value>nm</value></item>
+<item><label>NV</label><value>nv</value></item>
+<item><label>NY</label><value>ny</value></item>
+<item><label>OH</label><value>oh</value></item>
+<item><label>OK</label><value>ok</value></item>
+<item><label>OR</label><value>or</value></item>
+<item><label>PA</label><value>pa</value></item>
+<item><label>RI</label><value>ri</value></item>
+<item><label>SC</label><value>sc</value></item>
+<item><label>SD</label><value>sd</value></item>
+<item><label>TN</label><value>tn</value></item>
+<item><label>TX</label><value>tx</value></item>
+<item><label>UT</label><value>ut</value></item>
+<item><label>VA</label><value>va</value></item>
+<item><label>VT</label><value>vt</value></item>
+<item><label>WA</label><value>wa</value></item>
+<item><label>WI</label><value>wi</value></item>
+<item><label>WV</label><value>wv</value></item>
+<item><label>WY</label><value>wy</value></item>
+  </select1>
+
+  <select1 ref="ch7">
+    <label>Q7</label>
+    <item><label>Options</label><value>1</value></item>
+    <item><label>That vary too much</label><value>2</value></item>
+    <item><label>In length</label><value>3</value></item>
+    <item><label>Are</label><value>4</value></item>
+    <item><label>Display in a list format</label><value>5</value></item>
+    <item><label>Instead</label><value>6</value></item>
+    <item><label>Of</label><value>7</value></item>
+    <item><label>As a</label><value>8</value></item>
+    <item><label>Grid</label><value>9</value></item>
+  </select1>
+
+  <select1 ref="ch8">
+    <label>Q8</label>
+    <item><label>But still</label><value>1</value></item>
+    <item><label>Take up</label><value>2</value></item>
+    <item><label>As much space as they can</label><value>3</value></item>
+  </select1>
+
+</h:body>
+</h:html>
