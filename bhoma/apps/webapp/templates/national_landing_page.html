@@ -9,6 +9,9 @@
 <br></br><br></br><br></br><br></br><br></br>
 {% if debug %}
 <h3>Debug</h3>
-<a href="{% url clinic_landing_page %}">Go to Clinic Landing Page</a>
+<ul>
+    <li><a href="{% url clinic_landing_page %}">Go to Clinic Landing Page</a></li>
+    <li><a href="{% url couchlog_home %}">View recent error messages</a></li>
+</ul>
 {% endif %}
 {% endblock %}
