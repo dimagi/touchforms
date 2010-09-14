@@ -34,7 +34,11 @@ def post_xform_to_couch(instance):
         try:
             xform = CXFormInstance.get(doc_id)
             # fire signals
-            xform_saved.send(sender="post", form=xform)
+            try:
+                xform_saved.send(sender="post", form=xform)
+            except Exception, e:
+                logging.error("Problem sending post-save signals for xform %s" % doc_id)
+                log_exception(e)
             return xform
         except Exception, e:
             logging.error("Problem accessing %s" % doc_id)
