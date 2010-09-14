@@ -16,10 +16,6 @@ function(doc, req) {
     var xml_content = new XML(content); 
     doc = e4xmlJsonClass.xml2obj(xml_content);
         
-    // Because there is an xmlns in the form we can't reference these normally 
-    // like .uuid therefore we have to use the *:: annotation, which searches 
-    // every namespace.
-    // See: http://dispatchevent.org/roger/using-e4x-with-xhtml-watch-your-namespaces/
     var getUuid = function(doc) {
         // search for a uuid in some known places
         // CZUE: stop using the uid from the form.  It creates all kinds of other problems
@@ -40,17 +36,19 @@ function(doc, req) {
         return guid();
     }
     
-    // Try to get an id from the form, or fall back to generating one randomly
     uuid = getUuid(doc);
     log("id: " + uuid);
     doc["_id"] = uuid.toString();
     
     // attach the raw xml as a file called "form.xml"
-    // This apparently has to be base64 encoded to store properly in couch.
+    // This has to be base64 encoded to store properly in couch.
     var attachments = { "form.xml" : { "content_type":"text/xml", "data": base64Class.encode(req.body) } };      
     doc["_attachments"] = attachments;
     
-    doc["#doc_type"] = "XForm"
+    // add some special fields
+    doc["#doc_type"] = "XForm";    // doc type
+    doc["#received_on"] = Date();  // timestamp
+    doc["#export_tag"] = "@xmlns"; // export tag for .xls export
     
     // HACK / MAGIC - python couchdbkit ignores capital meta so always lowercase it
     if (doc["Meta"]) {
