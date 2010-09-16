@@ -167,6 +167,10 @@ var e4xmlJsonClass = {
             
             for (var i = 0; i < children.length(); i++) {
                 this.log_func("child " + i + ": " + children[i].name() + ":" + children[i]);
+                // Because there is an xmlns in the form we can't reference these normally 
+                // like .uuid therefore we have to use the *:: annotation, which searches 
+                // every namespace.
+                // See: http://dispatchevent.org/roger/using-e4x-with-xhtml-watch-your-namespaces/
                 if (xml.*::[children[i].name().localName].length() > 1) {
                     // there was more than one of these elements.  Make it a list.
                     if (!o[children[i].name().localName]) {
