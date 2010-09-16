@@ -132,8 +132,8 @@ class CXFormInstance(Document):
             logging.warn("no xml found for %s, trying old attachment scheme." % self.get_id)
             return self[const.TAG_XML]
     
-    def xml_md5(self):
-        return hashlib.md5(self.get_xml()).hexdigest()
+    def xml_sha1(self):
+        return hashlib.sha1(self.get_xml()).hexdigest()
     
     def top_level_tags(self):
         """
