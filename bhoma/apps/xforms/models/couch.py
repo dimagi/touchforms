@@ -101,6 +101,16 @@ class CXFormInstance(Document):
             return meta
             
         return None
+    
+    @property
+    def sha1(self):
+        # there are two ways this can be stored, one is the 
+        # tag, the other is just calculating it over the actual
+        # xml document
+        if const.TAG_SHA1 in self.all_properties():
+            return self.all_properties().get(const.TAG_SHA1, "")
+        else:
+            return self.xml_sha1()
         
     class Meta:
         app_label = 'xforms'
