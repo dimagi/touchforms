@@ -75,17 +75,34 @@ function initStaticWidgets () {
   numPadBP = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
             kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '/', '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
   
-  keyboard = new Layout('text-kbd', 4, 13, 68, 85, '*', 6, null, null, null, kbs([
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', ['7', NUMPAD_COLOR], ['8', NUMPAD_COLOR], ['9', NUMPAD_COLOR], [BACKSPACE_LABEL, '#aaa'],
-    'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', ['4', NUMPAD_COLOR], ['5', NUMPAD_COLOR], ['6', NUMPAD_COLOR], '.',
-    'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ['', SPC_COLOR], ['1', NUMPAD_COLOR], ['2', NUMPAD_COLOR], ['3', NUMPAD_COLOR], ',',
-    '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['0', NUMPAD_COLOR], '!', '?'     
-  ], null, 1.4, type_));
-  keyboardAlphaOnly = new Layout('text-kbd', 3, 10, 88, 110, '*', 8, null, null, null, kbs([
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', [BACKSPACE_LABEL, '#aaa'],
-    'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '',
-    'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '\u2013', '\'',
-  ], null, 1.9, type_));
+  if (kbdQwerty) {
+    kbdFull = [
+      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', ['7', NUMPAD_COLOR], ['8', NUMPAD_COLOR], ['9', NUMPAD_COLOR],
+      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', ['4', NUMPAD_COLOR], ['5', NUMPAD_COLOR], ['6', NUMPAD_COLOR],
+      'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '!', ['1', NUMPAD_COLOR], ['2', NUMPAD_COLOR], ['3', NUMPAD_COLOR],
+      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['', SPC_COLOR], ['0', NUMPAD_COLOR], [BACKSPACE_LABEL, '#aaa']     
+    ];
+    kbdAlpha = [
+      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
+      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', [BACKSPACE_LABEL, '#aaa'],
+      'Z', 'X', 'C', 'V', 'B', 'N', 'M', '\u2013', '\'', ''
+    ];
+  } else {
+    kbdFull = [
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', ['7', NUMPAD_COLOR], ['8', NUMPAD_COLOR], ['9', NUMPAD_COLOR], [BACKSPACE_LABEL, '#aaa'],
+      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', ['4', NUMPAD_COLOR], ['5', NUMPAD_COLOR], ['6', NUMPAD_COLOR], '.',
+      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ['', SPC_COLOR], ['1', NUMPAD_COLOR], ['2', NUMPAD_COLOR], ['3', NUMPAD_COLOR], ',',
+      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['0', NUMPAD_COLOR], '!', '?'     
+    ];
+    kbdAlpha = [
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', [BACKSPACE_LABEL, '#aaa'],
+      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '',
+      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '\u2013', '\''
+    ];
+  }
+
+  keyboard = new Layout('text-kbd', 4, 13, 68, 85, '*', 6, null, null, null, kbs(kbdFull, null, 1.4, type_));
+  keyboardAlphaOnly = new Layout('text-kbd', 3, 10, 88, 110, '*', 8, null, null, null, kbs(kbdAlpha, null, 1.9, type_));
 
   //progress bar is just static right now -- turn into a dedicated GUI object?
   progressBar.update(new Layout('progress-bar', 1, 2, ['30%', '*'], '*', [10, 10, 15, 15], 0, null, null, null, [
