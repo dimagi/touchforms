@@ -14,6 +14,7 @@ from django.utils.datastructures import SortedDict
 from couchdbkit.resource import ResourceNotFound
 import logging
 import hashlib
+from bhoma.utils.couch.database import get_db
 
 """
 Couch models.  For now, we prefix them starting with C in order to 
@@ -144,6 +145,10 @@ class CXFormInstance(Document):
     
     def xml_sha1(self):
         return hashlib.sha1(self.get_xml()).hexdigest()
+    
+    def has_duplicates(self):
+        dupe_count = get_db().view("xforms/duplicates", key=self.sha1, reduce=True).one()["value"]
+        return int(dupe_count) > 1
     
     def top_level_tags(self):
         """
