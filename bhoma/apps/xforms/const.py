@@ -4,6 +4,7 @@ TAG_XML = "#xml"
 TAG_VERSION = "@version"
 TAG_UIVERSION = "@uiVersion"
 TAG_NAMESPACE = "@xmlns"
+TAG_SHA1 = "#sha1"
 
 TAG_META = "meta"
 TAG_META_CLINIC_ID = "clinic_id"

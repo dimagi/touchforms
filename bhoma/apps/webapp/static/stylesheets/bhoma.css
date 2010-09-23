@@ -18,3 +18,23 @@ tr td.namespace{
     background-color: #fff;
     border-bottom: 1px solid #cccccc;
 }
+
+ul.tabs 
+{
+	float: left;
+    list-style-type: none;
+    font-size: 150%;
+    padding-left: 0;
+}
+
+.tabs li 
+{
+    display: inline;
+    padding-right: 20px;
+}
+
+.tabs li.active
+{
+    font-weight:bold;
+}
+ 

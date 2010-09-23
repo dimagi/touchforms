@@ -14,6 +14,7 @@ from django.utils.datastructures import SortedDict
 from couchdbkit.resource import ResourceNotFound
 import logging
 import hashlib
+from bhoma.utils.couch.database import get_db
 
 """
 Couch models.  For now, we prefix them starting with C in order to 
@@ -101,6 +102,16 @@ class CXFormInstance(Document):
             return meta
             
         return None
+    
+    @property
+    def sha1(self):
+        # there are two ways this can be stored, one is the 
+        # tag, the other is just calculating it over the actual
+        # xml document
+        if const.TAG_SHA1 in self.all_properties():
+            return self.all_properties().get(const.TAG_SHA1, "")
+        else:
+            return self.xml_sha1()
         
     class Meta:
         app_label = 'xforms'
@@ -134,6 +145,10 @@ class CXFormInstance(Document):
     
     def xml_sha1(self):
         return hashlib.sha1(self.get_xml()).hexdigest()
+    
+    def has_duplicates(self):
+        dupe_count = get_db().view("xforms/duplicates", key=self.sha1, reduce=True).one()["value"]
+        return int(dupe_count) > 1
     
     def top_level_tags(self):
         """
