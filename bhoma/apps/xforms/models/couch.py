@@ -108,8 +108,9 @@ class CXFormInstance(Document):
         # there are two ways this can be stored, one is the 
         # tag, the other is just calculating it over the actual
         # xml document
-        if const.TAG_SHA1 in self.all_properties():
-            return self.all_properties().get(const.TAG_SHA1, "")
+        stored_sha =  self.all_properties().get(const.TAG_SHA1, "")
+        if stored_sha:
+            return stored_sha
         else:
             return self.xml_sha1()
         
