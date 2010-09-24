@@ -29,7 +29,8 @@ function xformAjaxAdapter (formName, preloadData) {
       if (answer == null) {
         showError("An answer is required");
       } else if (answer <= activeQuestion["repetitions"].length) {
-        jQuery.post(XFORM_URL, JSON.stringify({'action': 'edit-repeat', 'session-id': this.session_id, 'ix': answer}),
+        jQuery.post(XFORM_URL, JSON.stringify({'action': (activeQuestion["repeat-delete"] ? 'delete-repeat' :'edit-repeat'), 
+                'session-id': this.session_id, 'ix': answer}),
           function (resp) {
             adapter._renderEvent(resp["event"], true);
           },
@@ -41,7 +42,8 @@ function xformAjaxAdapter (formName, preloadData) {
           },
           "json");
       } else if (answer == delIx) {
-        alert('del');
+        activeQuestion["repeat-delete"] = true;
+        this._renderEvent(activeQuestion, true);
       } else if (answer == doneIx) {
         this._step(true);
       } else {
@@ -108,24 +110,37 @@ function xformAjaxAdapter (formName, preloadData) {
         this._step(dirForward);
       }
     } else if (event["type"] == "repeat-juncture") {
-      event["caption"] = event["main-header"];
-      event["datatype"] = "select";
-
-      var options = []
-      for (var i = 0; i < event["repetitions"].length; i++) {
-        options.push(event["repetitions"][i]);
+      if (!event["repeat-delete"]) {
+        event["caption"] = event["main-header"];
+        event["datatype"] = "select";
+        
+        var options = []
+        for (var i = 0; i < event["repetitions"].length; i++) {
+          options.push(event["repetitions"][i]);
+        }
+        if (event["add-choice"] != null) {
+          options.push(event["add-choice"]);
+        }
+        if (event["del-choice"] != null) {
+          options.push(event["del-choice"]);
+        }
+        options.push(event["done-choice"]);
+        
+        event["choices"] = options;
+        event["answer"] = null;
+        event["required"] = true;
+      } else {
+        event["caption"] = event["del-header"];
+        event["datatype"] = "select";
+        
+        var options = []
+        for (var i = 0; i < event["repetitions"].length; i++) {
+          options.push(event["repetitions"][i]);
+        }
+        event["choices"] = options;
+        event["answer"] = null;
+        event["required"] = true;  
       }
-      if (event["add-choice"] != null) {
-        options.push(event["add-choice"]);
-      }
-      if (event["del-choice"] != null) {
-        options.push(event["del-choice"]);
-      }
-      options.push(event["done-choice"]);
-
-      event["choices"] = options;
-      event["answer"] = null;
-      event["required"] = true;
 
       renderQuestion(event, dirForward);
     } else {

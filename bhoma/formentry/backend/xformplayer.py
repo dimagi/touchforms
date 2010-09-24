@@ -282,7 +282,9 @@ class XFormSession:
 
         return self._parse_current_event()
 
-    #del repeat N
+    def delete_repeat (self, ix):
+        self.fec.deleteRepeat(ix - 1)
+        return self._parse_current_event()
 
     #obsolete
     def new_repetition (self):
@@ -336,6 +338,14 @@ def new_repeat (session_id):
         return {'error': 'invalid session id'}
 
     ev = xfsess.descend_repeat()
+    return {'event': ev}
+
+def delete_repeat (session_id, ix):
+    xfsess = global_state.get_session(session_id)
+    if xfsess == None:
+        return {'error': 'invalid session id'}
+
+    ev = xfsess.delete_repeat(ix)
     return {'event': ev}
 
 def new_repetition (session_id):
