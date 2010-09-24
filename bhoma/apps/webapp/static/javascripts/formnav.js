@@ -151,6 +151,13 @@ function xformAjaxAdapter (formName, preloadData) {
   this._step = function (dirForward) {
     BACK_AT_START_ABORTS = true;
 
+    //handle 'which repeat to delete?' interstitial
+    if (!dirForward && activeQuestion["repeat-delete"]) {
+      activeQuestion["repeat-delete"] = false;
+      this._renderEvent(activeQuestion, false);
+      return;
+    }
+
     adapter = this;
     jQuery.post(XFORM_URL, JSON.stringify({'action': (dirForward ? 'next' : 'back'),
                                            'session-id': this.session_id}),
