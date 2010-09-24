@@ -2,9 +2,11 @@
 {% block content %}
 <h3>What would you like to do?</h3>
 <ul>
-    <li><a href="{% url report_list %}">View Reports</a></li>
-    <li><a href="{% url export_data %}">Export Clinical Data</a></li>
-    <li><a href="{% url manage_chws %}">Manage Community Health Workers</a></li>
+    <li><a href="{% url patient_dashboard %}">Look at patients</a></li>
+    <li><a href="{% url report_list %}">View reports</a></li>
+    <li><a href="{% url manage_chws %}">Manage CHWs</a></li>
+    <li><a href="{% url export_data %}">Export clinical data to excel</a></li>
+    
 </ul>
 <br></br><br></br><br></br><br></br><br></br>
 {% if debug %}
