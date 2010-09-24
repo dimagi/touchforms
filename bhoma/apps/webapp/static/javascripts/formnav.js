@@ -16,9 +16,38 @@ function xformAjaxAdapter (formName, preloadData) {
       "json");
   }
 
+
+  this.NEW_REPEATS = true;
   this.answerQuestion = function (answer) {
     adapter = this;
-    if (activeQuestion["repeatable"]) {
+    if (activeQuestion["type"] == "repeat-juncture") {
+      //ugh, we _really_ need dictionary based select questions
+      var addIx = (activeQuestion["add-choice"] != null ? activeQuestion["repetitions"].length + 1 : -1);
+      var delIx = (activeQuestion["del-choice"] != null ? activeQuestion["choices"].length - 1 : -1);
+      var doneIx = activeQuestion["choices"].length;
+
+      if (answer == null) {
+        showError("An answer is required");
+      } else if (answer <= activeQuestion["repetitions"].length) {
+        jQuery.post(XFORM_URL, JSON.stringify({'action': 'edit-repeat', 'session-id': this.session_id, 'ix': answer}),
+          function (resp) {
+            adapter._renderEvent(resp["event"], true);
+          },
+          "json");
+      } else if (answer == addIx) {
+        jQuery.post(XFORM_URL, JSON.stringify({'action': 'new-repeat', 'session-id': this.session_id}),
+          function (resp) {
+            adapter._renderEvent(resp["event"], true);
+          },
+          "json");
+      } else if (answer == delIx) {
+        alert('del');
+      } else if (answer == doneIx) {
+        this._step(true);
+      } else {
+        alert('oops');
+      }
+    } else if (activeQuestion["repeatable"]) {
       if (answer == 1 && !activeQuestion["exists"]) {
         //create repeat
         jQuery.post(XFORM_URL, JSON.stringify({'action': 'add-repeat', 'session-id': this.session_id}),
@@ -66,7 +95,7 @@ function xformAjaxAdapter (formName, preloadData) {
     } else if (event["type"] == "form-complete") {
       this._formComplete(event);
     } else if (event["type"] == "sub-group") {
-      if (event["repeatable"]) {
+      if (!this.NEW_REPEATS && event["repeatable"]) {
         event["item"] = event["caption"];
         event["caption"] = "Add a " + event["item"] + "?";
         event["datatype"] = "select";
@@ -78,6 +107,27 @@ function xformAjaxAdapter (formName, preloadData) {
       } else {
         this._step(dirForward);
       }
+    } else if (event["type"] == "repeat-juncture") {
+      event["caption"] = event["main-header"];
+      event["datatype"] = "select";
+
+      var options = []
+      for (var i = 0; i < event["repetitions"].length; i++) {
+        options.push(event["repetitions"][i]);
+      }
+      if (event["add-choice"] != null) {
+        options.push(event["add-choice"]);
+      }
+      if (event["del-choice"] != null) {
+        options.push(event["del-choice"]);
+      }
+      options.push(event["done-choice"]);
+
+      event["choices"] = options;
+      event["answer"] = null;
+      event["required"] = true;
+
+      renderQuestion(event, dirForward);
     } else {
       alert("unrecognized event [" + event["type"] + "]");
     }
