@@ -214,24 +214,15 @@ class XFormSession:
 
     def _parse_repeat_juncture(self, event):
         r = self.fem.getCaptionPrompt()
+        ro = r.getRepeatOptions()
 
-        event['main-header'] = r.getRepeatText('mainheader')
+        event['main-header'] = ro.header
         event['repetitions'] = list(r.getRepetitionsText())
-        has_repetitions = len(event['repetitions']) > 0
 
-    	if self.fem.getForm().canCreateRepeat(self.fem.getForm().getChildInstanceRef(self.fem.getFormIndex())):
-            event['add-choice'] = r.getRepeatText('add' if has_repetitions else 'add-empty')
-        else:
-            event['add-choice'] = None
-
-    	if has_repetitions:
-            event['del-choice'] = r.getRepeatText('del')
-            event['del-header'] = r.getRepeatText('delheader')
-        else:
-            event['del-choice'] = None
-            event['del-header'] = None
-
-        event['done-choice'] = r.getRepeatText('done' if has_repetitions else 'done-empty')
+        event['add-choice'] = ro.add
+        event['del-choice'] = ro.delete
+        event['del-header'] = ro.delete_header
+        event['done-choice'] = ro.done
 
     def next_event (self):
         self.fec.stepToNextEvent()
