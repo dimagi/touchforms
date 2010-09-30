@@ -7,7 +7,8 @@ from java.util import Date
 from java.util import Vector
 from java.io import StringReader
 
-from preloadhandler import StaticPreloadHandler
+import preloadhandler
+from util import to_jdate, to_pdate, to_vect
     
 from setup import init_classpath
 import logging
@@ -19,18 +20,6 @@ from org.javarosa.core.model import Constants
 from org.javarosa.core.model.data import *
 from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
-
-def to_jdate(pdate):
-    return Date(pdate.year - 1900, pdate.month - 1, pdate.day)
-
-def to_pdate(jdate):
-    return datetime(jdate.getYear() + 1900, jdate.getMonth() + 1, jdate.getDate())
-
-def to_vect(it):
-    v = Vector()
-    for e in it:
-        v.addElement(e)
-    return v
 
 
 class global_state_mgr:
@@ -86,13 +75,17 @@ def load_form(xform, instance=None, preload_data={}):
     #todo: support hooking up a saved instance
         pass
 
-    #todo: support registering preloaders
-    #todo: suppoer registering function handlers (via evalContext)
     #todo: fix circular import
     for key, data_dict in preload_data.items():
-        handler = StaticPreloadHandler(key, data_dict)
+        handler = preloadhandler.StaticPreloadHandler(key, data_dict)
         logging.debug("Adding preloader for %s data: %s" % (key, data_dict))
         form.getPreloader().addPreloadHandler(handler)
+    
+    for funchandler in [preloadhandler.XFuncPrettify]:
+        handler = funchandler()
+        logging.debug("Adding function handler for [%s]" % handler.getName())
+        form.exprEvalContext.addFunctionHandler(handler)
+
     form.initialize(instance == None)
     return form
 
