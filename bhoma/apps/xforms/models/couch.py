@@ -15,6 +15,7 @@ from couchdbkit.resource import ResourceNotFound
 import logging
 import hashlib
 from bhoma.utils.couch.database import get_db
+from bhoma.utils.couch.models import AppVersionedDocument
 
 """
 Couch models.  For now, we prefix them starting with C in order to 
@@ -75,7 +76,7 @@ class Metadata(object):
                      ("clinic_id", "time_start", "time_end",
                       "username", "user_id","uid")])
 
-class CXFormInstance(Document):
+class CXFormInstance(AppVersionedDocument):
     """An XForms instance."""
     
     @property
