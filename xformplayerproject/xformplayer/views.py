@@ -16,13 +16,35 @@ from StringIO import StringIO
 from xformplayer.signals import xform_received
 from django.template.context import RequestContext
 from django.shortcuts import render_to_response
+import tempfile
+import os
 
 def xform_list(request):
     forms_by_namespace = defaultdict(list)
+    success = True
+    notice = ""
+    if request.method == "POST" and request.FILES["file"]:
+        file = request.FILES["file"]
+        try:
+            tmp_file_handle, tmp_file_path = tempfile.mkstemp()
+            tmp_file = open(tmp_file_path, "w")
+            tmp_file.write(file.read())
+            tmp_file.close()
+            new_form = XForm.from_file(tmp_file_path, str(file))
+            notice = "Created form: %s " % file
+        except Exception, e:
+            logging.error("Problem creating xform from %s: %s" % (file, e))
+            success = False
+            notice = "Problem creating xform from %s: %s" % (file, e)
+            
+            
     for form in XForm.objects.all():
         forms_by_namespace[form.namespace].append(form)
     return render_to_response("xformplayer/xform_list.html", 
-                              {'forms_by_namespace': dict(forms_by_namespace)},
+                              {'forms_by_namespace': dict(forms_by_namespace),
+                               "success": success,
+                               "notice": notice},
+                               
                               context_instance=RequestContext(request))
                               
 

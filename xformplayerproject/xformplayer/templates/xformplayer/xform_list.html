@@ -1,6 +1,17 @@
 {% extends "layout.html" %}
 {% block content %}
 <h2>XForms Demo</h2>
+{% if notice %}
+<div class="{{ success|yesno:'success,error' }}">
+{{ notice }}
+</div>
+{% endif %}
+<div class="notice">
+<form enctype="multipart/form-data" method="POST" action="">
+<b>Upload a new form:</b> &nbsp;&nbsp;&nbsp;<input type="file" name="file" id="id_file" />
+<input type="submit" value="Upload!" style="float:right;"/>
+</form> 
+</div>
 <table>
 {% for namespace, xforms in forms_by_namespace.items %}
     {% if forloop.first %}
