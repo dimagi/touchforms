@@ -7,7 +7,7 @@ Prerequisites
 Python (2.6+ recommended)
 Django (1.2+ recommended)
 Java (1.5+ recommended)
-Jython (2.5+ recommended)
+Jython (2.5+ required)
 
 
 Getting started
