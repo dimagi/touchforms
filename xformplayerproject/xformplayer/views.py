@@ -23,19 +23,24 @@ def xform_list(request):
     forms_by_namespace = defaultdict(list)
     success = True
     notice = ""
-    if request.method == "POST" and request.FILES["file"]:
-        file = request.FILES["file"]
-        try:
-            tmp_file_handle, tmp_file_path = tempfile.mkstemp()
-            tmp_file = open(tmp_file_path, "w")
-            tmp_file.write(file.read())
-            tmp_file.close()
-            new_form = XForm.from_file(tmp_file_path, str(file))
-            notice = "Created form: %s " % file
-        except Exception, e:
-            logging.error("Problem creating xform from %s: %s" % (file, e))
+    if request.method == "POST":
+        if "file" in request.FILES:
+            file = request.FILES["file"]
+            try:
+                tmp_file_handle, tmp_file_path = tempfile.mkstemp()
+                tmp_file = open(tmp_file_path, "w")
+                tmp_file.write(file.read())
+                tmp_file.close()
+                new_form = XForm.from_file(tmp_file_path, str(file))
+                notice = "Created form: %s " % file
+            except Exception, e:
+                logging.error("Problem creating xform from %s: %s" % (file, e))
+                success = False
+                notice = "Problem creating xform from %s: %s" % (file, e)
+        else:
             success = False
-            notice = "Problem creating xform from %s: %s" % (file, e)
+            notice = "No uploaded file set."
+            
             
             
     for form in XForm.objects.all():
