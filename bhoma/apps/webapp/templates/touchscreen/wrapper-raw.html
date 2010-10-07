@@ -4,6 +4,15 @@
     <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
     <link rel="stylesheet" href="{{MEDIA_URL}}webapp/stylesheets/blueprint/screen.css" type="text/css" media="screen, projection">
     <link rel="stylesheet" href="{{MEDIA_URL}}webapp/stylesheets/touchscreen.css" type="text/css" >
+    <link rel="stylesheet" href="{{MEDIA_URL}}webapp/stylesheets/jqModal.css" type="text/css">
+    <!-- javascripts (global, app, page) -->
+    <script type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/jquery-1.4.2.min.js"></script>
+    <script type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/jqModal.js"></script>
+    <script type="text/javascript">
+    $().ready(function() {
+      $('#dialog').jqm();
+    });
+    </script>
 {% block page_head %}{% endblock %}    
   </head>
 <body id="body" style="
@@ -84,9 +93,9 @@
                                 <td align="center" valign="middle">
                                     {{user}} @ {{ clinic.name }} | 
 	                                    {% if user.is_authenticated %}
-	                                        <a href="{% url touchscreen_logout %}">Log out</a></td>
+	                                        <a id="logout" class="jqModal" href="{% url touchscreen_logout %}">Log out</a></td>
 	                                    {% else %}
-	                                        <a href="{% url touchscreen_login %}">Log in</a>
+	                                        <a id="login" href="{% url touchscreen_login %}">Log in</a>
 	                                    {% endif %}
                             </tr>
                         </tbody>
@@ -107,15 +116,22 @@
             </div>
             {% endblock %}
         </div>
-        <div style="position: absolute; top: 0px; left: 0px; width: 1024px; height: 768px; display: none;" id="overlay">
-            <div style="position: absolute; top: 0px; left: 0px; width: 1024px; height: 768px; background-color: rgb(221, 102, 102); opacity: 0.7;" id="mask"></div>
-            <div style="position: relative; top: 150px; width: 70%; margin-left: auto; margin-right: auto;">
-                <p style="border: 3px solid black; padding: 20px; background-color: rgb(221, 221, 238);" id="overlay-content"></p>
-            </div>
-        </div>
+            <div class="jqmWindow" id="dialog" style="position: relative; top: 175px; width: 700px; left: 0%; margin-left: auto; margin-right: auto;">
+			    Are you sure you want to log out?
+			    <table cellpadding="7" class="shiny-button rounded" style="margin-bottom: 15px;" onclick="location.href='{% url touchscreen_logout %}';">
+			        <tbody>
+			            <tr>
+			                <td><b>&nbsp;Yes, log out now&nbsp;</b></td>
+			            </tr>
+			        </tbody>
+			    </table>
+			    <table cellpadding="7" style="color: white; font-weight: bold; margin-bottom: 5px;" id="alert-ch0" class="shiny-button rounded jqmClose">
+			        <tbody>
+			            <tr>
+			                <td><b>&nbsp;No, continue using BHOMA&nbsp;</b></td>
+			            </tr>
+			        </tbody>
+			    </table>
+		</div>
     </div>
-    <!-- an off-screen area to temporarily dump text and play with text sizing -->
-    <div id="staging" style="position: absolute; left: 0px; top: 1000px; width: 1500px; height: 1500px; background-color: rgb(221, 221, 221); font-weight: bold;">
-      <span id="snippet"></span>
-    </div>
-</body> 
+</body>
