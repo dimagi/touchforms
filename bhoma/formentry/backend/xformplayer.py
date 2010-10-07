@@ -96,7 +96,11 @@ class XFormSession:
             if content != None:
                 return content
             elif path != None:
-                return open(path).read()
+                f = open(path)
+                try:
+                    return f.read()
+                finally:
+                    f.close()
             else:
                 return None
 
