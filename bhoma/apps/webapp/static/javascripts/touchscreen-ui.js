@@ -15,6 +15,7 @@ FOOTER_COLOR = '#abd';
 BUTTON_TEXT_COLOR = '#fff';
 TEXT_COLOR = '#000';
 KEYBUTTON_COLOR = '#118';
+KEYBUTTON_CLASS = 'shiny-button';
 BUTTON_SELECTED_COLOR = '#0bf';
 HIGHLIGHT_COLOR = '#ffc';
 NUMPAD_COLOR = '#16c';
@@ -29,7 +30,7 @@ function initStaticWidgets () {
   
   helpButton = new TextButton('help-button', '#aaa', BUTTON_TEXT_COLOR, null, null, '?', 1., helpClicked);
   backButton = new TextButton('back-button', '#6ad', BUTTON_TEXT_COLOR, null, null, 'BACK', .9, backClicked);
-  homeButton = new TextButton('quit-button', '#d23', BUTTON_TEXT_COLOR, null, null, 'HOME', .9, homeClicked);
+  homeButton = new TextButton('home-button', '#d23', BUTTON_TEXT_COLOR, null, null, 'HOME', .9, homeClicked);
   nextButton = new TextButton('next-button', '#1a3', BUTTON_TEXT_COLOR, null, null, 'NEXT', 1.2, nextClicked);
   
   questionEntry = new Indirect();
@@ -599,7 +600,7 @@ function showActionableAlert (text, choices, actions) {
 function kb (lab, sz, col, onclick, centered) {
   if (col == null)
     col = KEYBUTTON_COLOR;
-  return new TextButton('button-' + lab, col, BUTTON_TEXT_COLOR, BUTTON_SELECTED_COLOR, null, lab, sz, (onclick != null ? function (ev) { onclick(ev, lab); } : null), centered);
+  return new TextButton('button-' + lab, col, BUTTON_TEXT_COLOR, BUTTON_SELECTED_COLOR, null, lab, sz, (onclick != null ? function (ev) { onclick(ev, lab); } : null), centered, KEYBUTTON_CLASS);
 }
   
 /* utility function to generate an array of keybaord buttons for... a keyboard */
