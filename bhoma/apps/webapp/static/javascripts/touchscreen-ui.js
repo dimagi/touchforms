@@ -20,6 +20,12 @@ HIGHLIGHT_COLOR = '#ffc';
 NUMPAD_COLOR = '#16c';
 SPC_COLOR = '#44e';
 
+KEYBUTTON_CLASS = 'key-button';
+BACKSPACE_CLASS = 'clear-button';
+NUMPAD_CLASS = 'numpad-button';
+SPC_CLASS= 'spacebar';
+
+
 BACKSPACE_LABEL = '\u21d0';
 
 AUTO_ADVANCE_DELAY = 150; //ms
@@ -29,7 +35,7 @@ function initStaticWidgets () {
   
   helpButton = new TextButton('help-button', '#aaa', BUTTON_TEXT_COLOR, null, null, '?', 1., helpClicked);
   backButton = new TextButton('back-button', '#6ad', BUTTON_TEXT_COLOR, null, null, 'BACK', .9, backClicked);
-  homeButton = new TextButton('quit-button', '#d23', BUTTON_TEXT_COLOR, null, null, 'HOME', .9, homeClicked);
+  homeButton = new TextButton('home-button', '#d23', BUTTON_TEXT_COLOR, null, null, 'HOME', .9, homeClicked);
   nextButton = new TextButton('next-button', '#1a3', BUTTON_TEXT_COLOR, null, null, 'NEXT', 1.2, nextClicked);
   
   questionEntry = new Indirect();
@@ -67,35 +73,35 @@ function initStaticWidgets () {
   ]);
 
   numPad = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', null, '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
+            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', null, '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_));
   numPadDecimal = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
+            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_));
   numPadPhone = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
+            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_));
   numPadBP = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '/', '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
+            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '/', '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_));
   
   if (kbdQwerty) {
     kbdFull = [
-      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', ['7', NUMPAD_COLOR], ['8', NUMPAD_COLOR], ['9', NUMPAD_COLOR],
-      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', ['4', NUMPAD_COLOR], ['5', NUMPAD_COLOR], ['6', NUMPAD_COLOR],
-      'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '!', ['1', NUMPAD_COLOR], ['2', NUMPAD_COLOR], ['3', NUMPAD_COLOR],
-      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['', SPC_COLOR], ['0', NUMPAD_COLOR], [BACKSPACE_LABEL, '#aaa']     
+      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', ['7', NUMPAD_CLASS], ['8', NUMPAD_CLASS], ['9', NUMPAD_CLASS],
+      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', ['4', NUMPAD_CLASS], ['5', NUMPAD_CLASS], ['6', NUMPAD_CLASS],
+      'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '!', ['1', NUMPAD_CLASS], ['2', NUMPAD_CLASS], ['3', NUMPAD_CLASS],
+      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['', SPC_CLASS], ['0', NUMPAD_CLASS], [BACKSPACE_LABEL, BACKSPACE_CLASS]     
     ];
     kbdAlpha = [
       'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
-      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', [BACKSPACE_LABEL, '#aaa'],
+      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', [BACKSPACE_LABEL, BACKSPACE_CLASS],
       'Z', 'X', 'C', 'V', 'B', 'N', 'M', '\u2013', '\'', ''
     ];
   } else {
     kbdFull = [
-      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', ['7', NUMPAD_COLOR], ['8', NUMPAD_COLOR], ['9', NUMPAD_COLOR], [BACKSPACE_LABEL, '#aaa'],
-      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', ['4', NUMPAD_COLOR], ['5', NUMPAD_COLOR], ['6', NUMPAD_COLOR], '.',
-      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ['', SPC_COLOR], ['1', NUMPAD_COLOR], ['2', NUMPAD_COLOR], ['3', NUMPAD_COLOR], ',',
-      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['0', NUMPAD_COLOR], '!', '?'     
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', ['7', NUMPAD_CLASS], ['8', NUMPAD_CLASS], ['9', NUMPAD_CLASS], [BACKSPACE_LABEL, BACKSPACE_CLASS],
+      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', ['4', NUMPAD_CLASS], ['5', NUMPAD_CLASS], ['6', NUMPAD_CLASS], '.',
+      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ['', SPC_CLASS], ['1', NUMPAD_CLASS], ['2', NUMPAD_CLASS], ['3', NUMPAD_CLASS], ',',
+      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['0', NUMPAD_CLASS], '!', '?'     
     ];
     kbdAlpha = [
-      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', [BACKSPACE_LABEL, '#aaa'],
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', [BACKSPACE_LABEL, BACKSPACE_CLASS],
       'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '',
       'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '\u2013', '\''
     ];
@@ -596,30 +602,32 @@ function showActionableAlert (text, choices, actions) {
 }
 
 /* utility function to generate a single keyboard button */
-function kb (lab, sz, col, onclick, centered) {
+function kb (lab, sz, col, onclick, centered, cls) {
   if (col == null)
     col = KEYBUTTON_COLOR;
-  return new TextButton('button-' + lab, col, BUTTON_TEXT_COLOR, BUTTON_SELECTED_COLOR, null, lab, sz, (onclick != null ? function (ev) { onclick(ev, lab); } : null), centered);
+  if (cls == null) 
+    cls = KEYBUTTON_CLASS;
+  return new TextButton('button-' + lab, col, BUTTON_TEXT_COLOR, BUTTON_SELECTED_COLOR, null, lab, sz, (onclick != null ? function (ev) { onclick(ev, lab); } : null), centered, cls);
 }
   
 /* utility function to generate an array of keybaord buttons for... a keyboard */
-function kbs (infos, def_color, def_sz, onclick, centered) {
+function kbs (infos, def_cls, def_sz, onclick, centered) {
   var stuff = new Array();
   for (var i = 0; i < infos.length; i++) {
     var info = infos[i];
     if (info != null) {
       if (info instanceof Array) {
         var lab = info[0];
-        var col = info.length > 1 && info[1] != null ? info[1] : def_color;
+        var cls = info.length > 1 && info[1] != null ? info[1] : def_cls;
         var sz = info.length > 2 && info[2] != null ? info[2] : def_sz;
         var selected = info.length > 3 ? info[3] : false;
       } else {
         var lab = info;
-        var col = def_color;
+        var cls = def_cls;
         var sz = def_sz;
         var selected = false;
       }
-      var st = kb(lab, sz, col, onclick, centered);
+      var st = kb(lab, sz, null, onclick, centered, cls);
       if (selected) {
         st.setStatus('selected');
       }
