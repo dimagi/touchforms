@@ -13,10 +13,10 @@ def bootstrap():
         files = os.listdir(settings.XFORMS_FORM_BOOTSTRAP_PATH)
         logging.debug("bootstrapping forms in %s" % settings.XFORMS_FORM_BOOTSTRAP_PATH)
         for filename in files:
+            # TODO: is this sneaky lazy loading a reasonable idea?
+            full_name = os.path.join(settings.XFORMS_FORM_BOOTSTRAP_PATH, filename)
+            file = open(full_name, "r")
             try:
-                # TODO: is this sneaky lazy loading a reasonable idea?
-                full_name = os.path.join(settings.XFORMS_FORM_BOOTSTRAP_PATH, filename)
-                file = open(full_name, "r")
                 checksum = hashlib.sha1(file.read()).hexdigest()
                 file.close()
                 if XForm.objects.filter(checksum=checksum).count() > 0:
@@ -29,6 +29,8 @@ def bootstrap():
             except Exception, e:
                 logging.error("Unknown problem bootstrapping file: %s. %s" % (filename, e))
                 log_exception(e)
+            finally:
+                file.close()
             
     except Exception, e:
         transaction.rollback_unless_managed()
