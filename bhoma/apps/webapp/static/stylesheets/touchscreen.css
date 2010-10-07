@@ -128,6 +128,7 @@
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#cbebff), color-stop(100%,#a1dbff)); /* webkit */
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cbebff', endColorstr='#a1dbff',GradientType=0 ); /* ie */
 }
+
 .selected {
     background: #00bbff; /* old browsers */
     background: -moz-linear-gradient(top, #00ccff 0%, #00bbee 100%); /* firefox */
