@@ -187,7 +187,7 @@ function has_spacing (widths, heights) {
 }
 
 //todo: auto-sizing?
-function TextButton (id, color, text_color, selected_color, inactive_color, caption, size_rel, onclick, centered) {
+function TextButton (id, color, text_color, selected_color, inactive_color, caption, size_rel, onclick, centered, cls) {
   this.id = id;
   this.color = color;
   this.text_color = text_color;
@@ -196,7 +196,8 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
   this.caption = caption;
   this.size_rel = size_rel;
   this.onclick = onclick;
-  this.centered = (centered != null ? centered : true);    
+  this.centered = (centered != null ? centered : true);
+  this.cls = cls
   this.status = 'default';
 
   this.container = null;
@@ -204,7 +205,8 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
   this.render = function (parent_div) {  
     this.container = parent_div;
     parent_div.id = uid(this.id);
-    this.setColor()
+    this.setColor();
+    this.setClass();
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td align="' + (this.centered ? 'center' : 'left') + '" valign="middle"><span></span></td></tr></table>'
     span = parent_div.getElementsByTagName('span')[0];
     span.style.fontWeight = 'bold';
@@ -216,10 +218,11 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
       span.style.marginLeft = .25 * parent_div.clientHeight + 'px';
     }
     this.span = span;
-    
     parent_div.style.MozBorderRadius = '10px';
     parent_div.style.BorderRadius = '10px';
     parent_div.style.WebkitBorderRadius = '10px';
+    
+    
   }
 
   this.setText = function (text) {
@@ -228,6 +231,19 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
       this.span.textContent = text;
   }
 
+  this.setClass = function() {
+    if (this.cls && this.container) {
+      if (this.status == 'default') {
+	    this.container.setAttribute("class", this.cls);
+	  } else if (this.status == 'selected') {
+	    this.container.setAttribute("class", "selected " + this.cls);
+	  }
+	  else if (this.status == 'disabled') {
+	    this.container.setAttribute("class", this.cls + " disabled");
+	  }
+	}
+  }
+    
   this.setColor = function () {
     if (this.status == 'default') {
       set_color(this.container, this.color, this.container.style.backgroundColor);
@@ -252,6 +268,7 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
     this.status = stat;
     if (this.container != null)
       this.setColor();
+      this.setClass();
   }
 }
 
@@ -553,7 +570,7 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     if (this.choices.length > 0) {
       content += '<br><br>';
       for (var i = 0; i < this.choices.length; i++) {
-        content += '<table id="alert-ch' + i + '" ' + (this.choices.length == 1 ? 'align="center" ' : '') + 'cellpadding="7" style="background: #118; color: white; -moz-border-radius: 10px; border-radius: 10px; -webkit-border-radius: 10px; font-weight: bold; margin-bottom: 5px;">\
+        content += '<table class="shiny-button rounded" id="alert-ch' + i + '" ' + (this.choices.length == 1 ? 'align="center" ' : '') + 'cellpadding="7" style="color: white; font-weight: bold; margin-bottom: 5px; ">\
           <tr><td><b>&nbsp;' + htmlescape(this.choices[i]) + '&nbsp;</b></td></tr></table>';
       }
     }

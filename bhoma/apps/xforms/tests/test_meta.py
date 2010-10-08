@@ -9,7 +9,8 @@ class TestMeta(TestCase):
     
     def testClosed(self):
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta.xml")
-        xml_data = open(file_path, "rb").read()
+        with open(file_path, "rb") as f:
+            xml_data = f.read()
         doc_id, errors = post_authenticated_data(xml_data, 
                                                  settings.XFORMS_POST_URL, 
                                                  settings.BHOMA_COUCH_USERNAME,
@@ -21,4 +22,3 @@ class TestMeta(TestCase):
         self.assertEqual(date(2010,07,23), xform.metadata.time_end.date())
         self.assertEqual("admin", xform.metadata.username)
         self.assertEqual("f7f0c79e-8b79-11df-b7de-005056c00008", xform.metadata.user_id)
-        
