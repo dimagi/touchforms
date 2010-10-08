@@ -40,7 +40,6 @@ function initStaticWidgets () {
   nextButton = new TextButton('next-button', '#1a3', BUTTON_TEXT_COLOR, null, null, 'NEXT', 1.2, nextClicked);
   
   questionEntry = new Indirect();
-  progressBar = new Indirect();
   
   overlay = new Overlay('#d66', HEADER_COLOR, 3., 2., '');
   touchscreenUI = new Top(
@@ -56,8 +55,8 @@ function initStaticWidgets () {
       new Layout('footer', 1, 4, [FOOTER_BUTTON_WIDTH, FOOTER_BUTTON_WIDTH, '*', FOOTER_BUTTON_WIDTH], '*',
                  [SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN, SCREEN_MARGIN], FOOTER_BUTTON_SPACING, FOOTER_COLOR, FOOTER_COLOR, FOOTER_COLOR, [
         backButton, 
-        homeButton, 
-        progressBar,
+        homeButton,
+        null, // progress bar 
         nextButton
       ]),
     ])
@@ -111,12 +110,7 @@ function initStaticWidgets () {
   keyboard = new Layout('text-kbd', 4, 13, 68, 85, '*', 6, null, null, null, kbs(kbdFull, null, 1.4, type_));
   keyboardAlphaOnly = new Layout('text-kbd', 3, 10, 88, 110, '*', 8, null, null, null, kbs(kbdAlpha, null, 1.9, type_));
 
-  //progress bar is just static right now -- turn into a dedicated GUI object?
-  progressBar.update(new Layout('progress-bar', 1, 2, ['30%', '*'], '*', [10, 10, 15, 15], 0, null, null, null, [
-    new Layout('pb0', 1, 1, '*', '*', 0, 0, '#4d6', null, null, [null]),   
-    new Layout('pb0', 1, 1, '*', '*', 0, 0, HEADER_COLOR, null, null, [null])   
-  ]));
-
+  
   answerText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.2, 'left', 0));
   freeTextAnswer = new Layout('answer-bar', 1, 2, ['7*', '*'], '*', [30, 30, 20, 20], 6, null, null, null, [
     answerText,

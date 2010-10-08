@@ -19,7 +19,7 @@ class ButtonOptions(Hideable):
         self.link = link
         self.text = text
 
-DEFAULT_HELP_OPTIONS = {"show":True, "text":"HELP"}
+DEFAULT_HELP_OPTIONS = {"show":False, "text":"HELP"}
 # wacky javascrippt html handoffs here, but this is the
 # exception, not the rule
 DEFAULT_BACK_OPTIONS = {"show":True, "text":"BACK", "link":"javascript:history.go(-1)"} 

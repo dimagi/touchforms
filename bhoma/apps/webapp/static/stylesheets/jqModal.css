@@ -3,7 +3,7 @@
 
 /* The Window's CSS z-index value is respected (takes priority). If none is supplied,
 	the Window's z-index value will be set to 3000 by default (via jqModal.js). */
-	
+
 .jqmWindow {
     display: none;
     
@@ -14,8 +14,8 @@
     margin-left: -425px;
     width: 850px;
     
-    background-color: #EEE;
-    color: #333;
+    background-color: #dedded;
+    color: #000;
     border: 1px solid black;
     padding: 12px;
 }
