@@ -26,7 +26,7 @@
 var VALUE_TAG = "#text";
 // this gets used to specify the root object's name
 // at a top level:
-// <myvar a="3"><b>cd</b></myvar> ==> {"#type": "myvar", "@a": 3, "b": "cd"}
+// <myvar a="3"><strong>cd</strong></myvar> ==> {"#type": "myvar", "@a": 3, "b": "cd"}
 var ROOT_TAG = "#type";
 
 /*global alert */

@@ -571,7 +571,7 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
       content += '<br><br>';
       for (var i = 0; i < this.choices.length; i++) {
         content += '<table class="shiny-button rounded" id="alert-ch' + i + '" ' + (this.choices.length == 1 ? 'align="center" ' : '') + 'cellpadding="7" style="color: white; font-weight: bold; margin-bottom: 5px; ">\
-          <tr><td><b>&nbsp;' + htmlescape(this.choices[i]) + '&nbsp;</b></td></tr></table>';
+          <tr><td><strong>&nbsp;' + htmlescape(this.choices[i]) + '&nbsp;</strong></td></tr></table>';
       }
     }
 
