@@ -6,15 +6,17 @@
     <li><a href="{% url report_list %}">View reports</a></li>
     <li><a href="{% url manage_chws %}">Manage CHWs</a></li>
     <li><a href="{% url export_data %}">Export clinical data to excel</a></li>
-    
 </ul>
-<br></br><br></br><br></br><br></br><br></br>
 {% if user.is_superuser %}
-<h3>Debug/administrative operations</h3>
+<h3>Administrative operations</h3>
+<ul>
+    <li><a href="{% url couchlog_home %}">View recent error messages</a></li>
+</ul>
+{% endif %}    
+{% if debug %}
+<h3>Debug</h3>
 <ul>
     <li><a href="{% url clinic_landing_page %}">Go to Clinic Landing Page</a></li>
-    <li><a href="{% url couchlog_home %}">View recent error messages</a></li>
-    <li><a href="{% url phone_sync_logs %}">Look at sync logs from phones</a></li>
 </ul>
 {% endif %}
 {% endblock %}
