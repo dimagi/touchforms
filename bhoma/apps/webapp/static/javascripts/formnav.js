@@ -1,14 +1,30 @@
 
-function xformAjaxAdapter (formName, preloadTag) {
+function xformAjaxAdapter (formName, preloadTags) {
   this.formName = formName;
-  this.preloadTag = preloadTag;
+  this.preloadTags = preloadTags;
   this.session_id = -1;
 
   this.loadForm = function () {
     adapter = this;
+    preload_data = {};
+    for (var type in this.preloadTags) {
+        var dict = this.preloadTags[type];
+        preload_data[type] = {};
+        for (var key in dict) {
+            var val = dict[key];
+            // this special character indicates a server preloader, which 
+            // we make a synchronous request for
+            if (val.indexOf("<") === 0) {
+                valback = jQuery.ajax({url: PRELOADER_URL, type: 'GET', data:{"param": val}, async: false}).responseText;
+                preload_data[type][key] = valback;
+            } else {
+                preload_data[type][key] = val
+            }
+        }
+    }
     jQuery.post(XFORM_URL, JSON.stringify({'action': 'new-form', 
                                            'form-name': this.formName,
-                                           'preloader-tag': this.preloadTag}),
+                                           'preloader-data': preload_data}),
       function (resp) {
         adapter.session_id = resp["session_id"];
         adapter._renderEvent(resp["event"], true);
