@@ -6,7 +6,7 @@ from django.template.loader import render_to_string
 register = template.Library()
 
 @register.simple_tag
-def ts_button(text, url, css_class="really-big-button", custom_style=""):
+def ts_button(text, url, css_class="really-big-button shiny-button", custom_style=""):
     '''
     Create a touchscreen friendly button, with some options
     '''

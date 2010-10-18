@@ -37,7 +37,6 @@ function(doc, req) {
     }
     
     uuid = getUuid(doc);
-    log("id: " + uuid);
     doc["_id"] = uuid.toString();
     
     // attach the raw xml as a file called "form.xml"
