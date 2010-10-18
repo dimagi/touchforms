@@ -32,7 +32,7 @@ function init () {
 
 {% ifequal mode 'xform' %} 
   XFORM_UID = $('#form-uid')[0].value;
-  gFormAdapter = new xformAjaxAdapter(XFORM_UID, {{ preloader_data|safe }});
+  gFormAdapter = new xformAjaxAdapter(XFORM_UID, {{ preloader_tag|safe }});
   
 {% else %}
   gFormAdapter = new workflowAdapter(new {{ form.wfobj }}());
