@@ -1,14 +1,14 @@
 
-function xformAjaxAdapter (formName, preloadData) {
+function xformAjaxAdapter (formName, preloadTag) {
   this.formName = formName;
-  this.preloadData = preloadData;
+  this.preloadTag = preloadTag;
   this.session_id = -1;
 
   this.loadForm = function () {
     adapter = this;
     jQuery.post(XFORM_URL, JSON.stringify({'action': 'new-form', 
                                            'form-name': this.formName,
-                                           'preloader-data': this.preloadData}),
+                                           'preloader-tag': this.preloadTag}),
       function (resp) {
         adapter.session_id = resp["session_id"];
         adapter._renderEvent(resp["event"], true);
