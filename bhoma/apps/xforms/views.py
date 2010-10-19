@@ -14,6 +14,8 @@ import json
 from collections import defaultdict
 from bhoma.apps.export.export import export_excel
 from StringIO import StringIO
+from bhoma.utils.couch import uid
+from bhoma.apps.xforms.const import PRELOADER_TAG_UID
 
 def xform_list(request):
     forms_by_namespace = defaultdict(list)
@@ -119,3 +121,13 @@ def post(request, callback=None):
     if callback:
         return callback(doc)
     return HttpResponse("Thanks! Your new xform id is: %s" % doc["_id"])
+
+def get_preloader_value(request):
+    """
+    Allows you to define keys that translate to calculated preloader values.
+    Currently the only supported value is <uid> which returns a new uid
+    """
+    param = request.GET.get('param', "")
+    if param.lower() == PRELOADER_TAG_UID:
+        return HttpResponse(uid.new())
+    return HttpResponse(param)

@@ -15,6 +15,7 @@
     <script language="javascript">
 
 XFORM_URL = "{% url xform_player_proxy %}";
+PRELOADER_URL = "{% url xform_preloader %}";
 XFORM_NAME = "{{form.name}}";
 XFORM_UID = null;
 
@@ -33,7 +34,7 @@ function init () {
 
 {% ifequal mode 'xform' %} 
   XFORM_UID = $('#form-uid')[0].value;
-  gFormAdapter = new xformAjaxAdapter(XFORM_UID, {{ preloader_tag|safe }});
+  gFormAdapter = new xformAjaxAdapter(XFORM_UID, {{ preloader_data|safe }});
   
 {% else %}
   gFormAdapter = new workflowAdapter(new {{ form.wfobj }}());
