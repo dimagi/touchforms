@@ -57,9 +57,9 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         reply = json.dumps(data_out)
 
         self.send_response(200)
-        self.send_header('Content-Type', 'text/json')
+        self.send_header('Content-Type', 'text/json; charset=utf-8')
         self.end_headers()
-        self.wfile.write(reply)
+        self.wfile.write(reply.encode('utf-8'))
         logging.debug('returned: [%s]' % reply)
 
 def handle_request (content):
