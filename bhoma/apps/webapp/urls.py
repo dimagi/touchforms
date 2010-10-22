@@ -29,4 +29,7 @@ urlpatterns = patterns('',
     url(r'^api/roles/$', views.get_roles),
     url(r'^api/user_exists/$', views.user_exists),
     
+    url(r'^api/diagnostics/$', views.diagnostics),
+    
+    
 )

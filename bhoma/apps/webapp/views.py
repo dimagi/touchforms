@@ -164,4 +164,8 @@ def logout(req, template_name="auth/loggedout.html"):
         return touchscreen_login(req)
     return django_logout(req, **{"template_name" : template_name})
 
+
+    
+    
 from api_views import *
+
