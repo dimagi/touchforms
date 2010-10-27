@@ -7,7 +7,8 @@ from java.util import Date
 from java.util import Vector
 from java.io import StringReader
 
-from preloadhandler import StaticPreloadHandler
+import preloadhandler
+from util import to_jdate, to_pdate, to_vect
     
 from setup import init_classpath
 import logging
@@ -19,18 +20,6 @@ from org.javarosa.core.model import Constants
 from org.javarosa.core.model.data import *
 from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
-
-def to_jdate(pdate):
-    return Date(pdate.year - 1900, pdate.month - 1, pdate.day)
-
-def to_pdate(jdate):
-    return datetime(jdate.getYear() + 1900, jdate.getMonth() + 1, jdate.getDate())
-
-def to_vect(it):
-    v = Vector()
-    for e in it:
-        v.addElement(e)
-    return v
 
 
 class global_state_mgr:
@@ -86,13 +75,12 @@ def load_form(xform, instance=None, preload_data={}):
     #todo: support hooking up a saved instance
         pass
 
-    #todo: support registering preloaders
-    #todo: suppoer registering function handlers (via evalContext)
     #todo: fix circular import
     for key, data_dict in preload_data.items():
-        handler = StaticPreloadHandler(key, data_dict)
+        handler = preloadhandler.StaticPreloadHandler(key, data_dict)
         logging.debug("Adding preloader for %s data: %s" % (key, data_dict))
         form.getPreloader().addPreloadHandler(handler)
+    
     form.initialize(instance == None)
     return form
 
@@ -103,7 +91,11 @@ class XFormSession:
             if content != None:
                 return content
             elif path != None:
-                return open(path).read()
+                f = open(path)
+                try:
+                    return f.read()
+                finally:
+                    f.close()
             else:
                 return None
 
@@ -138,6 +130,9 @@ class XFormSession:
         elif status == self.fec.EVENT_QUESTION:
             event['type'] = 'question'
             self._parse_question(event)
+        elif status == self.fec.EVENT_REPEAT_JUNCTURE:
+            event['type'] = 'repeat-juncture'
+            self._parse_repeat_juncture(event)
         else:
             event['type'] = 'sub-group'
             event['caption'] = self.fem.getCaptionPrompt().getLongText()
@@ -146,7 +141,7 @@ class XFormSession:
             elif status == self.fec.EVENT_REPEAT:
                 event['repeatable'] = True
                 event['exists'] = True
-            elif status == self.fec.EVENT_PROMPT_NEW_REPEAT:
+            elif status == self.fec.EVENT_PROMPT_NEW_REPEAT: #obsolete
                 event['repeatable'] = True
                 event['exists'] = False
 
@@ -209,6 +204,18 @@ class XFormSession:
             elif event['datatype'] == 'multiselect':
                 event['answer'] = [sel.index + 1 for sel in value.getValue()]
 
+    def _parse_repeat_juncture(self, event):
+        r = self.fem.getCaptionPrompt()
+        ro = r.getRepeatOptions()
+
+        event['main-header'] = ro.header
+        event['repetitions'] = list(r.getRepetitionsText())
+
+        event['add-choice'] = ro.add
+        event['del-choice'] = ro.delete
+        event['del-header'] = ro.delete_header
+        event['done-choice'] = ro.done
+
     def next_event (self):
         self.fec.stepToNextEvent()
         return self._parse_current_event()
@@ -250,6 +257,19 @@ class XFormSession:
         elif result == self.fec.ANSWER_OK:
             return {'status': 'success'}
 
+    def descend_repeat (self, ix=None):
+        if ix:
+            self.fec.descendIntoRepeat(ix - 1)
+        else:
+            self.fec.descendIntoNewRepeat()
+
+        return self._parse_current_event()
+
+    def delete_repeat (self, ix):
+        self.fec.deleteRepeat(ix - 1)
+        return self._parse_current_event()
+
+    #obsolete
     def new_repetition (self):
       #current in the form api this always succeeds, but theoretically there could
       #be unsatisfied constraints that make it fail. how to handle them here?
@@ -286,6 +306,30 @@ def answer_question (session_id, answer):
     else:
         result['status'] = 'validation-error'
         return result
+
+def edit_repeat (session_id, ix):
+    xfsess = global_state.get_session(session_id)
+    if xfsess == None:
+        return {'error': 'invalid session id'}
+
+    ev = xfsess.descend_repeat(ix)
+    return {'event': ev}
+
+def new_repeat (session_id):
+    xfsess = global_state.get_session(session_id)
+    if xfsess == None:
+        return {'error': 'invalid session id'}
+
+    ev = xfsess.descend_repeat()
+    return {'event': ev}
+
+def delete_repeat (session_id, ix):
+    xfsess = global_state.get_session(session_id)
+    if xfsess == None:
+        return {'error': 'invalid session id'}
+
+    ev = xfsess.delete_repeat(ix)
+    return {'event': ev}
 
 def new_repetition (session_id):
     xfsess = global_state.get_session(session_id)

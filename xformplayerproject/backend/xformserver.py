@@ -48,6 +48,8 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         try:
             data_out = handle_request(data_in)
         except (Exception, java.lang.Exception), e:
+            if isinstance(e, java.lang.Exception):
+                e.printStackTrace() #todo: log the java stacktrace
             logging.exception('error handling request')
             self.send_error(500, 'internal error handling request: %s: %s' % (type(e), str(e)))
             return
@@ -55,9 +57,9 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         reply = json.dumps(data_out)
 
         self.send_response(200)
-        self.send_header('Content-Type', 'text/json')
+        self.send_header('Content-Type', 'text/json; charset=utf-8')
         self.end_headers()
-        self.wfile.write(reply)
+        self.wfile.write(reply.encode('utf-8'))
         logging.debug('returned: [%s]' % reply)
 
 def handle_request (content):
@@ -99,6 +101,28 @@ def handle_request (content):
             return {'error': 'session id required'}
 
         return xformplayer.go_back(content['session-id'])
+
+    elif action == 'edit-repeat':
+        if 'session-id' not in content:
+            return {'error': 'session id required'}
+        if 'ix' not in content:
+            return {'error': 'repeat index required'}
+
+        return xformplayer.edit_repeat(content['session-id'], content['ix'])
+
+    elif action == 'new-repeat':
+        if 'session-id' not in content:
+            return {'error': 'session id required'}
+
+        return xformplayer.new_repeat(content['session-id'])
+    
+    elif action == 'delete-repeat':
+        if 'session-id' not in content:
+            return {'error': 'session id required'}
+        if 'ix' not in content:
+            return {'error': 'repeat index required'}
+
+        return xformplayer.delete_repeat(content['session-id'], content['ix'])
 
     else:
         return {'error': 'unrecognized action'}

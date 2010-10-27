@@ -2,9 +2,15 @@ from setup import init_classpath
 init_classpath()
 
 from org.javarosa.core.model.utils import IPreloadHandler
+from org.javarosa.core.model.condition import IFunctionHandler
 # from org.javarosa.core.model.data import IAnswerData
 from org.javarosa.core.model.data import StringData
 # from org.javarosa.core.model.instance import TreeElement
+
+import jarray
+import java.lang
+import java.util
+from util import to_vect
 
 class StaticPreloadHandler(IPreloadHandler):
     """
