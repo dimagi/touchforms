@@ -871,11 +871,28 @@ function type_ (e, c) {
     charCode = c.charCodeAt(0);
   }
 
-  var evt = document.createEvent("KeyboardEvent");
-  evt.initKeyEvent("keypress", true, true, window,
-                   0, 0, 0, 0,
-                   keyCode, charCode) 
-  elem = document.getElementsByTagName('input')[0];
-  elem.dispatchEvent(evt);
+  if (jQuery.browser.mozilla){
+      // preserve firefox behavior, just send the keypress to the input
+	  var evt = document.createEvent("KeyboardEvent");
+	  evt.initKeyEvent("keypress", true, true, window,
+	                   0, 0, 0, 0,
+	                   keyCode, charCode) 
+	  elem = document.getElementsByTagName('input')[0];
+	  elem.dispatchEvent(evt);
+  } else {
+    // only difference here is that the cursor is always assumed to be at the end of the input
+    elem = $($("input")[0]);
+    prev_text = elem.val();
+    if (c == BACKSPACE_LABEL) {
+        if (prev_text) {
+            elem.val(prev_text.substring(0, prev_text.length - 1));        
+        }
+    } else {
+        text = String.fromCharCode(charCode);
+        elem.val(prev_text + text);
+            
+    }
+  }
+  
 }
 
