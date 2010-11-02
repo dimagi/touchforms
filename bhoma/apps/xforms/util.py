@@ -51,7 +51,6 @@ def post_xform_to_couch(instance):
                 except Exception, e:
                     logging.error("Problem sending post-save signals for xform %s" % doc_id)
                     log_exception(e)
-                raise XFormException("fail!")
                 return xform
             except Exception, e:
                 logging.error("Problem accessing %s" % doc_id)
@@ -81,6 +80,7 @@ def post_xform_to_couch(instance):
                 # so that it doesn't show up in our reports
                 dupe = CXFormDuplicate.get(response)
                 dupe.save()
+                return dupe
             else:
                 # how badly do we care about this?
                 raise XFormException("Problem POSTing form to couch! errors/response: %s/%s" % (errors, response))
