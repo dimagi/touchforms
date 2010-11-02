@@ -164,3 +164,13 @@ class CXFormInstance(AppVersionedDocument):
             key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag 
             to_return[key] = self.xpath(key)
         return to_return
+    
+class CXFormDuplicate(CXFormInstance):
+    """
+    Duplicates of instances go here.
+    """
+    
+    def save(self, *args, **kwargs):
+        self["#doc_type"] = "XFormDuplicate"
+        super(CXFormDuplicate, self).save(*args, **kwargs)
+        

@@ -2,10 +2,6 @@ function(doc, req) {
     var e4xmlJsonClass = require("util/jsone4xml").e4xmlJsonClass;
     var base64Class = require("util/base64").Base64;
     
-    
-    e4xmlJsonClass.hello()
-    base64Class.hello();
-    
     if (doc) {
         log("doc wasn't null!  this is unexpected! you will LOSE your information in favor of the xml");
     }
@@ -16,15 +12,14 @@ function(doc, req) {
     var xml_content = new XML(content); 
     doc = e4xmlJsonClass.xml2obj(xml_content);
         
-    var getUuid = function(doc) {
+    var getUuid = function(req, doc) {
         // search for a uuid in some known places
         // CZUE: stop using the uid from the form.  It creates all kinds of other problems
         // with document update conflicts
-        /*
-        var other_uuid = doc["uuid"];
+        
+        if (req.query && req.query.uid) return req.query.uid;
         if (doc["uuid"]) return doc["uuid"];
         if (doc["Meta"] && doc["Meta"]["uid"]) return doc["Meta"]["uid"];
-        */
         var guid = function() {
             // http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
             // TODO: find a better guid generator / plug into couch uuid framework
@@ -36,7 +31,7 @@ function(doc, req) {
         return guid();
     }
     
-    uuid = getUuid(doc);
+    uuid = getUuid(req, doc);
     doc["_id"] = uuid.toString();
     
     // attach the raw xml as a file called "form.xml"
@@ -52,7 +47,7 @@ function(doc, req) {
     // HACK / MAGIC - python couchdbkit ignores capital meta so always lowercase it
     if (doc["Meta"]) {
         doc["meta"] = doc["Meta"];
-        doc["Meta"] = null;
+        delete doc["Meta"];
     } 
     var resp =  {"headers" : {"Content-Type" : "text/plain"},
                  "body" : uuid.toString()};
