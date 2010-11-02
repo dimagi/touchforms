@@ -149,8 +149,13 @@ class CXFormInstance(AppVersionedDocument):
         return hashlib.sha1(self.get_xml()).hexdigest()
     
     def has_duplicates(self):
+        # TODO: should this also check the duplicate xform models?  probably
         dupe_count = get_db().view("xforms/duplicates", key=self.sha1, reduce=True).one()["value"]
         return int(dupe_count) > 1
+    
+    def contributes(self):
+        """Whether this contributes, e.g. should be used in post-processing"""
+        return not self.has_duplicates()
     
     def top_level_tags(self):
         """
@@ -173,4 +178,8 @@ class CXFormDuplicate(CXFormInstance):
     def save(self, *args, **kwargs):
         self["#doc_type"] = "XFormDuplicate"
         super(CXFormDuplicate, self).save(*args, **kwargs)
+        
+    def contributes(self):
+        # by definition this should never contribute to anything. it's a duplicate
+        return False
         
