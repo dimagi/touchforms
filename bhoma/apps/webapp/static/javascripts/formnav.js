@@ -22,14 +22,13 @@ function xformAjaxAdapter (formName, preloadTags) {
             }
         }
     }
-    jQuery.post(XFORM_URL, JSON.stringify({'action': 'new-form', 
-                                           'form-name': this.formName,
-                                           'preloader-data': preload_data}),
+    this.serverRequest(XFORM_URL, {'action': 'new-form', 
+                                   'form-name': this.formName,
+                                   'preloader-data': preload_data},
       function (resp) {
         adapter.session_id = resp["session_id"];
         adapter._renderEvent(resp["event"], true);
-      },
-      "json");
+      });
   }
 
 
@@ -45,18 +44,16 @@ function xformAjaxAdapter (formName, preloadTags) {
       if (answer == null) {
         showError("An answer is required");
       } else if (answer <= activeQuestion["repetitions"].length) {
-        jQuery.post(XFORM_URL, JSON.stringify({'action': (activeQuestion["repeat-delete"] ? 'delete-repeat' :'edit-repeat'), 
-                'session-id': this.session_id, 'ix': answer}),
+        this.serverRequest(XFORM_URL, {'action': (activeQuestion["repeat-delete"] ? 'delete-repeat' :'edit-repeat'), 
+                'session-id': this.session_id, 'ix': answer},
           function (resp) {
             adapter._renderEvent(resp["event"], true);
-          },
-          "json");
+          });
       } else if (answer == addIx) {
-        jQuery.post(XFORM_URL, JSON.stringify({'action': 'new-repeat', 'session-id': this.session_id}),
+        this.serverRequest(XFORM_URL, {'action': 'new-repeat', 'session-id': this.session_id},
           function (resp) {
             adapter._renderEvent(resp["event"], true);
-          },
-          "json");
+          });
       } else if (answer == delIx) {
         activeQuestion["repeat-delete"] = true;
         this._renderEvent(activeQuestion, true);
@@ -68,11 +65,10 @@ function xformAjaxAdapter (formName, preloadTags) {
     } else if (activeQuestion["repeatable"]) {
       if (answer == 1 && !activeQuestion["exists"]) {
         //create repeat
-        jQuery.post(XFORM_URL, JSON.stringify({'action': 'add-repeat', 'session-id': this.session_id}),
+        this.serverRequest(XFORM_URL, {'action': 'add-repeat', 'session-id': this.session_id},
           function (resp) {
             adapter._renderEvent(resp["event"], true);
-          },
-          "json");
+          });
       } else if (answer == 2 && activeQuestion["exists"]) {
         //delete repeat
         alert('i should probably delete all the subsequent existing repeats here, but i don\'t support that currently. also, that\'s probably not the best user interaction');
@@ -82,9 +78,9 @@ function xformAjaxAdapter (formName, preloadTags) {
         this._step(true);
       }
     } else {
-      jQuery.post(XFORM_URL, JSON.stringify({'action': 'answer',
-                                             'session-id': this.session_id,
-                                             'answer': answer}),
+      this.serverRequest(XFORM_URL, {'action': 'answer',
+                                     'session-id': this.session_id,
+                                     'answer': answer},
         function (resp) {
           if (resp["status"] == "validation-error") {
             if (resp["type"] == "required") {
@@ -95,8 +91,7 @@ function xformAjaxAdapter (formName, preloadTags) {
           } else {
             adapter._renderEvent(resp["event"], true);
           }
-        },
-        "json");
+        });
     }
   }
 
@@ -175,16 +170,15 @@ function xformAjaxAdapter (formName, preloadTags) {
     }
 
     adapter = this;
-    jQuery.post(XFORM_URL, JSON.stringify({'action': (dirForward ? 'next' : 'back'),
-                                           'session-id': this.session_id}),
+    this.serverRequest(XFORM_URL, {'action': (dirForward ? 'next' : 'back'),
+                                   'session-id': this.session_id},
       function (resp) {
         if (!dirForward && resp["at-start"] && BACK_AT_START_ABORTS) {
           adapter.abort();
         } else {
           adapter._renderEvent(resp["event"], dirForward || resp["at-start"]);
         }
-      },
-      "json");
+      });
   }
 
   this._formComplete = function (params, path, method) {
@@ -202,6 +196,35 @@ function xformAjaxAdapter (formName, preloadTags) {
       'cancel': 'Stay and finish form'
     }
   }
+
+  this.serverRequest = function (url, params, callback) {
+    serverRequest(function (postCallback) {
+        jQuery.post(url, JSON.stringify(params), function (resp) {
+            callback(resp);
+            postCallback();
+          },
+          "json");
+      });
+  }
+}
+
+var requestInProgress = false;
+function serverRequest (makeRequest) {
+  if (requestInProgress) {
+    console.log('request is already in progress; aborting');
+    return;
+  }
+  
+  requestInProgress = true;
+  disableInput();
+  var waitingTimer = setTimeout(function () { touchscreenUI.showWaiting(true); }, 300);
+  
+  makeRequest(function () {
+    requestInProgress = false;
+    enableInput();
+    clearTimeout(waitingTimer);
+    touchscreenUI.showWaiting(false);
+    });
 }
 
 function Workflow (flow, onFinish) {
@@ -269,9 +292,12 @@ function wfAsyncQuery (query) {
 
   this.eval = function (callback) {
     queryObj = this;
-    this.query(function (val) {
-        queryObj.value = val;
-        callback();
+    serverRequest(function (postCallback) {
+        queryObj.query(function (val) {
+            queryObj.value = val;
+            callback();
+            postCallback();
+          });
       });
   }
 }

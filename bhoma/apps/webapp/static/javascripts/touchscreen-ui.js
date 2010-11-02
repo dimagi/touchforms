@@ -143,6 +143,32 @@ function initStaticWidgets () {
   monthButtons = tmp[1];
 }
 
+var clicksEnabled;
+var clickDisableCounter = 0;
+function setup () {
+  clicksEnabled = true;
+  $('body')[0].addEventListener('click', function (ev) {
+      if (!clicksEnabled) {
+        ev.stopPropagation();
+        return false; 
+      } else {
+        return true;
+      }
+    }, true);
+}
+
+function disableInput() {
+  clicksEnabled = false;
+  clickDisableCounter++;
+}
+
+function enableInput() {
+  clickDisableCounter--;
+  if (clickDisableCounter == 0) {
+    clicksEnabled = true;
+  }
+}
+
 function helpClicked (ev, x) {
   overlay.setText(activeQuestion["help"] || "There is no help text for this question.");
   overlay.setBgColor('#6d6');
@@ -563,13 +589,10 @@ function choiceSelected (ev, x) {
 }
 
 function doAutoAdvance () {
-  stopClicks = function (ev) { ev.stopPropagation(); return false; }
-  body = document.getElementById('body');
-
-  body.addEventListener('click', stopClicks, true);
+  disableInput();
   setTimeout(function () {
-      body.removeEventListener('click', stopClicks, true);
       nextClicked();
+      enableInput();
     }, AUTO_ADVANCE_DELAY);
 }
 

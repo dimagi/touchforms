@@ -21,7 +21,6 @@ from org.javarosa.core.model.data import *
 from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
 
-
 class global_state_mgr:
   instances = {}
   instance_id_counter = 0
