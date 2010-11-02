@@ -198,18 +198,17 @@ function xformAjaxAdapter (formName, preloadTags) {
   }
 
   this.serverRequest = function (url, params, callback) {
-    serverRequest(function (postCallback) {
-        jQuery.post(url, JSON.stringify(params), function (resp) {
-            callback(resp);
-            postCallback();
-          },
-          "json");
-      });
+    serverRequest(
+      function (cb) {
+        jQuery.post(url, JSON.stringify(params), cb, "json");
+      },
+      callback
+    );
   }
 }
 
 var requestInProgress = false;
-function serverRequest (makeRequest) {
+function serverRequest (makeRequest, callback) {
   if (requestInProgress) {
     console.log('request is already in progress; aborting');
     return;
@@ -219,8 +218,11 @@ function serverRequest (makeRequest) {
   disableInput();
   var waitingTimer = setTimeout(function () { touchscreenUI.showWaiting(true); }, 300);
   
-  makeRequest(function () {
+  makeRequest(function (resp) {
     requestInProgress = false;
+
+    callback(resp);
+
     enableInput();
     clearTimeout(waitingTimer);
     touchscreenUI.showWaiting(false);
@@ -292,13 +294,15 @@ function wfAsyncQuery (query) {
 
   this.eval = function (callback) {
     queryObj = this;
-    serverRequest(function (postCallback) {
+    serverRequest(
+      function (cb) {
         queryObj.query(function (val) {
             queryObj.value = val;
-            callback();
-            postCallback();
+            cb();
           });
-      });
+      },
+      callback
+    );
   }
 }
 
