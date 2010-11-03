@@ -70,7 +70,7 @@ def play(request, xform_id, callback=None, preloader_data={}):
     """
     xform = get_object_or_404(XForm, id=xform_id)
     if request.method == "POST":
-    
+
         if request.POST["type"] == 'form-complete':
             # get the instance
             instance = request.POST["output"]

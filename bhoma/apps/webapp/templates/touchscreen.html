@@ -28,10 +28,10 @@ kbdQwerty = false;
 
 function init () {
 
+  setup();
   initStaticWidgets();
   render_clean();
   
-
 {% ifequal mode 'xform' %} 
   XFORM_UID = $('#form-uid')[0].value;
   gFormAdapter = new xformAjaxAdapter(XFORM_UID, {{ preloader_data|safe }});
@@ -48,7 +48,7 @@ function init () {
   shortcut.add("Alt+N",function() { answerQuestion(); }, shortcut_args);
   shortcut.add("Alt+P",function() { prevQuestion(); }, shortcut_args);
   shortcut.add("esc",function() { overlay.setActive(false); }, shortcut_args);
-  
+
   gFormAdapter.loadForm();
 }
 
@@ -73,7 +73,7 @@ function init () {
       background-color: red;
       margin: 0px;">
     </div>
-    
+
     <!-- an off-screen area to temporarily dump text and play with text sizing -->
     <div id="staging" style="position: absolute; left: 0px; top: 1000px; width: 1500px; height: 1500px; background-color: #ddd; font-weight: bold;">
       <span id="snippet"></span>

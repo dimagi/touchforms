@@ -466,7 +466,8 @@ function ainv (arr, i) {
 function Top (main, overlay) {
   this.main = main;
   this.overlay = overlay;
-  
+  this.waitdiv = null;
+
   this.render = function (parent_div) {
     var maindiv = new_div('main', 0, 0, parent_div.clientWidth, parent_div.clientHeight);
     parent_div.appendChild(maindiv);
@@ -477,6 +478,19 @@ function Top (main, overlay) {
       parent_div.appendChild(ovdiv);  
       this.overlay.render(ovdiv);
     }
+
+    this.waitdiv = document.createElement('div');
+    this.waitdiv.style.position = 'absolute';
+    this.waitdiv.style.display = 'none';
+    this.waitdiv.style.width = '100%';
+    this.waitdiv.style.height = parent_div.clientHeight + 'px';
+    this.waitdiv.style.zIndex = 1000;
+    this.waitdiv.innerHTML = '<div style="background: #fff; opacity: .7; height: 100%;"></div><div style="position: absolute; top: 200px; width: 100%; text-align: center; font-weight: bold; font-size: 200%; color: #222;">Please wait&hellip;<br><img width="300" height="300" src="http://i.imgur.com/igNbB.gif"></div>';
+    parent_div.appendChild(this.waitdiv);
+  }
+
+  this.showWaiting = function (active) {
+    this.waitdiv.style.display = (active ? 'block' : 'none');
   }
 }
 
