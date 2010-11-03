@@ -485,7 +485,7 @@ function Top (main, overlay) {
     this.waitdiv.style.width = '100%';
     this.waitdiv.style.height = parent_div.clientHeight + 'px';
     this.waitdiv.style.zIndex = 1000;
-    this.waitdiv.innerHTML = '<div style="background: #fff; opacity: .7; height: 100%;"></div><div style="position: absolute; top: 200px; width: 100%; text-align: center; font-weight: bold; font-size: 200%; color: #222;">Please wait&hellip;<br></div>';
+    this.waitdiv.innerHTML = '<div style="background: #fff; opacity: .7; height: 100%;"></div><div style="position: absolute; top: 150px; width: 100%; text-align: center; font-weight: bold; font-size: 200%; color: #222;">Please wait&hellip;<br><br><img src="/static/webapp/images/loading.png"></div>';
     parent_div.appendChild(this.waitdiv);
   }
 
