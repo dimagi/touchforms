@@ -181,12 +181,12 @@ function xformAjaxAdapter (formName, preloadTags) {
       });
   }
 
-  this._formComplete = function (params, path, method) {
-    submit_redirect(params, path, method);
+  this._formComplete = function (params) {
+    interactionComplete(function () { submit_redirect(params); });
   }
 
   this.abort = function () {
-    submit_redirect({type: 'form-aborted'});
+    interactionComplete(function () { submit_redirect({type: 'form-aborted'}); });
   }
 
   this.quitWarning = function () {
@@ -239,8 +239,13 @@ function Workflow (flow, onFinish) {
     return this.flow(this.data);
   }
 
-  this.finish = function () {
+  this._finish = function () {
     this.onFinish(this.data);
+  }
+
+  this.finish = function () {
+    var wf = this;
+    interactionComplete(function () { wf._finish(); });
   }
 
   this.abort = function () {
@@ -560,6 +565,20 @@ function answerQuestion () {
 
 function prevQuestion () {
   gFormAdapter.prevQuestion();
+}
+
+var interactionDone = false;
+function interactionComplete (submit) {
+  if (interactionDone) {
+    console.log('interaction already done; ignoring');
+    return;
+  }
+  
+  interactionDone = true;
+  disableInput();
+  var waitingTimer = setTimeout(function () { touchscreenUI.showWaiting(true); }, 300);
+  
+  submit();
 }
 
 function submit_redirect(params, path, method) {
