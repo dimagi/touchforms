@@ -9,7 +9,6 @@ from bhoma.apps.xforms.util import post_xform_to_couch
 class LockTest(TestCase):
     
     def testPostCreatesLock(self):
-        print "running lock test"
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()
@@ -21,7 +20,6 @@ class LockTest(TestCase):
         self.assertTrue(xform.is_locked())
         
     def testUtilityReleasesLock(self):
-        print "running lock test"
         file_path = os.path.join(os.path.dirname(__file__), "data", "meta.xml")
         with open(file_path, "rb") as f:
             xml_data = f.read()

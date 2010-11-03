@@ -162,8 +162,13 @@ function disableInput() {
   clickDisableCounter++;
 }
 
-function enableInput() {
+function enableInput(force) {
   clickDisableCounter--;
+
+  if (clickDisableCounter < 0 || force) {
+    clickDisableCounter = 0;
+  }
+
   if (clickDisableCounter == 0) {
     clicksEnabled = true;
   }
