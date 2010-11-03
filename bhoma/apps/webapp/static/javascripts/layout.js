@@ -485,11 +485,23 @@ function Top (main, overlay) {
     this.waitdiv.style.width = '100%';
     this.waitdiv.style.height = parent_div.clientHeight + 'px';
     this.waitdiv.style.zIndex = 1000;
-    this.waitdiv.innerHTML = '<div style="background: #fff; opacity: .7; height: 100%;"></div><div style="position: absolute; top: 150px; width: 100%; text-align: center; font-weight: bold; font-size: 200%; color: #222;">Please wait&hellip;<br><br><img src="/static/webapp/images/loading.png"></div>';
+    this.waitdiv.innerHTML = '<div style="background: #fff; opacity: .7; height: 100%;"></div><div style="position: absolute; top: 150px; width: 100%; text-align: center; font-weight: bold; font-size: 200%; color: #222;">Please wait&hellip;<br><br><img src="/static/webapp/images/loading.png"></div><div id="abort-popup" style="display: none; position: absolute; left: 40px; bottom: 40px;"><p style="max-width: 35em; font-size: medium; font-weight: bold;">This is taking a long time. There might be a problem. You can click the ABORT button to go back to the main screen, but you will lose the form you were working on if you do.</p>' + oneOffButtonHTML ('abort', 'ABORT') + '</div>';
     parent_div.appendChild(this.waitdiv);
+    $('#abort')[0].onclick = function () { window.location='/touchscreen-abort/'; };
   }
 
+  this.abortTimer = null;
   this.showWaiting = function (active) {
+    if (active) {
+      if (this.abortTimer) {
+        clearTimeout(this.abortTimer);
+      }
+      $('#abort-popup')[0].style.display = 'none';
+      this.abortTimer = setTimeout(function () {
+          enableInput(true);
+          $('#abort-popup')[0].style.display = 'block';
+        }, 30000);
+    }
     this.waitdiv.style.display = (active ? 'block' : 'none');
   }
 }
@@ -584,8 +596,7 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     if (this.choices.length > 0) {
       content += '<br><br>';
       for (var i = 0; i < this.choices.length; i++) {
-        content += '<table class="shiny-button rounded" id="alert-ch' + i + '" ' + (this.choices.length == 1 ? 'align="center" ' : '') + 'cellpadding="7" style="color: white; font-weight: bold; margin-bottom: 5px; ">\
-          <tr><td><strong>&nbsp;' + htmlescape(this.choices[i]) + '&nbsp;</strong></td></tr></table>';
+        content += oneOffButtonHTML('alert-ch' + i, this.choices[i], this.choices.length == 1 ? 'center' : null, null, 'margin-bottom: 5px;');
       }
     }
 
@@ -641,6 +652,13 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     
     this.setActive(false);
   }
+}
+
+function oneOffButtonHTML (id, text, align, padding, custom_style) {
+  padding = padding || 7;
+  custom_style = custom_style || '';
+
+  return '<table class="shiny-button rounded" id="' + id + '" ' + (align ? 'align="' + align + '" ' : '') + 'cellpadding="' + padding + '" style="color: white; font-weight: bold; ' + custom_style + '"><tr><td><strong>&nbsp;' + htmlescape(text) + '&nbsp;</strong></td></tr></table>';
 }
 
 function InputArea (id, border, border_color, padding, inside_color, child, onclick) {
