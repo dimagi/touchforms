@@ -16,6 +16,7 @@ import logging
 import hashlib
 from bhoma.utils.couch.database import get_db
 from bhoma.utils.couch.models import AppVersionedDocument
+from bhoma.apps.xforms.const import TAG_LOCKED
 
 """
 Couch models.  For now, we prefix them starting with C in order to 
@@ -76,6 +77,12 @@ class Metadata(object):
                      ("clinic_id", "time_start", "time_end",
                       "username", "user_id","uid")])
 
+class LockedException(Exception):
+    """
+    Exception raised when something is locked.
+    """
+    pass
+
 class CXFormInstance(AppVersionedDocument):
     """An XForms instance."""
     
@@ -115,6 +122,9 @@ class CXFormInstance(AppVersionedDocument):
         else:
             return self.xml_sha1()
         
+    def is_locked(self):
+        return self.all_properties().get(const.TAG_LOCKED, False)
+    
     class Meta:
         app_label = 'xforms'
     
@@ -157,6 +167,27 @@ class CXFormInstance(AppVersionedDocument):
         """Whether this contributes, e.g. should be used in post-processing"""
         return not self.has_duplicates()
     
+    def acquire_lock(self):
+        if self.is_locked():
+            raise LockedException("Already locked!")
+    
+    def release_lock(self):
+        """
+        Says that we are ready to consume this.  Used in preventing update conflicts.
+        Returns True if the lock was released, false if it didn't have it in the
+        first place.
+        """
+        # this bad hack tells the change listeners not to process the xform 
+        # until this flag is removed.  This is an ugly way to drastically
+        # reduce the number of conflicting updates we get on the central
+        # server as all the signals fire on the newly created doc.
+        # It's kind of like a lock.  That is totally unenforced.
+        if self.is_locked():
+            self[TAG_LOCKED] = False
+            self.save()
+            return True
+        return False
+        
     def top_level_tags(self):
         """
         Get the top level tags found in the xml, in the order they are found.

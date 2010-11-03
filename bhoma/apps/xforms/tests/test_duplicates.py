@@ -23,4 +23,4 @@ class DuplicateFormTest(TestCase):
         self.assertFalse(doc.contributes())
         self.assertEqual("CXFormDuplicate", doc.doc_type)
         self.assertEqual("XFormDuplicate", doc["#doc_type"])
-        
+        self.assertFalse(doc.is_locked())
