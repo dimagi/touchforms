@@ -19,6 +19,7 @@ from django.contrib.auth.decorators import permission_required
 from bhoma.apps.webapp.config import is_clinic
 from django.template import loader
 from django.template.context import Context, RequestContext
+from bhoma.utils.logging import log_exception
 
 
 @require_GET
@@ -39,6 +40,11 @@ def landing_page(req):
 @require_GET
 def dashboard(req):
     return HttpResponseRedirect(reverse("patient_search"))
+
+def timeout(req):
+    class TimeoutException(Exception): pass
+    log_exception(TimeoutException("A touchscreen view has timed out and was aborted"))
+    return HttpResponseRedirect(reverse("landing_page"))
 
 def server_error(request, template_name='500.html'):
     """
