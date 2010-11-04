@@ -24,6 +24,8 @@ urlpatterns = patterns('',
     url(r'^accounts/new/$', views.new_user, name="new_user"),
     url(r'^accounts/delete/$', views.delete_user, name="delete_user"),
     
+    url(r'^touchscreen-abort/', views.timeout, name="touchscreen_timeout"),
+        
     url(r'^api/auth/$', views.authenticate_user),
     url(r'^api/usernames/$', views.get_usernames),
     url(r'^api/roles/$', views.get_roles),

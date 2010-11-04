@@ -46,11 +46,12 @@ def post_xform_to_couch(instance):
             try:
                 xform = CXFormInstance.get(doc_id)
                 # fire signals
-                try:
-                    xform_saved.send(sender="post", form=xform)
-                except Exception, e:
-                    logging.error("Problem sending post-save signals for xform %s" % doc_id)
-                    log_exception(e)
+                feedback = xform_saved.send_robust(sender="post", form=xform)
+                for func, errors in feedback:
+                    if errors:
+                        log_exception(errors, extra_info="Problem sending post-save signal %s for xform %s" % (func, doc_id))
+                    
+                xform.release_lock()
                 return xform
             except Exception, e:
                 logging.error("Problem accessing %s" % doc_id)
@@ -62,7 +63,6 @@ def post_xform_to_couch(instance):
         if e.status_int == 409:
             # this is an update conflict, i.e. the uid in the form was the same.
             # log it and flag it.
-            new_doc_id = uid.new()
             def _extract_id_from_raw_xml(xml):
                 # TODO: this is brittle as hell. Fix.
                 _PATTERNS = (r"<uid>(\w+)</uid>", r"<uuid>(\w+)</uuid>")
@@ -71,6 +71,7 @@ def post_xform_to_couch(instance):
                 logging.error("Unable to find conflicting matched uid in form: %s" % xml)
                 return ""
             conflict_id = _extract_id_from_raw_xml(instance)
+            new_doc_id = uid.new()
             log_exception(XFormException("Duplicate post for xform!"), 
                                          extra_info="uid from form: %s, duplicate instance %s" % (conflict_id, new_doc_id))
             response, errors = post_from_settings(instance, {"uid": new_doc_id})
@@ -79,6 +80,7 @@ def post_xform_to_couch(instance):
                 # get and save the duplicate to ensure the doc types are set correctly
                 # so that it doesn't show up in our reports
                 dupe = CXFormDuplicate.get(response)
+                dupe.release_lock()
                 dupe.save()
                 return dupe
             else:

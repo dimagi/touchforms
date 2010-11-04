@@ -43,7 +43,11 @@ function(doc, req) {
     doc["#doc_type"] = "XForm";    // doc type
     doc["#received_on"] = Date();  // timestamp
     doc["#export_tag"] = "@xmlns"; // export tag for .xls export
-    
+    doc["#locked"] = true;      // this bad hack tells the change listeners not to process the xform 
+                                // until this flag is removed.  This is an ugly way to drastically
+                                // reduce the number of conflicting updates we get on the central
+                                // server as all the signals fire on the newly created doc.
+                                
     // HACK / MAGIC - python couchdbkit ignores capital meta so always lowercase it
     if (doc["Meta"]) {
         doc["meta"] = doc["Meta"];
