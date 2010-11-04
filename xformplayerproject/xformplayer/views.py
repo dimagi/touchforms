@@ -80,6 +80,7 @@ def play(request, xform_id, callback=None, preloader_data={}):
         response = a valid http response
     """
     xform = get_object_or_404(XForm, id=xform_id)
+    instance = None
     if request.method == "POST":
         if request.POST["type"] == 'form-complete':
             # get the instance
@@ -87,12 +88,13 @@ def play(request, xform_id, callback=None, preloader_data={}):
 
             # raise signal
             xform_received.send(sender="player", instance=instance)
-            
+        elif request.POST["type"] == 'form-aborted':
+            return HttpResponseRedirect("/")
         # call the callback, if there, otherwise route back to the 
         # xformplayer list
-        if callback:
+	if callback and instance is not None:
             return callback(xform, instance)
-        else:
+        elif instance is not None:
             response = HttpResponse(mimetype='application/xml')
             response.write(instance) 
             return response
