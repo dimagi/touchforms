@@ -272,7 +272,6 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
   }
 }
 
-//todo: auto-sizing?
 function TextCaption (id, color, caption, size_rel, align, valign) {
   this.id = id;
   this.color = color;
@@ -297,8 +296,49 @@ function TextCaption (id, color, caption, size_rel, align, valign) {
   
   this.setText = function (text) {
     this.caption = text;
-    if (this.span != null)
+    if (this.span != null) {
       this.span.textContent = text;
+      this.span.style.fontSize = this.fitText(text, this.container.offsetWidth, 50., this.size_rel * 100., span.style) + '%';
+    }
+  }
+
+
+  this.fitText = function(text, width, min_size, max_size, style) {
+	var tmp = document.createElement("span");
+	
+	tmp.style.visibility = "hidden";
+	tmp.style.padding = "0px";
+	document.body.appendChild(tmp);
+	tmp.innerHTML = text;
+
+	tmp.style.cssText = this.span.style.cssText;
+
+	tmp.style.fontSize = max_size + '%';
+	var curSize = max_size;
+
+	console.debug("calling fitText, tmp.offsetWidth is " + tmp.offsetWidth + ", parent_div.offsetWidth is " + width, ", text is " + text); 
+
+	if (tmp.offsetWidth > width) {
+		var minSize = min_size;
+		var maxSize = max_size;
+
+		while(true){
+			curSize = minSize + Math.floor((maxSize - minSize) / 2);
+			tmp.textContent = text;
+			tmp.style.fontSize = curSize + '%';
+			//console.debug("size:" + curSize + ", min: " + minSize + ", max: " + maxSize + ", cur: " + curSize + " width: " + tmp.offsetWidth);
+			if (curSize == maxSize || curSize == minSize) {
+				break;
+			} else if (tmp.offsetWidth > width) {
+				maxSize = curSize;
+			} else {
+				minSize = curSize;
+			}		
+		};
+	}
+	console.debug("returning " + curSize);
+	document.body.removeChild(tmp);
+	return curSize;
   }
 }
 
