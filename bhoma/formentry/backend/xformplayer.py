@@ -3,6 +3,7 @@ import sys
 import os
 from datetime import datetime
 import threading
+import codecs
 
 from java.util import Date
 from java.util import Vector
@@ -99,7 +100,7 @@ class XFormSession:
             if content != None:
                 return content
             elif path != None:
-                with open(path) as f:
+                with codecs.open(path, encoding='utf-8') as f:
                     return f.read()
             else:
                 return None
