@@ -13,5 +13,6 @@ urlpatterns = patterns('',
     url(r'^download_excel/$', 'bhoma.apps.xforms.views.download_excel', name='xform_download_excel'),
     url(r'^player_proxy$', 'bhoma.apps.xforms.views.player_proxy', name='xform_player_proxy'),
     url(r'^post/$', 'bhoma.apps.xforms.views.post', name='xform_post'),
+    url(r'^preloader/$', 'bhoma.apps.xforms.views.get_preloader_value', name='xform_preloader'),
     
 )

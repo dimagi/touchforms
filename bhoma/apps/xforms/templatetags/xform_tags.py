@@ -24,7 +24,7 @@ def render_form_data(form):
         
         def render_base_type(key, value):
             if not value: return ""
-            return "<li>%s: <b>%s</b></li>" % (format_name(key), format_name(value))
+            return "<li>%s: <strong>%s</strong></li>" % (format_name(key), format_name(value))
             
         
         def is_base_type(value):
