@@ -202,7 +202,7 @@ function goHome () {
   if (gFormAdapter.abort) {
     gFormAdapter.abort();
   } else {
-    console.log('warning: workflow has no abort() method; returning to root page');
+    //console.log('warning: workflow has no abort() method; returning to root page');
     location.href='/';
   }
 }

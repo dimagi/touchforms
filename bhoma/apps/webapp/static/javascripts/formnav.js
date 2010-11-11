@@ -210,7 +210,7 @@ function xformAjaxAdapter (formName, preloadTags) {
 var requestInProgress = false;
 function serverRequest (makeRequest, callback) {
   if (requestInProgress) {
-    console.log('request is already in progress; aborting');
+    //console.log('request is already in progress; aborting');
     return;
   }
   
@@ -570,7 +570,7 @@ function prevQuestion () {
 var interactionDone = false;
 function interactionComplete (submit) {
   if (interactionDone) {
-    console.log('interaction already done; ignoring');
+    //console.log('interaction already done; ignoring');
     return;
   }
   
