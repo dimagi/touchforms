@@ -333,6 +333,7 @@ function TextCaption (id, color, caption, size_rel, align, valign) {
 			}		
 		};
 	}
+
 	document.body.removeChild(tmp);
 	return curSize;
   }
