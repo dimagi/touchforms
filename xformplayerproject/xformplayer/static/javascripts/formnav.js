@@ -74,7 +74,11 @@ function xformAjaxAdapter (formName, preloadData) {
             if (resp["type"] == "required") {
               showError("An answer is required");
             } else if (resp["type"] == "constraint") {
-              showError(resp["reason"]);      
+		if (resp["reason"] !== null && resp["reason"] !== undefined) {
+		    showError(resp["reason"]);
+		} else {
+		    showError("Not a valid answer, please try again.");
+		}
             }
           } else {
             adapter._renderEvent(resp["event"], true);
