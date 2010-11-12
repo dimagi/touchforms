@@ -316,7 +316,7 @@ function TextCaption (id, color, caption, size_rel, align, valign) {
 	tmp.style.fontSize = max_size + '%';
 	var curSize = max_size;
 
-	console.debug("calling fitText, tmp.offsetWidth is " + tmp.offsetWidth + ", parent_div.offsetWidth is " + width, ", text is " + text); 
+	//console.debug("calling fitText, tmp.offsetWidth is " + tmp.offsetWidth + ", parent_div.offsetWidth is " + width, ", text is " + text); 
 
 	if (tmp.offsetWidth > width) {
 		var minSize = min_size;
@@ -336,7 +336,7 @@ function TextCaption (id, color, caption, size_rel, align, valign) {
 			}		
 		};
 	}
-	console.debug("returning " + curSize);
+	//console.debug("returning " + curSize);
 	document.body.removeChild(tmp);
 	return curSize;
   }
