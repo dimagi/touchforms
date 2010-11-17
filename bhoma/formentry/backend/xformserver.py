@@ -57,9 +57,9 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         reply = json.dumps(data_out)
 
         self.send_response(200)
-        self.send_header('Content-Type', 'text/json')
+        self.send_header('Content-Type', 'text/json; charset=utf-8')
         self.end_headers()
-        self.wfile.write(reply)
+        self.wfile.write(reply.encode('utf-8'))
         logging.debug('returned: [%s]' % reply)
 
 def handle_request (content):
@@ -67,66 +67,71 @@ def handle_request (content):
         return {'error': 'action required'}
 
     action = content['action']
-    if action == 'new-form':
-        if 'form-name' not in content:
-            return {'error': 'form identifier required'}
-        preload_data = content["preloader-data"] if "preloader-data" in content else {}
-        return xformplayer.open_form(content['form-name'], preload_data)
+    try:
+        if action == 'new-form':
+            if 'form-name' not in content:
+                return {'error': 'form identifier required'}
+            preload_data = content["preloader-data"] if "preloader-data" in content else {}
+            return xformplayer.open_form(content['form-name'], preload_data)
 
-    elif action == 'edit-form':
-        return {'error': 'unsupported'}
+        elif action == 'edit-form':
+            return {'error': 'unsupported'}
 
-    elif action == 'answer':
-        if 'session-id' not in content:
-            return {'error': 'session id required'}
-        if 'answer' not in content:
-            return {'error': 'answer required'}
+        elif action == 'answer':
+            if 'session-id' not in content:
+                return {'error': 'session id required'}
+            if 'answer' not in content:
+                return {'error': 'answer required'}
 
-        return xformplayer.answer_question(content['session-id'], content['answer'])
+            return xformplayer.answer_question(content['session-id'], content['answer'])
 
-    elif action == 'add-repeat':
-        if 'session-id' not in content:
-            return {'error': 'session id required'}
+        elif action == 'add-repeat':
+            if 'session-id' not in content:
+                return {'error': 'session id required'}
 
-        return xformplayer.new_repetition(content['session-id'])
+            return xformplayer.new_repetition(content['session-id'])
 
-    elif action == 'next':
-        if 'session-id' not in content:
-            return {'error': 'session id required'}
+        elif action == 'next':
+            if 'session-id' not in content:
+                return {'error': 'session id required'}
 
-        return xformplayer.skip_next(content['session-id'])
+            return xformplayer.skip_next(content['session-id'])
 
-    elif action == 'back':
-        if 'session-id' not in content:
-            return {'error': 'session id required'}
+        elif action == 'back':
+            if 'session-id' not in content:
+                return {'error': 'session id required'}
 
-        return xformplayer.go_back(content['session-id'])
+            return xformplayer.go_back(content['session-id'])
 
-    elif action == 'edit-repeat':
-        if 'session-id' not in content:
-            return {'error': 'session id required'}
-        if 'ix' not in content:
-            return {'error': 'repeat index required'}
+        elif action == 'edit-repeat':
+            if 'session-id' not in content:
+                return {'error': 'session id required'}
+            if 'ix' not in content:
+                return {'error': 'repeat index required'}
 
-        return xformplayer.edit_repeat(content['session-id'], content['ix'])
+            return xformplayer.edit_repeat(content['session-id'], content['ix'])
 
-    elif action == 'new-repeat':
-        if 'session-id' not in content:
-            return {'error': 'session id required'}
+        elif action == 'new-repeat':
+            if 'session-id' not in content:
+                return {'error': 'session id required'}
 
-        return xformplayer.new_repeat(content['session-id'])
+            return xformplayer.new_repeat(content['session-id'])
     
-    elif action == 'delete-repeat':
-        if 'session-id' not in content:
-            return {'error': 'session id required'}
-        if 'ix' not in content:
-            return {'error': 'repeat index required'}
+        elif action == 'delete-repeat':
+            if 'session-id' not in content:
+                return {'error': 'session id required'}
+            if 'ix' not in content:
+                return {'error': 'repeat index required'}
 
-        return xformplayer.delete_repeat(content['session-id'], content['ix'])
+            return xformplayer.delete_repeat(content['session-id'], content['ix'])
 
-    else:
-        return {'error': 'unrecognized action'}
-
+        else:
+            return {'error': 'unrecognized action'}
+    
+    except xformplayer.NoSuchSession:
+        return {'error': 'invalid session id'}
+    except xformplayer.SequencingException:
+        return {'error': 'session is locked by another request'}
 
 
 if __name__ == "__main__":

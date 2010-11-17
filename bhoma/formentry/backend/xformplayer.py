@@ -1,7 +1,9 @@
+from __future__ import with_statement
 import sys
 import os
 from datetime import datetime
 import threading
+import codecs
 
 from java.util import Date
 from java.util import Vector
@@ -21,6 +23,8 @@ from org.javarosa.core.model.data import *
 from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
 
+class NoSuchSession(Exception):
+  pass
 
 class global_state_mgr:
   instances = {}
@@ -33,35 +37,30 @@ class global_state_mgr:
     self.lock = threading.Lock()
   
   def new_session(self, xfsess):
-    self.lock.acquire()
-    self.session_id_counter += 1
-    self.session_cache[self.session_id_counter] = xfsess
-    self.lock.release()
+    with self.lock:
+      self.session_id_counter += 1
+      self.session_cache[self.session_id_counter] = xfsess
     return self.session_id_counter
   
   def get_session(self, session_id):
-    self.lock.acquire()
-    try:
-      return self.session_cache[session_id]
-    except KeyError:
-      return None
-    finally:
-      self.lock.release()
+    with self.lock:
+      try:
+        return self.session_cache[session_id]
+      except KeyError:
+        raise NoSuchSession()
     
   #todo: we're not calling this currently, but should, or else xform sessions will hang around in memory forever    
   def destroy_session(self, session_id):
-    self.lock.acquire()
-    try:
-      del self.session_cache[session_id]
-    except KeyError:
-      pass
-    self.lock.release()
+    with self.lock:
+      try:
+        del self.session_cache[session_id]
+      except KeyError:
+        raise NoSuchSession()
     
   def save_instance(self, data):        
-    self.lock.acquire()
-    self.instance_id_counter += 1
-    self.instances[self.instance_id_counter] = data
-    self.lock.release()
+    with self.lock:
+      self.instance_id_counter += 1
+      self.instances[self.instance_id_counter] = data
     return self.instance_id_counter
 
   #todo: add ways to get xml, delete xml, and option not to save xml at all
@@ -89,14 +88,20 @@ def load_form(xform, instance=None, preload_data={}):
     form.initialize(instance == None)
     return form
 
+class SequencingException(Exception):
+    pass
+
 class XFormSession:
     def __init__(self, xform_raw=None, xform_path=None, instance_raw=None, instance_path=None,
                  preload_data={}):
+        self.lock = threading.Lock()
+
         def content_or_path(content, path):
             if content != None:
                 return content
             elif path != None:
-                return open(path).read()
+                with codecs.open(path, encoding='utf-8') as f:
+                    return f.read()
             else:
                 return None
 
@@ -111,6 +116,14 @@ class XFormSession:
         self.fec = FormEntryController(self.fem)
         self._parse_current_event()
 
+    def __enter__(self):
+        if not self.lock.acquire(False):
+            raise SequencingException()
+        return self
+
+    def __exit__(self, *_):
+        self.lock.release()
+ 
     def output(self):
         if self.cur_event['type'] != 'form-complete':
             #warn that not at end of form
@@ -127,7 +140,7 @@ class XFormSession:
             event['type'] = 'form-start'
         elif status == self.fec.EVENT_END_OF_FORM:
             event['type'] = 'form-complete'
-	    self.fem.getForm().postProcessInstance()
+            self.fem.getForm().postProcessInstance() 
         elif status == self.fec.EVENT_QUESTION:
             event['type'] = 'question'
             self._parse_question(event)
@@ -297,64 +310,43 @@ def open_form (form_name, preload_data={}):
     return {'session_id': sess_id, 'event': first_event}
 
 def answer_question (session_id, answer):
-    xfsess = global_state.get_session(session_id)
-    if xfsess == None:
-        return {'error': 'invalid session id'}
-
-    result = xfsess.answer_question(answer)
-    if result['status'] == 'success':
-        return {'status': 'accepted', 'event': next_event(xfsess)}
-    else:
-        result['status'] = 'validation-error'
-        return result
+    with global_state.get_session(session_id) as xfsess:
+        result = xfsess.answer_question(answer)
+        if result['status'] == 'success':
+            return {'status': 'accepted', 'event': next_event(xfsess)}
+        else:
+            result['status'] = 'validation-error'
+            return result
 
 def edit_repeat (session_id, ix):
-    xfsess = global_state.get_session(session_id)
-    if xfsess == None:
-        return {'error': 'invalid session id'}
-
-    ev = xfsess.descend_repeat(ix)
-    return {'event': ev}
+    with global_state.get_session(session_id) as xfsess:
+        ev = xfsess.descend_repeat(ix)
+        return {'event': ev}
 
 def new_repeat (session_id):
-    xfsess = global_state.get_session(session_id)
-    if xfsess == None:
-        return {'error': 'invalid session id'}
-
-    ev = xfsess.descend_repeat()
-    return {'event': ev}
+    with global_state.get_session(session_id) as xfsess:
+        ev = xfsess.descend_repeat()
+        return {'event': ev}
 
 def delete_repeat (session_id, ix):
-    xfsess = global_state.get_session(session_id)
-    if xfsess == None:
-        return {'error': 'invalid session id'}
-
-    ev = xfsess.delete_repeat(ix)
-    return {'event': ev}
+    with global_state.get_session(session_id) as xfsess:
+        ev = xfsess.delete_repeat(ix)
+        return {'event': ev}
 
 def new_repetition (session_id):
-    xfsess = global_state.get_session(session_id)
-    if xfsess == None:
-        return {'error': 'invalid session id'}
-
-    #new repeat creation currently cannot fail, so just blindly proceed to the next event
-    xfsess.new_repetition()
-    return {'event': next_event(xfsess)}
+    with global_state.get_session(session_id) as xfsess:
+        #new repeat creation currently cannot fail, so just blindly proceed to the next event
+        xfsess.new_repetition()
+        return {'event': next_event(xfsess)}
 
 def skip_next (session_id):
-    xfsess = global_state.get_session(session_id)
-    if xfsess == None:
-        return {'error': 'invalid session id'}
-
-    return {'event': next_event(xfsess)}
+    with global_state.get_session(session_id) as xfsess:
+        return {'event': next_event(xfsess)}
 
 def go_back (session_id):
-    xfsess = global_state.get_session(session_id)
-    if xfsess == None:
-        return {'error': 'invalid session id'}
-
-    (at_start, event) = prev_event(xfsess)
-    return {'event': event, 'at-start': at_start}
+    with global_state.get_session(session_id) as xfsess:
+        (at_start, event) = prev_event(xfsess)
+        return {'event': event, 'at-start': at_start}
 
 def next_event (xfsess):
     ev = xfsess.next_event()

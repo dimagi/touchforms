@@ -15,10 +15,17 @@ FOOTER_COLOR = '#abd';
 BUTTON_TEXT_COLOR = '#fff';
 TEXT_COLOR = '#000';
 KEYBUTTON_COLOR = '#118';
+KEYBUTTON_CLASS = 'shiny-button';
 BUTTON_SELECTED_COLOR = '#0bf';
 HIGHLIGHT_COLOR = '#ffc';
 NUMPAD_COLOR = '#16c';
 SPC_COLOR = '#44e';
+
+KEYBUTTON_CLASS = 'key-button';
+BACKSPACE_CLASS = 'clear-button';
+NUMPAD_CLASS = 'numpad-button';
+SPC_CLASS= 'spacebar';
+
 
 BACKSPACE_LABEL = '\u21d0';
 
@@ -29,11 +36,10 @@ function initStaticWidgets () {
   
   helpButton = new TextButton('help-button', '#aaa', BUTTON_TEXT_COLOR, null, null, '?', 1., helpClicked);
   backButton = new TextButton('back-button', '#6ad', BUTTON_TEXT_COLOR, null, null, 'BACK', .9, backClicked);
-  homeButton = new TextButton('quit-button', '#d23', BUTTON_TEXT_COLOR, null, null, 'HOME', .9, homeClicked);
+  homeButton = new TextButton('home-button', '#d23', BUTTON_TEXT_COLOR, null, null, 'HOME', .9, homeClicked);
   nextButton = new TextButton('next-button', '#1a3', BUTTON_TEXT_COLOR, null, null, 'NEXT', 1.2, nextClicked);
   
   questionEntry = new Indirect();
-  progressBar = new Indirect();
   
   overlay = new Overlay('#d66', HEADER_COLOR, 3., 2., '');
   touchscreenUI = new Top(
@@ -49,8 +55,8 @@ function initStaticWidgets () {
       new Layout('footer', 1, 4, [FOOTER_BUTTON_WIDTH, FOOTER_BUTTON_WIDTH, '*', FOOTER_BUTTON_WIDTH], '*',
                  [SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN, SCREEN_MARGIN], FOOTER_BUTTON_SPACING, FOOTER_COLOR, FOOTER_COLOR, FOOTER_COLOR, [
         backButton, 
-        homeButton, 
-        progressBar,
+        homeButton,
+        null, // progress bar 
         nextButton
       ]),
     ])
@@ -67,35 +73,35 @@ function initStaticWidgets () {
   ]);
 
   numPad = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', null, '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
+            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', null, '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_));
   numPadDecimal = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
+            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_));
   numPadPhone = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
+            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_));
   numPadBP = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '/', '0', [BACKSPACE_LABEL, '#aaa']], null, 2., type_));
+            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '/', '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_));
   
   if (kbdQwerty) {
     kbdFull = [
-      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', ['7', NUMPAD_COLOR], ['8', NUMPAD_COLOR], ['9', NUMPAD_COLOR],
-      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', ['4', NUMPAD_COLOR], ['5', NUMPAD_COLOR], ['6', NUMPAD_COLOR],
-      'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '!', ['1', NUMPAD_COLOR], ['2', NUMPAD_COLOR], ['3', NUMPAD_COLOR],
-      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['', SPC_COLOR], ['0', NUMPAD_COLOR], [BACKSPACE_LABEL, '#aaa']     
+      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', ['7', NUMPAD_CLASS], ['8', NUMPAD_CLASS], ['9', NUMPAD_CLASS],
+      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', ['4', NUMPAD_CLASS], ['5', NUMPAD_CLASS], ['6', NUMPAD_CLASS],
+      'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '!', ['1', NUMPAD_CLASS], ['2', NUMPAD_CLASS], ['3', NUMPAD_CLASS],
+      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['', SPC_CLASS], ['0', NUMPAD_CLASS], [BACKSPACE_LABEL, BACKSPACE_CLASS]     
     ];
     kbdAlpha = [
       'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
-      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', [BACKSPACE_LABEL, '#aaa'],
+      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', [BACKSPACE_LABEL, BACKSPACE_CLASS],
       'Z', 'X', 'C', 'V', 'B', 'N', 'M', '\u2013', '\'', ''
     ];
   } else {
     kbdFull = [
-      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', ['7', NUMPAD_COLOR], ['8', NUMPAD_COLOR], ['9', NUMPAD_COLOR], [BACKSPACE_LABEL, '#aaa'],
-      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', ['4', NUMPAD_COLOR], ['5', NUMPAD_COLOR], ['6', NUMPAD_COLOR], '.',
-      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ['', SPC_COLOR], ['1', NUMPAD_COLOR], ['2', NUMPAD_COLOR], ['3', NUMPAD_COLOR], ',',
-      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['0', NUMPAD_COLOR], '!', '?'     
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', ['7', NUMPAD_CLASS], ['8', NUMPAD_CLASS], ['9', NUMPAD_CLASS], [BACKSPACE_LABEL, BACKSPACE_CLASS],
+      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', ['4', NUMPAD_CLASS], ['5', NUMPAD_CLASS], ['6', NUMPAD_CLASS], '.',
+      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ['', SPC_CLASS], ['1', NUMPAD_CLASS], ['2', NUMPAD_CLASS], ['3', NUMPAD_CLASS], ',',
+      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['0', NUMPAD_CLASS], '!', '?'     
     ];
     kbdAlpha = [
-      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', [BACKSPACE_LABEL, '#aaa'],
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', [BACKSPACE_LABEL, BACKSPACE_CLASS],
       'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '',
       'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '\u2013', '\''
     ];
@@ -104,12 +110,7 @@ function initStaticWidgets () {
   keyboard = new Layout('text-kbd', 4, 13, 68, 85, '*', 6, null, null, null, kbs(kbdFull, null, 1.4, type_));
   keyboardAlphaOnly = new Layout('text-kbd', 3, 10, 88, 110, '*', 8, null, null, null, kbs(kbdAlpha, null, 1.9, type_));
 
-  //progress bar is just static right now -- turn into a dedicated GUI object?
-  progressBar.update(new Layout('progress-bar', 1, 2, ['30%', '*'], '*', [10, 10, 15, 15], 0, null, null, null, [
-    new Layout('pb0', 1, 1, '*', '*', 0, 0, '#4d6', null, null, [null]),   
-    new Layout('pb0', 1, 1, '*', '*', 0, 0, HEADER_COLOR, null, null, [null])   
-  ]));
-
+  
   answerText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.2, 'left', 0));
   freeTextAnswer = new Layout('answer-bar', 1, 2, ['7*', '*'], '*', [30, 30, 20, 20], 6, null, null, null, [
     answerText,
@@ -142,6 +143,37 @@ function initStaticWidgets () {
   monthButtons = tmp[1];
 }
 
+var clicksEnabled;
+var clickDisableCounter = 0;
+function setup () {
+  clicksEnabled = true;
+  $('body')[0].addEventListener('click', function (ev) {
+      if (!clicksEnabled) {
+        ev.stopPropagation();
+        return false; 
+      } else {
+        return true;
+      }
+    }, true);
+}
+
+function disableInput() {
+  clicksEnabled = false;
+  clickDisableCounter++;
+}
+
+function enableInput(force) {
+  clickDisableCounter--;
+
+  if (clickDisableCounter < 0 || force) {
+    clickDisableCounter = 0;
+  }
+
+  if (clickDisableCounter == 0) {
+    clicksEnabled = true;
+  }
+}
+
 function helpClicked (ev, x) {
   overlay.setText(activeQuestion["help"] || "There is no help text for this question.");
   overlay.setBgColor('#6d6');
@@ -170,7 +202,7 @@ function goHome () {
   if (gFormAdapter.abort) {
     gFormAdapter.abort();
   } else {
-    console.log('warning: workflow has no abort() method; returning to root page');
+    //console.log('warning: workflow has no abort() method; returning to root page');
     location.href='/';
   }
 }
@@ -562,13 +594,10 @@ function choiceSelected (ev, x) {
 }
 
 function doAutoAdvance () {
-  stopClicks = function (ev) { ev.stopPropagation(); return false; }
-  body = document.getElementById('body');
-
-  body.addEventListener('click', stopClicks, true);
+  disableInput();
   setTimeout(function () {
-      body.removeEventListener('click', stopClicks, true);
       nextClicked();
+      enableInput();
     }, AUTO_ADVANCE_DELAY);
 }
 
@@ -596,30 +625,32 @@ function showActionableAlert (text, choices, actions) {
 }
 
 /* utility function to generate a single keyboard button */
-function kb (lab, sz, col, onclick, centered) {
+function kb (lab, sz, col, onclick, centered, cls) {
   if (col == null)
     col = KEYBUTTON_COLOR;
-  return new TextButton('button-' + lab, col, BUTTON_TEXT_COLOR, BUTTON_SELECTED_COLOR, null, lab, sz, (onclick != null ? function (ev) { onclick(ev, lab); } : null), centered);
+  if (cls == null) 
+    cls = KEYBUTTON_CLASS;
+  return new TextButton('button-' + lab, col, BUTTON_TEXT_COLOR, BUTTON_SELECTED_COLOR, null, lab, sz, (onclick != null ? function (ev) { onclick(ev, lab); } : null), centered, cls);
 }
   
 /* utility function to generate an array of keybaord buttons for... a keyboard */
-function kbs (infos, def_color, def_sz, onclick, centered) {
+function kbs (infos, def_cls, def_sz, onclick, centered) {
   var stuff = new Array();
   for (var i = 0; i < infos.length; i++) {
     var info = infos[i];
     if (info != null) {
       if (info instanceof Array) {
         var lab = info[0];
-        var col = info.length > 1 && info[1] != null ? info[1] : def_color;
+        var cls = info.length > 1 && info[1] != null ? info[1] : def_cls;
         var sz = info.length > 2 && info[2] != null ? info[2] : def_sz;
         var selected = info.length > 3 ? info[3] : false;
       } else {
         var lab = info;
-        var col = def_color;
+        var cls = def_cls;
         var sz = def_sz;
         var selected = false;
       }
-      var st = kb(lab, sz, col, onclick, centered);
+      var st = kb(lab, sz, null, onclick, centered, cls);
       if (selected) {
         st.setStatus('selected');
       }
@@ -868,11 +899,28 @@ function type_ (e, c) {
     charCode = c.charCodeAt(0);
   }
 
-  var evt = document.createEvent("KeyboardEvent");
-  evt.initKeyEvent("keypress", true, true, window,
-                   0, 0, 0, 0,
-                   keyCode, charCode) 
-  elem = document.getElementsByTagName('input')[0];
-  elem.dispatchEvent(evt);
+  if (jQuery.browser.mozilla){
+      // preserve firefox behavior, just send the keypress to the input
+	  var evt = document.createEvent("KeyboardEvent");
+	  evt.initKeyEvent("keypress", true, true, window,
+	                   0, 0, 0, 0,
+	                   keyCode, charCode) 
+	  elem = document.getElementsByTagName('input')[0];
+	  elem.dispatchEvent(evt);
+  } else {
+    // only difference here is that the cursor is always assumed to be at the end of the input
+    elem = $($("input")[0]);
+    prev_text = elem.val();
+    if (c == BACKSPACE_LABEL) {
+        if (prev_text) {
+            elem.val(prev_text.substring(0, prev_text.length - 1));        
+        }
+    } else {
+        text = String.fromCharCode(charCode);
+        elem.val(prev_text + text);
+            
+    }
+  }
+  
 }
 

@@ -38,41 +38,45 @@ class XForm(models.Model):
     def from_file(cls, filename, name=None):
         """Create an xform from the original xml/xhtml file"""
         f = File(open(filename, 'r'))
-        if name is None:
-            name = os.path.basename(f.name)
-        file_contents = f.read()
-        checksum = hashlib.sha1(file_contents).hexdigest()
-        # TODO: parsing is exremely brittle and we should use jad/jar javarosa 
-        # stuff for it
-        element = ElementTree.XML(file_contents)
-        head = element[0]
-        namespace, version, uiversion = [None,] * 3
-        for child in head:
-            if "model" in child.tag:
-                for subchild in child:
-                    if "instance" in subchild.tag:
-                        instance_root = subchild[0]
-                        r = re.search('{[a-zA-Z0-9_\-\.\/\:]*}', instance_root.tag)
-                        if r is None:
-                            raise Exception("No namespace found in xform: %s" % name)
-                        for key, value in instance_root.attrib.items():
-                            # we do case-sensitive comparison because that's the 
-                            # xml spec.  we may want to make this less academic
-                            # and more user friendly.
-                            if key.strip() == VERSION_KEY:
-                                version = int(value)
-                            elif key.strip() == UIVERSION_KEY:
-                                uiversion = int(value)
-                            
-                        namespace = r.group(0).strip('{').strip('}')
-        if not namespace:
-            raise Exception("No namespace found in xform: %s" % name)
-        
-        if not namespace:
-            raise Exception("No namespace found in xform: %s" % name)
-        
-        instance = XForm.objects.create(name=name, namespace=namespace, 
-                                        version=version, uiversion=uiversion,
-                                        checksum=checksum, file=f)           
-        return instance
+        try:
+            if name is None:
+                name = os.path.basename(f.name)
+            file_contents = f.read()
+            checksum = hashlib.sha1(file_contents).hexdigest()
+            # TODO: parsing is exremely brittle and we should use jad/jar javarosa 
+            # stuff for it
+            element = ElementTree.XML(file_contents)
+            head = element[0]
+            namespace, version, uiversion = [None,] * 3
+            for child in head:
+                if "model" in child.tag:
+                    for subchild in child:
+                        if "instance" in subchild.tag:
+                            instance_root = subchild[0]
+                            r = re.search('{[a-zA-Z0-9_\-\.\/\:]*}', instance_root.tag)
+                            if r is None:
+                                raise Exception("No namespace found in xform: %s" % name)
+                            for key, value in instance_root.attrib.items():
+                                # we do case-sensitive comparison because that's the 
+                                # xml spec.  we may want to make this less academic
+                                # and more user friendly.
+                                if key.strip() == VERSION_KEY:
+                                    version = int(value)
+                                elif key.strip() == UIVERSION_KEY:
+                                    uiversion = int(value)
+                                
+                            namespace = r.group(0).strip('{').strip('}')
+            if not namespace:
+                raise Exception("No namespace found in xform: %s" % name)
+            
+            if not namespace:
+                raise Exception("No namespace found in xform: %s" % name)
+            
+            instance = XForm.objects.create(name=name, namespace=namespace, 
+                                            version=version, uiversion=uiversion,
+                                            checksum=checksum, file=f)           
+            return instance
+        finally:
+            f.close()
+                
                         

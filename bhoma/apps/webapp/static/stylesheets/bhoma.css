@@ -37,9 +37,19 @@ ul.tabs
 {
     font-weight:bold;
 }
+
+.boxed {
+    border: 1px solid #cccccc;
+    padding: 5px;
+    background-color: #f3f3f3;
+}
  
 .code  {
     border: 1px solid #cccccc;
     padding: 5px;
     background-color: #eee;
+}
+
+.relative {
+    position: relative;
 }

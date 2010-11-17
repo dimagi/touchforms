@@ -187,7 +187,7 @@ function has_spacing (widths, heights) {
 }
 
 //todo: auto-sizing?
-function TextButton (id, color, text_color, selected_color, inactive_color, caption, size_rel, onclick, centered) {
+function TextButton (id, color, text_color, selected_color, inactive_color, caption, size_rel, onclick, centered, cls) {
   this.id = id;
   this.color = color;
   this.text_color = text_color;
@@ -196,7 +196,8 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
   this.caption = caption;
   this.size_rel = size_rel;
   this.onclick = onclick;
-  this.centered = (centered != null ? centered : true);    
+  this.centered = (centered != null ? centered : true);
+  this.cls = cls
   this.status = 'default';
 
   this.container = null;
@@ -204,7 +205,8 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
   this.render = function (parent_div) {  
     this.container = parent_div;
     parent_div.id = uid(this.id);
-    this.setColor()
+    this.setColor();
+    this.setClass();
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td align="' + (this.centered ? 'center' : 'left') + '" valign="middle"><span></span></td></tr></table>'
     span = parent_div.getElementsByTagName('span')[0];
     span.style.fontWeight = 'bold';
@@ -216,10 +218,11 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
       span.style.marginLeft = .25 * parent_div.clientHeight + 'px';
     }
     this.span = span;
-    
     parent_div.style.MozBorderRadius = '10px';
     parent_div.style.BorderRadius = '10px';
     parent_div.style.WebkitBorderRadius = '10px';
+    
+    
   }
 
   this.setText = function (text) {
@@ -228,6 +231,19 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
       this.span.textContent = text;
   }
 
+  this.setClass = function() {
+    if (this.cls && this.container) {
+      if (this.status == 'default') {
+	    this.container.setAttribute("class", this.cls);
+	  } else if (this.status == 'selected') {
+	    this.container.setAttribute("class", "selected " + this.cls);
+	  }
+	  else if (this.status == 'disabled') {
+	    this.container.setAttribute("class", this.cls + " disabled");
+	  }
+	}
+  }
+    
   this.setColor = function () {
     if (this.status == 'default') {
       set_color(this.container, this.color, this.container.style.backgroundColor);
@@ -252,10 +268,10 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
     this.status = stat;
     if (this.container != null)
       this.setColor();
+      this.setClass();
   }
 }
 
-//todo: auto-sizing?
 function TextCaption (id, color, caption, size_rel, align, valign) {
   this.id = id;
   this.color = color;
@@ -280,8 +296,46 @@ function TextCaption (id, color, caption, size_rel, align, valign) {
   
   this.setText = function (text) {
     this.caption = text;
-    if (this.span != null)
+    if (this.span != null) {
       this.span.textContent = text;
+      this.span.style.fontSize = this.fitText(text, this.container.offsetWidth, 50., this.size_rel * 100., span.style) + '%';
+    }
+  }
+
+
+  this.fitText = function(text, width, min_size, max_size, style) {
+	var tmp = document.createElement("span");
+	
+	tmp.style.visibility = "hidden";
+	tmp.style.padding = "0px";
+	document.body.appendChild(tmp);
+	tmp.innerHTML = text;
+
+	tmp.style.cssText = this.span.style.cssText;
+
+	tmp.style.fontSize = max_size + '%';
+	var curSize = max_size;
+
+	if (tmp.offsetWidth > width) {
+		var minSize = min_size;
+		var maxSize = max_size;
+
+		while(true){
+			curSize = minSize + Math.floor((maxSize - minSize) / 2);
+			tmp.textContent = text;
+			tmp.style.fontSize = curSize + '%';
+			if (curSize == maxSize || curSize == minSize) {
+				break;
+			} else if (tmp.offsetWidth > width) {
+				maxSize = curSize;
+			} else {
+				minSize = curSize;
+			}		
+		};
+	}
+
+	document.body.removeChild(tmp);
+	return curSize;
   }
 }
 
@@ -449,7 +503,8 @@ function ainv (arr, i) {
 function Top (main, overlay) {
   this.main = main;
   this.overlay = overlay;
-  
+  this.waitdiv = null;
+
   this.render = function (parent_div) {
     var maindiv = new_div('main', 0, 0, parent_div.clientWidth, parent_div.clientHeight);
     parent_div.appendChild(maindiv);
@@ -460,6 +515,31 @@ function Top (main, overlay) {
       parent_div.appendChild(ovdiv);  
       this.overlay.render(ovdiv);
     }
+
+    this.waitdiv = document.createElement('div');
+    this.waitdiv.style.position = 'absolute';
+    this.waitdiv.style.display = 'none';
+    this.waitdiv.style.width = '100%';
+    this.waitdiv.style.height = parent_div.clientHeight + 'px';
+    this.waitdiv.style.zIndex = 1000;
+    this.waitdiv.innerHTML = '<div style="background: #fff; opacity: .7; height: 100%;"></div><div style="position: absolute; top: 150px; width: 100%; text-align: center; font-weight: bold; font-size: 200%; color: #222;">Please wait&hellip;<br><br><img src="/static/webapp/images/loading.png"></div><div id="abort-popup" style="display: none; position: absolute; left: 40px; bottom: 40px;"><p style="max-width: 35em; font-size: medium; font-weight: bold;">This is taking a long time. There might be a problem. You can click the ABORT button to go back to the main screen, but you will lose the form you were working on if you do.</p>' + oneOffButtonHTML ('abort', 'ABORT') + '</div>';
+    parent_div.appendChild(this.waitdiv);
+    $('#abort')[0].onclick = function () { window.location='/touchscreen-abort/'; };
+  }
+
+  this.abortTimer = null;
+  this.showWaiting = function (active) {
+    if (active) {
+      if (this.abortTimer) {
+        clearTimeout(this.abortTimer);
+      }
+      $('#abort-popup')[0].style.display = 'none';
+      this.abortTimer = setTimeout(function () {
+          enableInput(true);
+          $('#abort-popup')[0].style.display = 'block';
+        }, 30000);
+    }
+    this.waitdiv.style.display = (active ? 'block' : 'none');
   }
 }
 
@@ -553,8 +633,7 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     if (this.choices.length > 0) {
       content += '<br><br>';
       for (var i = 0; i < this.choices.length; i++) {
-        content += '<table id="alert-ch' + i + '" ' + (this.choices.length == 1 ? 'align="center" ' : '') + 'cellpadding="7" style="background: #118; color: white; -moz-border-radius: 10px; border-radius: 10px; -webkit-border-radius: 10px; font-weight: bold; margin-bottom: 5px;">\
-          <tr><td><b>&nbsp;' + htmlescape(this.choices[i]) + '&nbsp;</b></td></tr></table>';
+        content += oneOffButtonHTML('alert-ch' + i, this.choices[i], this.choices.length == 1 ? 'center' : null, null, 'margin-bottom: 5px;');
       }
     }
 
@@ -610,6 +689,13 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     
     this.setActive(false);
   }
+}
+
+function oneOffButtonHTML (id, text, align, padding, custom_style) {
+  padding = padding || 7;
+  custom_style = custom_style || '';
+
+  return '<table class="shiny-button rounded" id="' + id + '" ' + (align ? 'align="' + align + '" ' : '') + 'cellpadding="' + padding + '" style="color: white; font-weight: bold; ' + custom_style + '"><tr><td><strong>&nbsp;' + htmlescape(text) + '&nbsp;</strong></td></tr></table>';
 }
 
 function InputArea (id, border, border_color, padding, inside_color, child, onclick) {
