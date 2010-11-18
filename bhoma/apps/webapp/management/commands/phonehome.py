@@ -2,9 +2,11 @@ from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 import urllib2
 from bhoma.apps.locations.models import Location
+from bhoma.utils.couch.database import get_db
 import logging
 import json
 from datetime import datetime, timedelta
+import os.path
 
 def status_report(name, interval):
     def _status_report(f):
@@ -19,7 +21,7 @@ def status_report(name, interval):
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        self.SERVER = '127.0.0.1:8000' #settings.BHOMA_NATIONAL_SERVER_ROOT
+        self.SERVER = settings.BHOMA_NATIONAL_SERVER_ROOT
         self.ID_TAG = settings.BHOMA_CLINIC_ID
 
         urllib2.urlopen(
@@ -58,7 +60,8 @@ class Command(BaseCommand):
 
     @status_report('couch', 240)
     def couch_status(self):
-        return 'TODO'
+        db = get_db()
+        return {'info': db.info()}
 
 def due(last, interval):
     now = datetime.utcnow()
@@ -68,12 +71,15 @@ def due(last, interval):
         now > last + timedelta(minutes=interval)
     )
 
-#probably move to settings
-LAST_EXEC_PATH = '/var/run/bhoma/last_%s_status_report'
+#todo: move this to settings
+LAST_EXEC_PATH = '/var/run/bhoma/'
+
+def tmp_file_path(name):
+    return os.path.join(LAST_EXEC_PATH, 'last_%s_status_report' % name)
 
 def get_last_exec(name):
     try:
-        with open(LAST_EXEC_PATH % name) as f:
+        with open(tmp_file_path(name)) as f:
             return datetime.strptime(f.read()[:19], '%Y-%m-%d %H:%M:%S')
     except:
         logging.exception('error retrieving last exec time for [%s]' % name)
@@ -84,7 +90,7 @@ def update_last_exec(name, when=None):
         when = datetime.utcnow()
 
     try:
-        with open(LAST_EXEC_PATH % name, 'w') as f:
+        with open(tmp_file_path(name), 'w') as f:
             f.write('%s\n' % when.strftime('%Y-%m-%d %H:%M:%S'))
     except:
         logging.exception('error updating last exec time for [%s]' % name)
