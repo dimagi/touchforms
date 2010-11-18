@@ -6,9 +6,15 @@ from bhoma.utils.couch.database import get_db
 import logging
 import json
 from datetime import datetime, timedelta
+import os
 import os.path
+import re
 
-def status_report(name, interval):
+#todo: move this to settings
+LAST_EXEC_PATH = '/var/run/bhoma/'
+DEFAULT_IFACE = 'ppp0'
+
+def status_report(name, interval=None):
     def _status_report(f):
         def __status_report(self, payload, *args, **kwargs):
             last = get_last_exec(name)
@@ -48,6 +54,7 @@ class Command(BaseCommand):
             try:
                 payload = {'version': settings.BHOMA_COMMIT_ID}
                 self.couch_status(payload)
+                self.net_status_simple(payload)
 
             except Exception, e:
                 logging.exception('error generating payload')
@@ -63,16 +70,35 @@ class Command(BaseCommand):
         db = get_db()
         return {'info': db.info()}
 
+    @status_report('net')
+    def net_status_simple(self, iface=DEFAULT_IFACE):
+        with os.popen('ifconfig') as f:
+            lines = f.readlines()
+
+        current_iface = None
+        tx = None
+        rx = None
+        for l in lines:
+            match = re.match('(?P<iface>\w+)\s+', l)
+            if match:
+                current_iface = match.group('iface')
+            if current_iface == iface:
+                rxmatch = re.search('RX\s+bytes:?\s*(?P<c>\d+)', l)
+                txmatch = re.search('TX\s+bytes:?\s*(?P<c>\d+)', l)
+                if rxmatch:
+                    rx = int(rxmatch.group('c'))
+                if txmatch:
+                    tx = int(txmatch.group('c'))
+        return {'rx': rx, 'tx': tx}
+
 def due(last, interval):
     now = datetime.utcnow()
     return (
         last == None or
+        not interval or
         now < last or
         now > last + timedelta(minutes=interval)
     )
-
-#todo: move this to settings
-LAST_EXEC_PATH = '/var/run/bhoma/'
 
 def tmp_file_path(name):
     return os.path.join(LAST_EXEC_PATH, 'last_%s_status_report' % name)
