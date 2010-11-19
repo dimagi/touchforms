@@ -30,7 +30,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.SERVER = settings.BHOMA_NATIONAL_SERVER_ROOT
-        self.SERVER = #'127.0.0.1:8000'
+        #self.SERVER = '127.0.0.1:8000'
         self.ID_TAG = settings.BHOMA_CLINIC_ID
 
         urllib2.urlopen(
