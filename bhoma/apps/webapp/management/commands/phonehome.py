@@ -11,13 +11,15 @@ import os.path
 import re
 
 #todo: move this to settings
-LAST_EXEC_PATH = '/var/run/bhoma/'
+TMP_PATH = '/var/run/bhoma/'
 DEFAULT_IFACE = 'ppp0'
+#DEFAULT_IFACE = 'eth0'
+#DEFAULT_IFACE = 'wlan0'
 
 def status_report(name, interval=None):
     def _status_report(f):
         def __status_report(self, payload, *args, **kwargs):
-            last = get_last_exec(name)
+            last = get_last_exec(name) if interval else None
             if due(last, interval):
                 payload[name] = f(self, *args, **kwargs)
                 update_last_exec(name)
@@ -28,6 +30,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.SERVER = settings.BHOMA_NATIONAL_SERVER_ROOT
+        self.SERVER = #'127.0.0.1:8000'
         self.ID_TAG = settings.BHOMA_CLINIC_ID
 
         urllib2.urlopen(
@@ -65,7 +68,7 @@ class Command(BaseCommand):
             logging.exception('failsafe error generating payload')
             return 'error!'
 
-    @status_report('couch', 240)
+    @status_report('couch', 90)
     def couch_status(self):
         db = get_db()
         return {'info': db.info()}
@@ -101,7 +104,7 @@ def due(last, interval):
     )
 
 def tmp_file_path(name):
-    return os.path.join(LAST_EXEC_PATH, 'last_%s_status_report' % name)
+    return os.path.join(TMP_PATH, 'last_%s_status_report' % name)
 
 def get_last_exec(name):
     try:
