@@ -81,17 +81,23 @@ class Command(BaseCommand):
         current_iface = None
         tx = None
         rx = None
+        iffound = False
         for l in lines:
             match = re.match('(?P<iface>\w+)\s+', l)
             if match:
                 current_iface = match.group('iface')
             if current_iface == iface:
+                iffound = True
                 rxmatch = re.search('RX\s+bytes:?\s*(?P<c>\d+)', l)
                 txmatch = re.search('TX\s+bytes:?\s*(?P<c>\d+)', l)
                 if rxmatch:
                     rx = int(rxmatch.group('c'))
                 if txmatch:
                     tx = int(txmatch.group('c'))
+
+        if tx == None or rx == None and iffound:
+            logging.debug('unable to get tx/rx data [%s] [%s]' % (iface, str(lines)))
+
         return {'rx': rx, 'tx': tx}
 
 def due(last, interval):
