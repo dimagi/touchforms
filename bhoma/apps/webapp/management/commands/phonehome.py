@@ -95,7 +95,7 @@ class Command(BaseCommand):
                 if txmatch:
                     tx = int(txmatch.group('c'))
 
-        if tx == None or rx == None and iffound:
+        if (tx == None or rx == None) and iffound:
             logging.debug('unable to get tx/rx data [%s] [%s]' % (iface, str(lines)))
 
         return {'rx': rx, 'tx': tx}
