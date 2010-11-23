@@ -10,8 +10,7 @@ import os
 import os.path
 import re
 
-#todo: move this to settings
-TMP_PATH = '/var/run/bhoma/'
+#move to settings? make more generic?
 DEFAULT_IFACE = 'ppp0'
 #DEFAULT_IFACE = 'eth0'
 #DEFAULT_IFACE = 'wlan0'
@@ -110,7 +109,7 @@ def due(last, interval):
     )
 
 def tmp_file_path(name):
-    return os.path.join(TMP_PATH, 'last_%s_status_report' % name)
+    return os.path.join(BHOMA_TMP_DIR, 'last_%s_status_report' % name)
 
 def get_last_exec(name):
     try:
