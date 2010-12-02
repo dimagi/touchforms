@@ -1,8 +1,8 @@
 from django.shortcuts import get_object_or_404
 from django.conf import settings
-from xformplayer.models import XForm
+from xformplayer.models import XForm, PlaySession
 from django.http import HttpResponseRedirect, HttpResponse,\
-    HttpResponseServerError
+    HttpResponseServerError, HttpRequest
 from django.core.urlresolvers import reverse
 import logging
 import httplib
@@ -92,12 +92,12 @@ def play(request, xform_id, callback=None, preloader_data={}):
             return HttpResponseRedirect("/")
         # call the callback, if there, otherwise route back to the 
         # xformplayer list
-	if callback and instance is not None:
-            return callback(xform, instance)
-        elif instance is not None:
-            response = HttpResponse(mimetype='application/xml')
-            response.write(instance) 
-            return response
+    if callback and instance is not None:
+        return callback(xform, instance)
+    elif instance is not None:
+        response = HttpResponse(mimetype='application/xml')
+        response.write(instance)
+        return response
     
     preloader_data_js = json.dumps(preloader_data)
     return render_to_response("touchscreen.html",
@@ -105,7 +105,44 @@ def play(request, xform_id, callback=None, preloader_data={}):
                                "mode": 'xform',
                                "preloader_data": preloader_data_js },
                                context_instance=RequestContext(request))
-                                    
+
+def play_remote(request, session_id=None):
+    if not session_id:
+        xform = request.POST.get('xform')
+        try:
+            tmp_file_handle, tmp_file_path = tempfile.mkstemp()
+            tmp_file = open(tmp_file_path, "w")
+            tmp_file.write(xform.encode('utf-8'))
+            tmp_file.close()
+            new_form = XForm.from_file(tmp_file_path, str(file))
+            notice = "Created form: %s " % file
+        except Exception, e:
+            logging.error("Problem creating xform from %s: %s" % (file, e))
+            success = False
+            notice = "Problem creating xform from %s: %s" % (file, e)
+            raise e
+        session = PlaySession(
+            next = request.POST.get('next'),
+            data = json.loads(request.POST.get('data')),
+            xform_id = new_form.id,
+        )
+        session.save()
+        return HttpResponseRedirect(reverse('xform_play_remote', args=[session._id]))
+
+    session = PlaySession.get(session_id)
+
+    if request.method == "POST":
+        def callback(xform, instance):
+            next = session.next
+            xform.delete()
+            session.delete()
+            return HttpResponseRedirect(session.next)
+    else:
+        callback = None
+    return play(request, session.xform_id, callback, session.data)
+
+    
+
 def player_proxy(request):
     """Proxy to an xform player, to avoid cross-site scripting issues"""
     data = request.raw_post_data if request.method == "POST" else None

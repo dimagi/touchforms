@@ -6,3 +6,4 @@ xformplayerproject/data/*
 *~
 *.class
 *.db
+.idea

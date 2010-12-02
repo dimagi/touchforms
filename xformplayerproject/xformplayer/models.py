@@ -8,6 +8,8 @@ import re
 import os
 import logging
 import hashlib
+from couchdbkit.schema.properties import StringProperty, IntegerProperty, DictProperty
+from couchdbkit.ext.django.schema import Document
 
 VERSION_KEY = "version"
 UIVERSION_KEY = "uiVersion" 
@@ -76,3 +78,7 @@ class XForm(models.Model):
                                         checksum=checksum, file=f)           
         return instance
                         
+class PlaySession(Document):
+    xform_id = IntegerProperty()
+    next = StringProperty()
+    data = DictProperty()

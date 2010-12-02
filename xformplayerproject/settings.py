@@ -98,10 +98,16 @@ import os
 STATIC_DOC_ROOT = os.path.join(os.path.dirname(__file__), "xformplayer", "static")
 XFORMS_FORM_BOOTSTRAP_PATH = "bootstrap/xforms"
 XFORMS_PATH = "data/xforms"
-XFORMS_PLAYER_URL = "http://localhost:444/"
+XFORMS_PLAYER_URL = "http://localhost:4444/"
 
 try:
     from localsettings import *
 except ImportError:
     pass
 
+COUCHDB_DATABASE = 'http://%s%s/%s' % (
+    "%s:%s@" % (COUCH_USERNAME, COUCH_PASSWORD) if COUCH_USERNAME else "",
+    COUCH_SERVER_ROOT,
+    COUCH_DATABASE_NAME
+)
+COUCHDB_DATABASES = [('xformplayer', COUCHDB_DATABASE)]
