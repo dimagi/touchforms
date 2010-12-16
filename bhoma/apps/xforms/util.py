@@ -11,7 +11,11 @@ from bhoma.utils.couch import uid
 import re
 
 def get_xform_by_namespace(namespace):
-    matches = XForm.objects.filter(namespace=namespace).order_by("-version", "-created")
+    # because sorting works like None > 3 > 2 > 1 we have to first exclude None,
+    # but in the case where none of the forms have it, we want to then bring it in
+    matches = XForm.objects.filter(namespace=namespace).exclude(version=None).order_by("-version", "-created")
+    if matches.count() == 0:
+        matches = XForm.objects.filter(namespace=namespace).order_by("-version", "-created")
     if matches.count() > 0:
         return matches[0]
     else:
