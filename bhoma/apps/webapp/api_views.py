@@ -4,6 +4,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.models import check_password, User, Group
 from bhoma.apps.profile.models import BhomaUserProfile
 import bhoma.apps.webapp.diagnostics as d
+from bhoma.apps.webapp.models import Ping
 
 def get_usernames(request):
     """
@@ -48,3 +49,12 @@ def diagnostics(req):
         errors.append("database is down!")
     
     return HttpResponse(json.dumps({'errors': errors}))
+
+def phone_home(request, tag):
+    ping = Ping()
+    ping.tag = tag
+    ping.ip = request.META['REMOTE_ADDR']
+    if request.method == 'POST' and request.raw_post_data:
+        ping.payload = request.raw_post_data
+    ping.save()
+    return HttpResponse('ping', mimetype='text/plain')

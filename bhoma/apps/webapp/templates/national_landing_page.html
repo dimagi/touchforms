@@ -2,10 +2,14 @@
 {% block content %}
 <h3>What would you like to do?</h3>
 <ul>
+{% if user.is_superuser %}
     <li><a href="{% url patient_dashboard %}">Look at patients</a></li>
+{% endif %}
     <li><a href="{% url report_list %}">View reports</a></li>
     <li><a href="{% url manage_chws %}">Manage CHWs</a></li>
+{% if user.is_superuser %}
     <li><a href="{% url export_data %}">Export clinical data to excel</a></li>
+{% endif %}
 </ul>
 {% if user.is_superuser %}
 <h3>Administrative operations</h3>
