@@ -109,7 +109,7 @@ def due(last, interval):
     )
 
 def tmp_file_path(name):
-    return os.path.join(BHOMA_TMP_DIR, 'last_%s_status_report' % name)
+    return os.path.join(settings.BHOMA_TMP_DIR, 'last_%s_status_report' % name)
 
 def get_last_exec(name):
     try:
