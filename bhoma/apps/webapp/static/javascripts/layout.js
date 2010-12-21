@@ -12,7 +12,7 @@ function render_viewport (vp, scene_graph) {
 }
 
 function Indirect (key) {
-  this.key
+  this.key;
   this.parent = null;
   this.content = null;
   
@@ -26,44 +26,73 @@ function Indirect (key) {
   }
 }
 
-function Layout (id, num_rows, num_cols, widths, heights, margins, spacings, color, margin_color, spacing_color, content) {
-  this.id = id;
+/*
+ * make a grid layout, where each grid cell can have pluggable child content
+ * args == {id, nrows, ncols, widths, heights, margins, spacings, color, margin_color, spacing_color, content}
+ * id: id of the containing div
+ * nrows: number of grid rows, default: 1
+ * ncols: number of grid columns, default: 1
+ * widths: widths of columns; either an array of individual widths, or a scalar width for all columns; default: '*'
+ * heights: heights of rows; either an array of individual heights, or a scalar height for all rows; default: '*'
+ * margins: margins around the edge of the grid; either a 4-element array (left, right, top, bottom), 2-elem (left/right, top/bottom), or scalar (same for all); default: 0
+ * spacings: intra-cell spacings; 2-elem array (horizontal, vertical), or scalar to use the same for both; default: 0
+ *   all dimensions can be specified as '86' (86 pixels), '10%' (10% of total available space), '2*' (proportional share of remaining space after all other space allocated)
+ * color: grid cell color, uses parent's color if null
+ * margin_color: margin color, uses parent's color if null, '-' to re-use 'color'
+ * spacing_color: inter-cell space color, uses parent's color if null, '-' to re-use 'color'
+ * content: array of child elements for each grid cell, left-to-right, then top-to-bottom
+ */
+function Layout (args) {
+  this.id = args.id;
 
-  this.num_rows = num_rows;
-  this.num_cols = num_cols;
-  if (num_rows < 1 || num_cols < 1) {
+  this.nrows = args.nrows || 1;
+  this.ncols = args.ncols || 1;
+  if (this.nrows < 1 || this.ncols < 1) {
     throw new Error("invalid dimensions");
   }
   
+  var widths = args.widths || '*';
   if (widths instanceof Array) {
-    if (widths.length != num_cols) {
+    if (widths.length != this.ncols) {
       throw new Error("widths don't match # cols");
     }
     this.widths = widths;
   } else { //single width to use for all columns
     this.widths = [];
-    for (i = 0; i < num_cols; i++) {
+    for (i = 0; i < this.ncols; i++) {
       this.widths.push(widths)
     }
   }
 
+  var heights = args.heights || '*';
   if (heights instanceof Array) {
-    if (heights.length != num_rows) {
+    if (heights.length != this.nrows) {
       throw new Error("heights don't match # rows");
     }
     this.heights = heights;
-  } else { //single width to use for all columns
+  } else { //single height to use for all rows
     this.heights = [];
-    for (i = 0; i < num_rows; i++) {
+    for (i = 0; i < this.nrows; i++) {
       this.heights.push(heights)
     }
   }
 
+  var margins = args.margins || 0;
   if (margins instanceof Array) {
-    this.l_margin = margins[0];
-    this.r_margin = margins[1];
-    this.t_margin = margins[2];
-    this.b_margin = margins[3];  
+    if (margins.length != 2 && margins.length != 4) {
+      throw new Error("invalid margins");
+    }
+    if (margins.length == 2) {
+      this.l_margin = margins[0];
+      this.r_margin = margins[0];
+      this.t_margin = margins[1];
+      this.b_margin = margins[1];  
+    } else {
+      this.l_margin = margins[0];
+      this.r_margin = margins[1];
+      this.t_margin = margins[2];
+      this.b_margin = margins[3];  
+    }
   } else {
     this.l_margin = margins;
     this.r_margin = margins;
@@ -71,7 +100,11 @@ function Layout (id, num_rows, num_cols, widths, heights, margins, spacings, col
     this.b_margin = margins;
   }
   
+  var spacings = args.spacings || 0;
   if (spacings instanceof Array) {
+    if (spacings.length != 2) {
+      throw new Error("invalid margins");
+    }
     this.h_spacing = spacings[0];
     this.v_spacing = spacings[1];
   } else {
@@ -79,16 +112,19 @@ function Layout (id, num_rows, num_cols, widths, heights, margins, spacings, col
     this.v_spacing = spacings;
   }
   
-  this.content = content;
+  this.content = args.content;
+  if (this.content.length != this.nrows * this.ncols) {
+    throw new Error('not enough child content for layout! expected: ' + (this.nrows * this.ncols) + ' got: ' + this.content.length);
+  }
   for (var i = 0; i < this.content.length; i++) {
     if (this.content[i] instanceof Indirect) {
       this.content[i].setParent(this);
     }
   }
   
-  this.color = color;
-  this.margin_color = margin_color;
-  this.spacing_color = spacing_color;
+  this.color = args.color;
+  this.margin_color = (args.margin_color == '-' ? args.color : args.margin_color);
+  this.spacing_color = (args.spacing_color == '-' ? args.color : args.spacing_color);
 
   this.container = null;
   this.child_index = []; //[list of div for each child]
@@ -105,8 +141,8 @@ function Layout (id, num_rows, num_cols, widths, heights, margins, spacings, col
       this.container.replaceChild(domNew, this.child_index[position]);
     } else {
       domOld = this.child_index[position];
-      r = Math.floor(position / this.num_cols);
-      c = position % this.num_cols;
+      r = Math.floor(position / this.ncols);
+      c = position % this.ncols;
       x = domOld.offsetLeft;
       y = domOld.offsetTop;
       w = domOld.clientWidth;
@@ -147,14 +183,14 @@ function render_layout (layout, parent_div) {
   }
   
   layout.child_index = [];
-  for (var r = 0; r < layout.num_rows; r++) {
-    for (var c = 0; c < layout.num_cols; c++) {
+  for (var r = 0; r < layout.nrows; r++) {
+    for (var c = 0; c < layout.ncols; c++) {
       var x = woff[2*c + 1];
       var y = hoff[2*r + 1];
       var w = widths[2*c + 1];
       var h = heights[2*r + 1];
       
-      var subcontent = layout.content[layout.num_cols * r + c];
+      var subcontent = layout.content[layout.ncols * r + c];
       if (subcontent instanceof Indirect) {
         subcontent = subcontent.content;
       }
@@ -734,11 +770,11 @@ function InputArea (id, border, border_color, padding, inside_color, child, oncl
 
   this.render = function (parent_div) {
     if (this.padding > 0) {
-      inside = new Layout(id + '-padded', 1, 1, '*', '*', padding, 0, null, null, null, [this.child]);
+      inside = new Layout({id: id + '-padded', margins: padding, content: [this.child]});
     } else {
       inside = this.child;
     }
-    this.layout = new Layout(id, 1, 1, '*', '*', border, 0, this.inside_color, this.border_color, null, [inside]);
+    this.layout = new Layout({id: id, margins: border, color: this.inside_color, margin_color: this.border_color, content: [inside]});
     this.layout.render(parent_div);
     this.container = this.layout.container;
     this.container.onclick = this.onclick;

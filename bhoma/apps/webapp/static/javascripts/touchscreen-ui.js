@@ -44,22 +44,22 @@ function initStaticWidgets () {
   overlay = new Overlay('#d66', HEADER_COLOR, 3., 2., '');
   touchscreenUI = new Top(
     // main content
-    new Layout('main', 3, 1, '*', [HEADER_HEIGHT, '*', FOOTER_HEIGHT], SCREEN_BORDER, 0, MAIN_COLOR, BORDER_COLOR, null, [
-      new Layout('header', 1, 1, '*', '*', [SCREEN_MARGIN, SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN], 0, HEADER_COLOR, HEADER_COLOR, HEADER_COLOR, [
-        new Layout('top-bar', 1, 2, ['*', 50], '*', 0, 5, null, null, null, [
+    new Layout({id: 'main', nrows: 3, heights: [HEADER_HEIGHT, '*', FOOTER_HEIGHT], margins: SCREEN_BORDER, color: MAIN_COLOR, margin_color: BORDER_COLOR, content: [
+      new Layout({id: 'header', margins: [SCREEN_MARGIN, SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN], color: HEADER_COLOR, margin_color: '-', content: [
+        new Layout({id: 'top-bar', ncols: 2, widths: ['*', 50], spacings: 5, content: [
           questionCaption,
           helpButton
-        ])
-      ]),
-      new Layout('entry', 1, 1, '*', '*', [SCREEN_MARGIN, SCREEN_MARGIN, 0, 0], 0, null, null, null, [questionEntry]),
-      new Layout('footer', 1, 4, [FOOTER_BUTTON_WIDTH, FOOTER_BUTTON_WIDTH, '*', FOOTER_BUTTON_WIDTH], '*',
-                 [SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN, SCREEN_MARGIN], FOOTER_BUTTON_SPACING, FOOTER_COLOR, FOOTER_COLOR, FOOTER_COLOR, [
+        ]})
+      ]}),
+      new Layout({id: 'entry', margins: [SCREEN_MARGIN, 0], content: [questionEntry]}),
+      new Layout({id: 'footer', ncols: 4, widths: [FOOTER_BUTTON_WIDTH, FOOTER_BUTTON_WIDTH, '*', FOOTER_BUTTON_WIDTH], 
+                 margins: [SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN, SCREEN_MARGIN], spacings: FOOTER_BUTTON_SPACING, color: FOOTER_COLOR, margin_color: '-', spacing_color: '-', content: [
         backButton, 
         homeButton,
         null, // progress bar 
         nextButton
-      ]),
-    ])
+      ]}),
+    ]})
   ,
     //notifications overlay
     overlay
@@ -67,19 +67,20 @@ function initStaticWidgets () {
 
   answerBar = new Indirect();
   freeEntryKeyboard = new Indirect();
-  freeEntry = new Layout('free-entry', 2, 1, '*', [110, '*'], 0, 0, null, null, null, [
+  freeEntry = new Layout({id: 'free-entry', nrows: 2, heights: [110, '*'], content: [
     answerBar,
-    new Layout('kbd', 1, 1, '*', '*', [10, 10, 0, 5], 0, null, null, null, [freeEntryKeyboard])
-  ]);
+    new Layout({id: 'kbd', margins: [10, 10, 0, 5], content: [freeEntryKeyboard]})
+  ]});
 
-  numPad = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', null, '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_));
-  numPadDecimal = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_));
-  numPadPhone = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_));
-  numPadBP = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '/', '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_));
+  makeNumpad = function (extraKey) {
+    return new Layout({id: 'numpad', nrows: 4, ncols: 3, widths: 105, heights: 105, margins: '*', spacings: 15, 
+                      content: kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', extraKey, '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_)});
+  }
+
+  numPad = makeNumpad();
+  numPadDecimal = makeNumpad('.');
+  numPadPhone = makeNumpad('+');
+  numPadBP = makeNumpad('/');
   
   if (kbdQwerty) {
     kbdFull = [
@@ -107,33 +108,32 @@ function initStaticWidgets () {
     ];
   }
 
-  keyboard = new Layout('text-kbd', 4, 13, 68, 85, '*', 6, null, null, null, kbs(kbdFull, null, 1.4, type_));
-  keyboardAlphaOnly = new Layout('text-kbd', 3, 10, 88, 110, '*', 8, null, null, null, kbs(kbdAlpha, null, 1.9, type_));
-
+  keyboard = new Layout({id: 'text-kbd', nrows: 4, ncols: 13, widths: 68, heights: 85, margins: '*', spacings: 6, content: kbs(kbdFull, null, 1.4, type_)});
+  keyboardAlphaOnly = new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: 88, heights: 110, margins: '*', spacings: 8, content: kbs(kbdAlpha, null, 1.9, type_)});
   
   answerText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.2, 'left', 0));
-  freeTextAnswer = new Layout('answer-bar', 1, 2, ['7*', '*'], '*', [30, 30, 20, 20], 6, null, null, null, [
+  freeTextAnswer = new Layout({id: 'answer-bar', ncols: 2, widths: ['7*', '*'], margins: [30, 20], spacings: 6, content: [
     answerText,
     new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
-  ]);
+  ]});
 
   passwdText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.3, 'center', 0, true));
-  passwdAnswer = new Layout('answer-bar', 1, 2, ['3*', '*'], '*', [235, 235, 20, 20], 6, null, null, null, [
+  passwdAnswer = new Layout({id: 'answer-bar', ncols: 2, widths: ['3*', '*'], margins: [235, 20], spacings: 6, content: [
     passwdText,
     new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
-  ]);
+  ]});
   
   dayText = new InputArea('dayinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '06', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('day');});
   monthText = new InputArea('monthinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, 'Oct', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('month');});
   yearText = new InputArea('yearinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '20\u2022\u2022', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('year');});  
-  dateAnswer = new Layout('date-bar', 1, 6, [90, 36, 130, 36, 160, 110], '*', ['*', '*', 20, 20], 6, null, null, null, [
+  dateAnswer = new Layout({id: 'date-bar', ncols: 6, widths: [90, 36, 130, 36, 160, 110], margins: ['*', 20], spacings: 6, content: [
     dayText,
     new TextCaption('q-caption', TEXT_COLOR, '\u2013', 1.7, 'center', 'middle'),
     monthText,
     new TextCaption('q-caption', TEXT_COLOR, '\u2013', 1.7, 'center', 'middle'),
     yearText,
     new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
-  ]);
+  ]});
   
   tmp = render_button_grid('grid', 5, 2, 350, 70, 20, 'vert', decades, [], decadeSelected, 1.4);
   decadeChoices = tmp[0];
@@ -876,7 +876,7 @@ function render_button_grid (style, rows, cols, width, height, spacing, dir, cho
     }
   }  
 
-  layout_info = new Layout('ch', rows, cols, width, height, margins, spacing, null, null, null, button_grid);
+  layout_info = new Layout({id: 'ch', nrows: rows, ncols: cols, widths: width, heights: height, margins: margins, spacings: spacing, content: button_grid});
   return [layout_info, buttons];
 }
 
