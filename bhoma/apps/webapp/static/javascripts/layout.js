@@ -48,8 +48,9 @@ function Indirect (key) {
  *     - 10%- -- 10% of the smaller of the horizontal or vertical dimension
  *     - 10%+ -- 10% of the larger of the horizontal or vertical dimension
  *     - 10%= -- 10% of the geometric mean of the two dimensions
- *     - 10%! -- 10% of the screen size, regardless of the size of the current pane
- *   - proportional share of aspect-ratio-locked remaining space (e.g., '0.6a') -- similar to '*', but a unit of 'a' is guaranteed to be equal in both the horizontal and vertical dimension
+       note that +, -, and = will give an aspect-ratio-locked result
+ *     - appending ! will calculate relative to the total screen size dimensions, ignoring the dimensions of the current pane
+ *   - proportional share of aspect-ratio-locked remaining space (e.g., '0.6@') -- similar to '*', but a unit of '@' is guaranteed to be equal in both the horizontal and vertical dimension
  *   - proportional share of remaining space (e.g., '2.5*') after all other space is allocated
  *   directives take precedence in the order listed
  *   if you're not careful, it's possible to choose sizes that exceed the available space; layout and behavior may become unpredictable
@@ -176,8 +177,22 @@ function Layout (args) {
 }
 
 function render_layout (layout, parent_div) {
-  var widths = partition(parent_div.clientWidth, layout.widths, layout.l_margin, layout.r_margin, layout.h_spacing);
-  var heights = partition(parent_div.clientHeight, layout.heights, layout.t_margin, layout.b_margin, layout.v_spacing);
+  var dimensions = partition({
+      screen_width: SCREEN_WIDTH,
+      screen_height: SCREEN_HEIGHT,
+      pane_width: parent_div.clientWidth,
+      pane_height: parent_div.clientHeight,
+      widths: layout.widths,
+      heights: layout.heights,
+      lmargin: layout.l_margin,
+      rmargin: layout.r_margin,
+      tmargin: layout.t_margin,
+      bmargin: layout.b_margin,
+      hspacing: layout.h_spacing,
+      vspacing: layout.v_spacing
+    });
+  var widths = dimensions[0];
+  var heights = dimensions[1];
   var woff = offsets(widths);
   var hoff = offsets(heights);
   var parent_color = parent_div.style.backgroundColor;
@@ -459,75 +474,154 @@ function endswith (x, suffix) {
   return sx.substring(sx.length - suffix.length) == suffix;
 }
 
-function partition (dim, cells, margin_lo, margin_hi, spacing) {
+function partition (p) {
+  var EPSILON = 1.0e-3;
+
   //create partitions
-  var sizes = new Array();
-  var count = 2*cells.length + 1;
-  for (var i = 0; i < count; i++) {
-    if (i == 0) {
-      sizes[i] = margin_lo;
-    } else if (i == count - 1) {
-      sizes[i] = margin_hi;
-    } else if (i % 2 == 0) {
-      sizes[i] = spacing;
-    } else {
-      sizes[i] = cells[(i - 1) / 2];
+  var make_partitions = function (cells, margin_lo, margin_hi, spacing) {
+    var sizes = new Array();
+    var count = 2*cells.length + 1;
+    for (var i = 0; i < count; i++) {
+      if (i == 0) {
+        sizes[i] = margin_lo;
+      } else if (i == count - 1) {
+        sizes[i] = margin_hi;
+      } else if (i % 2 == 0) {
+        sizes[i] = spacing;
+      } else {
+        sizes[i] = cells[(i - 1) / 2];
+      }
+    }
+    return sizes;
+  }
+  var hSizes = make_partitions(p.widths, p.lmargin, p.rmargin, p.hspacing);
+  var vSizes = make_partitions(p.heights, p.tmargin, p.bmargin, p.vspacing);
+
+  //normalize raw pixel values
+  var px_norm = function (sizes) {
+    for (var i = 0; i < sizes.length; i++) {
+      var val = sizes[i] + '';
+      if (val.indexOf('@') == -1 && val.indexOf('*') == -1 && val.indexOf('%') == -1) {
+        sizes[i] = parseFloat(val);
+      }
     }
   }
-  
+  px_norm(hSizes);
+  px_norm(vSizes);
+
   //normalize percentage-based widths
-  var pct0 = 0.;
-  var px0 = 0;
-  for (var i = 0; i < sizes.length; i++) {
-    if (endswith(sizes[i], '%')) {
-      var pct = parseFloat(sizes[i].substring(0, sizes[i].length - 1)) / 100.;
-      var px = Math.round(dim * (pct0 + pct)) - px0;
-      sizes[i] = px;
-      pct0 += pct;
-      px0 += px;
+  var pct_norm = function (sizes, pane_dim, screen_dim) {
+    var avg_size = Math.sqrt(p.pane_width * p.pane_height);
+    var min_size = Math.min(p.pane_width, p.pane_height);
+    var max_size = Math.max(p.pane_width, p.pane_height);
+    var abs_avg_size = Math.sqrt(p.screen_width * p.screen_height);
+    var abs_min_size = Math.min(p.screen_width, p.screen_height);
+    var abs_max_size = Math.max(p.screen_width, p.screen_height);
+
+    for (var i = 0; i < sizes.length; i++) {
+      var d = sizes[i] + '';
+      if (d.indexOf('%') != -1) {
+        var pct = parseFloat(d.substring(0, d.indexOf('%'))) / 100.;
+        if (endswith(d, '-')) {
+          var total = min_size;
+        } else if (endswith(d, '+')) {
+          var total = max_size;
+        } else if (endswith(d, '=')) {
+          var total = avg_size;
+        } else if (endswith(d, '-!')) {
+          var total = abs_min_size;
+        } else if (endswith(d, '+!')) {
+          var total = abs_max_size;
+        } else if (endswith(d, '=!')) {
+          var total = abs_avg_size;
+        } else if (endswith(d, '!')) {
+          var total = screen_dim;
+        } else {
+          var total = pane_dim;
+        }
+
+        sizes[i] = total * pct;
+      }
     }
   }
-  //pct0 and px0 needed to evenly distribute rounding error
-  
-  //normalize proportional-based widths
-  var sum = 0;
-  var proport = new Array();
-  var sum_proport = 0.;
-  for (var i = 0; i < sizes.length; i++) {
-    if (endswith(sizes[i], '*')) {
-      var sfactor = sizes[i].substring(0, sizes[i].length - 1);
-      var prop = Math.round(sfactor.length > 0 ? parseFloat(sfactor) : 1.);
-      proport.push(prop)
-      sum_proport += prop;
-    } else {
+  pct_norm(hSizes, p.pane_width, p.screen_width);
+  pct_norm(vSizes, p.pane_height, p.screen_height);
+
+  var extract_proportions = function (sizes, c, total_size) {
+    var proport = new Array();
+    var sum_proport = 0.;
+    var sum_alloc = 0;
+    for (var i = 0; i < sizes.length; i++) {
+      if (endswith(sizes[i], c)) {
+        var sfactor = sizes[i].substring(0, sizes[i].length - 1);
+        var prop = (sfactor.length > 0 ? parseFloat(sfactor) : 1.);
+        proport.push(prop);
+        sum_proport += prop;
+      } else {
+        proport.push(-1);
+        if (!isNaN(sizes[i])) {
+          sum_alloc += sizes[i];
+        }
+      }
+    }
+    if (sum_alloc > total_size + EPSILON) {
+      throw new Error('inconsistent dimension spec for layout; too big for allowed size');
+    }
+    return {psizes: proport, propsum: sum_proport, allocsum: sum_alloc};
+  }
+
+  var set_prop_sizes = function (sizes, propsizes, unitsize) {
+    for (var i = 0; i < sizes.length; i++) {
+      if (propsizes[i] != -1) {
+        sizes[i] = propsizes[i] * unitsize;
+      }
+    }
+  }
+
+  //normalize aspect-locked proportial widths
+  var haprop = extract_proportions(hSizes, '@', p.pane_width);
+  var vaprop = extract_proportions(vSizes, '@', p.pane_height);
+  //  determine size of '@'
+  var asize = Math.min((p.pane_width - haprop.allocsum) / haprop.propsum,
+                       (p.pane_height - vaprop.allocsum) / vaprop.propsum);
+  set_prop_sizes(hSizes, haprop.psizes, asize);
+  set_prop_sizes(vSizes, vaprop.psizes, asize);
+
+  //normalize leftover proportional widths
+  var hprop = extract_proportions(hSizes, '*', p.pane_width);
+  var vprop = extract_proportions(vSizes, '*', p.pane_height);
+  set_prop_sizes(hSizes, hprop.psizes, (p.pane_width - hprop.allocsum) / hprop.propsum);
+  set_prop_sizes(vSizes, vprop.psizes, (p.pane_height - vprop.allocsum) / vprop.propsum);
+
+  //check that all space consumed
+  var check_size_used = function (sizes, ttl_size) {
+    var sum = 0;
+    for (var i = 0; i < sizes.length; i++) {
       sum += sizes[i];
-      proport.push(-1);
+    }
+    if (sum < ttl_size - EPSILON) {
+      throw Error('inconsistent dimension spec for layout; not all space consumed');
     }
   }
-  if (sum > dim) {
-    throw Error("too big for allowed width!")
-  }
-  var pp0 = 0.;
-  var px0 = 0;
-  for (var i = 0; i < proport.length; i++) {
-    if (proport[i] != -1) {
-      var px = Math.round((dim - sum) * (pp0 + proport[i]) / sum_proport) - px0;
-      sizes[i] = px;
-      pp0 += proport[i];
-      px0 += px;
+  check_size_used(hSizes, p.pane_width);
+  check_size_used(vSizes, p.pane_height);
+
+  //distribute rounding error
+  var round_sizes = function(sizes) {
+    var sum0 = 0;
+    var fsum0 = 0;
+    for (var i = 0; i < sizes.length; i++) {
+      var fsum1 = fsum0 + sizes[i];
+      var sum1 = Math.round(fsum1);
+      sizes[i] = sum1 - sum0;
+      fsum0 = fsum1;
+      sum0 = sum1;
     }
   }
-  //pp0 and px0 needed to evenly distribute rounding error
-  
-  var sum = 0;
-  for (var i = 0; i < sizes.length; i++) {
-    sum += sizes[i];
-  }
-  if (sum != dim) {
-    throw Error("not all space consumed!");
-  }
-  
-  return sizes;
+  round_sizes(hSizes);
+  round_sizes(vSizes);
+
+  return [hSizes, vSizes];
 }
 
 function offsets (dims) {
