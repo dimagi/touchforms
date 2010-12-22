@@ -36,11 +36,23 @@ function Indirect (key) {
  * heights: heights of rows; either an array of individual heights, or a scalar height for all rows; default: '*'
  * margins: margins around the edge of the grid; either a 4-element array (left, right, top, bottom), 2-elem (left/right, top/bottom), or scalar (same for all); default: 0
  * spacings: intra-cell spacings; 2-elem array (horizontal, vertical), or scalar to use the same for both; default: 0
- *   all dimensions can be specified as '86' (86 pixels), '10%' (10% of total available space), '2*' (proportional share of remaining space after all other space allocated)
  * color: grid cell color, uses parent's color if null
  * margin_color: margin color, uses parent's color if null, '-' to re-use 'color'
  * spacing_color: inter-cell space color, uses parent's color if null, '-' to re-use 'color'
  * content: array of child elements for each grid cell, left-to-right, then top-to-bottom
+ * 
+ * dimension spec for width/height/margin/spacing; dimensions can be specified as:
+ *   - raw pixels (e.g., 86)
+ *   - percentage of available space (e.g., '10%')
+ *     percentages can have an optional modifier afterward:
+ *     - 10%- -- 10% of the smaller of the horizontal or vertical dimension
+ *     - 10%+ -- 10% of the larger of the horizontal or vertical dimension
+ *     - 10%= -- 10% of the geometric mean of the two dimensions
+ *     - 10%! -- 10% of the screen size, regardless of the size of the current pane
+ *   - proportional share of aspect-ratio-locked remaining space (e.g., '0.6a') -- similar to '*', but a unit of 'a' is guaranteed to be equal in both the horizontal and vertical dimension
+ *   - proportional share of remaining space (e.g., '2.5*') after all other space is allocated
+ *   directives take precedence in the order listed
+ *   if you're not careful, it's possible to choose sizes that exceed the available space; layout and behavior may become unpredictable
  */
 function Layout (args) {
   this.id = args.id;
