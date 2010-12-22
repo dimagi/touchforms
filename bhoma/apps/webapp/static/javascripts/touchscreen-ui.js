@@ -1,12 +1,13 @@
 
 
-SCREEN_BORDER = 10;
-SCREEN_MARGIN = 10;
-SECTION_MARGIN = 6;
-HEADER_HEIGHT = 60;
-FOOTER_HEIGHT = 80;
-FOOTER_BUTTON_WIDTH = 150;
-FOOTER_BUTTON_SPACING = 6;
+SCREEN_BORDER = '1.1%=!'; //10px @ 1024x768;
+SCREEN_MARGIN = '1.1%=!'; //10px @ 1024x768;
+SECTION_MARGIN = '0.68%=!';
+HEADER_HEIGHT = '8%!';
+FOOTER_HEIGHT = '10%!';
+FOOTER_BUTTON_WIDTH = '15%!';
+FOOTER_BUTTON_SPACING = SECTION_MARGIN;
+HELP_BUTTON_SPACING = SECTION_MARGIN;
 
 BORDER_COLOR = '#000';
 MAIN_COLOR = '#eef';
@@ -46,7 +47,7 @@ function initStaticWidgets () {
     // main content
     new Layout({id: 'main', nrows: 3, heights: [HEADER_HEIGHT, '*', FOOTER_HEIGHT], margins: SCREEN_BORDER, color: MAIN_COLOR, margin_color: BORDER_COLOR, content: [
       new Layout({id: 'header', margins: [SCREEN_MARGIN, SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN], color: HEADER_COLOR, margin_color: '-', content: [
-        new Layout({id: 'top-bar', ncols: 2, widths: ['*', 50], spacings: 5, content: [
+        new Layout({id: 'top-bar', ncols: 2, widths: ['*', '1.1@'], heights: '@', spacings: HELP_BUTTON_SPACING, content: [
           questionCaption,
           helpButton
         ]})
@@ -73,8 +74,10 @@ function initStaticWidgets () {
   ]});
 
   makeNumpad = function (extraKey) {
-    return new Layout({id: 'numpad', nrows: 4, ncols: 3, widths: 105, heights: 105, margins: '*', spacings: 15, 
-                      content: kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', extraKey, '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_)});
+    return new Layout({margins: '1.7%-', content: [
+        new Layout({id: 'numpad', nrows: 4, ncols: 3, widths: '7@', heights: '7@', margins: '*', spacings: '@', 
+                    content: kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', extraKey, '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_)})
+      ]});
   }
 
   numPad = makeNumpad();
@@ -108,8 +111,8 @@ function initStaticWidgets () {
     ];
   }
 
-  keyboard = new Layout({id: 'text-kbd', nrows: 4, ncols: 13, widths: 68, heights: 85, margins: '*', spacings: 6, content: kbs(kbdFull, null, 1.4, type_)});
-  keyboardAlphaOnly = new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: 88, heights: 110, margins: '*', spacings: 8, content: kbs(kbdAlpha, null, 1.9, type_)});
+  keyboard = new Layout({id: 'text-kbd', nrows: 4, ncols: 13, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: kbs(kbdFull, null, 1.4, type_)});
+  keyboardAlphaOnly = new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: kbs(kbdAlpha, null, 1.9, type_)});
   
   answerText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.2, 'left', 0));
   freeTextAnswer = new Layout({id: 'answer-bar', ncols: 2, widths: ['7*', '*'], margins: [30, 20], spacings: 6, content: [
