@@ -149,6 +149,13 @@ function initStaticWidgets () {
 var clicksEnabled;
 var clickDisableCounter = 0;
 function setup () {
+  SCREEN_WIDTH = $('#viewport')[0].clientWidth;
+  SCREEN_HEIGHT = $('#viewport')[0].clientHeight;
+
+  $('#staging')[0].style.top = (SCREEN_HEIGHT + 500) + 'px';
+  $('#staging')[0].style.width = (1.5 * SCREEN_WIDTH) + 'px';
+  $('#staging')[0].style.height =  '600px';
+
   clicksEnabled = true;
   $('body')[0].addEventListener('click', function (ev) {
       if (!clicksEnabled) {
