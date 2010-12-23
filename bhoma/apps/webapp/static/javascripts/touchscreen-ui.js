@@ -75,10 +75,10 @@ function initStaticWidgets () {
   ]});
 
   makeNumpad = function (extraKey) {
-    return new Layout({margins: '1.7%-', content: [
+    return aspect_margin('1.7%-',
         new Layout({id: 'numpad', nrows: 4, ncols: 3, widths: '7@', heights: '7@', margins: '*', spacings: '@', 
                     content: kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', extraKey, '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_)})
-      ]});
+      );
   }
 
   numPad = makeNumpad();
@@ -138,13 +138,6 @@ function initStaticWidgets () {
     yearText,
     new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
   ]});
-  
-  tmp = renderbuttongrid_obsolete('grid', 5, 2, 350, 70, 20, 'vert', decades, [], decadeSelected, 1.4);
-  decadeChoices = tmp[0];
-  decadeButtons = tmp[1];
-  tmp = renderbuttongrid_obsolete('grid', 3, 4, 180, 120, 30, 'horiz', monthNames, [], monthSelected, 1.8);
-  monthChoices = tmp[0];
-  monthButtons = tmp[1];
 }
 
 var clicksEnabled;
@@ -345,25 +338,27 @@ function DateWidgetContext (dir, answer) {
     dayText.setText(this.day != null ? (this.day < 10 ? '0' : '') + this.day : '');
 
     if (this.screen == 'decade') {
-      selectWidget = decadeChoices;
-      activeInputWidget = decadeButtons;
+      tmp = decadeSelect();
+      selectWidget = tmp.layout;
+      activeInputWidget = tmp.buttons;
       this.select(this.decade, this.decade != null ? this.decade[0] + '\u2014' + this.decade[1] : null);
       this.highlight();
     } else if (this.screen == 'year') {
       tmp = yearSelect(this.decade[0], this.decade[1]);
-      selectWidget = tmp[0];
-      activeInputWidget = tmp[1];
+      selectWidget = tmp.layout;
+      activeInputWidget = tmp.buttons;
       this.select(this.year);
       this.highlight();
     } else if (this.screen == 'month') {
-      selectWidget = monthChoices;
-      activeInputWidget = monthButtons;
+      tmp = monthSelect();
+      selectWidget = tmp.layout;
+      activeInputWidget = tmp.buttons;
       this.select(this.month);
       this.highlight();
     } else if (this.screen == 'day') {
       tmp = daySelect(daysInMonth(this.month, this.year));
-      selectWidget = tmp[0];
-      activeInputWidget = tmp[1];
+      selectWidget = tmp.layout;
+      activeInputWidget = tmp.buttons;
       this.select(this.day);
       this.highlight();
     }
@@ -673,6 +668,11 @@ function kbs (infos, def_cls, def_sz, onclick, centered) {
   return stuff;
 }
 
+function decadeSelect () {
+  var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: 2, width: '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'}, decades, false, [], decadeSelected);
+  return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons};
+}
+
 //todo: support ranges other than decade
 function yearSelect (minyear, maxyear) {
   if (maxyear == null)
@@ -683,7 +683,13 @@ function yearSelect (minyear, maxyear) {
     years.push(o + '');
   }
 
-  return renderbuttongrid_obsolete('grid', 5, Math.ceil((maxyear - minyear + 1) / 5), (maxyear - minyear) > 9 ? 220 : 350, 70, 20, 'vert', years, [], yearSelected, 1.4);
+  var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: Math.ceil((maxyear - minyear + 1) / 5), width: (maxyear - minyear) > 9 ? '22@' : '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'}, years, false, [], yearSelected);
+  return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons};
+}
+
+function monthSelect () {
+  var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 3, ncols: 4, width: '6@', height: '4@', spacing: '@', textscale: 1.8, margins: '*'}, monthNames, false, [], monthSelected);
+  return {layout: aspect_margin('7%-', grid.layout), buttons: grid.buttons};
 }
 
 function daySelect (monthLength) {
@@ -691,49 +697,13 @@ function daySelect (monthLength) {
   for (var i = 1; i <= monthLength; i++) {
     days.push(i + '');
   }
-  return renderbuttongrid_obsolete('grid', 5, 7, 85, 85, 15, 'horiz', days, [], daySelected, 1.4);
+
+  var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 5, ncols: 7, width: '17@', height: '17@', spacing: '3@', textscale: 1.4, margins: '*'}, days, false, [], daySelected);
+  return {layout: aspect_margin('1.7%-', grid.layout), buttons: grid.buttons};
 }
 
-
-
-//OBSOLETE!!
-function renderbuttongrid_obsolete (style, rows, cols, width, height, spacing, dir, choices, selected, func, text_scale, multi) {
-  if (style == 'list') {
-    var margins = [30, '*', 30, '*'];
-  } else if (style == 'grid') {
-    var margins = '*';
-  }
-  
-  var cells = [];
-  for (var r = 0; r < rows; r++) {
-    for (var c = 0; c < cols; c++) {
-      var i = (dir == 'horiz' ? cols * r + c : rows * c + r);
-      if (i >= choices.length) {
-        var cell = null;
-      } else {
-        if (selected != null && selected.indexOf(i + 1) != -1) {
-          var cell = [(multi ? '\u2612' + choices[i].substring(1) : choices[i]), null, null, true];
-        } else {
-          var cell = choices[i];
-        }
-      }
-      cells.push(cell);
-    }
-  }
-
-  button_grid = kbs(cells, null, text_scale, func, style == 'grid');
-  buttons = []
-  for (var r = 0; r < rows; r++) {
-    for (var c = 0; c < cols; c++) {
-      var i = (dir == 'horiz' ? cols * r + c : rows * c + r);
-      if (i < choices.length) {
-        buttons[i] = button_grid[cols * r + c];
-      }
-    }
-  }  
-
-  layout_info = new Layout({id: 'ch', nrows: rows, ncols: cols, widths: width, heights: height, margins: margins, spacings: spacing, content: button_grid});
-  return [layout_info, buttons];
+function aspect_margin (margin, inner) {
+  return new Layout({margins: margin, content: [inner]});
 }
 
 function render_clean () {

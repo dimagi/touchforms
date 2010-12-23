@@ -455,9 +455,9 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing, passw
 
 function ChoiceSelect (args) {
   this.choices = args.choices;
-  this.multi = args.multi;
+  this.multi = args.multi || false;
   this.onclick = args.onclick || choiceSelected;
-  this.selected = args.selected; //todo: improve this
+  this.selected = args.selected || []; //todo: improve this
 
   this.buttons = null;
 
@@ -631,8 +631,6 @@ function buttonDimensions (textdim) {
 }
 
 function render_button_grid (layout_params, choices, multi, selected, onclick) {
-  //TODO: find a better way to handle these multiselect checkboxes
-
   var buttons = generate_choice_buttons(choices, multi, selected, layout_params, onclick);
 
   var button_grid = [];
