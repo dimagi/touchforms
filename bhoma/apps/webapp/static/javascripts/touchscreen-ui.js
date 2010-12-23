@@ -8,6 +8,7 @@ FOOTER_HEIGHT = '10%!';
 FOOTER_BUTTON_WIDTH = '15%!';
 FOOTER_BUTTON_SPACING = SECTION_MARGIN;
 HELP_BUTTON_SPACING = SECTION_MARGIN;
+CHOICE_LAYOUT_GOLDEN_RATIO = 1.2 //should ~= w:h ratio of renderable choice area / w:h ratio of screen (which mainly depends on size of header and footer)
 
 BORDER_COLOR = '#000';
 MAIN_COLOR = '#eef';
@@ -138,10 +139,10 @@ function initStaticWidgets () {
     new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
   ]});
   
-  tmp = render_button_grid('grid', 5, 2, 350, 70, 20, 'vert', decades, [], decadeSelected, 1.4);
+  tmp = renderbuttongrid_obsolete('grid', 5, 2, 350, 70, 20, 'vert', decades, [], decadeSelected, 1.4);
   decadeChoices = tmp[0];
   decadeButtons = tmp[1];
-  tmp = render_button_grid('grid', 3, 4, 180, 120, 30, 'horiz', monthNames, [], monthSelected, 1.8);
+  tmp = renderbuttongrid_obsolete('grid', 3, 4, 180, 120, 30, 'horiz', monthNames, [], monthSelected, 1.8);
   monthChoices = tmp[0];
   monthButtons = tmp[1];
 }
@@ -682,7 +683,7 @@ function yearSelect (minyear, maxyear) {
     years.push(o + '');
   }
 
-  return render_button_grid('grid', 5, Math.ceil((maxyear - minyear + 1) / 5), (maxyear - minyear) > 9 ? 220 : 350, 70, 20, 'vert', years, [], yearSelected, 1.4);
+  return renderbuttongrid_obsolete('grid', 5, Math.ceil((maxyear - minyear + 1) / 5), (maxyear - minyear) > 9 ? 220 : 350, 70, 20, 'vert', years, [], yearSelected, 1.4);
 }
 
 function daySelect (monthLength) {
@@ -690,168 +691,13 @@ function daySelect (monthLength) {
   for (var i = 1; i <= monthLength; i++) {
     days.push(i + '');
   }
-  return render_button_grid('grid', 5, 7, 85, 85, 15, 'horiz', days, [], daySelected, 1.4);
+  return renderbuttongrid_obsolete('grid', 5, 7, 85, 85, 15, 'horiz', days, [], daySelected, 1.4);
 }
 
-function getTextExtent (text, size, bounding_width) {
-  if (bounding_width == null) {
-    bounding_width = 1500;
-  }
 
-  snippet = document.getElementById('snippet');
-  snippet.style.width = bounding_width + 'px';
-  snippet.textContent = text;
-  snippet.style.fontSize = 100. * size + '%';
-  return [snippet.offsetWidth, snippet.offsetHeight];
-}
 
-function buttonDimensions (textdim) {
-  return [Math.round(1.1 * textdim[0] + 0.7 * textdim[1]), Math.round(textdim[1] * 1.5)];
-}
-
-function choiceSelect (choices, selected, multi, W_MAX, H_MAX) {
-  if (multi) {
-    for (i = 0; i < choices.length; i++) {
-      choices[i] = '\u2610 ' + choices[i];
-    }
-  }
-
-  //1) analysis of choices to determine optimum layout
-
-  //available size of choice area (ideally we should determine this dynamically; too tough for now)
-  W_MAX = W_MAX || 922;
-  H_MAX = H_MAX || 571;
-
-  var MAX_TEXT_SIZE_GRID = 2.5;
-  var MAX_TEXT_SIZE_LIST = 1.8;
-  var MIN_TEXT_SIZE = .3;
-  var MAX_LENGTH_FOR_GRID = 350.;
-  var MAX_LENGTH_DIFF_FOR_GRID_ABS = 125;
-  var MAX_LENGTH_DIFF_FOR_GRID_REL = 2.2;
-  var DIFF_REF_THRESHOLD = 50.;
-  var GOLDEN_RATIO = 1.6;
-  
-  if (choices.length <= 6) {
-    var SPACING_RATIO = .15;
-  } else if (choices.length <= 12) {
-    var SPACING_RATIO = .1;
-  } else {
-    var SPACING_RATIO = .05;
-  }
-    
-  //determine whether to use grid-based layout (centered, buttons oriented in grid pattern)
-  //or list-based layout (left-justified, vertical orientation)
-  var lengths = [];
-  var min_w = -1;
-  var max_w = -1;
-  var h = -1;
-  var longest_choice = null;
-  for (i = 0; i < choices.length; i++) {
-    var ext = getTextExtent(choices[i], 1.);
-    var w = ext[0];
-    h = ext[1];
-    lengths.push(w);
-    if (min_w == -1 || w < min_w)
-      min_w = w;
-    if (max_w == -1 || w > max_w) {
-      max_w = w;
-      longest_choice = choices[i];
-    }
-  }
-  if (max_w > MAX_LENGTH_FOR_GRID || max_w - min_w > MAX_LENGTH_DIFF_FOR_GRID_ABS || (min_w >= DIFF_REF_THRESHOLD && max_w/min_w > MAX_LENGTH_DIFF_FOR_GRID_REL)) {
-    style = 'list';
-  } else {
-    style = 'grid';
-  }
-
-  if (style == 'grid') {
-    //determine best grid dimensions -- layout that best approaches GOLDEN_RATIO
-    buttondim = buttonDimensions([max_w, h]);
-    best_arrangement = null;
-    zvalue = -1;
-    for (var r = 1; r <= choices.length; r++) {
-      c = Math.ceil(choices.length / r);
-      spc = buttondim[1] * .33;
-      spc = (spc > 40 ? 40 : (spc < 15 ? 15 : spc));
-      ratio = (buttondim[0] * c + spc * (c - 1)) / (buttondim[1] * r + spc * (r - 1));
-      z = (ratio < GOLDEN_RATIO ? GOLDEN_RATIO / ratio : ratio / GOLDEN_RATIO);
-      if (r * c == choices.length) { //bonus for grid being completely filled
-        z -= .75
-      }
-      if (zvalue == -1 || z < zvalue) {
-        zvalue = z;
-        best_arrangement = [r, c];
-      }
-    }
-    rows = best_arrangement[0];
-    cols = best_arrangement[1];    
-    var dir = (rows > cols ? 'vert' : 'horiz'); //determine orientation
-
-    //determine best button sizing -- largest sizing that will fit within allowed area
-    for (size = MAX_TEXT_SIZE_GRID; size >= MIN_TEXT_SIZE; size -= .1) {
-      var ext = buttonDimensions(getTextExtent(longest_choice, size));
-      bw = ext[0];
-      bh = ext[1];
-      best_spc = -1;
-      zvalue = -1;
-      //determine best inter-button spacing for given size -- where ratio of button area to inter-button area best approaches SPACING_RATIO
-      for (spc = 5; spc <= 50; spc += 5) {
-        w_total = (cols * bw + (cols - 1) * spc);
-        h_total = (rows * bh + (rows - 1) * spc);
-        k0 = bw * bh * rows * cols;
-        k1 = w_total * h_total;
-        ratio = (k1 - k0) / (k0 + k1);
-        z = (ratio < SPACING_RATIO ? SPACING_RATIO / ratio : ratio / SPACING_RATIO);
-        if (zvalue == -1 || z < zvalue) {
-          zvalue = z;
-          best_spc = spc;
-        }
-      }
-      w_total = (cols * bw + (cols - 1) * best_spc);
-      h_total = (rows * bh + (rows - 1) * best_spc);
-      if (w_total <= W_MAX && h_total <= H_MAX) {
-        break;
-      }
-    }
-    width = bw;
-    height = bh;
-    text_scale = size;
-    spacing = best_spc;
-  } else if (style == 'list') {
-    dir = 'vert';
-
-    //layout priority: maximize button size
-    fits = false;
-    for (size = MAX_TEXT_SIZE_LIST; size >= MIN_TEXT_SIZE; size -= .1) {
-      var ext = buttonDimensions(getTextExtent(longest_choice, size));
-      bw = ext[0];
-      bh = ext[1];
-      spc = Math.max(Math.round(bh * .1), 5);
-
-      rows = Math.floor((H_MAX + spc) / (bh + spc));
-      cols = Math.ceil(choices.length / rows)
-      w_total = (cols * bw + (cols - 1) * spc);
-      h_total = (rows * bh + (rows - 1) * spc);
-      if (w_total <= W_MAX && h_total <= H_MAX) {
-        fits = true;
-        break;
-      }
-    }
-    if (!fits) {
-      throw Error("choices too numerous or verbose to fit!");
-    }
-
-    width = bw;
-    height = bh;
-    text_scale = size;
-    spacing = spc;
-  }
-    
-  //2) render choices according to layout parameters
-  return render_button_grid(style, rows, cols, width, height, spacing, dir, choices, selected, choiceSelected, text_scale, multi);
-}
-
-function render_button_grid (style, rows, cols, width, height, spacing, dir, choices, selected, func, text_scale, multi) {
+//OBSOLETE!!
+function renderbuttongrid_obsolete (style, rows, cols, width, height, spacing, dir, choices, selected, func, text_scale, multi) {
   if (style == 'list') {
     var margins = [30, '*', 30, '*'];
   } else if (style == 'grid') {
@@ -867,9 +713,9 @@ function render_button_grid (style, rows, cols, width, height, spacing, dir, cho
       } else {
         if (selected != null && selected.indexOf(i + 1) != -1) {
           var cell = [(multi ? '\u2612' + choices[i].substring(1) : choices[i]), null, null, true];
-	} else {
-	  var cell = choices[i];
-	}
+        } else {
+          var cell = choices[i];
+        }
       }
       cells.push(cell);
     }

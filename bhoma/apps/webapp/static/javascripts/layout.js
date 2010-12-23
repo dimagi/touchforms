@@ -178,6 +178,7 @@ function Layout (args) {
 
 function render_layout (layout, parent_div) {
   var dimensions = partition({
+      id: layout.id,
       screen_width: SCREEN_WIDTH,
       screen_height: SCREEN_HEIGHT,
       pane_width: parent_div.clientWidth,
@@ -452,6 +453,218 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing, passw
   }
 }
 
+function ChoiceSelect (args) {
+  this.choices = args.choices;
+  this.multi = args.multi;
+  this.onclick = args.onclick || choiceSelected;
+  this.selected = args.selected; //todo: improve this
+
+  this.buttons = null;
+
+  this.render = function (parent_div) {
+    var layout_params = layout_choices(parent_div, this.choices);
+    var render_data = render_button_grid(layout_params, this.choices, this.multi, this.selected, this.onclick);
+    var layout = render_data.layout;
+    this.buttons = render_data.buttons;
+    layout.render(parent_div);
+  }
+}
+
+//given a set of choice captions, determine optimum layout of choice buttons to maximize aesthetics
+function layout_choices (parent_div, choices) {
+  //layout constants
+  var MAX_TEXT_SIZE_GRID = 2.5;
+  var MAX_TEXT_SIZE_LIST = 1.8;
+  var MIN_TEXT_SIZE = .3;
+  var MAX_LENGTH_FOR_GRID = 350.;  //px: need to dynamicize
+  var MAX_LENGTH_DIFF_FOR_GRID_ABS = 125; //px: need to dynamicize
+  var MAX_LENGTH_DIFF_FOR_GRID_REL = 2.2;
+  var DIFF_REF_THRESHOLD = 50.; //px: need to dynamicize
+  var GOLDEN_RATIO = SCREEN_WIDTH / SCREEN_HEIGHT * CHOICE_LAYOUT_GOLDEN_RATIO;
+  var BUFFER_MARGIN = 32; //px: need to dynamicize
+
+  if (choices.length <= 6) {
+    var SPACING_RATIO = .15;
+  } else if (choices.length <= 12) {
+    var SPACING_RATIO = .1;
+  } else {
+    var SPACING_RATIO = .05;
+  }
+
+  //available size of choice area
+  var W_MAX = parent_div.clientWidth - BUFFER_MARGIN;
+  var H_MAX = parent_div.clientHeight - BUFFER_MARGIN;
+
+  //determine whether to use grid-based layout (centered, buttons oriented in grid pattern)
+  //or list-based layout (left-justified, vertical orientation)
+  var lengths = [];
+  var min_w = -1;
+  var max_w = -1;
+  var h = -1;
+  var longest_choice = null;
+  for (i = 0; i < choices.length; i++) {
+    var ext = getChoiceExtent(choices[i], 1.);
+    var w = ext[0];
+    h = ext[1];
+    lengths.push(w);
+    if (min_w == -1 || w < min_w)
+      min_w = w;
+    if (max_w == -1 || w > max_w) {
+      max_w = w;
+      longest_choice = choices[i];
+    }
+  }
+  if (max_w > MAX_LENGTH_FOR_GRID || max_w - min_w > MAX_LENGTH_DIFF_FOR_GRID_ABS || (min_w >= DIFF_REF_THRESHOLD && max_w/min_w > MAX_LENGTH_DIFF_FOR_GRID_REL)) {
+    style = 'list';
+  } else {
+    style = 'grid';
+  }
+
+  if (style == 'grid') {
+    var margins = '*';
+
+    //determine best grid dimensions -- layout that best approaches GOLDEN_RATIO
+    buttondim = buttonDimensions([max_w, h]);
+    best_arrangement = null;
+    zvalue = -1;
+    for (var r = 1; r <= choices.length; r++) {
+      c = Math.ceil(choices.length / r);
+      spc = buttondim[1] * .33;
+      spc = (spc > 40 ? 40 : (spc < 15 ? 15 : spc));
+      ratio = (buttondim[0] * c + spc * (c - 1)) / (buttondim[1] * r + spc * (r - 1));
+      z = (ratio < GOLDEN_RATIO ? GOLDEN_RATIO / ratio : ratio / GOLDEN_RATIO);
+      if (r * c == choices.length) { //bonus for grid being completely filled
+        z -= .75
+          }
+      if (zvalue == -1 || z < zvalue) {
+        zvalue = z;
+        best_arrangement = [r, c];
+      }
+    }
+    rows = best_arrangement[0];
+    cols = best_arrangement[1];    
+    var dir = (rows > cols ? 'vert' : 'horiz'); //determine orientation
+
+    //determine best button sizing -- largest sizing that will fit within allowed area
+    for (size = MAX_TEXT_SIZE_GRID; size >= MIN_TEXT_SIZE; size -= .1) {
+      var ext = buttonDimensions(getChoiceExtent(longest_choice, size));
+      bw = ext[0];
+      bh = ext[1];
+      best_spc = -1;
+      zvalue = -1;
+      //determine best inter-button spacing for given size -- where ratio of button area to inter-button area best approaches SPACING_RATIO
+      for (spc = 5; spc <= 50; spc += 5) {
+        w_total = (cols * bw + (cols - 1) * spc);
+        h_total = (rows * bh + (rows - 1) * spc);
+        k0 = bw * bh * rows * cols;
+        k1 = w_total * h_total;
+        ratio = (k1 - k0) / (k0 + k1);
+        z = (ratio < SPACING_RATIO ? SPACING_RATIO / ratio : ratio / SPACING_RATIO);
+        if (zvalue == -1 || z < zvalue) {
+          zvalue = z;
+          best_spc = spc;
+        }
+      }
+      w_total = (cols * bw + (cols - 1) * best_spc);
+      h_total = (rows * bh + (rows - 1) * best_spc);
+      if (w_total <= W_MAX && h_total <= H_MAX) {
+        break;
+      }
+    }
+    width = bw;
+    height = bh;
+    text_scale = size;
+    spacing = best_spc;
+  } else if (style == 'list') {
+    dir = 'vert';
+    var margins = [BUFFER_MARGIN, '*', BUFFER_MARGIN, '*'];
+
+    //layout priority: maximize button size
+    fits = false;
+    for (size = MAX_TEXT_SIZE_LIST; size >= MIN_TEXT_SIZE; size -= .1) {
+      var ext = buttonDimensions(getChoiceExtent(longest_choice, size));
+      bw = ext[0];
+      bh = ext[1];
+      spc = Math.max(Math.round(bh * .1), 5);
+
+      rows = Math.floor((H_MAX + spc) / (bh + spc));
+      cols = Math.ceil(choices.length / rows)
+        w_total = (cols * bw + (cols - 1) * spc);
+      h_total = (rows * bh + (rows - 1) * spc);
+      if (w_total <= W_MAX && h_total <= H_MAX) {
+        fits = true;
+        break;
+      }
+    }
+    if (!fits) {
+      throw Error("choices too numerous or verbose to fit!");
+    }
+
+    width = bw;
+    height = bh;
+    text_scale = size;
+    spacing = spc;
+  }
+
+  return {style: style, nrows: rows, ncols: cols, width: width, height: height, spacing: spacing, dir: dir, textscale: text_scale, margins: margins};
+}
+
+function getChoiceExtent (text, size, multi, bounding_width) {
+  //increase text length to account for checkbox
+  return getTextExtent((multi ? '\u2610 ' : '') + text, size, bounding_width);
+}
+
+function getTextExtent (text, size, bounding_width) {
+  if (bounding_width == null) {
+    bounding_width = $('#staging')[0].clientWidth;
+  }
+
+  snippet = document.getElementById('snippet');
+  snippet.style.width = bounding_width + 'px';
+  snippet.textContent = text;
+  snippet.style.fontSize = 100. * size + '%';
+  return [snippet.offsetWidth, snippet.offsetHeight];
+}
+
+function buttonDimensions (textdim) {
+  return [Math.round(1.1 * textdim[0] + 0.7 * textdim[1]), Math.round(textdim[1] * 1.5)];
+}
+
+function render_button_grid (layout_params, choices, multi, selected, onclick) {
+  //TODO: find a better way to handle these multiselect checkboxes
+
+  var buttons = generate_choice_buttons(choices, multi, selected, layout_params, onclick);
+
+  var button_grid = [];
+  for (var i = 0; i < layout_params.nrows * layout_params.ncols; i++) {
+    var c = i % layout_params.ncols;
+    var r = (i - c) / layout_params.ncols;
+    var j =  (layout_params.dir == 'horiz' ? layout_params.ncols * r + c : layout_params.nrows * c + r);
+    button_grid.push(j < choices.length ? buttons[j] : null);
+  }
+
+  layout_info = new Layout({id: 'ch',
+                            nrows: layout_params.nrows,
+                            ncols: layout_params.ncols,
+                            widths: layout_params.width,
+                            heights: layout_params.height,
+                            margins: layout_params.margins,
+                            spacings: layout_params.spacing,
+                            content: button_grid});
+  return {layout: layout_info, buttons: buttons};
+}
+
+function generate_choice_buttons (choices, multi, selected, layout_params, onclick) {
+  var buttons = [];
+  for (var i = 0; i < choices.length; i++) {
+    var isSelected = (selected != null && selected.indexOf(i + 1) != -1);
+    var text = (multi ? (isSelected ? '\u2612' : '\u2610') + ' ' : '') + choices[i];
+    var button = isSelected ? [text, null, null, true] : text;
+    buttons.push(button);
+  }
+  return kbs(buttons, null, layout_params.textscale, onclick, layout_params.style == 'grid');
+}
+
 function uid (id) {
   if (id == null || id == '')
     id = "id-" + Math.floor(Math.random() * 1000000000);
@@ -621,6 +834,7 @@ function partition (p) {
   round_sizes(hSizes);
   round_sizes(vSizes);
 
+  console.log(hSizes, vSizes, p.id);
   return [hSizes, vSizes];
 }
 
