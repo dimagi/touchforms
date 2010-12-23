@@ -462,7 +462,7 @@ function ChoiceSelect (args) {
   this.buttons = null;
 
   this.render = function (parent_div) {
-    var layout_params = layout_choices(parent_div, this.choices);
+    var layout_params = layout_choices(parent_div, this.choices, this.multi);
     var render_data = render_button_grid(layout_params, this.choices, this.multi, this.selected, this.onclick);
     var layout = render_data.layout;
     this.buttons = render_data.buttons;
@@ -471,7 +471,7 @@ function ChoiceSelect (args) {
 }
 
 //given a set of choice captions, determine optimum layout of choice buttons to maximize aesthetics
-function layout_choices (parent_div, choices) {
+function layout_choices (parent_div, choices, multi) {
   //layout constants
   var MAX_TEXT_SIZE_GRID = 2.5;
   var MAX_TEXT_SIZE_LIST = 1.8;
@@ -547,7 +547,7 @@ function layout_choices (parent_div, choices) {
 
     //determine best button sizing -- largest sizing that will fit within allowed area
     for (size = MAX_TEXT_SIZE_GRID; size >= MIN_TEXT_SIZE; size -= .1) {
-      var ext = buttonDimensions(getChoiceExtent(longest_choice, size));
+      var ext = buttonDimensions(getChoiceExtent(longest_choice, size, multi));
       bw = ext[0];
       bh = ext[1];
       best_spc = -1;
@@ -582,7 +582,7 @@ function layout_choices (parent_div, choices) {
     //layout priority: maximize button size
     fits = false;
     for (size = MAX_TEXT_SIZE_LIST; size >= MIN_TEXT_SIZE; size -= .1) {
-      var ext = buttonDimensions(getChoiceExtent(longest_choice, size));
+      var ext = buttonDimensions(getChoiceExtent(longest_choice, size, multi));
       bw = ext[0];
       bh = ext[1];
       spc = Math.max(Math.round(bh * .1), 5);
