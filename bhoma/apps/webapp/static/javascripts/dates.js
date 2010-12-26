@@ -179,7 +179,7 @@ function DateWidgetContext (dir, answer, args) {
 
     this.choiceHack = [];
     for (var i = 0; i < choice_info.buttons.length; i++) {
-      this.choiceHack.push({label: choice_info.buttons[i].caption, value: choice_info.values[i]});
+      this.choiceHack.push({label: choice_info.buttons[i].label, value: choice_info.values[i]});
     }
 
     this.select(selected_val);

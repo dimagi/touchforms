@@ -250,27 +250,114 @@ function has_spacing (widths, heights) {
   return (widths.length > 3 || heights.length > 3) && (widths[2] > 0 || heights[2] > 0);
 }
 
+function ChoiceButton (args) {
+  this.label = args.label;
+  this.value = args.value || this.label;
+  this.multi = args.multi || false;
+  this.default_color = args.color;
+  this.selected_color = args.selcolor;
+  this.inactive_color = args.inactcolor;
+  this.base_style = args.style;
+  this.centered = args.centered;
+
+  this.init = function (args) {
+    this.make_button = function (args) {
+      var button = this;
+      var onclick = function (ev) {
+        if (args.action != null && button.status != 'disabled') {
+          args.action(ev, button.value);
+        }
+      };
+
+      return new TextButton({
+          id: 'button-' + this.value,
+          caption: '',
+          color: null,
+          style: null,
+          textcolor: args.textcolor,
+          textsize: args.textsize,
+          onclick: onclick,
+          centered: this.centered && !this.multi
+        });
+    }
+    this.button = this.make_button(args);
+    this.setStatus('default');
+  }
+
+  this.setStatus = function (stat) {
+    this.status = stat;
+
+    this.button.setText((this.multi ? (this.status == 'selected' ? '\u2612' : '\u2610') + ' ' : '') + this.label);
+    this.setColor();
+    this.setClass();
+  }
+
+  this.setColor = function () {
+    if (this.status == 'default') {
+      this.button.setColor(this.default_color);
+    } else if (this.status == 'selected') {
+      if (this.selected_color == null)
+        console.log('no selected color set!');
+      this.button.setColor(this.selected_color);
+    } else if (this.status == 'disabled') {
+      if (this.inactive_color == null)
+        console.log('no disabled color set!');
+      this.button.setColor(this.inactive_color);
+    }
+  }
+
+  this.setClass = function() {
+    if (this.base_style) {
+      if (this.status == 'default') {
+        this.button.setStyle(this.base_style);
+      } else if (this.status == 'selected') {
+        this.button.setStyle('selected ' + this.base_style);
+      } else if (this.status == 'disabled') {
+        //'disabled' style doesn't exist; commenting out until it does as it prevent the disabled color from taking effect
+        //not sure disabled buttons need the 3-d effect anyway
+        //this.button.setStyle(this.base_style + ' disabled');
+        this.button.setStyle(null);
+      }
+    }
+  }    
+
+  this.toggleStatus = function () {
+    if (this.status != 'disabled') {
+      this.setStatus(this.status == 'default' ? 'selected' : 'default');
+    }
+  }
+
+  this.resetStatus = function () {
+    if (this.status != 'disabled') {
+      this.setStatus('default');
+    }
+  }
+
+  this.render = function (parent_div) {
+    this.button.render(parent_div);
+  }
+
+  this.init(args);
+}
+
 //todo: auto-sizing?
 function TextButton (args) {
   this.id = args.id;
+  this.caption = args.caption;
   this.color = args.color;
   this.text_color = args.textcolor;
-  this.selected_color = args.selcolor;
-  this.inactive_color = args.inactcolor;
-  this.caption = args.caption;
   this.size_rel = args.textsize;
   this.onclick = args.onclick;
   this.centered = (args.centered != null ? args.centered : true);
-  this.cls = args.style
-  this.status = 'default';
+  this.style = args.style;
 
   this.container = null;
   this.span = null;
   this.render = function (parent_div) {  
     this.container = parent_div;
     parent_div.id = uid(this.id);
-    this.setColor();
-    this.setClass();
+    this.setColor(this.color);
+    this.setStyle(this.style);
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td align="' + (this.centered ? 'center' : 'left') + '" valign="middle"><span></span></td></tr></table>'
     span = parent_div.getElementsByTagName('span')[0];
     span.style.fontWeight = 'bold';
@@ -285,8 +372,6 @@ function TextButton (args) {
     parent_div.style.MozBorderRadius = '10px';
     parent_div.style.BorderRadius = '10px';
     parent_div.style.WebkitBorderRadius = '10px';
-    
-    
   }
 
   this.setText = function (text) {
@@ -295,43 +380,17 @@ function TextButton (args) {
       this.span.textContent = text;
   }
 
-  this.setClass = function() {
-    if (this.cls && this.container) {
-      if (this.status == 'default') {
-        this.container.setAttribute("class", this.cls);
-      } else if (this.status == 'selected') {
-        this.container.setAttribute("class", "selected " + this.cls);
-      } else if (this.status == 'disabled') {
-        //this.container.setAttribute("class", this.cls + " disabled");
-      }
-    }
-  }
-    
-  this.setColor = function () {
-    if (this.status == 'default') {
-      set_color(this.container, this.color, this.container.style.backgroundColor);
-    } else if (this.status == 'selected') {
-      if (this.selected_color == null)
-        alert('no selected color set!');
-      set_color(this.container, this.selected_color, null);
-    } else if (this.status == 'disabled') {
-      if (this.inactive_color == null)
-        alert('no disabled color set!');
-      set_color(this.container, this.inactive_color, null);
-    }
-  }
-
-  this.toggleStatus = function () {
-    if (this.status != 'disabled') {
-      this.setStatus(this.status == 'default' ? 'selected' : 'default');
-    }
-  }
-
-  this.setStatus = function (stat) {
-    this.status = stat;
+  this.setColor = function (color) {
+    this.color = color;
     if (this.container != null) {
-      this.setColor();
-      this.setClass();
+      set_color(this.container, this.color);
+    }
+  }
+
+  this.setStyle = function (style) {
+    this.style = style;
+    if (this.container != null && this.style != null) {
+      this.container.setAttribute("class", this.style);
     }
   }
 }
@@ -514,8 +573,7 @@ function layout_choices (parent_div, choices, multi) {
       longest_choice = choices[i];
     }
   }
-  if (multi || max_w > MAX_LENGTH_FOR_GRID || max_w - min_w > MAX_LENGTH_DIFF_FOR_GRID_ABS || (min_w >= DIFF_REF_THRESHOLD && max_w/min_w > MAX_LENGTH_DIFF_FOR_GRID_REL)) {
-    //(multi-selects are forced to 'list' style, to avoid unsightly lack of checkbox alignment due to centered captions)
+  if (max_w > MAX_LENGTH_FOR_GRID || max_w - min_w > MAX_LENGTH_DIFF_FOR_GRID_ABS || (min_w >= DIFF_REF_THRESHOLD && max_w/min_w > MAX_LENGTH_DIFF_FOR_GRID_REL)) {
     style = 'list';
   } else {
     style = 'grid';
@@ -657,11 +715,11 @@ function generate_choice_buttons (choices, multi, selected, layout_params, oncli
   var buttons = [];
   for (var i = 0; i < choices.length; i++) {
     var isSelected = (selected != null && selected.indexOf(i + 1) != -1);
-    var text = (multi ? (isSelected ? '\u2612' : '\u2610') + ' ' : '') + choices[i];
+    var text = choices[i];
     var button_info = isSelected ? {label: text, selected: true} : text;
     buttons.push(button_info);
   }
-  return kbs(buttons, {textsize: layout_params.textscale, action: onclick, centered: layout_params.style == 'grid'});
+  return kbs(buttons, {textsize: layout_params.textscale, action: onclick, centered: layout_params.style == 'grid', multi: multi});
 }
 
 function uid (id) {

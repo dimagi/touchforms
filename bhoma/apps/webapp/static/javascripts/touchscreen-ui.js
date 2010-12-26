@@ -325,17 +325,9 @@ function clearClicked (ev, x) {
   }
 }
 
-function normcap (caption) {
-  if (caption.length >= 2 && (caption.substring(0, 1) == '\u2610' || caption.substring(0, 1) == '\u2612')) {
-    return caption.substring(2);
-  } else {
-    return caption;
-  }
-}
-
 function getButtonByCaption (caption) {
   for (i = 0; i < activeInputWidget.length; i++) {
-    if (normcap(activeInputWidget[i].caption) == normcap(caption)) {
+    if (activeInputWidget[i].label == caption) {
       return activeInputWidget[i];
     }
   }
@@ -354,9 +346,7 @@ function getButtonID (button) {
 function clearButtons (except) {
   for (i = 0; i < activeInputWidget.length; i++) {
     if (activeInputWidget[i] != except) {
-      if (activeInputWidget[i].status != 'disabled') {
-        activeInputWidget[i].setStatus('default');
-      }
+      activeInputWidget[i].resetStatus();
     }
   }
 }
@@ -368,8 +358,6 @@ function choiceSelected (ev, x) {
   b.toggleStatus();
   if (activeQuestion["datatype"] == "select") {
     clearButtons(b);
-  } else {
-    b.setText((b.status == 'selected' ? '\u2612 ' : '\u2610 ') + b.caption.substring(2));
   }
 
   if (autoAdvance() && activeQuestion["datatype"] == "select" && oldstatus == "default") {
@@ -416,31 +404,9 @@ function make_button (label, args) {
   args.textcolor = args.textcolor || BUTTON_TEXT_COLOR;
   args.selcolor = args.selcolor || BUTTON_SELECTED_COLOR;
   args.inactcolor = args.inactcolor || BUTTON_DISABLED_COLOR;
-  args.caption = label;
-  args.id = args.id || ('button-' + label);
+  args.label = label;
 
-  //todo: fix this!
-  var clickfunc = function (ev) {
-    //this is a hack
-    if (activeInputWidget instanceof Array) {
-      var button = null;
-      for (var i = 0; i < activeInputWidget.length; i++) {
-        if (activeInputWidget[i].caption == label) {
-          button = activeInputWidget[i];
-          break;
-        }
-      }
-      if (button) {
-        if (button.status == 'disabled')
-          return;
-      }
-    }
-
-    args.action(ev, label);
-  }
-
-  args.onclick = (args.action != null ? clickfunc : null);
-  return new TextButton(args);
+  return new ChoiceButton(args);
 }
   
 /* utility function to generate a grid array of buttons */
