@@ -260,12 +260,14 @@ function ChoiceButton (args) {
   this.base_style = args.style;
   this.centered = args.centered;
 
+  this.flashcounter = 0;
+
   this.init = function (args) {
     this.make_button = function (args) {
       var button = this;
       var onclick = function (ev) {
         if (args.action != null && button.status != 'disabled') {
-          args.action(ev, button.value);
+          args.action(ev, button.value, button);
         }
       };
 
@@ -330,6 +332,20 @@ function ChoiceButton (args) {
   this.resetStatus = function () {
     if (this.status != 'disabled') {
       this.setStatus('default');
+    }
+  }
+
+  this.flash = function(len) {
+    if (len > 0) {
+      this.setStatus('selected');
+      this.flashcounter++;
+      var button = this;
+      setTimeout(function () {
+          button.flashcounter--;
+          if (button.flashcounter == 0) {
+            button.setStatus('default');
+          }
+        }, len);
     }
   }
 

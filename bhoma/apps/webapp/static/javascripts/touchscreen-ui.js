@@ -34,6 +34,7 @@ ALERT_BGCOLOR = '#dd6';
 BACKSPACE_LABEL = '\u21d0';
 
 AUTO_ADVANCE_DELAY = 150; //ms
+KEYFLASH = 0; //150; //ms
 
 function initStaticWidgets () {
   questionCaption = new TextCaption({id: 'q-caption', color: TEXT_COLOR, align: 'left', valign: 'top'});
@@ -447,7 +448,11 @@ function render_clean () {
   render_viewport('viewport', touchscreenUI);
 }
 
-function type_ (e, c) {  
+function type_ (e, c, button) {
+  if (activeQuestion.datatype != 'passwd') {
+    button.flash(KEYFLASH);
+  }
+  
   if (c == BACKSPACE_LABEL) {
     keyCode = 0x08;
     charCode = 0;
