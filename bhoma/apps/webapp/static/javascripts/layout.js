@@ -405,7 +405,7 @@ function TextButton (args) {
 
   this.setStyle = function (style) {
     this.style = style;
-    if (this.container != null && this.style != null) {
+    if (this.container != null) {
       this.container.setAttribute("class", this.style);
     }
   }
@@ -530,6 +530,7 @@ function TextInput (args) {
 
 function ChoiceSelect (args) {
   this.choices = args.choices;
+  this.values = args.choicevals;
   this.multi = args.multi || false;
   this.onclick = args.onclick || choiceSelected;
   this.selected = args.selected || []; //todo: improve this
@@ -538,7 +539,7 @@ function ChoiceSelect (args) {
 
   this.render = function (parent_div) {
     var layout_params = layout_choices(parent_div, this.choices, this.multi);
-    var render_data = render_button_grid(layout_params, this.choices, this.multi, this.selected, this.onclick);
+    var render_data = render_button_grid(layout_params, this.choices, this.values, this.multi, this.selected, this.onclick);
     var layout = render_data.layout;
     this.buttons = render_data.buttons;
     layout.render(parent_div);
@@ -705,8 +706,8 @@ function buttonDimensions (textdim) {
   return [Math.round(1.1 * textdim[0] + 0.7 * textdim[1]), Math.round(textdim[1] * 1.5)];
 }
 
-function render_button_grid (layout_params, choices, multi, selected, onclick) {
-  var buttons = generate_choice_buttons(choices, multi, selected, layout_params, onclick);
+function render_button_grid (layout_params, choices, values, multi, selected, onclick) {
+  var buttons = generate_choice_buttons(choices, values, multi, selected, layout_params, onclick);
 
   var button_grid = [];
   for (var i = 0; i < layout_params.nrows * layout_params.ncols; i++) {
@@ -727,15 +728,14 @@ function render_button_grid (layout_params, choices, multi, selected, onclick) {
   return {layout: layout_info, buttons: buttons};
 }
 
-function generate_choice_buttons (choices, multi, selected, layout_params, onclick) {
+function generate_choice_buttons (choices, values, multi, selected, layout_params, onclick) {
   var buttons = [];
   for (var i = 0; i < choices.length; i++) {
     var isSelected = (selected != null && selected.indexOf(i + 1) != -1);
-    var text = choices[i];
-    var button_info = isSelected ? {label: text, selected: true} : text;
+    var button_info = {label: choices[i], value: (values == null ? i + 1 : values[i]), selected: isSelected};
     buttons.push(button_info);
   }
-  return btgrid(buttons, {textsize: layout_params.textscale, action: onclick, centered: layout_params.style == 'grid', multi: multi});
+  return btngrid(buttons, {textsize: layout_params.textscale, action: onclick, centered: layout_params.style == 'grid', multi: multi});
 }
 
 function uid (id) {

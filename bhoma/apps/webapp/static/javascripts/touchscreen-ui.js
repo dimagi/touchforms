@@ -81,7 +81,7 @@ function initStaticWidgets () {
   makeNumpad = function (extraKey) {
     return aspect_margin('1.7%-',
         new Layout({id: 'numpad', nrows: 4, ncols: 3, widths: '7@', heights: '7@', margins: '*', spacings: '@', 
-                    content: btgrid(['1', '2', '3', '4', '5', '6', '7', '8', '9', extraKey, '0', backspaceKey], {textsize: 2., action: type_})})
+                    content: btngrid(['1', '2', '3', '4', '5', '6', '7', '8', '9', extraKey, '0', backspaceKey], {textsize: 2., action: type_})})
       );
   }
   numPad = makeNumpad();
@@ -115,8 +115,8 @@ function initStaticWidgets () {
     ];
   }
 
-  keyboard = new Layout({id: 'text-kbd', nrows: 4, ncols: 13, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btgrid(kbdFull, {textsize: 1.4, action: type_})});
-  keyboardAlphaOnly = new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btgrid(kbdAlpha, {textsize: 1.9, action: type_})});
+  keyboard = new Layout({id: 'text-kbd', nrows: 4, ncols: 13, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btngrid(kbdFull, {textsize: 1.4, action: type_})});
+  keyboardAlphaOnly = new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btngrid(kbdAlpha, {textsize: 1.9, action: type_})});
 
   //append a 'clear' button to input field(s) and size appropriately
   function make_answerbar (content, widths, id) {
@@ -320,28 +320,10 @@ function clearClicked (ev, x) {
   if (type == "str" || type == "int" || type == "float" || type == "passwd") {
     activeInputWidget.setText('');
   } else if (type == "select" || type == "multiselect") {
-    //not handled yet
+    //no clear button available for these datatypes
   } else if (type == "date") {
     dateEntryContext.clear();
   }
-}
-
-function getButtonByCaption (caption) {
-  for (i = 0; i < activeInputWidget.length; i++) {
-    if (activeInputWidget[i].label == caption) {
-      return activeInputWidget[i];
-    }
-  }
-  return null;
-}
-
-function getButtonID (button) {
-  for (i = 0; i < activeInputWidget.length; i++) {
-    if (activeInputWidget[i] == button) {
-      return i + 1;
-    }
-  }
-  return -1;
 }
 
 function clearButtons (except) {
@@ -352,13 +334,12 @@ function clearButtons (except) {
   }
 }
 
-function choiceSelected (ev, x) {
-  b = getButtonByCaption(x);
-  oldstatus = b.status
+function choiceSelected (ev, value, button) {
+  var oldstatus = button.status;
 
-  b.toggleStatus();
+  button.toggleStatus();
   if (activeQuestion["datatype"] == "select") {
-    clearButtons(b);
+    clearButtons(button);
   }
 
   if (autoAdvance() && activeQuestion["datatype"] == "select" && oldstatus == "default") {
@@ -411,7 +392,7 @@ function make_button (label, args) {
 }
   
 /* utility function to generate a grid array of buttons */
-function btgrid (buttons_info, template) {
+function btngrid (buttons_info, template) {
   var content = [];
   for (var i = 0; i < buttons_info.length; i++) {
     var buttonspec = buttons_info[i];

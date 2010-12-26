@@ -485,7 +485,7 @@ function renderQuestion (event, dir) {
     }
   } else if (event["datatype"] == "select" || event["datatype"] == "multiselect") {
     selections = normalize_select_answer(event["answer"], event["datatype"] == "multiselect");
-    choiceLayout = new ChoiceSelect({choices: event["choices"], selected: selections, multi: event["datatype"] == "multiselect"});
+    choiceLayout = new ChoiceSelect({choices: event["choices"], values: event["choicevals"], selected: selections, multi: event["datatype"] == "multiselect"});
     questionEntry.update(choiceLayout);
     activeInputWidget = choiceLayout.buttons;
   } else if (event["datatype"] == "date") {

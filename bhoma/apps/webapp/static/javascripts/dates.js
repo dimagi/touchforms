@@ -17,9 +17,6 @@ function DateWidgetContext (dir, answer, args) {
       this.prefill();
     }
     this.initScreens(dir, answer);
-
-    //remove when we have dict-based choices
-    this.choiceHack = null;
   }
 
   this.setDate = function (datestr) {
@@ -170,42 +167,37 @@ function DateWidgetContext (dir, answer, args) {
     } else if (this.screen == 'monthyear') {
       this.showScreen(monthYearSelect(this.make_months(), this), monthCount(this.year, this.month));
     }
-    freeEntryKeyboard.update(selectWidget);
   }
 
   this.showScreen = function (choice_info, selected_val) {
-    selectWidget = choice_info.layout;
-    activeInputWidget = choice_info.buttons;
+    this.highlight();
 
-    this.choiceHack = [];
-    for (var i = 0; i < choice_info.buttons.length; i++) {
-      this.choiceHack.push({label: choice_info.buttons[i].label, value: choice_info.values[i]});
-    }
+    freeEntryKeyboard.update(choice_info.layout);
+
+    //all below MUST come after the widget is rendered (taken care of by the line above)
+
+    activeInputWidget = choice_info.get_buttons();
 
     this.select(selected_val);
 
-    for (var i = 0; i < choice_info.buttons.length; i++) {
+    for (var i = 0; i < activeInputWidget.length; i++) {
       if (choice_info.dateranges[i] != null && !rangeOverlap(this.mindate, this.maxdate, choice_info.dateranges[i].start, choice_info.dateranges[i].end)) {
-        choice_info.buttons[i].setStatus('disabled');
+        activeInputWidget[i].setStatus('disabled');
       }
     }
-
-    this.highlight();
   }
 
   this.select = function (val) {
     clearButtons();
 
     if (val != null) {
-      var caption = null;
-      for (var i = 0; i < this.choiceHack.length; i++) {
-        if (this.choiceHack[i].value == val) {
-          caption = this.choiceHack[i].label;
+      var b = null;
+      for (var i = 0; i < activeInputWidget.length; i++) {
+        if (activeInputWidget[i].value == val) {
+          b = activeInputWidget[i];
           break;
         }
       }
-
-      var b = (caption != null ? getButtonByCaption(caption) : null);
       if (b != null) {
         b.setStatus('selected');
       }
@@ -248,15 +240,15 @@ function DateWidgetContext (dir, answer, args) {
         showError('This is not a valid date.');
       }
     } else {
-      currentScreenVal = null;
+      currentScreenUnchosen = true;
       for (i = 0; i < activeInputWidget.length; i++) {
         if (activeInputWidget[i].status == 'selected') {
-          currentScreenVal = activeInputWidget[i].caption;
+          currentScreenUnchosen = false;
           break;
         }
       }
       
-      if (currentScreenVal == null) {
+      if (currentScreenUnchosen) {
         showError('Please pick a ' + (this.screen == 'decade' ? 'year' : (this.screen == 'monthyear' ? 'month' : this.screen)) + '. To skip this question and leave it blank, click \'CLEAR\' first.');
         return;
       } else {
@@ -266,15 +258,7 @@ function DateWidgetContext (dir, answer, args) {
     }
   }
   
-  this.selected = function (field, caption) {
-    var val = null;
-    for (var i = 0; i < this.choiceHack.length; i++) {
-      if (this.choiceHack[i].label == caption) {
-        val = this.choiceHack[i].value;
-        break;
-      }
-    }
-
+  this.selected = function (field, val) {
     if (field == 'decade') {
       var oldbucket = this.getYearBucket();
 
@@ -494,7 +478,7 @@ function DateWidgetContext (dir, answer, args) {
 
   this.selfunc = function (field) {
     var context = this;
-    return function (ev, x) { context.selected(field, x); };
+    return function (ev, value) { context.selected(field, value); };
   }
 
   this.init(dir, answer, args || {});
@@ -511,8 +495,8 @@ function decadeSelect (decades, context) {
   }
 
   var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: 2, width: '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'},
-                                labels, false, [], context.selfunc('decade'));
-  return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons, values: values, dateranges: ranges};
+                                labels, values, false, [], context.selfunc('decade'));
+  return {layout: aspect_margin('5%-', grid.layout), get_buttons: function () { return grid.buttons; }, dateranges: ranges};
 }
 
 function yearSelect (bucket, context) {
@@ -528,7 +512,7 @@ function yearSelect (bucket, context) {
   var grid = render_button_grid({style: 'grid', dir: 'vert',
                                  nrows: Math.min(bucket.end - bucket.start + 1, 5), ncols: Math.ceil((bucket.end - bucket.start + 1) / 5),
                                  width: (bucket.end - bucket.start) > 9 ? '22@' : '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'},
-                                labels, false, [], context.selfunc('year'));
+                                labels, values, false, [], context.selfunc('year'));
   var layout = grid.layout;
   if (values.length <= 5) {
     //this is really, really, ugly
@@ -538,7 +522,7 @@ function yearSelect (bucket, context) {
     var h = 7 * values.length + 2 * (values.length - 1);
     layout = new Layout({margins: '*', widths: full_w + '@', heights: full_h + '@', content: [new Layout({margins: '*', widths: (100.*w/full_w) + '%', heights: (100.*h/full_h) + '%', content: [layout]})]});
   }
-  return {layout: aspect_margin('5%-', layout), buttons: grid.buttons, values: values, dateranges: ranges};
+  return {layout: aspect_margin('5%-', layout), get_buttons: function () { return grid.buttons; }, dateranges: ranges};
 }
 
 function monthSelect (year, context) {
@@ -553,8 +537,8 @@ function monthSelect (year, context) {
   var size = (numericMonths() ? 2.2 : 1.8);
 
   var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 3, ncols: 4, width: '6@', height: '4@', spacing: '@', textscale: size, margins: '*'},
-                                labels, false, [], context.selfunc('month'));
-  return {layout: aspect_margin('7%-', grid.layout), buttons: grid.buttons, values: values, dateranges: ranges};
+                                labels, values, false, [], context.selfunc('month'));
+  return {layout: aspect_margin('7%-', grid.layout), get_buttons: function () { return grid.buttons; }, dateranges: ranges};
 }
 
 function daySelect (month, year, context) {
@@ -569,8 +553,8 @@ function daySelect (month, year, context) {
   }
 
   var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 5, ncols: 7, width: '17@', height: '17@', spacing: '3@', textscale: 1.4, margins: '*'},
-                                labels, false, [], context.selfunc('day'));
-  return {layout: aspect_margin('1.7%-', grid.layout), buttons: grid.buttons, values: values, dateranges: ranges};
+                                labels, values, false, [], context.selfunc('day'));
+  return {layout: aspect_margin('1.7%-', grid.layout), get_buttons: function () { return grid.buttons; }, dateranges: ranges};
 }
 
 function monthYearSelect (monthyears, context) {
@@ -584,12 +568,8 @@ function monthYearSelect (monthyears, context) {
     ranges.push({start: mkFirstOfMonth(item.year, item.month), end: mkLastOfMonth(item.year, item.month)});
   }
 
-  var grid = new ChoiceSelect({choices: labels, onclick: context.selfunc('monthyear')});
-
-  //HACK -- can't get at buttons until layout has been rendered, and ChoiceSelect MUST be wrapped in another layout, or else button references won't match up
-  var layout = aspect_margin('0', grid);
-  freeEntryKeyboard.update(layout);
-  return {layout: layout, buttons: grid.buttons, values: values, dateranges: ranges};
+  var grid = new ChoiceSelect({choices: labels, choicevals: values, onclick: context.selfunc('monthyear')});
+  return {layout: grid, get_buttons: function () { return grid.buttons; }, dateranges: ranges};
 }
 
 function mkdate (y, m, d) {
