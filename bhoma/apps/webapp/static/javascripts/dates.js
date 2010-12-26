@@ -156,8 +156,7 @@ function DateWidgetContext (dir, answer, args) {
     dayText.setText(this.day != null ? intpad(this.day, 2) : '');
 
     if (this.screen == 'decade') {
-      var bucket = this.getYearBucket();
-      this.showScreen(decadeSelect(this.make_decades(), this), bucket != null ? bucket.start : null);
+      this.showScreen(decadeSelect(this.make_decades(), this), this.getChoiceVal('decade'));
     } else if (this.screen == 'year') {
       this.showScreen(yearSelect(this.getYearBucket(), this), this.year);
     } else if (this.screen == 'month') {
@@ -165,7 +164,30 @@ function DateWidgetContext (dir, answer, args) {
     } else if (this.screen == 'day') {
       this.showScreen(daySelect(this.month, this.year, this), this.day);
     } else if (this.screen == 'monthyear') {
-      this.showScreen(monthYearSelect(this.make_months(), this), monthCount(this.year, this.month));
+      this.showScreen(monthYearSelect(this.make_months(), this), this.getChoiceVal('monthyear'));
+    }
+  }
+
+  //it's asking for trouble to set choice values to types that are not comparable (i.e., lists, dicts), so we have to map certain date fields to ints
+  this.getChoiceVal = function (field) {
+    if (field == 'decade') {
+      var bucket = this.getYearBucket();
+      return (bucket != null ? bucket.start : null);
+    } else if (field == 'monthyear') {
+      return monthCount(this.year, this.month);
+    }
+  }
+
+  this.revChoiceVal = function (field, val) {
+    if (field == 'decade') {
+      var buckets = this.make_decades();
+      for (var i = 0; i < buckets.length; i++) {
+        if (buckets[i].start == val) {
+          return buckets[i];
+        }
+      }
+    } else if (field == 'monthyear') {
+      return {y: Math.floor(val / 12), m: (val % 12) + 1};
     }
   }
 
@@ -258,20 +280,12 @@ function DateWidgetContext (dir, answer, args) {
     }
   }
   
-  this.selected = function (field, val) {
+  this.selected = function (field, val, button) {
+    button.setStatus('selected');
+
     if (field == 'decade') {
-      var oldbucket = this.getYearBucket();
-
-      this.year_bucket == null;
-      var buckets = this.make_decades();
-      for (var i = 0; i < buckets.length; i++) {
-        if (buckets[i].start == val) {
-          this.year_bucket = buckets[i];
-          break;
-        }
-      }
-
-      if (oldbucket == null || oldbucket.start != this.year_bucket.start) {
+      if (this.getChoiceVal('decade') != val) {
+        this.year_bucket = this.revChoiceVal('decade', val);
         this.changed = true;
         this.year = null;
       }
@@ -293,13 +307,13 @@ function DateWidgetContext (dir, answer, args) {
       if (oldday != this.day)
         this.changed = true;
     } else if (field == 'monthyear') {
-      if (monthCount(this.year, this.month) != val) {
-        this.year = Math.floor(val / 12);
-        this.month = (val % 12) + 1;
+      if (this.getChoiceVal('monthyear') != val) {
+        var my = this.revChoiceVal('monthyear', val);
+        this.year = my.y;
+        this.month = my.m;
         this.changed = true;
       }
     }
-    this.select(val);
     
     var complete = false;
     var nextscreen = this.getNextScreen();
@@ -478,7 +492,7 @@ function DateWidgetContext (dir, answer, args) {
 
   this.selfunc = function (field) {
     var context = this;
-    return function (ev, value) { context.selected(field, value); };
+    return function (ev, value, button) { context.selected(field, value, button); };
   }
 
   this.init(dir, answer, args || {});
