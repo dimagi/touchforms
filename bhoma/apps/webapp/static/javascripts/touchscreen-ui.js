@@ -137,7 +137,7 @@ function initStaticWidgets () {
     content.push(clearButton);
     widths.push('1.7@');
 
-    return new Layout({margins: [30, 20], content: [
+    return new Layout({margins: ['3%', '18%'], content: [
          new Layout({id: id, ncols: content.length, heights: '@', widths: widths, margins: [expands ? 0 : '*', '*'], spacings: '.08@', content: content})
        ]});
   }
