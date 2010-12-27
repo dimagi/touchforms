@@ -69,9 +69,9 @@ function initStaticWidgets () {
 
   answerBar = new Indirect();
   freeEntryKeyboard = new Indirect();
-  freeEntry = new Layout({id: 'free-entry', nrows: 2, heights: [110, '*'], content: [
+  freeEntry = new Layout({id: 'free-entry', nrows: 2, heights: ['18%', '*'], content: [
     answerBar,
-    new Layout({id: 'kbd', margins: [10, 10, 0, 5], content: [freeEntryKeyboard]})
+    new Layout({id: 'kbd', margins: ['1.5%=', '1.5%=', 0, '.75%='], content: [freeEntryKeyboard]})
   ]});
 
   makeNumpad = function (extraKey) {
@@ -114,30 +114,46 @@ function initStaticWidgets () {
 
   keyboard = new Layout({id: 'text-kbd', nrows: 4, ncols: 13, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: kbs(kbdFull, null, 1.4, type_)});
   keyboardAlphaOnly = new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: kbs(kbdAlpha, null, 1.9, type_)});
-  
-  answerText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.2, 'left', 0));
-  freeTextAnswer = new Layout({id: 'answer-bar', ncols: 2, widths: ['7*', '*'], margins: [30, 20], spacings: 6, content: [
-    answerText,
-    new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
-  ]});
+
+  //append a 'clear' button to input field(s) and size appropriately
+  function make_answerbar (content, widths, id) {
+    if (!(content instanceof Array)) {
+      content = [content];
+    }
+    if (!(widths instanceof Array)) {
+      widths = [widths];
+    }
+
+    //todo: find a way to generalize this?
+    var expands = false;
+    for (var i = 0; i < widths.length; i++) {
+      if (widths[i].indexOf('*') != -1) {
+        expands = true;
+        break;
+      }
+    }
+
+    var clearButton = new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked);
+    content.push(clearButton);
+    widths.push('1.7@');
+
+    return new Layout({margins: [30, 20], content: [
+         new Layout({id: id, ncols: content.length, heights: '@', widths: widths, margins: [expands ? 0 : '*', '*'], spacings: '.08@', content: content})
+       ]});
+  }
+
+  answerText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.2, 'left', 0));  
+  freeTextAnswer = make_answerbar(answerText, '*', 'answer-bar');
 
   passwdText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.3, 'center', 0, true));
-  passwdAnswer = new Layout({id: 'answer-bar', ncols: 2, widths: ['3*', '*'], margins: [235, 20], spacings: 6, content: [
-    passwdText,
-    new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
-  ]});
+  passwdAnswer = make_answerbar(passwdText, '5@', 'passwd-bar');
   
   dayText = new InputArea('dayinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '06', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('day');});
   monthText = new InputArea('monthinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, 'Oct', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('month');});
   yearText = new InputArea('yearinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '20\u2022\u2022', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('year');});  
-  dateAnswer = new Layout({id: 'date-bar', ncols: 6, widths: [90, 36, 130, 36, 160, 110], margins: ['*', 20], spacings: 6, content: [
-    dayText,
-    new TextCaption('q-caption', TEXT_COLOR, '\u2013', 1.7, 'center', 'middle'),
-    monthText,
-    new TextCaption('q-caption', TEXT_COLOR, '\u2013', 1.7, 'center', 'middle'),
-    yearText,
-    new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
-  ]});
+  var dateSpacer = function () { return new TextCaption('q-caption', TEXT_COLOR, '\u2013', 1.7, 'center', 'middle'); };
+  dateAnswer = make_answerbar([dayText, dateSpacer(), monthText, dateSpacer(), yearText], ['1.3@', '.5@', '1.85@', '.5@', '2.3@'], 'date-bar');
+
 }
 
 var clicksEnabled;
