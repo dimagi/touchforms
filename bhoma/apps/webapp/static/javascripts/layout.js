@@ -251,17 +251,17 @@ function has_spacing (widths, heights) {
 }
 
 //todo: auto-sizing?
-function TextButton (id, color, text_color, selected_color, inactive_color, caption, size_rel, onclick, centered, cls) {
-  this.id = id;
-  this.color = color;
-  this.text_color = text_color;
-  this.selected_color = selected_color;
-  this.inactive_color = inactive_color;
-  this.caption = caption;
-  this.size_rel = size_rel;
-  this.onclick = onclick;
-  this.centered = (centered != null ? centered : true);
-  this.cls = cls
+function TextButton (args) {
+  this.id = args.id;
+  this.color = args.color;
+  this.text_color = args.textcolor;
+  this.selected_color = args.selcolor;
+  this.inactive_color = args.inactcolor;
+  this.caption = args.caption;
+  this.size_rel = args.textsize;
+  this.onclick = args.onclick;
+  this.centered = (args.centered != null ? args.centered : true);
+  this.cls = args.style
   this.status = 'default';
 
   this.container = null;
@@ -657,10 +657,10 @@ function generate_choice_buttons (choices, multi, selected, layout_params, oncli
   for (var i = 0; i < choices.length; i++) {
     var isSelected = (selected != null && selected.indexOf(i + 1) != -1);
     var text = (multi ? (isSelected ? '\u2612' : '\u2610') + ' ' : '') + choices[i];
-    var button = isSelected ? [text, null, null, true] : text;
-    buttons.push(button);
+    var button_info = isSelected ? {label: text, selected: true} : text;
+    buttons.push(button_info);
   }
-  return kbs(buttons, null, layout_params.textscale, onclick, layout_params.style == 'grid');
+  return kbs(buttons, {textsize: layout_params.textscale, action: onclick, centered: layout_params.style == 'grid'});
 }
 
 function uid (id) {

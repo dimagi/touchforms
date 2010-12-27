@@ -17,16 +17,16 @@ FOOTER_COLOR = '#abd';
 BUTTON_TEXT_COLOR = '#fff';
 TEXT_COLOR = '#000';
 KEYBUTTON_COLOR = '#118';
-KEYBUTTON_CLASS = 'shiny-button';
+KEYBUTTON_CLASS = 'key-button';
 BUTTON_SELECTED_COLOR = '#0bf';
 HIGHLIGHT_COLOR = '#ffc';
 NUMPAD_COLOR = '#16c';
-SPC_COLOR = '#44e';
-
-KEYBUTTON_CLASS = 'key-button';
-BACKSPACE_CLASS = 'clear-button';
 NUMPAD_CLASS = 'numpad-button';
+SPC_COLOR = '#44e';
 SPC_CLASS= 'spacebar';
+
+
+BACKSPACE_CLASS = 'clear-button';
 
 
 BACKSPACE_LABEL = '\u21d0';
@@ -36,10 +36,10 @@ AUTO_ADVANCE_DELAY = 150; //ms
 function initStaticWidgets () {
   questionCaption = new TextCaption('q-caption', TEXT_COLOR, '', 1., 'left', 'top');
   
-  helpButton = new TextButton('help-button', '#aaa', BUTTON_TEXT_COLOR, null, null, '?', 1., helpClicked);
-  backButton = new TextButton('back-button', '#6ad', BUTTON_TEXT_COLOR, null, null, 'BACK', .9, backClicked);
-  homeButton = new TextButton('home-button', '#d23', BUTTON_TEXT_COLOR, null, null, 'HOME', .9, homeClicked);
-  nextButton = new TextButton('next-button', '#1a3', BUTTON_TEXT_COLOR, null, null, 'NEXT', 1.2, nextClicked);
+  helpButton = new TextButton({id: 'help-button', color: '#aaa', textcolor: BUTTON_TEXT_COLOR, caption: '?', textsize: 1., onclick: helpClicked});
+  backButton = new TextButton({id: 'back-button', color: '#6ad', textcolor: BUTTON_TEXT_COLOR, caption: 'BACK', textsize: .9, onclick: backClicked});
+  homeButton = new TextButton({id: 'home-button', color: '#d23', textcolor: BUTTON_TEXT_COLOR, caption: 'HOME', textsize: .9, onclick: homeClicked});
+  nextButton = new TextButton({id: 'next-button', color: '#1a3', textcolor: BUTTON_TEXT_COLOR, caption: 'NEXT', textsize: 1.2, onclick: nextClicked});
   
   questionEntry = new Indirect();
   
@@ -77,7 +77,7 @@ function initStaticWidgets () {
   makeNumpad = function (extraKey) {
     return aspect_margin('1.7%-',
         new Layout({id: 'numpad', nrows: 4, ncols: 3, widths: '7@', heights: '7@', margins: '*', spacings: '@', 
-                    content: kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', extraKey, '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_)})
+                    content: kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', extraKey, '0', {label: BACKSPACE_LABEL, style: BACKSPACE_CLASS}], {textsize: 2., action: type_})})
       );
   }
 
@@ -88,32 +88,32 @@ function initStaticWidgets () {
   
   if (kbdQwerty) {
     kbdFull = [
-      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', ['7', NUMPAD_CLASS], ['8', NUMPAD_CLASS], ['9', NUMPAD_CLASS],
-      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', ['4', NUMPAD_CLASS], ['5', NUMPAD_CLASS], ['6', NUMPAD_CLASS],
-      'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '!', ['1', NUMPAD_CLASS], ['2', NUMPAD_CLASS], ['3', NUMPAD_CLASS],
-      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['', SPC_CLASS], ['0', NUMPAD_CLASS], [BACKSPACE_LABEL, BACKSPACE_CLASS]     
+      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', {label: '7', style: NUMPAD_CLASS}, {label: '8', style: NUMPAD_CLASS}, {label: '9', style: NUMPAD_CLASS},
+      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', {label: '4', style: NUMPAD_CLASS}, {label: '5', style: NUMPAD_CLASS}, {label: '6', style: NUMPAD_CLASS},
+      'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '!', {label: '1', style: NUMPAD_CLASS}, {label: '2', style: NUMPAD_CLASS}, {label: '3', style: NUMPAD_CLASS},
+      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', {label: '', style: SPC_CLASS}, {label: '0', style: NUMPAD_CLASS}, {label: BACKSPACE_LABEL, style: BACKSPACE_CLASS}     
     ];
     kbdAlpha = [
       'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
-      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', [BACKSPACE_LABEL, BACKSPACE_CLASS],
+      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', {label: BACKSPACE_LABEL, style: BACKSPACE_CLASS},
       'Z', 'X', 'C', 'V', 'B', 'N', 'M', '\u2013', '\'', ''
     ];
   } else {
     kbdFull = [
-      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', ['7', NUMPAD_CLASS], ['8', NUMPAD_CLASS], ['9', NUMPAD_CLASS], [BACKSPACE_LABEL, BACKSPACE_CLASS],
-      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', ['4', NUMPAD_CLASS], ['5', NUMPAD_CLASS], ['6', NUMPAD_CLASS], '.',
-      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ['', SPC_CLASS], ['1', NUMPAD_CLASS], ['2', NUMPAD_CLASS], ['3', NUMPAD_CLASS], ',',
-      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['0', NUMPAD_CLASS], '!', '?'     
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', {label: '7', style: NUMPAD_CLASS}, {label: '8', style: NUMPAD_CLASS}, {label: '9', style: NUMPAD_CLASS}, {label: BACKSPACE_LABEL, style: BACKSPACE_CLASS},
+      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', {label: '4', style: NUMPAD_CLASS}, {label: '5', style: NUMPAD_CLASS}, {label: '6', style: NUMPAD_CLASS}, '.',
+      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', {label: '', style: SPC_CLASS}, {label: '1', style: NUMPAD_CLASS}, {label: '2', style: NUMPAD_CLASS}, {label: '3', style: NUMPAD_CLASS}, ',',
+      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', {label: '0', style: NUMPAD_CLASS}, '!', '?'     
     ];
     kbdAlpha = [
-      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', [BACKSPACE_LABEL, BACKSPACE_CLASS],
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', {label: BACKSPACE_LABEL, style: BACKSPACE_CLASS},
       'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '',
       'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '\u2013', '\''
     ];
   }
 
-  keyboard = new Layout({id: 'text-kbd', nrows: 4, ncols: 13, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: kbs(kbdFull, null, 1.4, type_)});
-  keyboardAlphaOnly = new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: kbs(kbdAlpha, null, 1.9, type_)});
+  keyboard = new Layout({id: 'text-kbd', nrows: 4, ncols: 13, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: kbs(kbdFull, {textsize: 1.4, action: type_})});
+  keyboardAlphaOnly = new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: kbs(kbdAlpha, {textsize: 1.9, action: type_})});
 
   //append a 'clear' button to input field(s) and size appropriately
   function make_answerbar (content, widths, id) {
@@ -133,7 +133,7 @@ function initStaticWidgets () {
       }
     }
 
-    var clearButton = new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked);
+    var clearButton = new TextButton({id: 'clear-button', color: '#aaa', textcolor: BUTTON_TEXT_COLOR, caption: 'CLEAR', textsize: 0.8, onclick: clearClicked});
     content.push(clearButton);
     widths.push('1.7@');
 
@@ -646,42 +646,45 @@ function showActionableAlert (text, choices, actions) {
   overlay.setActive(true);
 }
 
-/* utility function to generate a single keyboard button */
-function kb (lab, sz, col, onclick, centered, cls) {
-  if (col == null)
-    col = KEYBUTTON_COLOR;
-  if (cls == null) 
-    cls = KEYBUTTON_CLASS;
-  return new TextButton('button-' + lab, col, BUTTON_TEXT_COLOR, BUTTON_SELECTED_COLOR, null, lab, sz, (onclick != null ? function (ev) { onclick(ev, lab); } : null), centered, cls);
+function make_button (label, args) {
+  args.color = args.color || KEYBUTTON_COLOR;
+  args.style = args.style || KEYBUTTON_CLASS;
+  args.textcolor = args.textcolor || BUTTON_TEXT_COLOR;
+  args.selcolor = args.selcolor || BUTTON_SELECTED_COLOR;
+  args.caption = label;
+  args.id = args.id || ('button-' + label);
+  args.onclick = (args.action != null ? function (ev) { args.action(ev, label); } : null);
+  return new TextButton(args);
 }
   
 /* utility function to generate an array of keybaord buttons for... a keyboard */
-function kbs (infos, def_cls, def_sz, onclick, centered) {
-  var stuff = new Array();
-  for (var i = 0; i < infos.length; i++) {
-    var info = infos[i];
-    if (info != null) {
-      if (info instanceof Array) {
-        var lab = info[0];
-        var cls = info.length > 1 && info[1] != null ? info[1] : def_cls;
-        var sz = info.length > 2 && info[2] != null ? info[2] : def_sz;
-        var selected = info.length > 3 ? info[3] : false;
-      } else {
-        var lab = info;
-        var cls = def_cls;
-        var sz = def_sz;
-        var selected = false;
+function kbs (buttons_info, template) {
+  var content = [];
+  for (var i = 0; i < buttons_info.length; i++) {
+    var buttonspec = buttons_info[i];
+    if (buttonspec != null) {
+      var args = {};
+      for (var key in template) {
+        args[key] = template[key];
       }
-      var st = kb(lab, sz, null, onclick, centered, cls);
-      if (selected) {
-        st.setStatus('selected');
+      if (buttonspec instanceof Object) {
+        for (var key in buttonspec) {
+          args[key] = buttonspec[key];
+        }
+        var label = buttonspec.label;
+      } else {
+        var label = buttonspec;
+      }
+      var button = make_button(label, args);
+      if (args.selected) {
+        button.setStatus('selected');
       }
     } else {
-      var st = null;
+      var button = null;
     }
-    stuff.push(st);
+    content.push(button); 
   }
-  return stuff;
+  return content;
 }
 
 function decadeSelect () {
