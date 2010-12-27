@@ -34,7 +34,7 @@ BACKSPACE_LABEL = '\u21d0';
 AUTO_ADVANCE_DELAY = 150; //ms
 
 function initStaticWidgets () {
-  questionCaption = new TextCaption('q-caption', TEXT_COLOR, '', 1., 'left', 'top');
+  questionCaption = new TextCaption({id: 'q-caption', color: TEXT_COLOR, align: 'left', valign: 'top'});
   
   helpButton = new TextButton({id: 'help-button', color: '#aaa', textcolor: BUTTON_TEXT_COLOR, caption: '?', textsize: 1., onclick: helpClicked});
   backButton = new TextButton({id: 'back-button', color: '#6ad', textcolor: BUTTON_TEXT_COLOR, caption: 'BACK', textsize: .9, onclick: backClicked});
@@ -148,10 +148,10 @@ function initStaticWidgets () {
   passwdText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.3, 'center', 0, true));
   passwdAnswer = make_answerbar(passwdText, '5@', 'passwd-bar');
   
-  dayText = new InputArea('dayinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '06', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('day');});
-  monthText = new InputArea('monthinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, 'Oct', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('month');});
-  yearText = new InputArea('yearinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '20\u2022\u2022', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('year');});  
-  var dateSpacer = function () { return new TextCaption('q-caption', TEXT_COLOR, '\u2013', 1.7, 'center', 'middle'); };
+  dayText = new InputArea('dayinp', 3, '#000', 0, '#fff', new TextCaption({color: TEXT_COLOR, size: 1.6}), function () {dateEntryContext.goto_('day');});
+  monthText = new InputArea('monthinp', 3, '#000', 0, '#fff', new TextCaption({color: TEXT_COLOR, size: 1.6}), function () {dateEntryContext.goto_('month');});
+  yearText = new InputArea('yearinp', 3, '#000', 0, '#fff', new TextCaption({color: TEXT_COLOR, size: 1.6}), function () {dateEntryContext.goto_('year');});  
+  var dateSpacer = function () { return new TextCaption({color: TEXT_COLOR, caption: '\u2013', size: 1.7}); };
   dateAnswer = make_answerbar([dayText, dateSpacer(), monthText, dateSpacer(), yearText], ['1.3@', '.5@', '1.85@', '.5@', '2.3@'], 'date-bar');
 
 }

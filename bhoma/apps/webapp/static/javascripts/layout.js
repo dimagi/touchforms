@@ -336,13 +336,13 @@ function TextButton (args) {
   }
 }
 
-function TextCaption (id, color, caption, size_rel, align, valign) {
-  this.id = id;
-  this.color = color;
-  this.caption = caption;
-  this.size_rel = size_rel;
-  this.align = align;
-  this.valign = valign;
+function TextCaption (args) {
+  this.id = args.id;
+  this.color = args.color || '#444';
+  this.caption = args.caption || '';
+  this.size_rel = args.size || 1.;
+  this.align = args.align || 'center';
+  this.valign = args.valign || 'middle';
   
   this.container = null;
   this.span = null;
