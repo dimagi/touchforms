@@ -142,10 +142,10 @@ function initStaticWidgets () {
        ]});
   }
 
-  answerText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.2, 'left', 0));  
+  answerText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput({textsize: 1.2, align: 'left', spacing: 0}));  
   freeTextAnswer = make_answerbar(answerText, '*', 'answer-bar');
 
-  passwdText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.3, 'center', 0, true));
+  passwdText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput({textsize: 1.3, spacing: 0, passwd: true}));
   passwdAnswer = make_answerbar(passwdText, '5@', 'passwd-bar');
   
   dayText = new InputArea('dayinp', 3, '#000', 0, '#fff', new TextCaption({color: TEXT_COLOR, size: 1.6}), function () {dateEntryContext.goto_('day');});

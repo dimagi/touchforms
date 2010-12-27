@@ -403,16 +403,16 @@ function TextCaption (args) {
   }
 }
 
-function TextInput (id, color, bgcolor, content, size_rel, align, spacing, passwd) {
-  this.id = id;
-  this.color = color;
-  this.bgcolor = bgcolor;
-  this.content = content;
-  this.size_rel = size_rel;
-  this.align = align;
-  this.spacing = spacing;
-  this.passwd = passwd;
-  this.maxlen = -1;
+function TextInput (args) {
+  this.id = args.id;
+  this.color = args.color || '#000';
+  this.bgcolor = args.bgcolor;
+  this.content = args.content || '';
+  this.size_rel = args.textsize || 1.;
+  this.align = args.align || 'center';
+  this.spacing = args.spacing;
+  this.passwd = args.passwd || false;
+  this.maxlen = args.maxlen || -1;
 
   this.container = null;
   this.control = null;
@@ -434,7 +434,7 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing, passw
     if (this.spacing != null) {
       inp.style.letterSpacing = this.spacing + 'px';
     }
-    inp.value = content;
+    inp.value = this.content;
     inp.type = (this.passwd ? 'password' : 'text');
     this.control = inp;
   }
