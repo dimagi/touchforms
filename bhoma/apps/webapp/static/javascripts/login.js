@@ -27,8 +27,7 @@ function wfLogin () {
                                });
         return auth_res.result;
     }
-    var q_password = new wfQuestion('Password', 'passwd', null, null, true, 
-                                    auth_validation, null, 'numeric');
+    var q_password = new wfQuestion({caption: 'Password', type: 'passwd', required: true, validation: auth_validation, domain: 'numeric'});
     yield q_password;
     
     data["username"] = username;

@@ -3,7 +3,7 @@
  */ 
 
 function qSelectReqd (caption, choices, help) {
-  return new wfQuestion(caption, 'select', null, uniqifyChoices(choices), true, null, help);
+  return new wfQuestion({caption: caption, type: 'select', choices: uniqifyChoices(choices), required: true, helptext: help});
 }
 
 function uniqifyChoices (choices) {

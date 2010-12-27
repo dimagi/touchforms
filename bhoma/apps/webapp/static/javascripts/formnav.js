@@ -254,16 +254,16 @@ function Workflow (flow, onFinish) {
   }
 }
 
-function wfQuestion (caption, type, answer, choices, required, validation, helptext, domain, custom_layout) {
-  this.caption = caption;
-  this.type = type;
-  this.value = answer || null;
-  this.choices = choices;
-  this.required = required || false;
-  this.validation = validation || function (ans) { return null; };
-  this.domain = domain;
-  this.custom_layout = custom_layout;
-  this.helptext = helptext;
+function wfQuestion (args) { //caption, type, answer, choices, required, validation, helptext, domain, custom_layout) {
+  this.caption = args.caption;
+  this.type = args.type;
+  this.value = args.answer || null;
+  this.choices = args.choices;
+  this.required = args.required || false;
+  this.validation = args.validation || function (ans) { return null; };
+  this.domain = args.domain;
+  this.helptext = args.helptext;
+  this.custom_layout = args.custom_layout;
 
   this.to_q = function () {
     return {'caption': this.caption,
