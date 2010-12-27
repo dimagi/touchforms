@@ -1052,14 +1052,14 @@ function oneOffButtonHTML (id, text, align, padding, custom_style) {
   return '<table class="shiny-button rounded" id="' + id + '" ' + (align ? 'align="' + align + '" ' : '') + 'cellpadding="' + padding + '" style="color: white; font-weight: bold; ' + custom_style + '"><tr><td><strong>&nbsp;' + htmlescape(text) + '&nbsp;</strong></td></tr></table>';
 }
 
-function InputArea (id, border, border_color, padding, inside_color, child, onclick) {
-  this.id = id;
-  this.border = border;
-  this.border_color = border_color;
-  this.padding = padding;
-  this.inside_color = inside_color;
-  this.child = child;
-  this.onclick = onclick;
+function InputArea (args) {
+  this.id = args.id;
+  this.border = args.border;
+  this.border_color = args.border_color || '#000';
+  this.padding = args.padding || 0;
+  this.inside_color = args.inside_color || '#fff';
+  this.child = args.child;
+  this.onclick = args.onclick;
 
   this.layout;
   this.container = null;
@@ -1088,11 +1088,11 @@ function InputArea (id, border, border_color, padding, inside_color, child, oncl
 
   this.render = function (parent_div) {
     if (this.padding > 0) {
-      inside = new Layout({id: id + '-padded', margins: padding, content: [this.child]});
+      inside = new Layout({id: this.id + '-padded', margins: this.padding, content: [this.child]});
     } else {
       inside = this.child;
     }
-    this.layout = new Layout({id: id, margins: border, color: this.inside_color, margin_color: this.border_color, content: [inside]});
+    this.layout = new Layout({id: this.id, margins: this.border, color: this.inside_color, margin_color: this.border_color, content: [inside]});
     this.layout.render(parent_div);
     this.container = this.layout.container;
     this.container.onclick = this.onclick;

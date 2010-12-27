@@ -142,15 +142,15 @@ function initStaticWidgets () {
        ]});
   }
 
-  answerText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput({textsize: 1.2, align: 'left', spacing: 0}));  
+  answerText = new InputArea({id: 'textinp', border: 3, padding: 5, child: new TextInput({textsize: 1.2, align: 'left', spacing: 0})});  
   freeTextAnswer = make_answerbar(answerText, '*', 'answer-bar');
 
-  passwdText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput({textsize: 1.3, spacing: 0, passwd: true}));
+  passwdText = new InputArea({id: 'textinp', border: 3, padding: 5, child: new TextInput({textsize: 1.3, spacing: 0, passwd: true})});
   passwdAnswer = make_answerbar(passwdText, '5@', 'passwd-bar');
   
-  dayText = new InputArea('dayinp', 3, '#000', 0, '#fff', new TextCaption({color: TEXT_COLOR, size: 1.6}), function () {dateEntryContext.goto_('day');});
-  monthText = new InputArea('monthinp', 3, '#000', 0, '#fff', new TextCaption({color: TEXT_COLOR, size: 1.6}), function () {dateEntryContext.goto_('month');});
-  yearText = new InputArea('yearinp', 3, '#000', 0, '#fff', new TextCaption({color: TEXT_COLOR, size: 1.6}), function () {dateEntryContext.goto_('year');});  
+  dayText = new InputArea({id: 'dayinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {dateEntryContext.goto_('day');}});
+  monthText = new InputArea({id: 'monthinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {dateEntryContext.goto_('month');}});
+  yearText = new InputArea({id: 'yearinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {dateEntryContext.goto_('year');}});  
   var dateSpacer = function () { return new TextCaption({color: TEXT_COLOR, caption: '\u2013', size: 1.7}); };
   dateAnswer = make_answerbar([dayText, dateSpacer(), monthText, dateSpacer(), yearText], ['1.3@', '.5@', '1.85@', '.5@', '2.3@'], 'date-bar');
 
