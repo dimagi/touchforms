@@ -254,7 +254,7 @@ function Workflow (flow, onFinish) {
   }
 }
 
-function wfQuestion (args) { //caption, type, answer, choices, required, validation, helptext, domain, custom_layout) {
+function wfQuestion (args) {
   this.caption = args.caption;
   this.type = args.type;
   this.value = args.answer || null;

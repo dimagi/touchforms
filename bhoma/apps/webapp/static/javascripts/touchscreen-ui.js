@@ -86,7 +86,7 @@ function initStaticWidgets () {
   numPadPhone = makeNumpad('+');
   numPadBP = makeNumpad('/');
   
-  if (kbdQwerty) {
+  if (qwertyKbd()) {
     kbdFull = [
       'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', {label: '7', style: NUMPAD_CLASS}, {label: '8', style: NUMPAD_CLASS}, {label: '9', style: NUMPAD_CLASS},
       'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', {label: '4', style: NUMPAD_CLASS}, {label: '5', style: NUMPAD_CLASS}, {label: '6', style: NUMPAD_CLASS},
@@ -154,6 +154,24 @@ function initStaticWidgets () {
   var dateSpacer = function () { return new TextCaption({color: TEXT_COLOR, caption: '\u2013', size: 1.7}); };
   dateAnswer = make_answerbar([dayText, dateSpacer(), monthText, dateSpacer(), yearText], ['1.3@', '.5@', '1.85@', '.5@', '2.3@'], 'date-bar');
 
+}
+
+function setting (varname, defval) {
+  defval = defval || false;
+  var val = window[varname];
+  return (val != null ? val : defval);
+}
+
+function numericMonths () {
+  return setting('NUMERIC_MONTHS');
+}
+
+function qwertyKbd () {
+  return setting('KBD_QWERTY');
+}
+
+function autoAdvance () {
+  return setting('AUTO_ADVANCE', true);
 }
 
 var clicksEnabled;
@@ -270,6 +288,7 @@ function clearClicked (ev, x) {
 monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 decades = ['2000\u2014' + ((new Date()).getFullYear() + 1), '1990\u20141999', '1980\u20141989', '1970\u20141979', '1960\u20141969',
 	   '1950\u20141959', '1940\u20141949', '1930\u20141939', '1920\u20141929', '1910\u20141919'];
+
 function DateWidgetContext (dir, answer) {
   this.init = function (dir, answer) {
     this.screen = (dir || answer == null ? 'decade' : 'day');
@@ -284,9 +303,8 @@ function DateWidgetContext (dir, answer) {
       this.day = null;
     } else {
       this.year = +datestr.substring(0, 4);
-      month = +datestr.substring(5, 7);
       this.day = +datestr.substring(8, 10);
-      this.month = monthNames[month - 1];
+      this.month = +datestr.substring(5, 7);
       this.decade = this.decadeForYear(this.year);
     }
     this.changed = false;
@@ -318,8 +336,7 @@ function DateWidgetContext (dir, answer) {
   this.getDate = function () {
     if (this.isFull()) {
       dateout = this.year + '-';
-      monthnum = monthNames.indexOf(this.month) + 1;
-      dateout += (monthnum < 10 ? '0' : '') + monthnum + '-';
+      dateout += (this.month < 10 ? '0' : '') + this.month + '-';
       dateout += (this.day < 10 ? '0' : '') + this.day;
       return dateout;
     } else {
@@ -503,7 +520,7 @@ function DateWidgetContext (dir, answer) {
     
     this.refresh();
 
-    if (field == 'day' && this.isFull() && autoAdvance) {
+    if (field == 'day' && this.isFull() && autoAdvance()) {
       doAutoAdvance();
     }
   }
@@ -537,12 +554,12 @@ function isLeap (year) {
 function daysInMonth (month, year) {
   if (month == null)
     return 31;
-  if (year == null && month == 'Feb')
+  if (year == null && month == 2)
     return 28;
 
-  if (month == 'Feb') {
+  if (month == 2) {
     return 28 + (isLeap(year) ? 1 : 0);
-  } else if (month == 'Apr' || month == 'Jun' || month == 'Sep' || month == 'Nov') {
+  } else if (month == 4 || month == 6 || month == 9 || month == 11) {
     return 30;
   } else {
     return 31;
@@ -610,7 +627,7 @@ function choiceSelected (ev, x) {
     b.setText((b.status == 'selected' ? '\u2612 ' : '\u2610 ') + b.caption.substring(2));
   }
 
-  if (autoAdvance && activeQuestion["datatype"] == "select" && oldstatus == "default") {
+  if (autoAdvance() && activeQuestion["datatype"] == "select" && oldstatus == "default") {
     doAutoAdvance();
   }
 }
@@ -707,7 +724,17 @@ function yearSelect (minyear, maxyear) {
 }
 
 function monthSelect () {
-  var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 3, ncols: 4, width: '6@', height: '4@', spacing: '@', textscale: 1.8, margins: '*'}, monthNames, false, [], monthSelected);
+  if (numericMonths()) {
+    var labels = [];
+    for (var i = 1; i <= 12; i++) {
+      labels.push(i + '');
+    }
+    var size = 2.2;
+  } else {
+    var labels = monthNames;
+    var size = 1.8;
+  }
+  var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 3, ncols: 4, width: '6@', height: '4@', spacing: '@', textscale: size, margins: '*'}, labels, false, [], monthSelected);
   return {layout: aspect_margin('7%-', grid.layout), buttons: grid.buttons};
 }
 
