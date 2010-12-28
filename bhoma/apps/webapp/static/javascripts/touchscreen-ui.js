@@ -553,6 +553,9 @@ function intpad (x, n) {
 }
 
 function monthName (mnum) {
+  if (mnum == null)
+    return null;
+
   if (mnum >= 1 && mnum <= 12) {
     return monthNames[mnum - 1];
   } else {
@@ -561,6 +564,9 @@ function monthName (mnum) {
 }
        
 function monthForName (mname) {
+  if (mname == null)
+    return null;
+
   var mnum = monthNames.indexOf(mname);
   if (mnum != -1) {
     return mnum + 1;
