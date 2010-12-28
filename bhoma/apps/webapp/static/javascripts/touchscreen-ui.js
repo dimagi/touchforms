@@ -152,7 +152,7 @@ function initStaticWidgets () {
   monthText = new InputArea({id: 'monthinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {dateEntryContext.goto_('month');}});
   yearText = new InputArea({id: 'yearinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {dateEntryContext.goto_('year');}});  
   var dateSpacer = function () { return new TextCaption({color: TEXT_COLOR, caption: '\u2013', size: 1.7}); };
-  dateAnswer = make_answerbar([dayText, dateSpacer(), monthText, dateSpacer(), yearText], ['1.3@', '.5@', '1.85@', '.5@', '2.3@'], 'date-bar');
+  dateAnswer = make_answerbar([dayText, dateSpacer(), monthText, dateSpacer(), yearText], ['1.3@', '.5@', numericMonths() ? '1.3@' : '1.85@', '.5@', '2.3@'], 'date-bar');
 
 }
 
@@ -335,10 +335,7 @@ function DateWidgetContext (dir, answer) {
 
   this.getDate = function () {
     if (this.isFull()) {
-      dateout = this.year + '-';
-      dateout += (this.month < 10 ? '0' : '') + this.month + '-';
-      dateout += (this.day < 10 ? '0' : '') + this.day;
-      return dateout;
+      return this.year + '-' + intpad(this.month, 2) + '-' + intpad(this.day, 2);
     } else {
       return null;
     }				   
@@ -367,8 +364,8 @@ function DateWidgetContext (dir, answer) {
     } else {
       yearText.setText('');
     }
-    monthText.setText(this.month != null ? this.month : '');
-    dayText.setText(this.day != null ? (this.day < 10 ? '0' : '') + this.day : '');
+    monthText.setText(this.month != null ? (numericMonths() ? intpad(this.month, 2) : monthName(this.month)) : '');
+    dayText.setText(this.day != null ? intpad(this.day, 2) : '');
 
     if (this.screen == 'decade') {
       tmp = decadeSelect();
@@ -386,7 +383,7 @@ function DateWidgetContext (dir, answer) {
       tmp = monthSelect();
       selectWidget = tmp.layout;
       activeInputWidget = tmp.buttons;
-      this.select(this.month);
+      this.select(numericMonths() ? this.month : monthName(this.month)); //todo: would benefit from dict-based buttons
       this.highlight();
     } else if (this.screen == 'day') {
       tmp = daySelect(daysInMonth(this.month, this.year));
@@ -497,7 +494,7 @@ function DateWidgetContext (dir, answer) {
       }
     } else if (field == 'month') {
       oldmonth = this.month;
-      this.month = val;
+      this.month = (numericMonths() ? +val : monthForName(val));
       if (oldmonth != this.month)
         this.changed = true;
     } else if (field == 'day') {
@@ -545,6 +542,31 @@ function DateWidgetContext (dir, answer) {
   }
 
   this.init(dir, answer);
+}
+
+function intpad (x, n) {
+  var s = x + '';
+  while (s.length < n) {
+    s = '0' + s;
+  }
+  return s;
+}
+
+function monthName (mnum) {
+  if (mnum >= 1 && mnum <= 12) {
+    return monthNames[mnum - 1];
+  } else {
+    throw new Error(mnum + ' not a valid month');
+  }
+}
+       
+function monthForName (mname) {
+  var mnum = monthNames.indexOf(mname);
+  if (mnum != -1) {
+    return mnum + 1;
+  } else {
+    throw new Error(mname + ' not a valid month');
+  }
 }
 
 function isLeap (year) {
