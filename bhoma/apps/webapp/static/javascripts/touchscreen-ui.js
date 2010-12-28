@@ -151,9 +151,33 @@ function initStaticWidgets () {
   dayText = new InputArea({id: 'dayinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {dateEntryContext.goto_('day');}});
   monthText = new InputArea({id: 'monthinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {dateEntryContext.goto_('month');}});
   yearText = new InputArea({id: 'yearinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {dateEntryContext.goto_('year');}});  
-  var dateSpacer = function () { return new TextCaption({color: TEXT_COLOR, caption: '\u2013', size: 1.7}); };
-  dateAnswer = make_answerbar([dayText, dateSpacer(), monthText, dateSpacer(), yearText], ['1.3@', '.5@', numericMonths() ? '1.3@' : '1.85@', '.5@', '2.3@'], 'date-bar');
+  var make_date_answerbar = function () {
+    var dateSpacer = function () { return new TextCaption({color: TEXT_COLOR, caption: '\u2013', size: 1.7}); };
 
+    var content = [];
+    var widths = [];
+    for (var i = 0; i < 3; i++) {
+      var field = dateDisplayOrder()[i];
+      if (field == 'd') {
+        content.push(dayText);
+        widths.push('1.3@');
+      } else if (field == 'm') {
+        content.push(monthText);
+        widths.push(numericMonths() ? '1.3@' : '1.85@');
+      } else if (field == 'y') {
+        content.push(yearText);
+        widths.push('2.3@');
+      }
+
+      if (i < 2) {
+        content.push(dateSpacer());
+        widths.push('.5@');
+      }
+    }
+
+    return make_answerbar(content, widths, 'date-bar');
+  }
+  dateAnswer = make_date_answerbar();
 }
 
 function setting (varname, defval) {
@@ -172,6 +196,14 @@ function qwertyKbd () {
 
 function autoAdvance () {
   return setting('AUTO_ADVANCE', true);
+}
+
+function dateDisplayOrder () {
+  return setting('DATE_DISPLAY_ORDER', 'dmy');
+}
+
+function dateEntryOrder () {
+  return setting('DATE_ENTRY_ORDER', 'ymd'); //not acted upon yet
 }
 
 var clicksEnabled;
