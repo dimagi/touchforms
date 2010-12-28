@@ -23,8 +23,11 @@ HIGHLIGHT_COLOR = '#ffc';
 NUMPAD_COLOR = '#16c';
 NUMPAD_CLASS = 'numpad-button';
 SPC_COLOR = '#44e';
-SPC_CLASS= 'spacebar';
+SPC_CLASS = 'spacebar';
 
+HELP_BGCOLOR = '#6d6';
+ERR_BGCOLOR = '#d66';
+ALERT_BGCOLOR = '#dd6';
 
 BACKSPACE_CLASS = 'clear-button';
 
@@ -43,7 +46,7 @@ function initStaticWidgets () {
   
   questionEntry = new Indirect();
   
-  overlay = new Overlay('#d66', HEADER_COLOR, 3., 2., '');
+  overlay = new Overlay(HEADER_COLOR, 2.);
   touchscreenUI = new Top(
     // main content
     new Layout({id: 'main', nrows: 3, heights: [HEADER_HEIGHT, '*', FOOTER_HEIGHT], margins: SCREEN_BORDER, color: MAIN_COLOR, margin_color: BORDER_COLOR, content: [
@@ -181,17 +184,16 @@ function initStaticWidgets () {
 }
 
 function setting (varname, defval) {
-  defval = defval || false;
   var val = window[varname];
   return (val != null ? val : defval);
 }
 
 function numericMonths () {
-  return setting('NUMERIC_MONTHS');
+  return setting('NUMERIC_MONTHS', false);
 }
 
 function qwertyKbd () {
-  return setting('KBD_QWERTY');
+  return setting('KBD_QWERTY', false);
 }
 
 function autoAdvance () {
@@ -202,8 +204,10 @@ function dateDisplayOrder () {
   return setting('DATE_DISPLAY_ORDER', 'dmy');
 }
 
+//not acted upon yet
 function dateEntryOrder () {
-  return setting('DATE_ENTRY_ORDER', 'ymd'); //not acted upon yet
+  var val = setting('DATE_ENTRY_ORDER', 'ymd');
+  return (val == '-' ? dateDisplayOrder() : val);
 }
 
 var clicksEnabled;
@@ -245,11 +249,11 @@ function enableInput(force) {
 }
 
 function helpClicked (ev, x) {
-  overlay.setText(activeQuestion["help"] || "There is no help text for this question.");
-  overlay.setBgColor('#6d6');
-  overlay.setTimeout(15.);
-  overlay.setDismiss(null);
-  overlay.setActive(true);
+  overlay.activate({
+      text: activeQuestion["help"] || "There is no help text for this question.",
+      color: HELP_BGCOLOR,
+      timeout: 15.
+    });
 }
 
 function backClicked (ev, x) {
@@ -701,26 +705,28 @@ function doAutoAdvance () {
 }
 
 function showError (text) {
-  overlay.setText(text);
-  overlay.setBgColor('#d66');
-  overlay.setTimeout(3.);
-  overlay.setDismiss(null);
-  overlay.setActive(true);
+  overlay.activate({
+      text: text,
+      color: ERR_BGCOLOR,
+      timeout: 3.,
+    });
 }
 
 function showAlert (text, ondismiss) {
-  overlay.setText(text);
-  overlay.setBgColor('#dd6');
-  overlay.setTimeout(0.);
-  overlay.setDismiss(ondismiss);
-  overlay.setActive(true);
+  overlay.activate({
+      text: text,
+      color: ALERT_BGCOLOR,
+      ondismiss: ondismiss
+    });
 }
 
 function showActionableAlert (text, choices, actions) {
-  overlay.setText(text, choices, actions);
-  overlay.setBgColor('#dd6');
-  overlay.setTimeout(0.);
-  overlay.setActive(true);
+  overlay.activate({
+      text: text,
+      choices: choices,
+      actions: actions,
+      color: ALERT_BGCOLOR
+    });
 }
 
 function make_button (label, args) {

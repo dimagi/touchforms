@@ -906,11 +906,13 @@ function htmlescape (raw) {
   return raw;
 }
 
-function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
-  this.mask_color = mask_color;
+function Overlay (bg_color, fadeout) {
   this.bg_color = bg_color;
   this.fadeout = fadeout * 1000.;
-  this.text = text_content;
+
+  this.mask_color = null;
+  this.text = '';
+  this.timeout = null;
   this.ondismiss = null;
   this.choices = null;
   this.actions = null;
@@ -918,12 +920,21 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
   this.active = null;  
   this.container = null;
   this.timeout_id = null;
-  
+  this.span = null;
+  this.mask = null;
+
   this.setTimeout = function (to) {
     this.timeout = to * 1000.;
   }
-  this.setTimeout(timeout);
-  
+
+  this.activate = function (args) {
+    this.setMaskColor(args.color);
+    this.setTimeout(args.timeout || 0.);
+    this.ondismiss = args.ondismiss;
+    this.setText(args.text || '', args.choices, args.actions);
+    this.setActive(true);
+  }
+
   this.setActive = function (state, manual) {
     if (this.active && state) {
       return; //do nothing if already active
@@ -956,9 +967,6 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     } 
   }
   
-  this.span = null;
-  this.mask = null;
-  
   this.setText = function (text, choices, actions) {
     this.text = text;
     this.choices = choices;
@@ -968,16 +976,12 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
       this.renderContent();
   }
   
-  this.setBgColor = function (color) {
+  this.setMaskColor = function (color) {
     this.mask_color = color;
     if (this.mask != null)
       this.mask.style.backgroundColor = color;
   }
   
-  this.setDismiss = function (ondismiss) {
-    this.ondismiss = ondismiss;
-  }
-
   this.renderContent = function () {
     var content = htmlescape(this.text);
 
@@ -1008,7 +1012,7 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
   this.omfg = function (i) {
     var self = this;
     return function () {
-      self.setDismiss(self.actions[i]);
+      self.ondismiss = self.actions[i];
       self.setActive(false, true);
     };
   }
