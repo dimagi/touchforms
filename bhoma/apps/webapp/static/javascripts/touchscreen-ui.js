@@ -834,7 +834,6 @@ function decadeSelect (decades) {
   return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons, values: values, dateranges: ranges};
 }
 
-//todo: proper layout for odd ranges
 function yearSelect (bucket) {
   var labels = [];
   var values = [];
@@ -845,9 +844,20 @@ function yearSelect (bucket) {
     ranges.push({start: mkdate(o, 1, 1), end: mkdate(o, 12, 31)});
   }
 
-  var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: Math.ceil((bucket.end - bucket.start + 1) / 5), width: (bucket.end - bucket.start) > 9 ? '22@' : '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'},
+  var grid = render_button_grid({style: 'grid', dir: 'vert',
+                                 nrows: Math.min(bucket.end - bucket.start + 1, 5), ncols: Math.ceil((bucket.end - bucket.start + 1) / 5),
+                                 width: (bucket.end - bucket.start) > 9 ? '22@' : '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'},
                                 labels, false, [], dateselfunc('year'));
-  return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons, values: values, dateranges: ranges};
+  var layout = grid.layout;
+  if (values.length <= 5) {
+    //this is really, really, ugly
+    var full_w = 35 * 2 + 2;
+    var full_h = 7 * 5 + 2 * 4;
+    var w = 35;
+    var h = 7 * values.length + 2 * (values.length - 1);
+    layout = new Layout({margins: '*', widths: full_w + '@', heights: full_h + '@', content: [new Layout({margins: [.5*(full_w - w) + '*', .5*(full_h - h) + '*'], widths: w + '*', heights: h + '*', content: [layout]})]});
+  }
+  return {layout: aspect_margin('5%-', layout), buttons: grid.buttons, values: values, dateranges: ranges};
 }
 
 function monthSelect (year) {
@@ -895,8 +905,8 @@ function monthYearSelect (monthyears) {
 
   var grid = new ChoiceSelect({choices: labels, onclick: dateselfunc('monthyear')});
 
-  //HACK -- can't get at buttons until layout has been rendered
-  var layout = aspect_margin('1.7%-', grid);
+  //HACK -- can't get at buttons until layout has been rendered, and ChoiceSelect MUST be wrapped in another layout, or else button references won't match up
+  var layout = aspect_margin('0', grid);
   freeEntryKeyboard.update(layout);
   return {layout: layout, buttons: grid.buttons, values: values, dateranges: ranges};
 }
