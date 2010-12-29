@@ -334,6 +334,8 @@ function DateWidgetContext (dir, answer, args) {
     this.setDate(answer);
     this.setAllowedRange(args.min, args.max);
     this.initScreens(dir, answer);
+    if (!answer)
+      this.prefill();
 
     //remove when we have dict-based choices
     this.choiceHack = null;
@@ -374,6 +376,18 @@ function DateWidgetContext (dir, answer, args) {
     console.log(mindate, maxdate, [this.minyear, this.minmonth, this.minday], [this.maxyear, this.maxmonth, this.maxday]);
   }
 
+  this.prefill = function () {
+    if (this.minyear == this.maxyear) {
+      this.year = this.minyear;
+      if (this.minmonth == this.maxmonth) {
+        this.month = this.minmonth;
+        if (this.minday == this.maxday) {
+          this.day = this.minday;
+        }
+      }
+    }
+  }
+
   this.initScreens = function (dir, answer) {
     this.screens = ['day'];
     if (monthCount(this.maxyear, this.maxmonth) - monthCount(this.minyear, this.minmonth) + 1 <= this.MAX_MONTHS_FOR_YEARLESS) {
@@ -386,10 +400,9 @@ function DateWidgetContext (dir, answer, args) {
         this.screens.push('decade');
       }
     }
-    console.log(this.make_decades());
-    console.log(this.screens);
 
     //todo: set initial screen
+    //forward or blank ? first : last
     this.screen = (dir || answer == null ? ainv(this.screens, -1) : this.screens[0]);
   }
 
@@ -543,7 +556,7 @@ function DateWidgetContext (dir, answer, args) {
         }
       }
 
-      var b = getButtonByCaption(caption);
+      var b = (caption != null ? getButtonByCaption(caption) : null);
       if (b != null) {
         b.setStatus('selected');
       }
@@ -564,7 +577,9 @@ function DateWidgetContext (dir, answer, args) {
     this.month = null;
     this.day = null;
     this.year_bucket = null;
-    this.screen = ainv(this.screens, -1); //todo: screen setting
+    this.prefill();
+
+    this.screen = ainv(this.screens, -1); //screen: go to first
     this.refresh();
   }
 
@@ -710,7 +725,21 @@ function DateWidgetContext (dir, answer, args) {
   }
 
   this.goto_ = function (field) {
-    this.screen = (field == 'year' ? 'decade' : field); //fix for monthyear
+    var candidates = [];
+    if (field == 'year') {
+      candidates = ['decade', 'year', 'monthyear'];
+    } else if (field == 'month') {
+      candidates = ['month', 'monthyear'];
+    } else if (field == 'day') {
+      candidates = ['day'];
+    }
+
+    for (var i = 0; i < candidates.length; i++) {
+      if (this.screens.indexOf(candidates[i]) != -1) {
+        this.screen = candidates[i];
+        break;
+      }
+    }
     this.refresh();
   }
 
