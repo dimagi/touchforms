@@ -333,9 +333,10 @@ function DateWidgetContext (dir, answer, args) {
   this.init = function (dir, answer, args) {
     this.setDate(answer);
     this.setAllowedRange(args.min, args.max);
-    this.initScreens(dir, answer);
-    if (!answer)
+    if (!answer) {
       this.prefill();
+    }
+    this.initScreens(dir, answer);
 
     //remove when we have dict-based choices
     this.choiceHack = null;
@@ -372,8 +373,6 @@ function DateWidgetContext (dir, answer, args) {
     if (mindate > maxdate) {
       throw new Error('bad allowed date range');
     }
-
-    console.log(mindate, maxdate, [this.minyear, this.minmonth, this.minday], [this.maxyear, this.maxmonth, this.maxday]);
   }
 
   this.prefill = function () {
@@ -392,7 +391,6 @@ function DateWidgetContext (dir, answer, args) {
     this.screens = ['day'];
     if (monthCount(this.maxyear, this.maxmonth) - monthCount(this.minyear, this.minmonth) + 1 <= this.MAX_MONTHS_FOR_YEARLESS) {
       this.screens.push('monthyear');
-      console.log(this.make_months());
     } else {
       this.screens.push('month');
       this.screens.push('year');
@@ -401,9 +399,7 @@ function DateWidgetContext (dir, answer, args) {
       }
     }
 
-    //todo: set initial screen
-    //forward or blank ? first : last
-    this.screen = (dir || answer == null ? ainv(this.screens, -1) : this.screens[0]);
+    this.screen = (dir || answer == null ? this.getFirstScreen() : this.getLastScreen());
   }
 
   this.make_decades = function () {
@@ -579,7 +575,7 @@ function DateWidgetContext (dir, answer, args) {
     this.year_bucket = null;
     this.prefill();
 
-    this.screen = ainv(this.screens, -1); //screen: go to first
+    this.screen = this.getFirstScreen();
     this.refresh();
   }
 
@@ -587,7 +583,10 @@ function DateWidgetContext (dir, answer, args) {
     if (this.isEmpty() || this.isFull()) {
       if (this.isEmpty() || this.isValid()) {
         if (!this.isEmpty() && !this.isInRange()) {
-          showError('This date is outside the allowed range.');
+          function fmtdate (y, m, d) {
+            return (y >= 1900 && y <= 2050 ? monthName(m) + ' ' + d + ', ' + y : 'anything');
+          }
+          showError('This date is outside the allowed range. (' + fmtdate(this.minyear, this.minmonth, this.minday) + ' \u2014 ' + fmtdate(this.maxyear, this.maxmonth, this.maxday) + ')');
         } else {
           answerQuestion();
         }
@@ -613,33 +612,89 @@ function DateWidgetContext (dir, answer, args) {
     }
   }
   
-  //todo: support monthyear
   this.getEmptyScreen = function () {
-    if (this.decade == null) {
-      return 'decade';
-    } else if (this.year == null) {
-      return 'year';
-    } else if (this.month == null) {
-      return 'month';
-    } else if (this.day == null) {
-      return 'day';
-    } else {
-      return null;
+    var screens = this.screenOrder();
+    for (var i = 0; i < screens.length; i++) {
+      var empty = false;
+      if (screens[i] == 'decade' && this.getYearBucket() == null) {
+        empty = true;
+      } else if (screens[i] == 'year' && this.year == null) {
+        empty = true;
+      } else if (screens[i] == 'month' && this.month == null) {
+        empty = true;
+      } else if (screens[i] == 'day' && this.day == null) {
+        empty = true;
+      } else if (screens[i] == 'monthyear' && monthCount(this.year, this.month) == null) {
+        empty = true;
+      }
+      if (empty) {
+        return screens[i];
+      }
     }
+    return null;
   }
 
-  //todo: support monthyear
   this.getNextScreen = function () {
-    screens = ['decade', 'year', 'month', 'day'];
+    var screens = this.screenOrder();
     i = screens.indexOf(this.screen) + 1;
     return (i >= screens.length ? null : screens[i]);
   }
 
-  //todo: support monthyear
   this.getPrevScreen = function () {
-    screens = ['decade', 'year', 'month', 'day'];
+    var screens = this.screenOrder();
     i = screens.indexOf(this.screen) - 1;
     return (i < 0 ? null : screens[i]);
+  }
+
+  this.getFirstScreen = function () {
+    var scr = this.getEmptyScreen();
+    return (scr != null ? scr : this.screenOrder()[0]);
+  }
+
+  this.getLastScreen = function () {
+    return ainv(this.screenOrder(), -1);
+  }
+
+  this.getFieldOrder = function () {
+    var order = [];
+    var s = dateEntryOrder();
+    for (var i = 0; i < 3; i++) {
+      order.push(({d: 'day', m: 'month', y: 'year'})[s[i]]);
+    }
+    return order;
+  }
+
+  this.screensForField = function (field) {
+    var candidates = [];
+    if (field == 'year') {
+      candidates = ['decade', 'year', 'monthyear'];
+    } else if (field == 'month') {
+      candidates = ['month', 'monthyear'];
+    } else if (field == 'day') {
+      candidates = ['day'];
+    }
+
+    var screens = []
+    for (var i = 0; i < candidates.length; i++) {
+      if (this.screens.indexOf(candidates[i]) != -1) {
+        screens.push(candidates[i]);
+      }
+    }
+    return screens;
+  }
+
+  this.screenOrder = function () {
+    var order = [];
+    var fields = this.getFieldOrder();
+    for (var i = 0; i < fields.length; i++) {
+      var fieldscreens = this.screensForField(fields[i]);
+      for (var j = 0; j < fieldscreens.length; j++) {
+        if (order.indexOf(fieldscreens[j]) == -1) {
+          order.push(fieldscreens[j]);
+        }
+      }
+    }
+    return order;
   }
 
   this.selected = function (field, caption) {
@@ -693,19 +748,22 @@ function DateWidgetContext (dir, answer, args) {
     }
     this.select(val);
     
-    if (this.screen == 'day') { //todo: screen ordering
+    var complete = false;
+    var nextscreen = this.getNextScreen();
+    if (nextscreen == null) {
       if (!this.isFull()) {
         this.screen = this.getEmptyScreen();
       } else {
         //stay on current screen; must click 'next' to advance question
+        complete = true;
       }
     } else {
-      this.screen = this.getNextScreen();
+      this.screen = nextscreen;
     }
     
     this.refresh();
 
-    if (field == 'day' && this.isFull() && autoAdvance()) { //todo: screen ordering
+    if (complete && autoAdvance()) {
       doAutoAdvance();
     }
   }
@@ -725,21 +783,7 @@ function DateWidgetContext (dir, answer, args) {
   }
 
   this.goto_ = function (field) {
-    var candidates = [];
-    if (field == 'year') {
-      candidates = ['decade', 'year', 'monthyear'];
-    } else if (field == 'month') {
-      candidates = ['month', 'monthyear'];
-    } else if (field == 'day') {
-      candidates = ['day'];
-    }
-
-    for (var i = 0; i < candidates.length; i++) {
-      if (this.screens.indexOf(candidates[i]) != -1) {
-        this.screen = candidates[i];
-        break;
-      }
-    }
+    this.screen = this.screensForField(field)[0];
     this.refresh();
   }
 
