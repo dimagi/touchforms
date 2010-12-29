@@ -584,9 +584,13 @@ function DateWidgetContext (dir, answer, args) {
   }
 
   this.highlight = function () {
-    yearText.setBgColor(this.screen == 'decade' || this.screen == 'year' || this.screen == 'monthyear' ? HIGHLIGHT_COLOR : '#fff');
-    monthText.setBgColor(this.screen == 'month' || this.screen == 'monthyear' ? HIGHLIGHT_COLOR : '#fff');
-    dayText.setBgColor(this.screen == 'day' ? HIGHLIGHT_COLOR : '#fff');
+    var self = this;
+    var highlightField = function (domobj, field) {
+      domobj.setBgColor(self.screensForField(field).indexOf(self.screen) != -1 ? HIGHLIGHT_COLOR : '#fff');
+    }
+    highlightField(yearText, 'year');
+    highlightField(monthText, 'month');
+    highlightField(dayText, 'day');
   }
 
   this.clear = function () {
@@ -607,10 +611,7 @@ function DateWidgetContext (dir, answer, args) {
     if (this.isEmpty() || this.isFull()) {
       if (this.isEmpty() || this.isValid()) {
         if (!this.isEmpty() && !this.isInRange()) {
-          function fmtdate (y, m, d) {
-            return (y >= 1900 && y <= 2050 ? monthName(m) + ' ' + d + ', ' + y : 'anything');
-          }
-          showError('This date is outside the allowed range. (' + fmtdate(this.minyear, this.minmonth, this.minday) + ' \u2014 ' + fmtdate(this.maxyear, this.maxmonth, this.maxday) + ')');
+          showError('This date is outside the allowed range. (' + readableDate(this.minyear, this.minmonth, this.minday) + ' \u2014 ' + readableDate(this.maxyear, this.maxmonth, this.maxday) + ')');
         } else {
           answerQuestion();
         }
@@ -968,6 +969,10 @@ function parseDate (datestr) {
   var month = +datestr.substring(5, 7);
   var day = +datestr.substring(8, 10);
   return {year: year, month: month, day: day};
+}
+
+function readableDate (y, m, d) {
+  return (y >= 1900 && y <= 2050 ? monthName(m) + ' ' + d + ', ' + y : 'anything');
 }
 
 function normcap (caption) {
