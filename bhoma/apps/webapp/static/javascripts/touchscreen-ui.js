@@ -19,6 +19,7 @@ TEXT_COLOR = '#000';
 KEYBUTTON_COLOR = '#118';
 KEYBUTTON_CLASS = 'key-button';
 BUTTON_SELECTED_COLOR = '#0bf';
+BUTTON_DISABLED_COLOR = '#888';
 HIGHLIGHT_COLOR = '#ffc';
 NUMPAD_COLOR = '#16c';
 NUMPAD_CLASS = 'numpad-button';
@@ -364,11 +365,13 @@ function DateWidgetContext (dir, answer, args) {
     this.minyear = mindate.getFullYear();
     this.minmonth = mindate.getMonth() + 1;
     this.minday = mindate.getDate();
+    this.mindate = mkdate(this.minyear, this.minmonth, this.minday);
 
     var maxdate = new Date(new Date().getTime() + maxdelta * 86400000);
     this.maxyear = maxdate.getFullYear();
     this.maxmonth = maxdate.getMonth() + 1;
     this.maxday = maxdate.getDate();
+    this.maxdate = mkdate(this.maxyear, this.maxmonth, this.maxday);
 
     if (mindate > maxdate) {
       throw new Error('bad allowed date range');
@@ -467,10 +470,7 @@ function DateWidgetContext (dir, answer, args) {
 
   this.isInRange = function () {
     if (this.isValid()) {
-      var min = new Date(this.minyear, this.minmonth - 1, this.minday);
-      var max = new Date(this.maxyear, this.maxmonth - 1, this.maxday);
-      var cur = new Date(this.year, this.month - 1, this.day);
-      return (min <= cur && cur <= max);
+      return rangeOverlap(this.mindate, this.maxdate, mkdate(this.year, this.month, this.day));
     } else {
       return false;
     }
@@ -518,9 +518,9 @@ function DateWidgetContext (dir, answer, args) {
     } else if (this.screen == 'year') {
       this.showScreen(yearSelect(this.getYearBucket()), this.year);
     } else if (this.screen == 'month') {
-      this.showScreen(monthSelect(), this.month);
+      this.showScreen(monthSelect(this.year), this.month);
     } else if (this.screen == 'day') {
-      this.showScreen(daySelect(daysInMonth(this.month, this.year)), this.day);
+      this.showScreen(daySelect(this.month, this.year), this.day);
     } else if (this.screen == 'monthyear') {
       this.showScreen(monthYearSelect(this.make_months()), monthCount(this.year, this.month));
     }
@@ -537,6 +537,13 @@ function DateWidgetContext (dir, answer, args) {
     }
 
     this.select(selected_val);
+
+    for (var i = 0; i < choice_info.buttons.length; i++) {
+      if (choice_info.dateranges[i] != null && !rangeOverlap(this.mindate, this.maxdate, choice_info.dateranges[i].start, choice_info.dateranges[i].end)) {
+        choice_info.buttons[i].setStatus('disabled');
+      }
+    }
+
     this.highlight();
   }
 
@@ -797,64 +804,75 @@ function dateselfunc (field) {
 function decadeSelect (decades) {
   var labels = [];
   var values = [];
+  var ranges = [];
   for (var i = 0; i < decades.length; i++) {
     labels.push(decades[i].start + '\u2014' + decades[i].end);
     values.push(decades[i].start);
+    ranges.push({start: mkdate(decades[i].start, 1, 1), end: mkdate(decades[i].end, 12, 31)});
   }
 
   var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: 2, width: '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'},
                                 labels, false, [], dateselfunc('decade'));
-  return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons, values: values};
+  return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons, values: values, dateranges: ranges};
 }
 
 //todo: proper layout for odd ranges
 function yearSelect (bucket) {
   var labels = [];
   var values = [];
+  var ranges = [];
   for (var o = bucket.start; o <= bucket.end; o++) {
     labels.push(o + '');
     values.push(o);
+    ranges.push({start: mkdate(o, 1, 1), end: mkdate(o, 12, 31)});
   }
 
   var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: Math.ceil((bucket.end - bucket.start + 1) / 5), width: (bucket.end - bucket.start) > 9 ? '22@' : '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'},
                                 labels, false, [], dateselfunc('year'));
-  return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons, values: values};
+  return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons, values: values, dateranges: ranges};
 }
 
-function monthSelect () {
+function monthSelect (year) {
   var labels = [];
   var values = [];
+  var ranges = [];
   for (var i = 1; i <= 12; i++) {
     labels.push(numericMonths() ? i + '' : monthName(i));
     values.push(i);
+    ranges.push(year != null ? {start: mkdate(year, i, 1), end: mkdate(year, i, daysInMonth(i, year))} : null);
   }
   var size = (numericMonths() ? 2.2 : 1.8);
 
   var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 3, ncols: 4, width: '6@', height: '4@', spacing: '@', textscale: size, margins: '*'},
                                 labels, false, [], dateselfunc('month'));
-  return {layout: aspect_margin('7%-', grid.layout), buttons: grid.buttons, values: values};
+  return {layout: aspect_margin('7%-', grid.layout), buttons: grid.buttons, values: values, dateranges: ranges};
 }
 
-function daySelect (monthLength) {
+function daySelect (month, year) {
+  var monthLength = daysInMonth(month, year);
   var labels = [];
   var values = [];
+  var ranges = [];
   for (var i = 1; i <= monthLength; i++) {
     labels.push(i + '');
     values.push(i);
+    ranges.push(monthCount(year, month) != null ? {start: mkdate(year, month, i), end: mkdate(year, month, i)} : null);
   }
 
   var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 5, ncols: 7, width: '17@', height: '17@', spacing: '3@', textscale: 1.4, margins: '*'},
                                 labels, false, [], dateselfunc('day'));
-  return {layout: aspect_margin('1.7%-', grid.layout), buttons: grid.buttons, values: values};
+  return {layout: aspect_margin('1.7%-', grid.layout), buttons: grid.buttons, values: values, dateranges: ranges};
 }
 
 function monthYearSelect (monthyears) {
   var labels = [];
   var values = [];
+  var ranges = [];
   for (var i = 0; i < monthyears.length; i++) {
     var item = monthyears[i];
     labels.push((numericMonths() ? intpad(item.month) + '/' : monthName(item.month) + ' ') + item.year);
     values.push(monthCount(item.year, item.month));
+    ranges.push({start: mkdate(item.year, item.month, 1), end: mkdate(item.year, item.month, daysInMonth(item.month, item.year))});
   }
 
   var grid = new ChoiceSelect({choices: labels, onclick: dateselfunc('monthyear')});
@@ -862,7 +880,11 @@ function monthYearSelect (monthyears) {
   //HACK -- can't get at buttons until layout has been rendered
   var layout = aspect_margin('1.7%-', grid);
   freeEntryKeyboard.update(layout);
-  return {layout: layout, buttons: grid.buttons, values: values};
+  return {layout: layout, buttons: grid.buttons, values: values, dateranges: ranges};
+}
+
+function mkdate (y, m, d) {
+  return new Date(y, m - 1, d);
 }
 
 function intpad (x, n) {
@@ -919,6 +941,11 @@ function monthCount (year, month) {
   return (year == null || month == null ? null : 12 * year + month - 1);
 }
 
+function rangeOverlap (start0, end0, start1, end1) {
+  end1 = end1 || start1;
+  return Math.max(start0, start1) <= Math.min(end0, end1);
+}
+
 function normcap (caption) {
   if (caption.length >= 2 && (caption.substring(0, 1) == '\u2610' || caption.substring(0, 1) == '\u2612')) {
     return caption.substring(2);
@@ -948,7 +975,9 @@ function getButtonID (button) {
 function clearButtons (except) {
   for (i = 0; i < activeInputWidget.length; i++) {
     if (activeInputWidget[i] != except) {
-      activeInputWidget[i].setStatus('default');
+      if (activeInputWidget[i].status != 'disabled') {
+        activeInputWidget[i].setStatus('default');
+      }
     }
   }
 }
@@ -1007,9 +1036,30 @@ function make_button (label, args) {
   args.style = args.style || KEYBUTTON_CLASS;
   args.textcolor = args.textcolor || BUTTON_TEXT_COLOR;
   args.selcolor = args.selcolor || BUTTON_SELECTED_COLOR;
+  args.inactcolor = args.inactcolor || BUTTON_DISABLED_COLOR;
   args.caption = label;
   args.id = args.id || ('button-' + label);
-  args.onclick = (args.action != null ? function (ev) { args.action(ev, label); } : null);
+
+  var clickfunc = function (ev) {
+    //this is a hack
+    if (activeInputWidget instanceof Array) {
+      var button = null;
+      for (var i = 0; i < activeInputWidget.length; i++) {
+        if (activeInputWidget[i].caption == label) {
+          button = activeInputWidget[i];
+          break;
+        }
+      }
+      if (button) {
+        if (button.status == 'disabled')
+          return;
+      }
+    }
+
+    args.action(ev, label);
+  }
+
+  args.onclick = (args.action != null ? clickfunc : null);
   return new TextButton(args);
 }
   

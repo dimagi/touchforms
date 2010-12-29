@@ -298,14 +298,13 @@ function TextButton (args) {
   this.setClass = function() {
     if (this.cls && this.container) {
       if (this.status == 'default') {
-	    this.container.setAttribute("class", this.cls);
-	  } else if (this.status == 'selected') {
-	    this.container.setAttribute("class", "selected " + this.cls);
-	  }
-	  else if (this.status == 'disabled') {
-	    this.container.setAttribute("class", this.cls + " disabled");
-	  }
-	}
+        this.container.setAttribute("class", this.cls);
+      } else if (this.status == 'selected') {
+        this.container.setAttribute("class", "selected " + this.cls);
+      } else if (this.status == 'disabled') {
+        //this.container.setAttribute("class", this.cls + " disabled");
+      }
+    }
   }
     
   this.setColor = function () {
@@ -330,9 +329,10 @@ function TextButton (args) {
 
   this.setStatus = function (stat) {
     this.status = stat;
-    if (this.container != null)
+    if (this.container != null) {
       this.setColor();
       this.setClass();
+    }
   }
 }
 
