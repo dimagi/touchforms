@@ -262,6 +262,7 @@ function wfQuestion (args) {
   this.required = args.required || false;
   this.validation = args.validation || function (ans) { return null; };
   this.domain = args.domain;
+  this.domain_meta = args.meta;
   this.helptext = args.helptext;
   this.custom_layout = args.custom_layout;
 
@@ -273,6 +274,7 @@ function wfQuestion (args) {
             'required': this.required,
             'help': this.helptext,
             'domain': this.domain,
+            'domain_meta': this.domain_meta,
             'customlayout': this.custom_layout};
   }
 
@@ -508,7 +510,7 @@ function renderQuestion (event, dir) {
     questionEntry.update(choiceLayout);
     activeInputWidget = choiceLayout.buttons;
   } else if (event["datatype"] == "date") {
-    dateEntryContext = new DateWidgetContext(dir, event["answer"]);
+    dateEntryContext = new DateWidgetContext(dir, event["answer"], event["domain_meta"]);
     dateEntryContext.refresh();
   } else {
     alert("unrecognized datatype [" + event["datatype"] + "]");

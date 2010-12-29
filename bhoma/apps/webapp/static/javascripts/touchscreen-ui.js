@@ -389,6 +389,7 @@ function DateWidgetContext (dir, answer, args) {
         self.maxday = df.day;
         self.maxdate = df.date;
       });
+    this.outofrangemsg = (args.outofrangemsg != null ? args.outofrangemsg + ' The allowed range is: {{range}}.' : 'This date is outside the allowed range ({{range}}).');
 
     if (this.mindate > this.maxdate) {
       throw new Error('bad allowed date range');
@@ -611,7 +612,7 @@ function DateWidgetContext (dir, answer, args) {
     if (this.isEmpty() || this.isFull()) {
       if (this.isEmpty() || this.isValid()) {
         if (!this.isEmpty() && !this.isInRange()) {
-          showError('This date is outside the allowed range. (' + readableDate(this.minyear, this.minmonth, this.minday) + ' \u2014 ' + readableDate(this.maxyear, this.maxmonth, this.maxday) + ')');
+          showError(this.outofrangemsg.replace('{{range}}', readableDate(this.minyear, this.minmonth, this.minday) + ' \u2014 ' + readableDate(this.maxyear, this.maxmonth, this.maxday)));
         } else {
           answerQuestion();
         }
