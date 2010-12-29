@@ -104,6 +104,13 @@ function xformAjaxAdapter (formName, preloadTags) {
       if (event["style"]["domain"])
         event["domain"] = event["style"]["domain"];
 
+      if (event["datatype"] == "date") {
+        event["domain_meta"] = {
+          mindiff: +event["style"]["min"],
+          maxdiff: +event["style"]["max"]
+        };
+      }
+
       renderQuestion(event, dirForward);
     } else if (event["type"] == "form-complete") {
       this._formComplete(event);
