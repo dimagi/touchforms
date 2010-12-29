@@ -373,13 +373,13 @@ function DateWidgetContext (dir, answer, args) {
 
     console.log(mindate, maxdate, [this.minyear, this.minmonth, this.minday], [this.maxyear, this.maxmonth, this.maxday]);
     console.log(this.make_decades());
-    //console.log(this.make_months());
   }
 
   this.initScreens = function (dir, answer) {
     this.screens = ['day'];
     if (monthCount(this.maxyear, this.maxmonth) - monthCount(this.minyear, this.minmonth) + 1 <= this.MAX_MONTHS_FOR_YEARLESS) {
       this.screens.push('monthyear');
+      console.log(this.make_months());
     } else {
       this.screens.push('month');
       this.screens.push('year');
@@ -389,6 +389,7 @@ function DateWidgetContext (dir, answer, args) {
     }
     console.log(this.screens);
 
+    //todo: set initial screen
     this.screen = (dir || answer == null ? ainv(this.screens, -1) : this.screens[0]);
   }
 
@@ -504,7 +505,7 @@ function DateWidgetContext (dir, answer, args) {
     } else if (this.screen == 'day') {
       this.showScreen(daySelect(daysInMonth(this.month, this.year)), this.day);
     } else if (this.screen == 'monthyear') {
-      this.showScreen(monthYearSelect(), monthCount(this.year, this.month));
+      this.showScreen(monthYearSelect(this.make_months()), monthCount(this.year, this.month));
     }
     freeEntryKeyboard.update(selectWidget);
   }
@@ -555,7 +556,7 @@ function DateWidgetContext (dir, answer, args) {
     this.month = null;
     this.day = null;
     this.year_bucket = null;
-    this.screen = ainv(this.screens, -1);
+    this.screen = ainv(this.screens, -1); //todo: screen setting
     this.refresh();
   }
 
@@ -660,10 +661,16 @@ function DateWidgetContext (dir, answer, args) {
       this.day = val;
       if (oldday != this.day)
         this.changed = true;
+    } else if (field == 'monthyear') {
+      if (monthCount(this.year, this.month) != val) {
+        this.year = Math.floor(val / 12);
+        this.month = (val % 12) + 1;
+        this.changed = true;
+      }
     }
     this.select(val);
     
-    if (this.screen == 'day') {
+    if (this.screen == 'day') { //todo: screen ordering
       if (!this.isFull()) {
         this.screen = this.getEmptyScreen();
       } else {
@@ -675,7 +682,7 @@ function DateWidgetContext (dir, answer, args) {
     
     this.refresh();
 
-    if (field == 'day' && this.isFull() && autoAdvance()) {
+    if (field == 'day' && this.isFull() && autoAdvance()) { //todo: screen ordering
       doAutoAdvance();
     }
   }
@@ -695,7 +702,7 @@ function DateWidgetContext (dir, answer, args) {
   }
 
   this.goto_ = function (field) {
-    this.screen = (field == 'year' ? 'decade' : field);
+    this.screen = (field == 'year' ? 'decade' : field); //fix for monthyear
     this.refresh();
   }
 
@@ -758,6 +765,23 @@ function daySelect (monthLength) {
   var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 5, ncols: 7, width: '17@', height: '17@', spacing: '3@', textscale: 1.4, margins: '*'},
                                 labels, false, [], dateselfunc('day'));
   return {layout: aspect_margin('1.7%-', grid.layout), buttons: grid.buttons, values: values};
+}
+
+function monthYearSelect (monthyears) {
+  var labels = [];
+  var values = [];
+  for (var i = 0; i < monthyears.length; i++) {
+    var item = monthyears[i];
+    labels.push((numericMonths() ? intpad(item.month) + '/' : monthName(item.month) + ' ') + item.year);
+    values.push(monthCount(item.year, item.month));
+  }
+
+  var grid = new ChoiceSelect({choices: labels, onclick: dateselfunc('monthyear')});
+
+  //HACK -- can't get at buttons until layout has been rendered
+  var layout = aspect_margin('1.7%-', grid);
+  freeEntryKeyboard.update(layout);
+  return {layout: layout, buttons: grid.buttons, values: values};
 }
 
 function intpad (x, n) {
