@@ -855,7 +855,7 @@ function yearSelect (bucket) {
     var full_h = 7 * 5 + 2 * 4;
     var w = 35;
     var h = 7 * values.length + 2 * (values.length - 1);
-    layout = new Layout({margins: '*', widths: full_w + '@', heights: full_h + '@', content: [new Layout({margins: [.5*(full_w - w) + '*', .5*(full_h - h) + '*'], widths: w + '*', heights: h + '*', content: [layout]})]});
+    layout = new Layout({margins: '*', widths: full_w + '@', heights: full_h + '@', content: [new Layout({margins: '*', widths: (100.*w/full_w) + '%', heights: (100.*h/full_h) + '%', content: [layout]})]});
   }
   return {layout: aspect_margin('5%-', layout), buttons: grid.buttons, values: values, dateranges: ranges};
 }
