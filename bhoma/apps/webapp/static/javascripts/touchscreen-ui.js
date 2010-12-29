@@ -422,6 +422,21 @@ function DateWidgetContext (dir, answer, args) {
     return months;
   }
 
+  this.getYearBucket = function () {
+    if (this.year != null) {
+      var buckets = this.make_decades();
+      for (var i = 0; i < buckets.length; i++) {
+        if (buckets[i].start <= this.year && buckets[i].end >= this.year) {
+          return buckets[i];
+        }
+      }
+    } else if (this.year_bucket != null) {
+      return this.year_bucket;
+    } else {
+      return null;
+    }
+  }
+
   this.isFull = function () {
     return (this.year != null && this.month != null && this.day != null);
   }
@@ -435,7 +450,7 @@ function DateWidgetContext (dir, answer, args) {
   }
 
   this.isInRange = function () {
-    if (this.isFull()) {
+    if (this.isValid()) {
       var min = new Date(this.minyear, this.minmonth - 1, this.minday);
       var max = new Date(this.maxyear, this.maxmonth - 1, this.maxday);
       var cur = new Date(this.year, this.month - 1, this.day);
@@ -480,7 +495,8 @@ function DateWidgetContext (dir, answer, args) {
     dayText.setText(this.day != null ? intpad(this.day, 2) : '');
 
     if (this.screen == 'decade') {
-      this.showScreen(decadeSelect(this.make_decades()), this.year_bucket != null ? this.year_bucket.start : null);
+      var bucket = this.getYearBucket();
+      this.showScreen(decadeSelect(this.make_decades()), bucket != null ? bucket.start : null);
     } else if (this.screen == 'year') {
       this.showScreen(yearSelect(this.year_bucket), this.year);
     } else if (this.screen == 'month') {
@@ -493,33 +509,32 @@ function DateWidgetContext (dir, answer, args) {
     freeEntryKeyboard.update(selectWidget);
   }
 
-  this.showScreen = function (buttons, selected_val) {
-      tmp = decadeSelect();
-      selectWidget = tmp.layout;
-      activeInputWidget = tmp.buttons;
-      this.select(this.decade, this.decade != null ? this.decade[0] + '\u2014' + this.decade[1] : null);
-    } else if (this.screen == 'year') {
-      tmp = yearSelect(this.decade[0], this.decade[1]);
-      selectWidget = tmp.layout;
-      activeInputWidget = tmp.buttons;
-      this.select(this.year);
-    } else if (this.screen == 'month') {
-      tmp = monthSelect();
-      selectWidget = tmp.layout;
-      activeInputWidget = tmp.buttons;
-      this.select(numericMonths() ? this.month : monthName(this.month)); //todo: would benefit from dict-based buttons
-    } else if (this.screen == 'day') {
-      tmp = daySelect(daysInMonth(this.month, this.year));
-      selectWidget = tmp.layout;
-      activeInputWidget = tmp.buttons;
-      this.select(this.day);
+  this.showScreen = function (choice_info, selected_val) {
+    selectWidget = choice_info.layout;
+    activeInputWidget = choice_info.buttons;
+
+    this.choiceHack = [];
+    for (var i = 0; i < choice_info.buttons.length; i++) {
+      this.choiceHack.push({label: choice_info.buttons[i].caption, value: choice_info.values[i]});
+    }
+
+    this.select(selected_val);
     this.highlight();
   }
 
-  this.select = function (val, caption) {
+  this.select = function (val) {
     clearButtons();
+
     if (val != null) {
-      b = getButtonByCaption((caption != null ? caption : val) + '');
+      var caption = null;
+      for (var i = 0; i < this.choiceHack.length; i++) {
+        if (this.choiceHack[i].value == val) {
+          caption = this.choiceHack[i].label;
+          break;
+        }
+      }
+
+      var b = getButtonByCaption(caption);
       if (b != null) {
         b.setStatus('selected');
       }
@@ -536,18 +551,22 @@ function DateWidgetContext (dir, answer, args) {
     if (this.getDate() != null)
       this.changed = true;
 
-    this.decade = null;
     this.year = null;
     this.month = null;
     this.day = null;
-    this.screen = 'decade';
+    this.year_bucket = null;
+    this.screen = ainv(this.screens, -1);
     this.refresh();
   }
 
   this.next = function () {
     if (this.isEmpty() || this.isFull()) {
       if (this.isEmpty() || this.isValid()) {
-        answerQuestion();
+        if (!this.isEmpty() && !this.isInRange()) {
+          showError('This date is outside the allowed range.');
+        } else {
+          answerQuestion();
+        }
       } else {
         showError('This is not a valid date.');
       }
@@ -561,7 +580,7 @@ function DateWidgetContext (dir, answer, args) {
       }
       
       if (currentScreenVal == null) {
-        showError('Please pick a ' + (this.screen == 'decade' ? 'year' : this.screen) + '. To skip this question and leave it blank, click \'CLEAR\' first.');
+        showError('Please pick a ' + (this.screen == 'decade' ? 'year' : (this.screen == 'monthyear' ? 'month' : this.screen)) + '. To skip this question and leave it blank, click \'CLEAR\' first.');
         return;
       } else {
         this.screen = this.getEmptyScreen();
@@ -570,6 +589,7 @@ function DateWidgetContext (dir, answer, args) {
     }
   }
   
+  //todo: support monthyear
   this.getEmptyScreen = function () {
     if (this.decade == null) {
       return 'decade';
@@ -584,25 +604,42 @@ function DateWidgetContext (dir, answer, args) {
     }
   }
 
+  //todo: support monthyear
   this.getNextScreen = function () {
     screens = ['decade', 'year', 'month', 'day'];
     i = screens.indexOf(this.screen) + 1;
     return (i >= screens.length ? null : screens[i]);
   }
 
+  //todo: support monthyear
   this.getPrevScreen = function () {
     screens = ['decade', 'year', 'month', 'day'];
     i = screens.indexOf(this.screen) - 1;
     return (i < 0 ? null : screens[i]);
   }
 
-  this.selected = function (field, val) {
+  this.selected = function (field, caption) {
+    var val = null;
+    for (var i = 0; i < this.choiceHack.length; i++) {
+      if (this.choiceHack[i].label == caption) {
+        val = this.choiceHack[i].value;
+        break;
+      }
+    }
+
     if (field == 'decade') {
-      olddecade = this.decade;
-      startyear = +val.substring(0, 4);
-      endyear = +val.substring(5, 9);
-      this.decade = [startyear, endyear];
-      if (olddecade == null || olddecade[0] != this.decade[0] || olddecade[1] != this.decade[1]) {
+      var oldbucket = this.getYearBucket();
+
+      this.year_bucket == null;
+      var buckets = this.make_decades();
+      for (var i = 0; i < buckets.length; i++) {
+        if (buckets[i].start == val) {
+          this.year_bucket = buckets[i];
+          break;
+        }
+      }
+
+      if (oldbucket == null || oldbucket.start != this.year_bucket.start) {
         this.changed = true;
         this.year = null;
       }
@@ -611,11 +648,11 @@ function DateWidgetContext (dir, answer, args) {
       this.year = val;
       if (oldyear != this.year) {
         this.changed = true;
-        this.decade = this.decadeForYear(val);
+        this.year_bucket == null;
       }
     } else if (field == 'month') {
       oldmonth = this.month;
-      this.month = (numericMonths() ? +val : monthForName(val));
+      this.month = val;
       if (oldmonth != this.month)
         this.changed = true;
     } else if (field == 'day') {
@@ -670,58 +707,57 @@ function dateselfunc (field) {
 }
 
 function decadeSelect (decades) {
-  var captions = [];
+  var labels = [];
   var values = [];
   for (var i = 0; i < decades.length; i++) {
-    captions.push(decades[i].start + '\u2014' + decades[i].end);
+    labels.push(decades[i].start + '\u2014' + decades[i].end);
     values.push(decades[i].start);
   }
 
   var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: 2, width: '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'},
-                                captions, false, [], dateselfunc('decade'));
+                                labels, false, [], dateselfunc('decade'));
   return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons, values: values};
 }
 
-//todo: support ranges other than decade
-function yearSelect (minyear, maxyear) {
-  if (maxyear == null)
-    maxyear = minyear + 9;
-
-  var years = [];
-  for (var o = minyear; o <= maxyear; o++) {
-    years.push(o + '');
+//todo: proper layout for odd ranges
+function yearSelect (bucket) {
+  var labels = [];
+  var values = [];
+  for (var o = bucket.start; o <= bucket.end; o++) {
+    labels.push(o + '');
+    values.push(o);
   }
 
-  var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: Math.ceil((maxyear - minyear + 1) / 5), width: (maxyear - minyear) > 9 ? '22@' : '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'},
-                                years, false, [], dateselfunc('year'));
-  return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons};
+  var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: Math.ceil((bucket.end - bucket.start + 1) / 5), width: (bucket.end - bucket.start) > 9 ? '22@' : '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'},
+                                labels, false, [], dateselfunc('year'));
+  return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons, values: values};
 }
 
 function monthSelect () {
-  if (numericMonths()) {
-    var labels = [];
-    for (var i = 1; i <= 12; i++) {
-      labels.push(i + '');
-    }
-    var size = 2.2;
-  } else {
-    var labels = monthNames;
-    var size = 1.8;
+  var labels = [];
+  var values = [];
+  for (var i = 1; i <= 12; i++) {
+    labels.push(numericMonths() ? i + '' : monthName(i));
+    values.push(i);
   }
+  var size = (numericMonths() ? 2.2 : 1.8);
+
   var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 3, ncols: 4, width: '6@', height: '4@', spacing: '@', textscale: size, margins: '*'},
                                 labels, false, [], dateselfunc('month'));
-  return {layout: aspect_margin('7%-', grid.layout), buttons: grid.buttons};
+  return {layout: aspect_margin('7%-', grid.layout), buttons: grid.buttons, values: values};
 }
 
 function daySelect (monthLength) {
-  var days = new Array();
+  var labels = [];
+  var values = [];
   for (var i = 1; i <= monthLength; i++) {
-    days.push(i + '');
+    labels.push(i + '');
+    values.push(i);
   }
 
   var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 5, ncols: 7, width: '17@', height: '17@', spacing: '3@', textscale: 1.4, margins: '*'},
-                                days, false, [], dateselfunc('day'));
-  return {layout: aspect_margin('1.7%-', grid.layout), buttons: grid.buttons};
+                                labels, false, [], dateselfunc('day'));
+  return {layout: aspect_margin('1.7%-', grid.layout), buttons: grid.buttons, values: values};
 }
 
 function intpad (x, n) {
@@ -775,7 +811,7 @@ function daysInMonth (month, year) {
 }
 
 function monthCount (year, month) {
-  return 12 * year + month - 1;
+  return (year == null || month == null ? null : 12 * year + month - 1);
 }
 
 function normcap (caption) {
