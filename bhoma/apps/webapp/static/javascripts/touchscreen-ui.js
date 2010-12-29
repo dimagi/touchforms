@@ -322,51 +322,127 @@ function clearClicked (ev, x) {
 }
 
 monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-decades = ['2000\u2014' + ((new Date()).getFullYear() + 1), '1990\u20141999', '1980\u20141989', '1970\u20141979', '1960\u20141969',
-	   '1950\u20141959', '1940\u20141949', '1930\u20141939', '1920\u20141929', '1910\u20141919'];
 
-function DateWidgetContext (dir, answer) {
-  this.init = function (dir, answer) {
-    this.screen = (dir || answer == null ? 'decade' : 'day');
+function DateWidgetContext (dir, answer, args) {
+  this.DEFAULT_FUTURE_RANGE = 1826; //days ~= 5 years
+  this.MAX_MONTHS_FOR_YEARLESS = 8;
+  this.YEAR_COLUMN = 5;
+  this.NUM_DECADE_CHOICES = 10;
+  this.DECADE_ROLLOVER = 4;
+
+  this.init = function (dir, answer, args) {
     this.setDate(answer);
+    this.setAllowedRange(args.min, args.max);
+    this.initScreens(dir, answer);
+
+    //remove when we have dict-based choices
+    this.choiceHack = null;
   }
 
   this.setDate = function (datestr) {
     if (datestr == null) {
-      this.decade = null;
       this.year = null;
       this.month = null;
       this.day = null;
     } else {
       this.year = +datestr.substring(0, 4);
-      this.day = +datestr.substring(8, 10);
       this.month = +datestr.substring(5, 7);
-      this.decade = this.decadeForYear(this.year);
+      this.day = +datestr.substring(8, 10);
     }
+    this.year_bucket = null;
     this.changed = false;
   }
 
-  this.decadeForYear = function (year) {
-    for (i = 0; i < decades.length; i++) {
-      startyear = +decades[i].substring(0, 4);
-      endyear = +decades[i].substring(5, 9);
-      if (startyear <= year && year <= endyear) {
-        return [startyear, endyear];
+  this.setAllowedRange = function (mindelta, maxdelta) {
+    mindelta = (mindelta == null ? 50000 : mindelta);
+    maxdelta = (maxdelta == null ? this.DEFAULT_FUTURE_RANGE : maxdelta);
+
+    var mindate = new Date(new Date().getTime() - mindelta * 86400000);
+    this.minyear = mindate.getFullYear();
+    this.minmonth = mindate.getMonth() + 1;
+    this.minday = mindate.getDate();
+
+    var maxdate = new Date(new Date().getTime() + maxdelta * 86400000);
+    this.maxyear = maxdate.getFullYear();
+    this.maxmonth = maxdate.getMonth() + 1;
+    this.maxday = maxdate.getDate();
+
+    if (mindate > maxdate) {
+      throw new Error('bad allowed date range');
+    }
+
+    console.log(mindate, maxdate, [this.minyear, this.minmonth, this.minday], [this.maxyear, this.maxmonth, this.maxday]);
+    console.log(this.make_decades());
+    //console.log(this.make_months());
+  }
+
+  this.initScreens = function (dir, answer) {
+    this.screens = ['day'];
+    if (monthCount(this.maxyear, this.maxmonth) - monthCount(this.minyear, this.minmonth) + 1 <= this.MAX_MONTHS_FOR_YEARLESS) {
+      this.screens.push('monthyear');
+    } else {
+      this.screens.push('month');
+      this.screens.push('year');
+      if (Math.floor(this.maxyear / this.YEAR_COLUMN) - Math.floor(this.minyear / this.YEAR_COLUMN) > 2) {
+        this.screens.push('decade');
       }
     }
-    return null;
+    console.log(this.screens);
+
+    this.screen = (dir || answer == null ? ainv(this.screens, -1) : this.screens[0]);
+  }
+
+  this.make_decades = function () {
+    var decades = [];
+
+    var start = Math.floor((this.maxyear - this.DECADE_ROLLOVER) / 10) * 10;
+    decades.push({start: start, end: this.maxyear});
+    while (decades.length < this.NUM_DECADE_CHOICES) {
+      start -= 10;
+      decades.push({start: start, end: start + 9});
+    }
+
+    return decades;
+  }
+
+  this.make_months = function () {
+    var year = this.minyear;
+    var month = this.minmonth;
+    var months = [];
+
+    while (monthCount(year, month) <= monthCount(this.maxyear, this.maxmonth)) {
+      months.push({year: year, month: month});
+      month += 1;
+      if (month > 12) {
+        year += 1;
+        month = 1;
+      }
+    }
+
+    return months;
   }
 
   this.isFull = function () {
-    return (this.decade != null && this.year != null && this.month != null && this.day != null);
+    return (this.year != null && this.month != null && this.day != null);
   }
 
   this.isEmpty = function () {
-    return (this.decade == null && this.year == null && this.month == null && this.day == null);
+    return (this.year_bucket == null && this.year == null && this.month == null && this.day == null);
   }
 
   this.isValid = function () {
     return (this.isFull() && this.day <= daysInMonth(this.month, this.year));
+  }
+
+  this.isInRange = function () {
+    if (this.isFull()) {
+      var min = new Date(this.minyear, this.minmonth - 1, this.minday);
+      var max = new Date(this.maxyear, this.maxmonth - 1, this.maxday);
+      var cur = new Date(this.year, this.month - 1, this.day);
+      return (min <= cur && cur <= max);
+    } else {
+      return false;
+    }
   }
 
   this.getDate = function () {
@@ -374,7 +450,7 @@ function DateWidgetContext (dir, answer) {
       return this.year + '-' + intpad(this.month, 2) + '-' + intpad(this.day, 2);
     } else {
       return null;
-    }				   
+    }
   }
 
   this.refresh = function () {
@@ -577,7 +653,51 @@ function DateWidgetContext (dir, answer) {
     this.refresh();
   }
 
-  this.init(dir, answer);
+  this.init(dir, answer, args || {});
+}
+
+function decadeSelect () {
+  var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: 2, width: '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'}, decades, false, [], decadeSelected);
+  return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons};
+}
+
+//todo: support ranges other than decade
+function yearSelect (minyear, maxyear) {
+  if (maxyear == null)
+    maxyear = minyear + 9;
+
+  var years = [];
+  for (var o = minyear; o <= maxyear; o++) {
+    years.push(o + '');
+  }
+
+  var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: Math.ceil((maxyear - minyear + 1) / 5), width: (maxyear - minyear) > 9 ? '22@' : '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'}, years, false, [], yearSelected);
+  return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons};
+}
+
+function monthSelect () {
+  if (numericMonths()) {
+    var labels = [];
+    for (var i = 1; i <= 12; i++) {
+      labels.push(i + '');
+    }
+    var size = 2.2;
+  } else {
+    var labels = monthNames;
+    var size = 1.8;
+  }
+  var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 3, ncols: 4, width: '6@', height: '4@', spacing: '@', textscale: size, margins: '*'}, labels, false, [], monthSelected);
+  return {layout: aspect_margin('7%-', grid.layout), buttons: grid.buttons};
+}
+
+function daySelect (monthLength) {
+  var days = new Array();
+  for (var i = 1; i <= monthLength; i++) {
+    days.push(i + '');
+  }
+
+  var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 5, ncols: 7, width: '17@', height: '17@', spacing: '3@', textscale: 1.4, margins: '*'}, days, false, [], daySelected);
+  return {layout: aspect_margin('1.7%-', grid.layout), buttons: grid.buttons};
 }
 
 function intpad (x, n) {
@@ -628,6 +748,10 @@ function daysInMonth (month, year) {
   } else {
     return 31;
   }
+}
+
+function monthCount (year, month) {
+  return 12 * year + month - 1;
 }
 
 function decadeSelected (ev, x) {
@@ -768,50 +892,6 @@ function kbs (buttons_info, template) {
     content.push(button); 
   }
   return content;
-}
-
-function decadeSelect () {
-  var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: 2, width: '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'}, decades, false, [], decadeSelected);
-  return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons};
-}
-
-//todo: support ranges other than decade
-function yearSelect (minyear, maxyear) {
-  if (maxyear == null)
-    maxyear = minyear + 9;
-
-  var years = [];
-  for (var o = minyear; o <= maxyear; o++) {
-    years.push(o + '');
-  }
-
-  var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: Math.ceil((maxyear - minyear + 1) / 5), width: (maxyear - minyear) > 9 ? '22@' : '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'}, years, false, [], yearSelected);
-  return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons};
-}
-
-function monthSelect () {
-  if (numericMonths()) {
-    var labels = [];
-    for (var i = 1; i <= 12; i++) {
-      labels.push(i + '');
-    }
-    var size = 2.2;
-  } else {
-    var labels = monthNames;
-    var size = 1.8;
-  }
-  var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 3, ncols: 4, width: '6@', height: '4@', spacing: '@', textscale: size, margins: '*'}, labels, false, [], monthSelected);
-  return {layout: aspect_margin('7%-', grid.layout), buttons: grid.buttons};
-}
-
-function daySelect (monthLength) {
-  var days = new Array();
-  for (var i = 1; i <= monthLength; i++) {
-    days.push(i + '');
-  }
-
-  var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 5, ncols: 7, width: '17@', height: '17@', spacing: '3@', textscale: 1.4, margins: '*'}, days, false, [], daySelected);
-  return {layout: aspect_margin('1.7%-', grid.layout), buttons: grid.buttons};
 }
 
 function aspect_margin (margin, inner) {

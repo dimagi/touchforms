@@ -999,7 +999,7 @@ function Overlay (bg_color, fadeout) {
 
     if (this.choices.length > 0) {
       for (var i = 0; i < this.choices.length; i++) {
-        document.getElementById('alert-ch' + i).onclick = this.omfg(i);
+        document.getElementById('alert-ch' + i).onclick = this.actionable(i);
       }
       this.container.onclick = null;
     } else {
@@ -1008,8 +1008,7 @@ function Overlay (bg_color, fadeout) {
     }
   }
 
-  //javascript has a HUGE gotcha if you try to define function closures inside a for loop
-  this.omfg = function (i) {
+  this.actionable = function (i) {
     var self = this;
     return function () {
       self.ondismiss = self.actions[i];
