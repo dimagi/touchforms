@@ -333,7 +333,7 @@ function DateWidgetContext (dir, answer, args) {
 
   this.init = function (dir, answer, args) {
     this.setDate(answer);
-    this.setAllowedRange(args.min, args.max);
+    this.setAllowedRange(args);
     if (!answer) {
       this.prefill();
     }
@@ -349,31 +349,48 @@ function DateWidgetContext (dir, answer, args) {
       this.month = null;
       this.day = null;
     } else {
-      this.year = +datestr.substring(0, 4);
-      this.month = +datestr.substring(5, 7);
-      this.day = +datestr.substring(8, 10);
+      var parsed = parseDate(datestr);
+      this.year = parsed.year;
+      this.month = parsed.month;
+      this.day = parsed.day;
     }
     this.year_bucket = null;
     this.changed = false;
   }
 
-  this.setAllowedRange = function (mindelta, maxdelta) {
-    mindelta = (mindelta == null ? 50000 : mindelta);
-    maxdelta = (maxdelta == null ? this.DEFAULT_FUTURE_RANGE : maxdelta);
+  this.setAllowedRange = function (args) {
+    var setlimit = function (datelimit, limitdelta, limitdefault, assignfunc) {
+      if (datelimit) {
+        var datefields = parseDate(datelimit);
+      } else {
+        limitdelta = (limitdelta == null ? limitdefault : limitdelta);
+        datelimit = new Date(new Date().getTime() + limitdelta * 86400000);
+        var datefields = {
+          year: datelimit.getFullYear(),
+          month: datelimit.getMonth() + 1,
+          day: datelimit.getDate()
+        };
+      }
 
-    var mindate = new Date(new Date().getTime() - mindelta * 86400000);
-    this.minyear = mindate.getFullYear();
-    this.minmonth = mindate.getMonth() + 1;
-    this.minday = mindate.getDate();
-    this.mindate = mkdate(this.minyear, this.minmonth, this.minday);
+      datefields.date = mkdate(datefields.year, datefields.month, datefields.day);
+      assignfunc(datefields);
+    }
 
-    var maxdate = new Date(new Date().getTime() + maxdelta * 86400000);
-    this.maxyear = maxdate.getFullYear();
-    this.maxmonth = maxdate.getMonth() + 1;
-    this.maxday = maxdate.getDate();
-    this.maxdate = mkdate(this.maxyear, this.maxmonth, this.maxday);
+    var self = this;
+    setlimit(args.mindate, args.mindiff != null ? -args.mindiff : null, -50000, function (df) {
+        self.minyear = df.year;
+        self.minmonth = df.month;
+        self.minday = df.day;
+        self.mindate = df.date;
+      });
+    setlimit(args.maxdate, args.maxdiff, this.DEFAULT_FUTURE_RANGE, function (df) {
+        self.maxyear = df.year;
+        self.maxmonth = df.month;
+        self.maxday = df.day;
+        self.maxdate = df.date;
+      });
 
-    if (mindate > maxdate) {
+    if (this.mindate > this.maxdate) {
       throw new Error('bad allowed date range');
     }
   }
@@ -944,6 +961,13 @@ function monthCount (year, month) {
 function rangeOverlap (start0, end0, start1, end1) {
   end1 = end1 || start1;
   return Math.max(start0, start1) <= Math.min(end0, end1);
+}
+
+function parseDate (datestr) {
+  var year = +datestr.substring(0, 4);
+  var month = +datestr.substring(5, 7);
+  var day = +datestr.substring(8, 10);
+  return {year: year, month: month, day: day};
 }
 
 function normcap (caption) {
