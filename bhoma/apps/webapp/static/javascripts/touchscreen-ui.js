@@ -372,7 +372,6 @@ function DateWidgetContext (dir, answer, args) {
     }
 
     console.log(mindate, maxdate, [this.minyear, this.minmonth, this.minday], [this.maxyear, this.maxmonth, this.maxday]);
-    console.log(this.make_decades());
   }
 
   this.initScreens = function (dir, answer) {
@@ -387,6 +386,7 @@ function DateWidgetContext (dir, answer, args) {
         this.screens.push('decade');
       }
     }
+    console.log(this.make_decades());
     console.log(this.screens);
 
     //todo: set initial screen
@@ -394,16 +394,20 @@ function DateWidgetContext (dir, answer, args) {
   }
 
   this.make_decades = function () {
-    var decades = [];
-
-    var start = Math.floor((this.maxyear - this.DECADE_ROLLOVER) / 10) * 10;
-    decades.push({start: start, end: this.maxyear});
-    while (decades.length < this.NUM_DECADE_CHOICES) {
-      start -= 10;
-      decades.push({start: start, end: start + 9});
+    if (this.screens.indexOf('decade') == -1) {
+      return [{start: this.minyear, end: this.maxyear}];
+    } else {
+      var decades = [];
+      
+      var start = Math.floor((this.maxyear - this.DECADE_ROLLOVER) / 10) * 10;
+      decades.push({start: start, end: this.maxyear});
+      while (decades.length < this.NUM_DECADE_CHOICES) {
+        start -= 10;
+        decades.push({start: start, end: start + 9});
+      }
+      
+      return decades;
     }
-
-    return decades;
   }
 
   this.make_months = function () {
@@ -424,8 +428,10 @@ function DateWidgetContext (dir, answer, args) {
   }
 
   this.getYearBucket = function () {
-    if (this.year != null) {
-      var buckets = this.make_decades();
+    var buckets = this.make_decades();
+    if (buckets.length == 1) {
+      return buckets[0];
+    } else if (this.year != null) {
       for (var i = 0; i < buckets.length; i++) {
         if (buckets[i].start <= this.year && buckets[i].end >= this.year) {
           return buckets[i];
@@ -472,11 +478,13 @@ function DateWidgetContext (dir, answer, args) {
   this.refresh = function () {
     questionEntry.update(freeEntry);
     answerBar.update(dateAnswer);
+
+    var year_bucket = this.getYearBucket();
     if (this.year != null) {
       yearText.setText(this.year + '');
-    } else if (this.year_bucket != null) {
-      sstart = this.year_bucket.start + '';
-      send = this.year_bucket.end + '';
+    } else if (year_bucket != null) {
+      sstart = year_bucket.start + '';
+      send = year_bucket.end + '';
       syear = '';
       for (i = 0; i < 4; i++) {
         if (sstart[i] == send[i]) {
@@ -499,7 +507,7 @@ function DateWidgetContext (dir, answer, args) {
       var bucket = this.getYearBucket();
       this.showScreen(decadeSelect(this.make_decades()), bucket != null ? bucket.start : null);
     } else if (this.screen == 'year') {
-      this.showScreen(yearSelect(this.year_bucket), this.year);
+      this.showScreen(yearSelect(this.getYearBucket()), this.year);
     } else if (this.screen == 'month') {
       this.showScreen(monthSelect(), this.month);
     } else if (this.screen == 'day') {
