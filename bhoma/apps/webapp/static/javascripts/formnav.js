@@ -106,8 +106,8 @@ function xformAjaxAdapter (formName, preloadTags) {
 
       if (event["datatype"] == "date") {
         event["domain_meta"] = {
-          mindiff: +event["style"]["min"],
-          maxdiff: +event["style"]["max"]
+          mindiff: event["style"]["before"] != null ? +event["style"]["before"] : null,
+          maxdiff: event["style"]["after"] != null ? +event["style"]["after"] : null
         };
       }
 
