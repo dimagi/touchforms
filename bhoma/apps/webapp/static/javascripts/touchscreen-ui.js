@@ -458,9 +458,9 @@ function DateWidgetContext (dir, answer, args) {
     answerBar.update(dateAnswer);
     if (this.year != null) {
       yearText.setText(this.year + '');
-    } else if (this.decade != null) {
-      sstart = this.decade[0] + '';
-      send = this.decade[1] + '';
+    } else if (this.year_bucket != null) {
+      sstart = this.year_bucket.start + '';
+      send = this.year_bucket.end + '';
       syear = '';
       for (i = 0; i < 4; i++) {
         if (sstart[i] == send[i]) {
@@ -480,31 +480,40 @@ function DateWidgetContext (dir, answer, args) {
     dayText.setText(this.day != null ? intpad(this.day, 2) : '');
 
     if (this.screen == 'decade') {
+      this.showScreen(decadeSelect(this.make_decades()), this.year_bucket != null ? this.year_bucket.start : null);
+    } else if (this.screen == 'year') {
+      this.showScreen(yearSelect(this.year_bucket), this.year);
+    } else if (this.screen == 'month') {
+      this.showScreen(monthSelect(), this.month);
+    } else if (this.screen == 'day') {
+      this.showScreen(daySelect(daysInMonth(this.month, this.year)), this.day);
+    } else if (this.screen == 'monthyear') {
+      this.showScreen(monthYearSelect(), monthCount(this.year, this.month));
+    }
+    freeEntryKeyboard.update(selectWidget);
+  }
+
+  this.showScreen = function (buttons, selected_val) {
       tmp = decadeSelect();
       selectWidget = tmp.layout;
       activeInputWidget = tmp.buttons;
       this.select(this.decade, this.decade != null ? this.decade[0] + '\u2014' + this.decade[1] : null);
-      this.highlight();
     } else if (this.screen == 'year') {
       tmp = yearSelect(this.decade[0], this.decade[1]);
       selectWidget = tmp.layout;
       activeInputWidget = tmp.buttons;
       this.select(this.year);
-      this.highlight();
     } else if (this.screen == 'month') {
       tmp = monthSelect();
       selectWidget = tmp.layout;
       activeInputWidget = tmp.buttons;
       this.select(numericMonths() ? this.month : monthName(this.month)); //todo: would benefit from dict-based buttons
-      this.highlight();
     } else if (this.screen == 'day') {
       tmp = daySelect(daysInMonth(this.month, this.year));
       selectWidget = tmp.layout;
       activeInputWidget = tmp.buttons;
       this.select(this.day);
-      this.highlight();
-    }
-    freeEntryKeyboard.update(selectWidget);
+    this.highlight();
   }
 
   this.select = function (val, caption) {
@@ -518,8 +527,8 @@ function DateWidgetContext (dir, answer, args) {
   }
 
   this.highlight = function () {
-    yearText.setBgColor(this.screen == 'decade' || this.screen == 'year' ? HIGHLIGHT_COLOR : '#fff');
-    monthText.setBgColor(this.screen == 'month' ? HIGHLIGHT_COLOR : '#fff');
+    yearText.setBgColor(this.screen == 'decade' || this.screen == 'year' || this.screen == 'monthyear' ? HIGHLIGHT_COLOR : '#fff');
+    monthText.setBgColor(this.screen == 'month' || this.screen == 'monthyear' ? HIGHLIGHT_COLOR : '#fff');
     dayText.setBgColor(this.screen == 'day' ? HIGHLIGHT_COLOR : '#fff');
   }
 
@@ -656,9 +665,21 @@ function DateWidgetContext (dir, answer, args) {
   this.init(dir, answer, args || {});
 }
 
-function decadeSelect () {
-  var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: 2, width: '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'}, decades, false, [], decadeSelected);
-  return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons};
+function dateselfunc (field) {
+  return function (ev, x) { dateEntryContext.selected(field, x); };
+}
+
+function decadeSelect (decades) {
+  var captions = [];
+  var values = [];
+  for (var i = 0; i < decades.length; i++) {
+    captions.push(decades[i].start + '\u2014' + decades[i].end);
+    values.push(decades[i].start);
+  }
+
+  var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: 2, width: '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'},
+                                captions, false, [], dateselfunc('decade'));
+  return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons, values: values};
 }
 
 //todo: support ranges other than decade
@@ -671,7 +692,8 @@ function yearSelect (minyear, maxyear) {
     years.push(o + '');
   }
 
-  var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: Math.ceil((maxyear - minyear + 1) / 5), width: (maxyear - minyear) > 9 ? '22@' : '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'}, years, false, [], yearSelected);
+  var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: Math.ceil((maxyear - minyear + 1) / 5), width: (maxyear - minyear) > 9 ? '22@' : '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'},
+                                years, false, [], dateselfunc('year'));
   return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons};
 }
 
@@ -686,7 +708,8 @@ function monthSelect () {
     var labels = monthNames;
     var size = 1.8;
   }
-  var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 3, ncols: 4, width: '6@', height: '4@', spacing: '@', textscale: size, margins: '*'}, labels, false, [], monthSelected);
+  var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 3, ncols: 4, width: '6@', height: '4@', spacing: '@', textscale: size, margins: '*'},
+                                labels, false, [], dateselfunc('month'));
   return {layout: aspect_margin('7%-', grid.layout), buttons: grid.buttons};
 }
 
@@ -696,7 +719,8 @@ function daySelect (monthLength) {
     days.push(i + '');
   }
 
-  var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 5, ncols: 7, width: '17@', height: '17@', spacing: '3@', textscale: 1.4, margins: '*'}, days, false, [], daySelected);
+  var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 5, ncols: 7, width: '17@', height: '17@', spacing: '3@', textscale: 1.4, margins: '*'},
+                                days, false, [], dateselfunc('day'));
   return {layout: aspect_margin('1.7%-', grid.layout), buttons: grid.buttons};
 }
 
@@ -752,22 +776,6 @@ function daysInMonth (month, year) {
 
 function monthCount (year, month) {
   return 12 * year + month - 1;
-}
-
-function decadeSelected (ev, x) {
-  dateEntryContext.selected('decade', x);
-}
-
-function yearSelected (ev, x) {
-  dateEntryContext.selected('year', x);
-}
-
-function monthSelected (ev, x) {
-  dateEntryContext.selected('month', x);
-}
-
-function daySelected (ev, x) {
-  dateEntryContext.selected('day', x);
 }
 
 function normcap (caption) {
