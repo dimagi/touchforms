@@ -4,17 +4,17 @@
     <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
     <link rel="stylesheet" href="{{MEDIA_URL}}webapp/stylesheets/touchscreen.css" type="text/css">
 
-    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/layout.js?version={{jsvers}}"></script>   
-    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/touchscreen-ui.js?version={{jsvers}}"></script>   
-    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/formnav.js?version={{jsvers}}"></script>
-    <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}webapp/javascripts/workflow.js?version={{jsvers}}"></script>
-    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/dates.js?version={{jsvers}}"></script>
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/layout.js?version={{app_version}}"></script>   
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/touchscreen-ui.js?version={{app_version}}"></script>   
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/formnav.js?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}webapp/javascripts/workflow.js?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/dates.js?version={{app_version}}"></script>
    
     <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/jquery-1.4.2.min.js"></script>
     <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/shortcut.js"></script>
 
 {% for script in dynamic_scripts %}
-    <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}{{script}}?version={{jsvers}}"></script>   
+    <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}{{script}}?version={{app_version}}"></script>   
 {% endfor %}
 
     <script language="javascript">
