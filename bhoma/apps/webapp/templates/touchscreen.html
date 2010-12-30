@@ -2,16 +2,21 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
     <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
-    <link rel="stylesheet" href="{{MEDIA_URL}}webapp/stylesheets/touchscreen.css" type="text/css" >
-    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/layout.js?version=2"></script>   
-    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/touchscreen-ui.js?version=2"></script>   
-    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/formnav.js?version=2"></script>   
+    <link rel="stylesheet" href="{{MEDIA_URL}}webapp/stylesheets/touchscreen.css" type="text/css">
+
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/layout.js?version={{jsvers}}"></script>   
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/touchscreen-ui.js?version={{jsvers}}"></script>   
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/formnav.js?version={{jsvers}}"></script>
+    <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}webapp/javascripts/workflow.js?version={{jsvers}}"></script>
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/dates.js?version={{jsvers}}"></script>
+   
     <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/jquery-1.4.2.min.js"></script>
     <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/shortcut.js"></script>
-    <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}webapp/javascripts/workflow.js?version=2"></script>
+
 {% for script in dynamic_scripts %}
-    <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}{{script}}"></script>   
+    <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}{{script}}?version={{jsvers}}"></script>   
 {% endfor %}
+
     <script language="javascript">
 
 XFORM_URL = "{% url xform_player_proxy %}";
@@ -20,7 +25,7 @@ XFORM_NAME = "{{form.name}}";
 XFORM_UID = null;
 
 CLINIC_PREFIX = {{ clinic.prefix }};
-CLINIC_NUM_CHW_ZONES = 6; //templatize me
+CLINIC_NUM_CHW_ZONES = {{ clinic.num_chw_zones|default:"8" }};
 
 //NUMERIC_MONTHS = true;
 //DATE_DISPLAY_ORDER = 'dmy';
@@ -31,22 +36,16 @@ function init () {
   initStaticWidgets();
   render_clean();
   
-{% ifequal mode 'xform' %} 
+{% ifequal mode 'xform' %}
+
   XFORM_UID = $('#form-uid')[0].value;
   gFormAdapter = new xformAjaxAdapter(XFORM_UID, {{ preloader_data|safe }});
   
 {% else %}
+
   gFormAdapter = new workflowAdapter(new {{ form.wfobj }}());
+
 {% endifequal %}
-  shortcut_args = {
-    'type':'keydown',
-    'propagate':false,
-    'target':document
-  };
-  /* shortcuts for cory - a la firefox search */
-  shortcut.add("Alt+N",function() { answerQuestion(); }, shortcut_args);
-  shortcut.add("Alt+P",function() { prevQuestion(); }, shortcut_args);
-  shortcut.add("esc",function() { overlay.setActive(false); }, shortcut_args);
 
   gFormAdapter.loadForm();
 }
