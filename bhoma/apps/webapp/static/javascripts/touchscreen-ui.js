@@ -25,13 +25,11 @@ NUMPAD_COLOR = '#16c';
 NUMPAD_CLASS = 'numpad-button';
 SPC_COLOR = '#44e';
 SPC_CLASS = 'spacebar';
+BACKSPACE_CLASS = 'clear-button';
 
 HELP_BGCOLOR = '#6d6';
 ERR_BGCOLOR = '#d66';
 ALERT_BGCOLOR = '#dd6';
-
-BACKSPACE_CLASS = 'clear-button';
-
 
 BACKSPACE_LABEL = '\u21d0';
 
@@ -202,12 +200,11 @@ function autoAdvance () {
 }
 
 function dateDisplayOrder () {
-  return setting('DATE_DISPLAY_ORDER', 'dmy');
+  return setting('DATE_DISPLAY_ORDER', 'ymd');
 }
 
-//not acted upon yet
 function dateEntryOrder () {
-  var val = setting('DATE_ENTRY_ORDER', 'ymd');
+  var val = setting('DATE_ENTRY_ORDER', '-');
   return (val == '-' ? dateDisplayOrder() : val);
 }
 
