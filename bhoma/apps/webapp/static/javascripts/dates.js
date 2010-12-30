@@ -160,15 +160,15 @@ function DateWidgetContext (dir, answer, args) {
 
     if (this.screen == 'decade') {
       var bucket = this.getYearBucket();
-      this.showScreen(decadeSelect(this.make_decades()), bucket != null ? bucket.start : null);
+      this.showScreen(decadeSelect(this.make_decades(), this), bucket != null ? bucket.start : null);
     } else if (this.screen == 'year') {
-      this.showScreen(yearSelect(this.getYearBucket()), this.year);
+      this.showScreen(yearSelect(this.getYearBucket(), this), this.year);
     } else if (this.screen == 'month') {
-      this.showScreen(monthSelect(this.year), this.month);
+      this.showScreen(monthSelect(this.year, this), this.month);
     } else if (this.screen == 'day') {
-      this.showScreen(daySelect(this.month, this.year), this.day);
+      this.showScreen(daySelect(this.month, this.year, this), this.day);
     } else if (this.screen == 'monthyear') {
-      this.showScreen(monthYearSelect(this.make_months()), monthCount(this.year, this.month));
+      this.showScreen(monthYearSelect(this.make_months(), this), monthCount(this.year, this.month));
     }
     freeEntryKeyboard.update(selectWidget);
   }
@@ -492,42 +492,43 @@ function DateWidgetContext (dir, answer, args) {
     this.refresh();
   }
 
+  this.selfunc = function (field) {
+    var context = this;
+    return function (ev, x) { context.selected(field, x); };
+  }
+
   this.init(dir, answer, args || {});
 }
 
-function dateselfunc (field) {
-  return function (ev, x) { dateEntryContext.selected(field, x); };
-}
-
-function decadeSelect (decades) {
+function decadeSelect (decades, context) {
   var labels = [];
   var values = [];
   var ranges = [];
   for (var i = 0; i < decades.length; i++) {
     labels.push(decades[i].start + '\u2014' + decades[i].end);
     values.push(decades[i].start);
-    ranges.push({start: mkdate(decades[i].start, 1, 1), end: mkdate(decades[i].end, 12, 31)});
+    ranges.push({start: mkNewYearsDay(decades[i].start), end: mkNewYearsEve(decades[i].end)});
   }
 
   var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: 2, width: '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'},
-                                labels, false, [], dateselfunc('decade'));
+                                labels, false, [], context.selfunc('decade'));
   return {layout: aspect_margin('5%-', grid.layout), buttons: grid.buttons, values: values, dateranges: ranges};
 }
 
-function yearSelect (bucket) {
+function yearSelect (bucket, context) {
   var labels = [];
   var values = [];
   var ranges = [];
   for (var o = bucket.start; o <= bucket.end; o++) {
     labels.push(o + '');
     values.push(o);
-    ranges.push({start: mkdate(o, 1, 1), end: mkdate(o, 12, 31)});
+    ranges.push({start: mkNewYearsDay(o), end: mkNewYearsEve(o)});
   }
 
   var grid = render_button_grid({style: 'grid', dir: 'vert',
                                  nrows: Math.min(bucket.end - bucket.start + 1, 5), ncols: Math.ceil((bucket.end - bucket.start + 1) / 5),
                                  width: (bucket.end - bucket.start) > 9 ? '22@' : '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'},
-                                labels, false, [], dateselfunc('year'));
+                                labels, false, [], context.selfunc('year'));
   var layout = grid.layout;
   if (values.length <= 5) {
     //this is really, really, ugly
@@ -540,23 +541,23 @@ function yearSelect (bucket) {
   return {layout: aspect_margin('5%-', layout), buttons: grid.buttons, values: values, dateranges: ranges};
 }
 
-function monthSelect (year) {
+function monthSelect (year, context) {
   var labels = [];
   var values = [];
   var ranges = [];
   for (var i = 1; i <= 12; i++) {
     labels.push(numericMonths() ? i + '' : monthName(i));
     values.push(i);
-    ranges.push(year != null ? {start: mkdate(year, i, 1), end: mkdate(year, i, daysInMonth(i, year))} : null);
+    ranges.push(year != null ? {start: mkFirstOfMonth(year, i), end: mkLastOfMonth(year, i)} : null);
   }
   var size = (numericMonths() ? 2.2 : 1.8);
 
   var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 3, ncols: 4, width: '6@', height: '4@', spacing: '@', textscale: size, margins: '*'},
-                                labels, false, [], dateselfunc('month'));
+                                labels, false, [], context.selfunc('month'));
   return {layout: aspect_margin('7%-', grid.layout), buttons: grid.buttons, values: values, dateranges: ranges};
 }
 
-function daySelect (month, year) {
+function daySelect (month, year, context) {
   var monthLength = daysInMonth(month, year);
   var labels = [];
   var values = [];
@@ -568,11 +569,11 @@ function daySelect (month, year) {
   }
 
   var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 5, ncols: 7, width: '17@', height: '17@', spacing: '3@', textscale: 1.4, margins: '*'},
-                                labels, false, [], dateselfunc('day'));
+                                labels, false, [], context.selfunc('day'));
   return {layout: aspect_margin('1.7%-', grid.layout), buttons: grid.buttons, values: values, dateranges: ranges};
 }
 
-function monthYearSelect (monthyears) {
+function monthYearSelect (monthyears, context) {
   var labels = [];
   var values = [];
   var ranges = [];
@@ -580,10 +581,10 @@ function monthYearSelect (monthyears) {
     var item = monthyears[i];
     labels.push((numericMonths() ? intpad(item.month) + '/' : monthName(item.month) + ' ') + item.year);
     values.push(monthCount(item.year, item.month));
-    ranges.push({start: mkdate(item.year, item.month, 1), end: mkdate(item.year, item.month, daysInMonth(item.month, item.year))});
+    ranges.push({start: mkFirstOfMonth(item.year, item.month), end: mkLastOfMonth(item.year, item.month)});
   }
 
-  var grid = new ChoiceSelect({choices: labels, onclick: dateselfunc('monthyear')});
+  var grid = new ChoiceSelect({choices: labels, onclick: context.selfunc('monthyear')});
 
   //HACK -- can't get at buttons until layout has been rendered, and ChoiceSelect MUST be wrapped in another layout, or else button references won't match up
   var layout = aspect_margin('0', grid);
@@ -593,6 +594,22 @@ function monthYearSelect (monthyears) {
 
 function mkdate (y, m, d) {
   return new Date(y, m - 1, d);
+}
+
+function mkNewYearsDay (y) {
+  return mkdate(y, 1, 1);
+}
+
+function mkNewYearsEve (y) {
+  return mkdate(y, 12, 31);
+}
+
+function mkFirstOfMonth (y, m) {
+  return mkdate(y, m, 1);
+}
+
+function mkLastOfMonth (y, m) {
+  return mkdate(y, m, daysInMonth(m, y));
 }
 
 function intpad (x, n) {
