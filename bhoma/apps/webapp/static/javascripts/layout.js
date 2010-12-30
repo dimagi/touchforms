@@ -514,7 +514,8 @@ function layout_choices (parent_div, choices, multi) {
       longest_choice = choices[i];
     }
   }
-  if (max_w > MAX_LENGTH_FOR_GRID || max_w - min_w > MAX_LENGTH_DIFF_FOR_GRID_ABS || (min_w >= DIFF_REF_THRESHOLD && max_w/min_w > MAX_LENGTH_DIFF_FOR_GRID_REL)) {
+  if (multi || max_w > MAX_LENGTH_FOR_GRID || max_w - min_w > MAX_LENGTH_DIFF_FOR_GRID_ABS || (min_w >= DIFF_REF_THRESHOLD && max_w/min_w > MAX_LENGTH_DIFF_FOR_GRID_REL)) {
+    //(multi-selects are forced to 'list' style, to avoid unsightly lack of checkbox alignment due to centered captions)
     style = 'list';
   } else {
     style = 'grid';

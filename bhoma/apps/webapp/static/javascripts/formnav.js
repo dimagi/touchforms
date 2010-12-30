@@ -62,7 +62,7 @@ function xformAjaxAdapter (formName, preloadTags) {
       } else {
         alert('oops');
       }
-    } else if (activeQuestion["repeatable"]) {
+    } else if (!NEW_REPEATS && activeQuestion["repeatable"]) {
       if (answer == 1 && !activeQuestion["exists"]) {
         //create repeat
         this.serverRequest(XFORM_URL, {'action': 'add-repeat', 'session-id': this.session_id},

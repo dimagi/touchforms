@@ -419,6 +419,7 @@ function make_button (label, args) {
   args.caption = label;
   args.id = args.id || ('button-' + label);
 
+  //todo: fix this!
   var clickfunc = function (ev) {
     //this is a hack
     if (activeInputWidget instanceof Array) {
@@ -442,7 +443,7 @@ function make_button (label, args) {
   return new TextButton(args);
 }
   
-/* utility function to generate an array of keybaord buttons for... a keyboard */
+/* utility function to generate a grid array of buttons */
 function kbs (buttons_info, template) {
   var content = [];
   for (var i = 0; i < buttons_info.length; i++) {
