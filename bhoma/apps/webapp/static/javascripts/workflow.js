@@ -7,15 +7,28 @@ function qSelectReqd (caption, choices, help) {
 }
 
 function uniqifyChoices (choices) {
+  var getcapt = function (choice) {
+    return (choice instanceof Object ? choice.lab : choice);
+  }
+
+  var setcapt = function (choices, i, capt) {
+    if (choices[i] instanceof Object) {
+      choices[i].lab = capt;
+    } else {
+      choices[i] = capt;
+    }
+  }
+
   var duplicateChoices = true;
   while (duplicateChoices) {
     captions = []
     indices = []
     for (var i = 0; i < choices.length; i++) {
-      var k = captions.indexOf(choices[i]);
+      var capt = getcapt(choices[i]);
+      var k = captions.indexOf(capt);
       if (k == -1) {
         k = captions.length;
-        captions.push(choices[i]);
+        captions.push(capt);
         indices[k] = []
       }
       indices[k].push(i);
@@ -26,7 +39,7 @@ function uniqifyChoices (choices) {
       if (indices[i].length > 1) {
         duplicateChoices = true;
         for (var j = 0; j < indices[i].length; j++) {
-          choices[indices[i][j]] += ' (' + (j + 1) + ')'
+          setcapt(choices, indices[i][j], getcapt(choices[indices[i][j]]) + ' (' + (j + 1) + ')');
         }
       }
     }
@@ -77,10 +90,10 @@ function qRoleList(title) {
 function chwZoneChoices (num_zones) {
   var choices = [];
   for (var i = 1; i <= num_zones; i++) {
-    choices.push("Zone " + i);
+    choices.push({lab: "Zone " + i, val: 'zone' + i});
   }
-  choices.push("Lives outside catchment area");
-  choices.push("Don't know which zone");
+  choices.push({lab: "Lives outside catchment area", val: 'outside_catchment_area'});
+  choices.push({lab: "Don't know which zone", val: 'unknown'});
 
   return choices;
 }

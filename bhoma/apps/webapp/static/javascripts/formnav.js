@@ -313,10 +313,6 @@ function workflowAdapter (workflow) {
   }
 
   this.answerQuestion = function (answer) {
-    //type = this.active_question.type;
-    //if (type == 'date')
-    //  answer = new Date(answer);
-
     this.active_question.value = answer;
 
     var val_error = null;
