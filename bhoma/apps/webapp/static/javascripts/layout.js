@@ -735,7 +735,7 @@ function generate_choice_buttons (choices, multi, selected, layout_params, oncli
     var button_info = isSelected ? {label: text, selected: true} : text;
     buttons.push(button_info);
   }
-  return kbs(buttons, {textsize: layout_params.textscale, action: onclick, centered: layout_params.style == 'grid', multi: multi});
+  return btgrid(buttons, {textsize: layout_params.textscale, action: onclick, centered: layout_params.style == 'grid', multi: multi});
 }
 
 function uid (id) {

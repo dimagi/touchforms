@@ -77,13 +77,15 @@ function initStaticWidgets () {
     new Layout({id: 'kbd', margins: ['1.5%=', '1.5%=', 0, '.75%='], content: [freeEntryKeyboard]})
   ]});
 
+  var backspaceKey = {label: BACKSPACE_LABEL, value: '_del', style: BACKSPACE_CLASS};
+  var hyphenKey = {label: '\u2013', value: '-'};
+
   makeNumpad = function (extraKey) {
     return aspect_margin('1.7%-',
         new Layout({id: 'numpad', nrows: 4, ncols: 3, widths: '7@', heights: '7@', margins: '*', spacings: '@', 
-                    content: kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', extraKey, '0', {label: BACKSPACE_LABEL, style: BACKSPACE_CLASS}], {textsize: 2., action: type_})})
+                    content: btgrid(['1', '2', '3', '4', '5', '6', '7', '8', '9', extraKey, '0', backspaceKey], {textsize: 2., action: type_})})
       );
   }
-
   numPad = makeNumpad();
   numPadDecimal = makeNumpad('.');
   numPadPhone = makeNumpad('+');
@@ -94,29 +96,29 @@ function initStaticWidgets () {
       'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', {label: '7', style: NUMPAD_CLASS}, {label: '8', style: NUMPAD_CLASS}, {label: '9', style: NUMPAD_CLASS},
       'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', {label: '4', style: NUMPAD_CLASS}, {label: '5', style: NUMPAD_CLASS}, {label: '6', style: NUMPAD_CLASS},
       'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '!', {label: '1', style: NUMPAD_CLASS}, {label: '2', style: NUMPAD_CLASS}, {label: '3', style: NUMPAD_CLASS},
-      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', {label: '', style: SPC_CLASS}, {label: '0', style: NUMPAD_CLASS}, {label: BACKSPACE_LABEL, style: BACKSPACE_CLASS}     
+      hyphenKey, '+', '%', '&', '*', '/', ':', ';', '(', ')', {label: ' ', style: SPC_CLASS}, {label: '0', style: NUMPAD_CLASS}, backspaceKey     
     ];
     kbdAlpha = [
       'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
-      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', {label: BACKSPACE_LABEL, style: BACKSPACE_CLASS},
-      'Z', 'X', 'C', 'V', 'B', 'N', 'M', '\u2013', '\'', ''
+      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', backspaceKey,
+      'Z', 'X', 'C', 'V', 'B', 'N', 'M', hyphenKey, '\'', ' '
     ];
   } else {
     kbdFull = [
-      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', {label: '7', style: NUMPAD_CLASS}, {label: '8', style: NUMPAD_CLASS}, {label: '9', style: NUMPAD_CLASS}, {label: BACKSPACE_LABEL, style: BACKSPACE_CLASS},
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', {label: '7', style: NUMPAD_CLASS}, {label: '8', style: NUMPAD_CLASS}, {label: '9', style: NUMPAD_CLASS}, backspaceKey,
       'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', {label: '4', style: NUMPAD_CLASS}, {label: '5', style: NUMPAD_CLASS}, {label: '6', style: NUMPAD_CLASS}, '.',
-      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', {label: '', style: SPC_CLASS}, {label: '1', style: NUMPAD_CLASS}, {label: '2', style: NUMPAD_CLASS}, {label: '3', style: NUMPAD_CLASS}, ',',
-      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', {label: '0', style: NUMPAD_CLASS}, '!', '?'     
+      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', {label: ' ', style: SPC_CLASS}, {label: '1', style: NUMPAD_CLASS}, {label: '2', style: NUMPAD_CLASS}, {label: '3', style: NUMPAD_CLASS}, ',',
+      hyphenKey, '+', '%', '&', '*', '/', ':', ';', '(', ')', {label: '0', style: NUMPAD_CLASS}, '!', '?'     
     ];
     kbdAlpha = [
-      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', {label: BACKSPACE_LABEL, style: BACKSPACE_CLASS},
-      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '',
-      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '\u2013', '\''
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', backspaceKey,
+      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', ' ',
+      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', hyphenKey, '\''
     ];
   }
 
-  keyboard = new Layout({id: 'text-kbd', nrows: 4, ncols: 13, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: kbs(kbdFull, {textsize: 1.4, action: type_})});
-  keyboardAlphaOnly = new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: kbs(kbdAlpha, {textsize: 1.9, action: type_})});
+  keyboard = new Layout({id: 'text-kbd', nrows: 4, ncols: 13, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btgrid(kbdFull, {textsize: 1.4, action: type_})});
+  keyboardAlphaOnly = new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btgrid(kbdAlpha, {textsize: 1.9, action: type_})});
 
   //append a 'clear' button to input field(s) and size appropriately
   function make_answerbar (content, widths, id) {
@@ -411,7 +413,7 @@ function make_button (label, args) {
 }
   
 /* utility function to generate a grid array of buttons */
-function kbs (buttons_info, template) {
+function btgrid (buttons_info, template) {
   var content = [];
   for (var i = 0; i < buttons_info.length; i++) {
     var buttonspec = buttons_info[i];
@@ -453,16 +455,10 @@ function type_ (e, c, button) {
     button.flash(KEYFLASH);
   }
   
-  if (c == BACKSPACE_LABEL) {
+  if (c == '_del') {
     keyCode = 0x08;
     charCode = 0;
   } else {
-    if (c == '\u2012' || c == '\u2013' || c == '\u2014') {
-      c = '-';
-    } else if (c == '') {
-      c = ' ';
-    }
-    
     keyCode = 0;
     charCode = c.charCodeAt(0);
   }
