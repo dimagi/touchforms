@@ -477,8 +477,7 @@ function renderQuestion (event, dir) {
     }
   } else if (event["datatype"] == "select" || event["datatype"] == "multiselect") {
     selections = normalize_select_answer(event["answer"], event["datatype"] == "multiselect");
-    var choice_data = unzip_choices(event["choices"], event["choicevals"]);
-    choiceLayout = new ChoiceSelect({choices: choice_data.labels, choicevals: choice_data.values, selected: selections, multi: event["datatype"] == "multiselect"});
+    choiceLayout = new ChoiceSelect({choices: event["choices"], choicevals: event["choicevals"], selected: selections, multi: event["datatype"] == "multiselect"});
     questionEntry.update(choiceLayout);
     activeInputWidget = choiceLayout.buttons;
   } else if (event["datatype"] == "date") {
@@ -530,20 +529,6 @@ function normalize_select_answer (ans, multi) {
     return (!multi ? [ans] : ans);
   } else {
     return null;
-  }
-}
-
-function unzip_choices (labels, values) {
-  if (labels[0] instanceof Object && values == null) {
-    var labs = [];
-    var vals = [];
-    for (var i = 0; i < labels.length; i++) {
-      labs.push(labels[i].lab);
-      vals.push(labels[i].val);      
-    }
-    return {labels: labs, values: vals}
-  } else {
-    return {labels: labels, values: values}
   }
 }
 

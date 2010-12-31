@@ -536,9 +536,24 @@ function norm_selected (sel) {
   }
 }
 
+function unzip_choices (labels, values) {
+  if (labels[0] instanceof Object && values == null) {
+    var labs = [];
+    var vals = [];
+    for (var i = 0; i < labels.length; i++) {
+      labs.push(labels[i].lab);
+      vals.push(labels[i].val);      
+    }
+    return {labels: labs, values: vals}
+  } else {
+    return {labels: labels, values: values}
+  }
+}
+
 function ChoiceSelect (args) {
-  this.choices = args.choices;
-  this.values = args.choicevals;
+  var cv = unzip_choices(args.choices, args.choicevals);
+  this.choices = cv.labels;
+  this.values = cv.values;
   this.multi = args.multi || false;
   this.onclick = args.onclick || choiceSelected;
   this.selected = norm_selected(args.selected); //todo: improve this
