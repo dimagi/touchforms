@@ -252,20 +252,15 @@ function enableInput(force) {
   }
 }
 
-function helpClicked (ev, x) {
-  overlay.activate({
-      text: activeQuestion["help"] || "There is no help text for this question.",
-      color: HELP_BGCOLOR,
-      timeout: 15.
-    });
+function helpClicked () {
+  activeControl.help();
 }
 
-function backClicked (ev, x) {
-  if (activeQuestion["datatype"] == 'date') {
-    dateEntryContext.back();
-  } else {
-    prevQuestion();
-  }
+function backClicked () {
+  activeControl.back();
+  //  if (activeQuestion["datatype"] == 'date') {
+  //  dateEntryContext.back();
+  //} else {
 }
 
 function homeClicked (ev, x) {
@@ -285,33 +280,12 @@ function goHome () {
   }
 }
 
-function nextClicked (ev, x) {
-  if (activeQuestion["datatype"] == 'date') {
-    dateEntryContext.next();
-    return;
-  } else if (activeQuestion["datatype"] == 'float' && answerText.child.control.value != '' && isNaN(+answerText.child.control.value)) {
-    showError("Not a valid number");
-    return;
-  } else if (activeQuestion["domain"] == 'phone' && answerText.child.control.value != '' && !(/^\+?[0-9]+$/.test(answerText.child.control.value))) {
-    showError("This does not appear to be a valid phone number");
-    return;
-  } else if (activeQuestion["domain"] == 'bp' && answerText.child.control.value != '') {
-    var val = answerText.child.control.value;
-    var match = /^([0-9]+)\/([0-9]+)$/.exec(val);
-    if (!match) {
-      showError("This does not appear to be a valid blood pressure reading. Blood pressure should look like: 120/80");
-      return;
-    }
+function nextClicked () {
+  activeControl.next();
 
-    syst = +match[1];
-    diast = +match[2];
-    if (syst > 300 || syst < 40 || diast > 210 || diast < 20) {
-      showError("Blood pressure must be between 40/20 and 300/210");
-      return;
-    }
-  }
-
-  answerQuestion();
+  //  if (activeQuestion["datatype"] == 'date') {
+  //  dateEntryContext.next();
+  //  return;
 }
 
 function clearClicked (ev, x) {
@@ -346,12 +320,14 @@ function choiceSelected (ev, value, button) {
   }
 }
 
-function doAutoAdvance () {
-  disableInput();
-  setTimeout(function () {
-      nextClicked();
-      enableInput();
-    }, AUTO_ADVANCE_DELAY);
+function autoAdvanceTrigger () {
+  if (doAutoAdvance()) {
+    disableInput();
+    setTimeout(function () {
+        nextClicked();
+        enableInput();
+      }, AUTO_ADVANCE_DELAY);
+  }
 }
 
 function showError (text) {

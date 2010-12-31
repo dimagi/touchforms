@@ -5,7 +5,32 @@ function inherit (subclass, superclass) {
   subclass._parent = superclass;
 }
 
+function Entry () {
+  this.help = function () {
+    overlay.activate({
+        text: activeQuestion["help"] || "There is no help text for this question.",
+        color: HELP_BGCOLOR,
+        timeout: 15.
+      });
+  }
+}
+
 function SimpleEntry () {
+  inherit(this, new Entry());
+
+  this.next = function () {
+    if (this.prevalidate()) {
+      answerQuestion();
+    }
+  }
+
+  this.prevalidate = function () {
+    return true;
+  }
+
+  this.back = function () {
+    prevQuestion();
+  }
 
 }
 
@@ -30,6 +55,11 @@ function FreeTextEntry (args) {
     return (this.inputfield == null ? null : this.inputfield.child.control);
   }
 
+  this.getRaw = function () {
+    var control = this.getControl();
+    return (control != null ? control.value : null);
+  }
+
   this.getAnswerBar = function () {
     var answerText = new InputArea({id: 'textinp', border: 3, padding: 5, child: new TextInput({textsize: 1.2, align: 'left', spacing: 0})});  
     var freeTextAnswer = make_answerbar(answerText, '*', 'answer-bar');
@@ -49,6 +79,22 @@ function FreeTextEntry (args) {
     flash = no_flash || false;
     self = self || this;
     return function (ev, c, button) { type_(self.getControl(), c, button, !no_flash); };
+  }
+
+  this.prevalidate = function () {
+    var raw = this.getRaw();
+    if (raw) {
+      var errmsg = this._prevalidate(raw);
+      if (errmsg) {
+        showError(errmsg);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  this._prevalidate = function (raw) {
+    return null;
   }
 }
 
@@ -93,6 +139,10 @@ function FloatEntry () {
   this.getKeyboard = function () {
     return makeNumpad('.', this.typeFunc());
   }
+
+  this._prevalidate = function (raw) {
+    return (isNaN(+raw) ? "Not a valid number" : null);
+  }
 }
 
 function PhoneNumberEntry () {
@@ -101,6 +151,10 @@ function PhoneNumberEntry () {
   this.getKeyboard = function () {
     return makeNumpad('+', this.typeFunc());
   }
+
+  this._prevalidate = function (raw) {
+    return (!(/^\+?[0-9]+$/.test(raw)) ? "This does not appear to be a valid phone number" : null);
+  }
 }
 
 function BloodPressureEntry () {
@@ -108,6 +162,21 @@ function BloodPressureEntry () {
 
   this.getKeyboard = function () {
     return makeNumpad('/', this.typeFunc());
+  }
+
+  this._prevalidate = function (raw) {
+    var match = /^([0-9]+)\/([0-9]+)$/.exec(raw);
+    if (!match) {
+      return "This does not appear to be a valid blood pressure reading. Blood pressure should look like: 120/80";
+    }
+
+    syst = +match[1];
+    diast = +match[2];
+    if (syst > 300 || syst < 40 || diast > 210 || diast < 20) {
+      return "Blood pressure must be between 40/20 and 300/210";
+    }
+
+    return null;
   }
 }
 
