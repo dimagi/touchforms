@@ -86,10 +86,15 @@ function get_roles() {
         
 
 function qRoleList(title) {
-    roles = get_roles();
-    if (title == null) 
-        title = "Please choose the user's role";
-    return qSelectReqd(title, roles);
+    var roles = get_roles();
+    title = title || "Please choose the user's role";
+
+    var rolechoices = [];
+    for (var i = 0; i < roles.length; i++) {
+      rolechoices.push({lab: roles[i], val: roles[i]});
+    }
+
+    return qSelectReqd(title, rolechoices);
 }
 
 function chwZoneChoices (num_zones) {

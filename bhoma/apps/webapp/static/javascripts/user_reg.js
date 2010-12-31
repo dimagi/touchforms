@@ -40,9 +40,6 @@ function wfNewUser() {
         var q_username = new wfQuestion({caption: 'Login Name', type: 'str', required: true, validation: userval, domain: 'alpha'});
         yield q_username;
         data['username'] = q_username.value;
-
-
-
         
         var password_format = function (pass) {
             return (pass.length < 4 ? "Passwords must be at least 4 digits" : null);
@@ -52,22 +49,22 @@ function wfNewUser() {
         data['password'] = q_password.value;
         
         var q_fname = new wfQuestion({caption: 'First Name', type: 'str', required: true, domain: 'alpha'});
-	    yield q_fname;
-	    data['fname'] = q_fname.value;
-    	
+        yield q_fname;
+        data['fname'] = q_fname.value;
+        
         var q_lname = new wfQuestion({caption: 'Last Name', type: 'str', required: true, domain: 'alpha'});
-	    yield q_lname;
-	    data['lname'] = q_lname.value;
-	    
-	    var q_role = qRoleList();
+        yield q_lname;
+        data['lname'] = q_lname.value;
+        
+        var q_role = qRoleList();
         yield q_role;
-        data['role'] = roles[q_role.value - 1];
-    
-  }
+        data['role'] = q_role.value;
+        
+    }
 
-  var onFinish = function (data) {
-    submit_redirect({result: JSON.stringify(data)});
-  }
+    var onFinish = function (data) {
+      submit_redirect({result: JSON.stringify(data)});
+    }
 
-  return new Workflow(flow, onFinish);
+    return new Workflow(flow, onFinish);
 }
