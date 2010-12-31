@@ -63,13 +63,7 @@ function get_usernames() {
 function qUsernameList(title) {
     var usernames = get_usernames();
     title = title || "Please select your username";
-
-    var userchoices = [];
-    for (var i = 0; i < usernames.length; i++) {
-      userchoices.push({lab: usernames[i], val: usernames[i]});
-    }
-
-    return qSelectReqd(title, userchoices);
+    return qSelectReqd(title, zip_choices(usernames, usernames));
 }
 
 function get_roles() {
@@ -88,13 +82,7 @@ function get_roles() {
 function qRoleList(title) {
     var roles = get_roles();
     title = title || "Please choose the user's role";
-
-    var rolechoices = [];
-    for (var i = 0; i < roles.length; i++) {
-      rolechoices.push({lab: roles[i], val: roles[i]});
-    }
-
-    return qSelectReqd(title, rolechoices);
+    return qSelectReqd(title, zip_choices(roles, roles));
 }
 
 function chwZoneChoices (num_zones) {
@@ -105,5 +93,13 @@ function chwZoneChoices (num_zones) {
   choices.push({lab: "Lives outside catchment area", val: 'outside_catchment_area'});
   choices.push({lab: "Don't know which zone", val: 'unknown'});
 
+  return choices;
+}
+
+function zip_choices (labels, values) {
+  var choices = [];
+  for (var i = 0; i < labels.length; i++) {
+    choices.push({lab: labels[i], val: values[i]});
+  }
   return choices;
 }
