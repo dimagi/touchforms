@@ -252,7 +252,7 @@ function has_spacing (widths, heights) {
 
 function ChoiceButton (args) {
   this.label = args.label;
-  this.value = args.value || this.label;
+  this.value = (args.value != null ? args.value : this.label);
   this.multi = args.multi || false;
   this.default_color = args.color;
   this.selected_color = args.selcolor;
