@@ -31,8 +31,6 @@ function xformAjaxAdapter (formName, preloadTags) {
       });
   }
 
-
-  this.NEW_REPEATS = true;
   this.answerQuestion = function (answer) {
     adapter = this;
     if (activeQuestion["type"] == "repeat-juncture") {
@@ -61,21 +59,6 @@ function xformAjaxAdapter (formName, preloadTags) {
         this._step(true);
       } else {
         alert('oops');
-      }
-    } else if (!this.NEW_REPEATS && activeQuestion["repeatable"]) {
-      if (answer == 1 && !activeQuestion["exists"]) {
-        //create repeat
-        this.serverRequest(XFORM_URL, {'action': 'add-repeat', 'session-id': this.session_id},
-          function (resp) {
-            adapter._renderEvent(resp["event"], true);
-          });
-      } else if (answer == 2 && activeQuestion["exists"]) {
-        //delete repeat
-        alert('i should probably delete all the subsequent existing repeats here, but i don\'t support that currently. also, that\'s probably not the best user interaction');
-        this._step(true);
-      } else {
-        //nothing changed; advance
-        this._step(true);
       }
     } else {
       this.serverRequest(XFORM_URL, {'action': 'answer',
@@ -115,18 +98,7 @@ function xformAjaxAdapter (formName, preloadTags) {
     } else if (event["type"] == "form-complete") {
       this._formComplete(event);
     } else if (event["type"] == "sub-group") {
-      if (!this.NEW_REPEATS && event["repeatable"]) {
-        event["item"] = event["caption"];
-        event["caption"] = "Add a " + event["item"] + "?";
-        event["datatype"] = "select";
-        event["choices"] = ["Yes", "No"];
-        event["answer"] = (event["exists"] ? 1 : (dirForward ? null : 2));
-        event["required"] = true;
-
-        renderQuestion(event, dirForward);
-      } else {
-        this._step(dirForward);
-      }
+      this._step(dirForward);
     } else if (event["type"] == "repeat-juncture") {
       if (!event["repeat-delete"]) {
         event["caption"] = event["main-header"];
@@ -544,7 +516,7 @@ function getQuestionAnswer () {
     selected = [];
     for (i = 0; i < activeInputWidget.length; i++) {
       if (activeInputWidget[i].status == 'selected') {
-        selected.push(getButtonID(activeInputWidget[i]));
+        selected.push(activeInputWidget[i].value);
       }
     }
     
