@@ -3,7 +3,7 @@ function wfLogin () {
   var flow = function (data) {
     var q_username = qUsernameList();
     yield q_username;
-    username = usernames[q_username.value - 1];
+    username = q_username.value;
     
     //enter password
     var auth_validation = function(password) {

@@ -61,10 +61,15 @@ function get_usernames() {
 }
         
 function qUsernameList(title) {
-    usernames = get_usernames();
-    if (title == null) 
-        title = "Please select your username";
-    return qSelectReqd(title, usernames);
+    var usernames = get_usernames();
+    title = title || "Please select your username";
+
+    var userchoices = [];
+    for (var i = 0; i < usernames.length; i++) {
+      userchoices.push({lab: usernames[i], val: usernames[i]});
+    }
+
+    return qSelectReqd(title, userchoices);
 }
 
 function get_roles() {
