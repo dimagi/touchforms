@@ -34,28 +34,24 @@ function xformAjaxAdapter (formName, preloadTags) {
   this.answerQuestion = function (answer) {
     adapter = this;
     if (activeQuestion["type"] == "repeat-juncture") {
-      //ugh, we _really_ need dictionary based select questions
-      var addIx = (activeQuestion["add-choice"] != null ? activeQuestion["repetitions"].length + 1 : -1);
-      var delIx = (activeQuestion["del-choice"] != null ? activeQuestion["choices"].length - 1 : -1);
-      var doneIx = activeQuestion["choices"].length;
-
       if (answer == null) {
         showError("An answer is required");
-      } else if (answer <= activeQuestion["repetitions"].length) {
+      } else if (answer.substring(0, 3) == 'rep') {
+        var repIx = +answer.substring(3);
         this.serverRequest(XFORM_URL, {'action': (activeQuestion["repeat-delete"] ? 'delete-repeat' :'edit-repeat'), 
-                'session-id': this.session_id, 'ix': answer},
+                'session-id': this.session_id, 'ix': repIx},
           function (resp) {
             adapter._renderEvent(resp["event"], true);
           });
-      } else if (answer == addIx) {
+      } else if (answer == 'add') {
         this.serverRequest(XFORM_URL, {'action': 'new-repeat', 'session-id': this.session_id},
           function (resp) {
             adapter._renderEvent(resp["event"], true);
           });
-      } else if (answer == delIx) {
+      } else if (answer == 'del') {
         activeQuestion["repeat-delete"] = true;
         this._renderEvent(activeQuestion, true);
-      } else if (answer == doneIx) {
+      } else if (answer == 'done') {
         this._step(true);
       } else {
         alert('oops');
@@ -104,18 +100,18 @@ function xformAjaxAdapter (formName, preloadTags) {
         event["caption"] = event["main-header"];
         event["datatype"] = "select";
         
-        var options = []
+        var options = [];
         for (var i = 0; i < event["repetitions"].length; i++) {
-          options.push(event["repetitions"][i]);
+          options.push({lab: event["repetitions"][i], val: 'rep' + (i + 1)});
         }
         if (event["add-choice"] != null) {
-          options.push(event["add-choice"]);
+          options.push({lab: event["add-choice"], val: 'add'});
         }
         if (event["del-choice"] != null) {
-          options.push(event["del-choice"]);
+          options.push({lab: event["del-choice"], val: 'del'});
         }
-        options.push(event["done-choice"]);
-        
+        options.push({lab: event["done-choice"], val: 'done'});
+
         event["choices"] = options;
         event["answer"] = null;
         event["required"] = true;
@@ -123,9 +119,9 @@ function xformAjaxAdapter (formName, preloadTags) {
         event["caption"] = event["del-header"];
         event["datatype"] = "select";
         
-        var options = []
+        var options = [];
         for (var i = 0; i < event["repetitions"].length; i++) {
-          options.push(event["repetitions"][i]);
+          options.push({lab: event["repetitions"][i], val: 'rep' + (i + 1)});
         }
         event["choices"] = options;
         event["answer"] = null;
@@ -485,7 +481,8 @@ function renderQuestion (event, dir) {
     }
   } else if (event["datatype"] == "select" || event["datatype"] == "multiselect") {
     selections = normalize_select_answer(event["answer"], event["datatype"] == "multiselect");
-    choiceLayout = new ChoiceSelect({choices: event["choices"], values: event["choicevals"], selected: selections, multi: event["datatype"] == "multiselect"});
+    var choice_data = unzip_choices(event["choices"], event["choicevals"]);
+    choiceLayout = new ChoiceSelect({choices: choice_data.labels, choicevals: choice_data.values, selected: selections, multi: event["datatype"] == "multiselect"});
     questionEntry.update(choiceLayout);
     activeInputWidget = choiceLayout.buttons;
   } else if (event["datatype"] == "date") {
@@ -537,6 +534,20 @@ function normalize_select_answer (ans, multi) {
     return (!multi ? [ans] : ans);
   } else {
     return null;
+  }
+}
+
+function unzip_choices (labels, values) {
+  if (labels[0] instanceof Object && values == null) {
+    var labs = [];
+    var vals = [];
+    for (var i = 0; i < labels.length; i++) {
+      labs.push(labels[i].lab);
+      vals.push(labels[i].val);      
+    }
+    return {labels: labs, values: vals}
+  } else {
+    return {labels: labels, values: values}
   }
 }
 
