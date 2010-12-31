@@ -31,8 +31,6 @@ HELP_BGCOLOR = '#6d6';
 ERR_BGCOLOR = '#d66';
 ALERT_BGCOLOR = '#dd6';
 
-BACKSPACE_LABEL = '\u21d0';
-
 AUTO_ADVANCE_DELAY = 150; //ms
 KEYFLASH = 0; //150; //ms
 
@@ -77,7 +75,7 @@ function initStaticWidgets () {
     new Layout({id: 'kbd', margins: ['1.5%=', '1.5%=', 0, '.75%='], content: [freeEntryKeyboard]})
   ]});
 
-  var backspaceKey = {label: BACKSPACE_LABEL, value: '_del', style: BACKSPACE_CLASS};
+  var backspaceKey = {label: '\u21d0', value: '_del', style: BACKSPACE_CLASS};
   var hyphenKey = {label: '\u2013', value: '-'};
 
   makeNumpad = function (extraKey) {
@@ -451,20 +449,22 @@ function render_clean () {
 }
 
 function type_ (e, c, button) {
+  var BKSP = '_del';
+
   if (activeQuestion.datatype != 'passwd') {
     button.flash(KEYFLASH);
   }
   
-  if (c == '_del') {
-    keyCode = 0x08;
-    charCode = 0;
-  } else {
-    keyCode = 0;
-    charCode = c.charCodeAt(0);
-  }
-
   if (jQuery.browser.mozilla){
-      // preserve firefox behavior, just send the keypress to the input
+    // preserve firefox behavior, just send the keypress to the input
+    if (c == BKSP) {
+      keyCode = 0x08;
+      charCode = 0;
+    } else {
+      keyCode = 0;
+      charCode = c.charCodeAt(0);
+    }
+
 	  var evt = document.createEvent("KeyboardEvent");
 	  evt.initKeyEvent("keypress", true, true, window,
 	                   0, 0, 0, 0,
@@ -475,16 +475,13 @@ function type_ (e, c, button) {
     // only difference here is that the cursor is always assumed to be at the end of the input
     elem = $($("input")[0]);
     prev_text = elem.val();
-    if (c == BACKSPACE_LABEL) {
+    if (c == BKSP) {
         if (prev_text) {
             elem.val(prev_text.substring(0, prev_text.length - 1));        
         }
     } else {
-        text = String.fromCharCode(charCode);
-        elem.val(prev_text + text);
-            
+        elem.val(prev_text + c);            
     }
   }
-  
 }
 
