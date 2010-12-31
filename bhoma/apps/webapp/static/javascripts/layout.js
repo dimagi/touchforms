@@ -512,6 +512,7 @@ function TextInput (args) {
     inp.value = this.content;
     inp.type = (this.passwd ? 'password' : 'text');
     this.control = inp;
+    this.setMaxLen(this.maxlen);
   }
   
   this.setText = function (text) {

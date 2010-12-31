@@ -5,7 +5,13 @@ function inherit (subclass, superclass) {
   subclass._parent = superclass;
 }
 
+function SimpleEntry () {
+
+}
+
 function FreeTextEntry (args) {
+  inherit(this, new SimpleEntry());
+
   this.domain = args.domain || 'full';
   this.length_limit = args.length_limit || 500;
 
@@ -57,6 +63,7 @@ function kbdForDomain (domain, typefunc) {
 }
 
 function PasswordEntry (args) {
+  args.length_limit = args.length_limit || 9;
   inherit(this, new FreeTextEntry(args));
 
   this.getAnswerBar = function () {
