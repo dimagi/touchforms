@@ -428,53 +428,34 @@ function renderQuestion (event, dir) {
   questionCaption.setText(event["caption"]);
  
   if (event["customlayout"] != null) {
+    //todo: what to do about this
+    throw new Error('unfinished');
     event["customlayout"](event);
-  } else if (event["datatype"] == "str" ||
-             event["datatype"] == "int" ||
-             event["datatype"] == "float" ||
-             event["datatype"] == "passwd") {
-    questionEntry.update(freeEntry);
+  } else if (event.domain == 'phone') {
+    activeControl = new PhoneNumberEntry();
+  } else if (event.domain == 'bp') {
+    activeControl = new BloodPressureEntry();
+  } else if (event.domain == 'pat-id') {
+    activeControl = new PatientIDEntry();
+  } else if (event.datatype == "str") {
+    activeControl = new FreeTextEntry({domain: event.domain});
+  } else if (event.datatype == "int") {
+    activeControl = new IntEntry();
+  } else if (event.datatype == "float") {
+    activeControl = new FloatEntry();
+  } else if (event.datatype == "passwd") {
+    activeControl = new PasswordEntry({domain: event.domain});
 
-    if (event["datatype"] == "passwd") {
-      answerWidget = passwdAnswer;
-      entryWidget = passwdText;
-    } else {
-      answerWidget = freeTextAnswer;
-      entryWidget = answerText;
-    }
-    entryWidget.setMaxLen(500);
-
-    answerBar.update(answerWidget);
-
-    if (event["datatype"] == "str" || event["datatype"] == "passwd") {
-      if (event["domain"] == "alpha") {
-        kbd = keyboardAlphaOnly;
-      } else if (event["domain"] == "numeric" || event["domain"] == "pat-id") {
-        kbd = numPad;
-      } else if (event["domain"] == "bp") {
-        kbd = numPadBP;
-      } else if (event["domain"] == "phone") {
-        kbd = numPadPhone;
-      } else {
-        kbd = keyboard;
-      }
-
+  /*
       if (event["domain"] == "pat-id" && event["answer"] == null) {
         event["answer"] = CLINIC_PREFIX;
       }
-    } else if (event["datatype"] == "int") {
-      kbd = numPad;
-      entryWidget.setMaxLen(9);
-    } else if (event["datatype"] == "float") {
-      kbd = numPadDecimal;
-    }
-
-    freeEntryKeyboard.update(kbd);    
-    activeInputWidget = entryWidget;
     
     if (event["answer"] != null) {
       entryWidget.setText(event["answer"]);
     }
+  */
+
   } else if (event["datatype"] == "select" || event["datatype"] == "multiselect") {
     selections = normalize_select_answer(event["answer"], event["datatype"] == "multiselect");
     choiceLayout = new ChoiceSelect({choices: event["choices"], choicevals: event["choicevals"], selected: selections, multi: event["datatype"] == "multiselect"});
@@ -487,9 +468,12 @@ function renderQuestion (event, dir) {
     alert("unrecognized datatype [" + event["datatype"] + "]");
   }
 
-  if (event["answer"] == null) {
-    clearClicked();
-  }
+  if (activeControl != null)
+    activeControl.load();
+
+  //  if (event["answer"] == null) {
+  //  clearClicked();
+  // }
 }
 
 function getQuestionAnswer () {

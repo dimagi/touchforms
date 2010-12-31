@@ -5,6 +5,7 @@ monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oc
 
 function DateWidgetContext (dir, answer, args) {
   this.DEFAULT_FUTURE_RANGE = 1826; //days ~= 5 years
+  //formatting constants
   this.MAX_MONTHS_FOR_YEARLESS = 8;
   this.YEAR_COLUMN = 5;
   this.NUM_DECADE_CHOICES = 10;

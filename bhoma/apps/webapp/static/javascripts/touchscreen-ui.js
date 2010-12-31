@@ -75,82 +75,6 @@ function initStaticWidgets () {
     new Layout({id: 'kbd', margins: ['1.5%=', '1.5%=', 0, '.75%='], content: [freeEntryKeyboard]})
   ]});
 
-  var backspaceKey = {label: '\u21d0', value: '_del', style: BACKSPACE_CLASS};
-  var hyphenKey = {label: '\u2013', value: '-'};
-
-  makeNumpad = function (extraKey) {
-    return aspect_margin('1.7%-',
-        new Layout({id: 'numpad', nrows: 4, ncols: 3, widths: '7@', heights: '7@', margins: '*', spacings: '@', 
-                    content: btngrid(['1', '2', '3', '4', '5', '6', '7', '8', '9', extraKey, '0', backspaceKey], {textsize: 2., action: type_})})
-      );
-  }
-  numPad = makeNumpad();
-  numPadDecimal = makeNumpad('.');
-  numPadPhone = makeNumpad('+');
-  numPadBP = makeNumpad('/');
-  
-  if (qwertyKbd()) {
-    kbdFull = [
-      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', {label: '7', style: NUMPAD_CLASS}, {label: '8', style: NUMPAD_CLASS}, {label: '9', style: NUMPAD_CLASS},
-      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', {label: '4', style: NUMPAD_CLASS}, {label: '5', style: NUMPAD_CLASS}, {label: '6', style: NUMPAD_CLASS},
-      'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '!', {label: '1', style: NUMPAD_CLASS}, {label: '2', style: NUMPAD_CLASS}, {label: '3', style: NUMPAD_CLASS},
-      hyphenKey, '+', '%', '&', '*', '/', ':', ';', '(', ')', {label: ' ', style: SPC_CLASS}, {label: '0', style: NUMPAD_CLASS}, backspaceKey     
-    ];
-    kbdAlpha = [
-      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
-      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', backspaceKey,
-      'Z', 'X', 'C', 'V', 'B', 'N', 'M', hyphenKey, '\'', ' '
-    ];
-  } else {
-    kbdFull = [
-      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', {label: '7', style: NUMPAD_CLASS}, {label: '8', style: NUMPAD_CLASS}, {label: '9', style: NUMPAD_CLASS}, backspaceKey,
-      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', {label: '4', style: NUMPAD_CLASS}, {label: '5', style: NUMPAD_CLASS}, {label: '6', style: NUMPAD_CLASS}, '.',
-      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', {label: ' ', style: SPC_CLASS}, {label: '1', style: NUMPAD_CLASS}, {label: '2', style: NUMPAD_CLASS}, {label: '3', style: NUMPAD_CLASS}, ',',
-      hyphenKey, '+', '%', '&', '*', '/', ':', ';', '(', ')', {label: '0', style: NUMPAD_CLASS}, '!', '?'     
-    ];
-    kbdAlpha = [
-      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', backspaceKey,
-      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', ' ',
-      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', hyphenKey, '\''
-    ];
-  }
-
-  keyboard = new Layout({id: 'text-kbd', nrows: 4, ncols: 13, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btngrid(kbdFull, {textsize: 1.4, action: type_})});
-  keyboardAlphaOnly = new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btngrid(kbdAlpha, {textsize: 1.9, action: type_})});
-
-  //append a 'clear' button to input field(s) and size appropriately
-  function make_answerbar (content, widths, id) {
-    if (!(content instanceof Array)) {
-      content = [content];
-    }
-    if (!(widths instanceof Array)) {
-      widths = [widths];
-    }
-
-    //todo: find a way to generalize this?
-    var expands = false;
-    for (var i = 0; i < widths.length; i++) {
-      if (widths[i].indexOf('*') != -1) {
-        expands = true;
-        break;
-      }
-    }
-
-    var clearButton = new TextButton({id: 'clear-button', color: '#aaa', textcolor: BUTTON_TEXT_COLOR, caption: 'CLEAR', textsize: 0.8, onclick: clearClicked});
-    content.push(clearButton);
-    widths.push('1.7@');
-
-    return new Layout({margins: ['3%', '18%'], content: [
-         new Layout({id: id, ncols: content.length, heights: '@', widths: widths, margins: [expands ? 0 : '*', '*'], spacings: '.08@', content: content})
-       ]});
-  }
-
-  answerText = new InputArea({id: 'textinp', border: 3, padding: 5, child: new TextInput({textsize: 1.2, align: 'left', spacing: 0})});  
-  freeTextAnswer = make_answerbar(answerText, '*', 'answer-bar');
-
-  passwdText = new InputArea({id: 'textinp', border: 3, padding: 5, child: new TextInput({textsize: 1.3, spacing: 0, passwd: true})});
-  passwdAnswer = make_answerbar(passwdText, '5@', 'passwd-bar');
-  
   dayText = new InputArea({id: 'dayinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {dateEntryContext.goto_('day');}});
   monthText = new InputArea({id: 'monthinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {dateEntryContext.goto_('month');}});
   yearText = new InputArea({id: 'yearinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {dateEntryContext.goto_('year');}});  
@@ -182,6 +106,81 @@ function initStaticWidgets () {
   }
   dateAnswer = make_date_answerbar();
 }
+
+BKSP = '_del';
+backspaceKey = {label: '\u21d0', value: BKSP, style: BACKSPACE_CLASS};
+hyphenKey = {label: '\u2013', value: '-'};
+
+function makeNumpad (extraKey, action) {
+  return aspect_margin('1.7%-',
+    new Layout({id: 'numpad', nrows: 4, ncols: 3, widths: '7@', heights: '7@', margins: '*', spacings: '@', 
+                content: btngrid(['1', '2', '3', '4', '5', '6', '7', '8', '9', extraKey, '0', backspaceKey], {textsize: 2., action: action})})
+  );
+}
+
+function makeKeyboard (full, action) {
+  if (qwertyKbd()) {
+    kbdFull = [
+      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', {label: '7', style: NUMPAD_CLASS}, {label: '8', style: NUMPAD_CLASS}, {label: '9', style: NUMPAD_CLASS},
+      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', {label: '4', style: NUMPAD_CLASS}, {label: '5', style: NUMPAD_CLASS}, {label: '6', style: NUMPAD_CLASS},
+      'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '!', {label: '1', style: NUMPAD_CLASS}, {label: '2', style: NUMPAD_CLASS}, {label: '3', style: NUMPAD_CLASS},
+      hyphenKey, '+', '%', '&', '*', '/', ':', ';', '(', ')', {label: ' ', style: SPC_CLASS}, {label: '0', style: NUMPAD_CLASS}, backspaceKey     
+    ];
+    kbdAlpha = [
+      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
+      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', backspaceKey,
+      'Z', 'X', 'C', 'V', 'B', 'N', 'M', hyphenKey, '\'', ' '
+    ];
+  } else {
+    kbdFull = [
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', {label: '7', style: NUMPAD_CLASS}, {label: '8', style: NUMPAD_CLASS}, {label: '9', style: NUMPAD_CLASS}, backspaceKey,
+      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', {label: '4', style: NUMPAD_CLASS}, {label: '5', style: NUMPAD_CLASS}, {label: '6', style: NUMPAD_CLASS}, '.',
+      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', {label: ' ', style: SPC_CLASS}, {label: '1', style: NUMPAD_CLASS}, {label: '2', style: NUMPAD_CLASS}, {label: '3', style: NUMPAD_CLASS}, ',',
+      hyphenKey, '+', '%', '&', '*', '/', ':', ';', '(', ')', {label: '0', style: NUMPAD_CLASS}, '!', '?'     
+    ];
+    kbdAlpha = [
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', backspaceKey,
+      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', ' ',
+      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', hyphenKey, '\''
+    ];
+  }
+
+  if (full) {
+    return new Layout({id: 'text-kbd', nrows: 4, ncols: 13, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btngrid(kbdFull, {textsize: 1.4, action: action})});
+  } else {
+    return new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btngrid(kbdAlpha, {textsize: 1.9, action: action})});
+  }
+}
+
+//append a 'clear' button to input field(s) and size appropriately
+function make_answerbar (content, widths, id) {
+  if (!(content instanceof Array)) {
+    content = [content];
+  }
+  if (!(widths instanceof Array)) {
+    widths = [widths];
+  }
+  
+  //todo: find a way to generalize this?
+  var expands = false;
+  for (var i = 0; i < widths.length; i++) {
+    if (widths[i].indexOf('*') != -1) {
+      expands = true;
+      break;
+    }
+  }
+  
+  var clearButton = new TextButton({id: 'clear-button', color: '#aaa', textcolor: BUTTON_TEXT_COLOR, caption: 'CLEAR', textsize: 0.8, onclick: clearClicked});
+  content.push(clearButton);
+  widths.push('1.7@');
+  
+  return new Layout({margins: ['3%', '18%'], content: [
+      new Layout({id: id, ncols: content.length, heights: '@', widths: widths, margins: [expands ? 0 : '*', '*'], spacings: '.08@', content: content})
+    ]});
+}
+
+
+
 
 function setting (varname, defval) {
   var val = window[varname];
@@ -429,39 +428,36 @@ function render_clean () {
   render_viewport('viewport', touchscreenUI);
 }
 
-function type_ (e, c, button) {
-  var BKSP = '_del';
-
-  if (activeQuestion.datatype != 'passwd') {
+function type_ (input_field, c, button, flash) {
+  if (flash) {
     button.flash(KEYFLASH);
   }
   
   if (jQuery.browser.mozilla){
     // preserve firefox behavior, just send the keypress to the input
     if (c == BKSP) {
-      keyCode = 0x08;
-      charCode = 0;
+      var keyCode = 0x08;
+      var charCode = 0;
     } else {
-      keyCode = 0;
-      charCode = c.charCodeAt(0);
+      var keyCode = 0;
+      var charCode = c.charCodeAt(0);
     }
 
 	  var evt = document.createEvent("KeyboardEvent");
 	  evt.initKeyEvent("keypress", true, true, window,
 	                   0, 0, 0, 0,
-	                   keyCode, charCode) 
-	  elem = document.getElementsByTagName('input')[0];
-	  elem.dispatchEvent(evt);
+	                   keyCode, charCode); 
+	  input_field.dispatchEvent(evt);
   } else {
     // only difference here is that the cursor is always assumed to be at the end of the input
-    elem = $($("input")[0]);
-    prev_text = elem.val();
+    var elem = $(input_field);
+    var prev_text = elem.val();
     if (c == BKSP) {
-        if (prev_text) {
-            elem.val(prev_text.substring(0, prev_text.length - 1));        
-        }
+      if (prev_text) {
+        elem.val(prev_text.substring(0, prev_text.length - 1));        
+      }
     } else {
-        elem.val(prev_text + c);            
+      elem.val(prev_text + c);
     }
   }
 }

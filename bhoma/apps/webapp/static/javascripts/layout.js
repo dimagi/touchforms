@@ -696,7 +696,7 @@ function layout_choices (parent_div, choices, multi) {
       }
     }
     if (!fits) {
-      throw Error("choices too numerous or verbose to fit!");
+      throw new Error("choices too numerous or verbose to fit!");
     }
 
     width = bw;
@@ -911,7 +911,7 @@ function partition (p) {
       sum += sizes[i];
     }
     if (sum < ttl_size - EPSILON) {
-      throw Error('inconsistent dimension spec for layout; not all space consumed');
+      throw new Error('inconsistent dimension spec for layout; not all space consumed');
     }
   }
   check_size_used(hSizes, p.pane_width);
