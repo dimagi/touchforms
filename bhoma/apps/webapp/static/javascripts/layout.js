@@ -528,12 +528,20 @@ function TextInput (args) {
   }
 }
 
+function norm_selected (sel) {
+  if (sel == null) {
+    return null;
+  } else {
+    return (sel instanceof Array ? sel : [sel]);
+  }
+}
+
 function ChoiceSelect (args) {
   this.choices = args.choices;
   this.values = args.choicevals;
   this.multi = args.multi || false;
   this.onclick = args.onclick || choiceSelected;
-  this.selected = args.selected || []; //todo: improve this
+  this.selected = norm_selected(args.selected); //todo: improve this
 
   this.buttons = null;
 
@@ -729,10 +737,12 @@ function render_button_grid (layout_params, choices, values, multi, selected, on
 }
 
 function generate_choice_buttons (choices, values, multi, selected, layout_params, onclick) {
+  selected = norm_selected(selected);
   var buttons = [];
   for (var i = 0; i < choices.length; i++) {
-    var isSelected = (selected != null && selected.indexOf(i + 1) != -1);
-    var button_info = {label: choices[i], value: (values == null ? i + 1 : values[i]), selected: isSelected};
+    var value = (values == null ? i + 1 : values[i]);
+    var isSelected = (selected != null && selected.indexOf(value) != -1);
+    var button_info = {label: choices[i], value: value, selected: isSelected};
     buttons.push(button_info);
   }
   return btngrid(buttons, {textsize: layout_params.textscale, action: onclick, centered: layout_params.style == 'grid', multi: multi});

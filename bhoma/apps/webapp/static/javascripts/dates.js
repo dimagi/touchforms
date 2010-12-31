@@ -156,15 +156,15 @@ function DateWidgetContext (dir, answer, args) {
     dayText.setText(this.day != null ? intpad(this.day, 2) : '');
 
     if (this.screen == 'decade') {
-      this.showScreen(decadeSelect(this.make_decades(), this), this.getChoiceVal('decade'));
+      this.showScreen(decadeSelect(this.make_decades(), this.getChoiceVal('decade'), this));
     } else if (this.screen == 'year') {
-      this.showScreen(yearSelect(this.getYearBucket(), this), this.year);
+      this.showScreen(yearSelect(this.getYearBucket(), this.year, this));
     } else if (this.screen == 'month') {
-      this.showScreen(monthSelect(this.year, this), this.month);
+      this.showScreen(monthSelect(this.year, this.month, this));
     } else if (this.screen == 'day') {
-      this.showScreen(daySelect(this.month, this.year, this), this.day);
+      this.showScreen(daySelect(this.month, this.year, this.day, this));
     } else if (this.screen == 'monthyear') {
-      this.showScreen(monthYearSelect(this.make_months(), this), this.getChoiceVal('monthyear'));
+      this.showScreen(monthYearSelect(this.make_months(), this.getChoiceVal('monthyear'), this));
     }
   }
 
@@ -200,28 +200,9 @@ function DateWidgetContext (dir, answer, args) {
 
     activeInputWidget = choice_info.get_buttons();
 
-    this.select(selected_val);
-
     for (var i = 0; i < activeInputWidget.length; i++) {
       if (choice_info.dateranges[i] != null && !rangeOverlap(this.mindate, this.maxdate, choice_info.dateranges[i].start, choice_info.dateranges[i].end)) {
         activeInputWidget[i].setStatus('disabled');
-      }
-    }
-  }
-
-  this.select = function (val) {
-    clearButtons();
-
-    if (val != null) {
-      var b = null;
-      for (var i = 0; i < activeInputWidget.length; i++) {
-        if (activeInputWidget[i].value == val) {
-          b = activeInputWidget[i];
-          break;
-        }
-      }
-      if (b != null) {
-        b.setStatus('selected');
       }
     }
   }
@@ -280,9 +261,7 @@ function DateWidgetContext (dir, answer, args) {
     }
   }
   
-  this.selected = function (field, val, button) {
-    button.setStatus('selected');
-
+  this.selected = function (field, val) {
     if (field == 'decade') {
       if (this.getChoiceVal('decade') != val) {
         this.year_bucket = this.revChoiceVal('decade', val);
@@ -498,7 +477,7 @@ function DateWidgetContext (dir, answer, args) {
   this.init(dir, answer, args || {});
 }
 
-function decadeSelect (decades, context) {
+function decadeSelect (decades, selval, context) {
   var labels = [];
   var values = [];
   var ranges = [];
@@ -509,11 +488,11 @@ function decadeSelect (decades, context) {
   }
 
   var grid = render_button_grid({style: 'grid', dir: 'vert', nrows: 5, ncols: 2, width: '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'},
-                                labels, values, false, [], context.selfunc('decade'));
+                                labels, values, false, selval, context.selfunc('decade'));
   return {layout: aspect_margin('5%-', grid.layout), get_buttons: function () { return grid.buttons; }, dateranges: ranges};
 }
 
-function yearSelect (bucket, context) {
+function yearSelect (bucket, selval, context) {
   var labels = [];
   var values = [];
   var ranges = [];
@@ -526,7 +505,7 @@ function yearSelect (bucket, context) {
   var grid = render_button_grid({style: 'grid', dir: 'vert',
                                  nrows: Math.min(bucket.end - bucket.start + 1, 5), ncols: Math.ceil((bucket.end - bucket.start + 1) / 5),
                                  width: (bucket.end - bucket.start) > 9 ? '22@' : '35@', height: '7@', spacing: '2@', textscale: 1.4, margins: '*'},
-                                labels, values, false, [], context.selfunc('year'));
+                                labels, values, false, selval, context.selfunc('year'));
   var layout = grid.layout;
   if (values.length <= 5) {
     //this is really, really, ugly
@@ -539,7 +518,7 @@ function yearSelect (bucket, context) {
   return {layout: aspect_margin('5%-', layout), get_buttons: function () { return grid.buttons; }, dateranges: ranges};
 }
 
-function monthSelect (year, context) {
+function monthSelect (year, selval, context) {
   var labels = [];
   var values = [];
   var ranges = [];
@@ -551,11 +530,11 @@ function monthSelect (year, context) {
   var size = (numericMonths() ? 2.2 : 1.8);
 
   var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 3, ncols: 4, width: '6@', height: '4@', spacing: '@', textscale: size, margins: '*'},
-                                labels, values, false, [], context.selfunc('month'));
+                                labels, values, false, selval, context.selfunc('month'));
   return {layout: aspect_margin('7%-', grid.layout), get_buttons: function () { return grid.buttons; }, dateranges: ranges};
 }
 
-function daySelect (month, year, context) {
+function daySelect (month, year, selval, context) {
   var monthLength = daysInMonth(month, year);
   var labels = [];
   var values = [];
@@ -567,11 +546,11 @@ function daySelect (month, year, context) {
   }
 
   var grid = render_button_grid({style: 'grid', dir: 'horiz', nrows: 5, ncols: 7, width: '17@', height: '17@', spacing: '3@', textscale: 1.4, margins: '*'},
-                                labels, values, false, [], context.selfunc('day'));
+                                labels, values, false, selval, context.selfunc('day'));
   return {layout: aspect_margin('1.7%-', grid.layout), get_buttons: function () { return grid.buttons; }, dateranges: ranges};
 }
 
-function monthYearSelect (monthyears, context) {
+function monthYearSelect (monthyears, selval, context) {
   var labels = [];
   var values = [];
   var ranges = [];
@@ -582,7 +561,7 @@ function monthYearSelect (monthyears, context) {
     ranges.push({start: mkFirstOfMonth(item.year, item.month), end: mkLastOfMonth(item.year, item.month)});
   }
 
-  var grid = new ChoiceSelect({choices: labels, choicevals: values, onclick: context.selfunc('monthyear')});
+  var grid = new ChoiceSelect({choices: labels, choicevals: values, onclick: context.selfunc('monthyear'), selected: selval});
   return {layout: grid, get_buttons: function () { return grid.buttons; }, dateranges: ranges};
 }
 
