@@ -230,18 +230,16 @@ function MultiSelectEntry (args) {
   this.default_selections = null;
 
   this.load = function () {
-    var choiceLayout = this.getChoices();
+    var choiceLayout = this.makeChoices();
     questionEntry.update(choiceLayout);
     this.buttons = choiceLayout.buttons;
   }
 
-  this.getChoices = function () {
-    return this.makeChoices(true);
+  this.makeChoices = function () {
+    return new ChoiceSelect({choices: this.choices, choicevals: this.choicevals, selected: this.default_selections, multi: this.isMulti(), action: this.selectFunc()});
   }
 
-  this.makeChoices = function (multi) {
-    return new ChoiceSelect({choices: this.choices, choicevals: this.choicevals, selected: this.default_selections, multi: multi, action: this.selectFunc()});
-  }
+  this.isMulti = function () { return true; }
 
   //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
   this.getAnswer = function (self) {
@@ -277,9 +275,7 @@ function MultiSelectEntry (args) {
 function SingleSelectEntry (args) {
   inherit(this, new MultiSelectEntry(args));
 
-  this.getChoices = function () {
-    return this.makeChoices(false);
-  }
+  this.isMulti = function () { return false; }
 
   //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
   this.getAnswer = function (self) {
@@ -291,6 +287,7 @@ function SingleSelectEntry (args) {
     this._parent.setAnswer(answer != null ? [answer] : null, clearClicked, this);
   }
 
+  //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
   this.selectFunc = function (self) {
     var togglefunc = this._parent.selectFunc();
     var self = self || this;
