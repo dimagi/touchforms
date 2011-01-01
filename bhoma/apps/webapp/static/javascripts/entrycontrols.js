@@ -38,6 +38,24 @@ function invokeSuper (self, funcName) {
   }
 }
 
+/* TO USE:
+ *
+ * early in the constructor of the child class, call:
+ *   inherit(this, new SuperClass(...));
+ * this is akin to calling super(...); inside a java constructor
+ *
+ * this call will load all variables and functions from the parent class
+ * into this class.
+ *
+ * add additional variables and methods after the inherit() call. to
+ * overload a method in the parent class, simply redefine the function
+ * in this class
+ *
+ * to call a parent method explicitly, do:
+ *   this.super('someMethod')(args);
+ * this is akin to calling super.someMethod(args); in java
+ */
+
 /* ============================= */
 
 
