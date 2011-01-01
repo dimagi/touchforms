@@ -13,6 +13,10 @@ function Entry () {
         timeout: 15.
       });
   }
+
+  this.clear = function () {
+    this.setAnswer(null, true);
+  }
 }
 
 function SimpleEntry () {
@@ -41,6 +45,7 @@ function FreeTextEntry (args) {
   this.length_limit = args.length_limit || 500;
 
   this.inputfield = null;
+  this.default_answer = null;
 
   this.load = function () {
     questionEntry.update(freeEntry);
@@ -49,6 +54,7 @@ function FreeTextEntry (args) {
     answerBar.update(answerBarControls.component);
     freeEntryKeyboard.update(this.getKeyboard());
     this.inputfield = answerBarControls.inputfield;
+    this.setAnswer(this.default_answer);
   }
 
   this.getControl = function () {
@@ -58,6 +64,20 @@ function FreeTextEntry (args) {
   this.getRaw = function () {
     var control = this.getControl();
     return (control != null ? control.value : null);
+  }
+
+  this.getAnswer = function () {
+    var raw = this.getRaw();
+    return (raw == '' ? null : raw);
+  }
+
+  this.setAnswer = function (answer) {
+    var control = this.getControl();
+    if (control) {
+      control.value = (answer != null ? answer : '');
+    } else {
+      this.default_answer = answer;
+    }
   }
 
   this.getAnswerBar = function () {
@@ -131,10 +151,19 @@ function PasswordEntry (args) {
 function IntEntry () {
   inherit(this, new FreeTextEntry({domain: 'numeric', length_limit: 9}));
 
+  this.getAnswer = function () {
+    var val = this._parent.getAnswer();
+    return (val != null ? +val : val);
+  }
 }
 
 function FloatEntry () {
   inherit(this, new FreeTextEntry({}));
+
+  this.getAnswer = function () {
+    var val = this._parent.getAnswer();
+    return (val != null ? +val : val);
+  }
 
   this.getKeyboard = function () {
     return makeNumpad('.', this.typeFunc());
@@ -182,4 +211,8 @@ function BloodPressureEntry () {
 
 function PatientIDEntry () {
   inherit(this, new FreeTextEntry({domain: 'numeric', length_limit: 13}));
+
+  this.setAnswer = function (answer, clearClicked) {
+    this._parent.setAnswer(!clearClicked && !answer ? CLINIC_PREFIX : answer);
+  }
 }

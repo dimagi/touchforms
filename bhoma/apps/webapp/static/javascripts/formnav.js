@@ -431,6 +431,8 @@ function renderQuestion (event, dir) {
     //todo: what to do about this
     throw new Error('unfinished');
     event["customlayout"](event);
+
+
   } else if (event.domain == 'phone') {
     activeControl = new PhoneNumberEntry();
   } else if (event.domain == 'bp') {
@@ -446,16 +448,6 @@ function renderQuestion (event, dir) {
   } else if (event.datatype == "passwd") {
     activeControl = new PasswordEntry({domain: event.domain});
 
-  /*
-      if (event["domain"] == "pat-id" && event["answer"] == null) {
-        event["answer"] = CLINIC_PREFIX;
-      }
-    
-    if (event["answer"] != null) {
-      entryWidget.setText(event["answer"]);
-    }
-  */
-
   } else if (event["datatype"] == "select" || event["datatype"] == "multiselect") {
     selections = normalize_select_answer(event["answer"], event["datatype"] == "multiselect");
     choiceLayout = new ChoiceSelect({choices: event["choices"], choicevals: event["choicevals"], selected: selections, multi: event["datatype"] == "multiselect"});
@@ -468,26 +460,17 @@ function renderQuestion (event, dir) {
     alert("unrecognized datatype [" + event["datatype"] + "]");
   }
 
-  if (activeControl != null)
+  if (activeControl != null) {
+    activeControl.setAnswer(event.answer);
     activeControl.load();
-
-  //  if (event["answer"] == null) {
-  //  clearClicked();
-  // }
+  }
 }
 
 function getQuestionAnswer () {
-  type = activeQuestion["datatype"];
+  return (activeControl != null ? activeControl.getAnswer() : null);
 
-  if (type == "str" || type == "int" || type == "float" || type == "passwd") {
-    var val = activeInputWidget.child.control.value;
-    if (val == "") {
-      return null;
-    } else if (type == "str" || type == "passwd") {
-      return val;
-    } else {
-      return +val;
-    }
+  /*
+
   } else if (type == "select" || type == "multiselect") {
     selected = [];
     for (i = 0; i < activeInputWidget.length; i++) {
@@ -503,9 +486,8 @@ function getQuestionAnswer () {
     }
   } else if (type == "date") {
     return dateEntryContext.getDate();
-  } else if (type == "info") {
-    return null;
   }
+  */
 }
 
 function normalize_select_answer (ans, multi) {

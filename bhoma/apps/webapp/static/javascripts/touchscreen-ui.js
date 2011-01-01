@@ -289,6 +289,9 @@ function nextClicked () {
 }
 
 function clearClicked (ev, x) {
+  activeControl.clear();
+
+  /*
   type = activeQuestion["datatype"];
   if (type == "str" || type == "int" || type == "float" || type == "passwd") {
     activeInputWidget.setText('');
@@ -297,6 +300,8 @@ function clearClicked (ev, x) {
   } else if (type == "date") {
     dateEntryContext.clear();
   }
+  */
+
 }
 
 function clearButtons (except) {
