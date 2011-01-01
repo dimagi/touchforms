@@ -3,7 +3,7 @@
 
 monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-function DateWidgetContext (dir, answer, args) {
+function DateWidgetContext (args) {
   this.DEFAULT_FUTURE_RANGE = 1826; //days ~= 5 years
   //formatting constants
   this.MAX_MONTHS_FOR_YEARLESS = 8;
@@ -11,20 +11,21 @@ function DateWidgetContext (dir, answer, args) {
   this.NUM_DECADE_CHOICES = 10;
   this.DECADE_ROLLOVER = 4;
 
-  this.init = function (dir, answer, args) {
+  this.args = args || {};
+
+  this.init = function (answer, dir) {
+    this.setAllowedRange(this.args);
     this.setDate(answer);
-    this.setAllowedRange(args);
-    if (!answer) {
-      this.prefill();
-    }
     this.initScreens(dir, answer);
   }
 
   this.setDate = function (datestr) {
+    var olddate = this.getDate();
     if (datestr == null) {
       this.year = null;
       this.month = null;
       this.day = null;
+      this.prefill();
     } else {
       var parsed = parseDate(datestr);
       this.year = parsed.year;
@@ -32,7 +33,7 @@ function DateWidgetContext (dir, answer, args) {
       this.day = parsed.day;
     }
     this.year_bucket = null;
-    this.changed = false;
+    this.changed = (this.getDate() != olddate);
   }
 
   this.setAllowedRange = function (args) {
@@ -218,20 +219,6 @@ function DateWidgetContext (dir, answer, args) {
     highlightField(dayText, 'day');
   }
 
-  this.clear = function () {
-    if (this.getDate() != null)
-      this.changed = true;
-
-    this.year = null;
-    this.month = null;
-    this.day = null;
-    this.year_bucket = null;
-    this.prefill();
-
-    this.screen = this.getFirstScreen();
-    this.refresh();
-  }
-
   this.next = function () {
     if (this.isEmpty() || this.isFull()) {
       if (this.isEmpty() || this.isValid()) {
@@ -310,8 +297,8 @@ function DateWidgetContext (dir, answer, args) {
     
     this.refresh();
 
-    if (complete && autoAdvance()) {
-      doAutoAdvance();
+    if (complete) {
+      autoAdvanceTrigger();
     }
   }
   
@@ -474,8 +461,6 @@ function DateWidgetContext (dir, answer, args) {
     var context = this;
     return function (ev, value, button) { context.selected(field, value, button); };
   }
-
-  this.init(dir, answer, args || {});
 }
 
 function decadeSelect (decades, selval, context) {
@@ -562,7 +547,7 @@ function monthYearSelect (monthyears, selval, context) {
     ranges.push({start: mkFirstOfMonth(item.year, item.month), end: mkLastOfMonth(item.year, item.month)});
   }
 
-  var grid = new ChoiceSelect({choices: labels, choicevals: values, onclick: context.selfunc('monthyear'), selected: selval});
+  var grid = new ChoiceSelect({choices: labels, choicevals: values, action: context.selfunc('monthyear'), selected: selval});
   return {layout: grid, get_buttons: function () { return grid.buttons; }, dateranges: ranges};
 }
 

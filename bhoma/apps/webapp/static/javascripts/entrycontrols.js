@@ -65,13 +65,15 @@ function FreeTextEntry (args) {
     return (control != null ? control.value : null);
   }
 
-  this.getAnswer = function () {
-    var raw = this.getRaw();
+  //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
+  this.getAnswer = function (self) {
+    self = self || this;
+    var raw = self.getRaw();
     return (raw == '' ? null : raw);
   }
 
   //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
-  this.setAnswer = function (answer, self) {
+  this.setAnswer = function (answer, clearClicked, self) {
     self = self || this;
     var control = self.getControl();
     if (control) {
@@ -153,7 +155,7 @@ function IntEntry () {
   inherit(this, new FreeTextEntry({domain: 'numeric', length_limit: 9}));
 
   this.getAnswer = function () {
-    var val = this._parent.getAnswer();
+    var val = this._parent.getAnswer(this);
     return (val != null ? +val : val);
   }
 }
@@ -162,7 +164,7 @@ function FloatEntry () {
   inherit(this, new FreeTextEntry({}));
 
   this.getAnswer = function () {
-    var val = this._parent.getAnswer();
+    var val = this._parent.getAnswer(this);
     return (val != null ? +val : val);
   }
 
@@ -214,7 +216,7 @@ function PatientIDEntry () {
   inherit(this, new FreeTextEntry({domain: 'numeric', length_limit: 13}));
 
   this.setAnswer = function (answer, clearClicked) {
-    this._parent.setAnswer(!clearClicked && !answer ? CLINIC_PREFIX : answer, this);
+    this._parent.setAnswer(!clearClicked && !answer ? CLINIC_PREFIX : answer, clearClicked, this);
   }
 }
 
@@ -255,7 +257,7 @@ function MultiSelectEntry (args) {
 
   //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
   //answer is null or list
-  this.setAnswer = function (answer, self) {
+  this.setAnswer = function (answer, clearClicked, self) {
     self = self || this;
     if (self.buttons) {
       for (var i = 0; i < self.buttons.length; i++) {
@@ -285,8 +287,8 @@ function SingleSelectEntry (args) {
     return selected.length > 0 ? selected[0] : null;
   }
 
-  this.setAnswer = function (answer) {
-    this._parent.setAnswer(answer != null ? [answer] : null, this);
+  this.setAnswer = function (answer, clearClicked) {
+    this._parent.setAnswer(answer != null ? [answer] : null, clearClicked, this);
   }
 
   this.selectFunc = function (self) {
@@ -311,23 +313,33 @@ function clearButtons (buttons, except_for) {
   }
 }
 
-function DateEntry () {
+function DateEntry (dir, args) {
   inherit(this, new Entry());
 
-  this.next = function () {
-    dateEntryContext.next();
+  this.dir = dir;
+  this.context = new DateWidgetContext(args);
+
+  this.load = function () {
+    this.context.refresh();
   }
 
-  this.back = function () {
-    dateEntryContext.back();
+  this.setAnswer = function (answer, clearClicked) {
+    this.context.init(answer, this.dir || clearClicked);
+    if (clearClicked) {
+      this.context.refresh();
+    }
   }
 
   this.getAnswer = function () {
-    return dateEntryContext.getDate();
+    return this.context.getDate();
   }
 
-    dateEntryContext = new DateWidgetContext(dir, event["answer"], event["domain_meta"]);
-    dateEntryContext.refresh();
+  this.next = function () {
+    this.context.next();
+  }
 
+  this.back = function () {
+    this.context.back();
+  }
 }
 

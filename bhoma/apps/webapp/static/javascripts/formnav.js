@@ -448,7 +448,7 @@ function renderQuestion (event, dir) {
   } else if (event.datatype == "multiselect") {
     activeControl = new MultiSelectEntry({choices: event.choices, choicevals: event.choicevals});
   } else if (event.datatype == "date") {
-    activeControl = new DateEntry();
+    activeControl = new DateEntry(dir, event.domain_meta);
   } else {
     alert("unrecognized datatype [" + event.datatype + "]");
   }
