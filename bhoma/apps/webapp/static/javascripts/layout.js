@@ -290,8 +290,10 @@ function ChoiceButton (args) {
     this.status = stat;
 
     this.button.setText((this.multi ? (this.status == 'selected' ? '\u2612' : '\u2610') + ' ' : '') + this.label);
-    this.setColor();
-    this.setClass();
+    var styleSet = this.setClass();
+    if (!styleSet) {
+      this.setColor();
+    }
   }
 
   this.setColor = function () {
@@ -311,16 +313,17 @@ function ChoiceButton (args) {
   this.setClass = function() {
     if (this.base_style) {
       if (this.status == 'default') {
-        this.button.setStyle(this.base_style);
+        return this.button.setStyle(this.base_style);
       } else if (this.status == 'selected') {
-        this.button.setStyle('selected ' + this.base_style);
+        return this.button.setStyle('selected ' + this.base_style);
       } else if (this.status == 'disabled') {
         //'disabled' style doesn't exist; commenting out until it does as it prevent the disabled color from taking effect
         //not sure disabled buttons need the 3-d effect anyway
         //this.button.setStyle(this.base_style + ' disabled');
-        this.button.setStyle(null);
+        return this.button.setStyle(null);
       }
     }
+    return false;
   }    
 
   this.toggleStatus = function () {
@@ -408,6 +411,7 @@ function TextButton (args) {
     if (this.container != null) {
       this.container.setAttribute("class", this.style);
     }
+    return (style != null);
   }
 }
 
