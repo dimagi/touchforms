@@ -1,9 +1,45 @@
+/* === INHERITANCE PATTERN === */
+
 function inherit (subclass, superclass) {
+  subclass._super = superclass._super || {};
   for (var e in superclass) {
-    subclass[e] = superclass[e];
+    if (e != '_super' && e != 'super') {
+      if (typeof(superclass[e]) != 'function') {
+        subclass[e] = superclass[e];
+      } else {
+        if (subclass._super[e] == null) {
+          subclass._super[e] = [];
+        }
+        subclass._super[e].push(superclass[e]);
+        subclass[e] = passToParent(e);
+      }
+    }
   }
-  subclass._parent = superclass;
+  subclass.super = function (funcName) {
+    return invokeSuper(this, funcName);
+  }
 }
+
+function passToParent (funcName) {
+  return function () {
+    return this.super(funcName).apply(null, arguments);
+  }
+}
+
+function invokeSuper (self, funcName) {
+  return function () {
+    var basefunc = self._super[funcName].pop();
+    if (!basefunc) {
+      throw new Error('function ' + funcName + ' not defined in superclass');
+    }
+    var retval = basefunc.apply(self, arguments);
+    self._super[funcName].push(basefunc);
+    return retval;
+  }
+}
+
+/* ============================= */
+
 
 function Entry () {
   this.help = function () {
@@ -65,21 +101,17 @@ function FreeTextEntry (args) {
     return (control != null ? control.value : null);
   }
 
-  //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
-  this.getAnswer = function (self) {
-    self = self || this;
-    var raw = self.getRaw();
+  this.getAnswer = function () {
+    var raw = this.getRaw();
     return (raw == '' ? null : raw);
   }
 
-  //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
-  this.setAnswer = function (answer, clearClicked, self) {
-    self = self || this;
-    var control = self.getControl();
+  this.setAnswer = function (answer, postLoad) {
+    var control = this.getControl();
     if (control) {
       control.value = (answer != null ? answer : '');
     } else {
-      self.default_answer = answer;
+      this.default_answer = answer;
     }
   }
 
@@ -97,10 +129,9 @@ function FreeTextEntry (args) {
     return kbdForDomain(this.domain, this.typeFunc());
   }
 
-  //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
-  this.typeFunc = function (no_flash, self) {
+  this.typeFunc = function (no_flash) {
     flash = no_flash || false;
-    self = self || this;
+    var self = this;
     return function (ev, c, button) { type_(self.getControl(), c, button, !no_flash); };
   }
 
@@ -147,7 +178,7 @@ function PasswordEntry (args) {
 
   this.typeFunc = function () {
     //turn off keyflash
-    return this._parent.typeFunc(true, this);
+    return this.super('typeFunc')(true);
   }
 }
 
@@ -155,7 +186,7 @@ function IntEntry () {
   inherit(this, new FreeTextEntry({domain: 'numeric', length_limit: 9}));
 
   this.getAnswer = function () {
-    var val = this._parent.getAnswer(this);
+    var val = this.super('getAnswer')();
     return (val != null ? +val : val);
   }
 }
@@ -164,7 +195,7 @@ function FloatEntry () {
   inherit(this, new FreeTextEntry({}));
 
   this.getAnswer = function () {
-    var val = this._parent.getAnswer(this);
+    var val = this.super('getAnswer')();
     return (val != null ? +val : val);
   }
 
@@ -215,8 +246,8 @@ function BloodPressureEntry () {
 function PatientIDEntry () {
   inherit(this, new FreeTextEntry({domain: 'numeric', length_limit: 13}));
 
-  this.setAnswer = function (answer, clearClicked) {
-    this._parent.setAnswer(!clearClicked && !answer ? CLINIC_PREFIX : answer, clearClicked, this);
+  this.setAnswer = function (answer, postLoad) {
+    this.super('setAnswer')(!postLoad && !answer ? CLINIC_PREFIX : answer, postLoad);
   }
 }
 
@@ -226,6 +257,7 @@ function MultiSelectEntry (args) {
   this.choices = args.choices;
   this.choicevals = args.choicevals;
 
+  this.isMulti = true;
   this.buttons = null;
   this.default_selections = null;
 
@@ -236,34 +268,28 @@ function MultiSelectEntry (args) {
   }
 
   this.makeChoices = function () {
-    return new ChoiceSelect({choices: this.choices, choicevals: this.choicevals, selected: this.default_selections, multi: this.isMulti(), action: this.selectFunc()});
+    return new ChoiceSelect({choices: this.choices, choicevals: this.choicevals, selected: this.default_selections, multi: this.isMulti, action: this.selectFunc()});
   }
 
-  this.isMulti = function () { return true; }
-
-  //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
-  this.getAnswer = function (self) {
-    self = self || this;
+  this.getAnswer = function () {
     var selected = [];
-    for (i = 0; i < self.buttons.length; i++) {
-      if (self.buttons[i].status == 'selected') {
-        selected.push(self.buttons[i].value);
+    for (i = 0; i < this.buttons.length; i++) {
+      if (this.buttons[i].status == 'selected') {
+        selected.push(this.buttons[i].value);
       }
     }
     return selected;
   }
 
-  //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
   //answer is null or list
-  this.setAnswer = function (answer, clearClicked, self) {
-    self = self || this;
-    if (self.buttons) {
-      for (var i = 0; i < self.buttons.length; i++) {
-        var button = self.buttons[i];
+  this.setAnswer = function (answer, postLoad) {
+    if (this.buttons) {
+      for (var i = 0; i < this.buttons.length; i++) {
+        var button = this.buttons[i];
         button.setStatus(answer != null && answer.indexOf(button.value) != -1 ? 'selected': 'default');
       }
     } else {
-      self.default_selections = answer;
+      this.default_selections = answer;
     }
   }
 
@@ -275,22 +301,20 @@ function MultiSelectEntry (args) {
 function SingleSelectEntry (args) {
   inherit(this, new MultiSelectEntry(args));
 
-  this.isMulti = function () { return false; }
+  this.isMulti = false;
 
-  //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
-  this.getAnswer = function (self) {
-    var selected = this._parent.getAnswer(self || this);
+  this.getAnswer = function () {
+    var selected = this.super('getAnswer')();
     return selected.length > 0 ? selected[0] : null;
   }
 
-  this.setAnswer = function (answer, clearClicked) {
-    this._parent.setAnswer(answer != null ? [answer] : null, clearClicked, this);
+  this.setAnswer = function (answer, postLoad) {
+    this.super('setAnswer')(answer != null ? [answer] : null, postLoad);
   }
 
-  //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
-  this.selectFunc = function (self) {
-    var togglefunc = this._parent.selectFunc();
-    var self = self || this;
+  this.selectFunc = function () {
+    var togglefunc = this.super('selectFunc')();
+    var self = this;
     return function (ev, c, button) {
       var oldstatus = button.status;
       togglefunc(ev, c, button);
@@ -320,9 +344,9 @@ function DateEntry (dir, args) {
     this.context.refresh();
   }
 
-  this.setAnswer = function (answer, clearClicked) {
-    this.context.init(answer, this.dir || clearClicked);
-    if (clearClicked) {
+  this.setAnswer = function (answer, postLoad) {
+    this.context.init(answer, this.dir || postLoad);
+    if (postLoad) {
       this.context.refresh();
     }
   }
@@ -339,4 +363,3 @@ function DateEntry (dir, args) {
     this.context.back();
   }
 }
-
