@@ -70,12 +70,14 @@ function FreeTextEntry (args) {
     return (raw == '' ? null : raw);
   }
 
-  this.setAnswer = function (answer) {
-    var control = this.getControl();
+  //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
+  this.setAnswer = function (answer, self) {
+    self = self || this;
+    var control = self.getControl();
     if (control) {
       control.value = (answer != null ? answer : '');
     } else {
-      this.default_answer = answer;
+      self.default_answer = answer;
     }
   }
 
@@ -212,7 +214,7 @@ function PatientIDEntry () {
   inherit(this, new FreeTextEntry({domain: 'numeric', length_limit: 13}));
 
   this.setAnswer = function (answer, clearClicked) {
-    this._parent.setAnswer(!clearClicked && !answer ? CLINIC_PREFIX : answer);
+    this._parent.setAnswer(!clearClicked && !answer ? CLINIC_PREFIX : answer, this);
   }
 }
 
@@ -239,29 +241,29 @@ function MultiSelectEntry (args) {
     return new ChoiceSelect({choices: this.choices, choicevals: this.choicevals, selected: this.default_selections, multi: multi, action: this.selectFunc()});
   }
 
-  //'buttons' parameter is needed to circumvent javascript 'inheritance' shortcomings
-  this.getAnswer = function (buttons) {
-    buttons = buttons || this.buttons;
+  //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
+  this.getAnswer = function (self) {
+    self = self || this;
     var selected = [];
-    for (i = 0; i < buttons.length; i++) {
-      if (buttons[i].status == 'selected') {
-        selected.push(buttons[i].value);
+    for (i = 0; i < self.buttons.length; i++) {
+      if (self.buttons[i].status == 'selected') {
+        selected.push(self.buttons[i].value);
       }
     }
     return selected;
   }
 
-  //'buttons' parameter is needed to circumvent javascript 'inheritance' shortcomings
+  //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
   //answer is null or list
-  this.setAnswer = function (answer, buttons) {
-    buttons = buttons || this.buttons;
-    if (buttons) {
-      for (var i = 0; i < buttons.length; i++) {
-        var button = buttons[i];
+  this.setAnswer = function (answer, self) {
+    self = self || this;
+    if (self.buttons) {
+      for (var i = 0; i < self.buttons.length; i++) {
+        var button = self.buttons[i];
         button.setStatus(answer != null && answer.indexOf(button.value) != -1 ? 'selected': 'default');
       }
     } else {
-      this.default_selections = answer;
+      self.default_selections = answer;
     }
   }
 
@@ -278,12 +280,12 @@ function SingleSelectEntry (args) {
   }
 
   this.getAnswer = function () {
-    var selected = this._parent.getAnswer(this.buttons);
+    var selected = this._parent.getAnswer(this);
     return selected.length > 0 ? selected[0] : null;
   }
 
   this.setAnswer = function (answer) {
-    this._parent.setAnswer(answer != null ? [answer] : null, this.buttons);
+    this._parent.setAnswer(answer != null ? [answer] : null, this);
   }
 
   this.selectFunc = function () {
