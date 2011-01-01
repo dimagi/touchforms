@@ -35,7 +35,6 @@ function SimpleEntry () {
   this.back = function () {
     prevQuestion();
   }
-
 }
 
 function FreeTextEntry (args) {
@@ -214,5 +213,97 @@ function PatientIDEntry () {
 
   this.setAnswer = function (answer, clearClicked) {
     this._parent.setAnswer(!clearClicked && !answer ? CLINIC_PREFIX : answer);
+  }
+}
+
+function MultiSelectEntry (args) {
+  inherit(this, new SimpleEntry());
+
+  this.choices = args.choices;
+  this.choicevals = args.choicevals;
+
+  this.buttons = null;
+  this.default_selections = null;
+
+  this.load = function () {
+    var choiceLayout = this.getChoices();
+    questionEntry.update(choiceLayout);
+    this.buttons = choiceLayout.buttons;
+  }
+
+  this.getChoices = function () {
+    return this.makeChoices(true);
+  }
+
+  this.makeChoices = function (multi) {
+    return new ChoiceSelect({choices: this.choices, choicevals: this.choicevals, selected: this.default_selections, multi: multi, action: this.selectFunc()});
+  }
+
+  //'buttons' parameter is needed to circumvent javascript 'inheritance' shortcomings
+  this.getAnswer = function (buttons) {
+    buttons = buttons || this.buttons;
+    var selected = [];
+    for (i = 0; i < buttons.length; i++) {
+      if (buttons[i].status == 'selected') {
+        selected.push(buttons[i].value);
+      }
+    }
+    return selected;
+  }
+
+  //'buttons' parameter is needed to circumvent javascript 'inheritance' shortcomings
+  //answer is null or list
+  this.setAnswer = function (answer, buttons) {
+    buttons = buttons || this.buttons;
+    if (buttons) {
+      for (var i = 0; i < buttons.length; i++) {
+        var button = buttons[i];
+        button.setStatus(answer != null && answer.indexOf(button.value) != -1 ? 'selected': 'default');
+      }
+    } else {
+      this.default_selections = answer;
+    }
+  }
+
+  this.selectFunc = function () {
+    return function (ev, c, button) { button.toggleStatus(); }
+  }
+}
+
+function SingleSelectEntry (args) {
+  inherit(this, new MultiSelectEntry(args));
+
+  this.getChoices = function () {
+    return this.makeChoices(false);
+  }
+
+  this.getAnswer = function () {
+    var selected = this._parent.getAnswer(this.buttons);
+    return selected.length > 0 ? selected[0] : null;
+  }
+
+  this.setAnswer = function (answer) {
+    this._parent.setAnswer(answer != null ? [answer] : null, this.buttons);
+  }
+
+  this.selectFunc = function () {
+    var togglefunc = this._parent.selectFunc();
+    var self = this;
+    return function (ev, c, button) {
+      var oldstatus = button.status;
+      togglefunc(ev, c, button);
+      clearButtons(self.buttons, button);
+      if (oldstatus == 'default') {
+        autoAdvanceTrigger();
+      }
+    }
+  }
+}
+
+function clearButtons (buttons, except_for) {
+  for (var i = 0; i < buttons.length; i++) {
+    if (buttons[i] != except_for) {
+      buttons[i].resetStatus();
+    }
   }
 }

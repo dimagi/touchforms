@@ -556,7 +556,7 @@ function ChoiceSelect (args) {
   this.choices = cv.labels;
   this.values = cv.values;
   this.multi = args.multi || false;
-  this.onclick = args.onclick || choiceSelected;
+  this.onclick = args.action;
   this.selected = norm_selected(args.selected); //todo: improve this
 
   this.buttons = null;

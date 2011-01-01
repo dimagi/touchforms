@@ -292,11 +292,6 @@ function clearClicked (ev, x) {
   activeControl.clear();
 
   /*
-  type = activeQuestion["datatype"];
-  if (type == "str" || type == "int" || type == "float" || type == "passwd") {
-    activeInputWidget.setText('');
-  } else if (type == "select" || type == "multiselect") {
-    //no clear button available for these datatypes
   } else if (type == "date") {
     dateEntryContext.clear();
   }
@@ -304,29 +299,8 @@ function clearClicked (ev, x) {
 
 }
 
-function clearButtons (except) {
-  for (i = 0; i < activeInputWidget.length; i++) {
-    if (activeInputWidget[i] != except) {
-      activeInputWidget[i].resetStatus();
-    }
-  }
-}
-
-function choiceSelected (ev, value, button) {
-  var oldstatus = button.status;
-
-  button.toggleStatus();
-  if (activeQuestion["datatype"] == "select") {
-    clearButtons(button);
-  }
-
-  if (autoAdvance() && activeQuestion["datatype"] == "select" && oldstatus == "default") {
-    doAutoAdvance();
-  }
-}
-
 function autoAdvanceTrigger () {
-  if (doAutoAdvance()) {
+  if (autoAdvance()) {
     disableInput();
     setTimeout(function () {
         nextClicked();

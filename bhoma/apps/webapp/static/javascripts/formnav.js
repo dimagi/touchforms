@@ -447,17 +447,17 @@ function renderQuestion (event, dir) {
     activeControl = new FloatEntry();
   } else if (event.datatype == "passwd") {
     activeControl = new PasswordEntry({domain: event.domain});
+  } else if (event.datatype == "select") {
+    activeControl = new SingleSelectEntry({choices: event.choices, choicevals: event.choicevals});
+  } else if (event.datatype == "multiselect") {
+    activeControl = new MultiSelectEntry({choices: event.choices, choicevals: event.choicevals});
 
-  } else if (event["datatype"] == "select" || event["datatype"] == "multiselect") {
-    selections = normalize_select_answer(event["answer"], event["datatype"] == "multiselect");
-    choiceLayout = new ChoiceSelect({choices: event["choices"], choicevals: event["choicevals"], selected: selections, multi: event["datatype"] == "multiselect"});
-    questionEntry.update(choiceLayout);
-    activeInputWidget = choiceLayout.buttons;
+
   } else if (event["datatype"] == "date") {
     dateEntryContext = new DateWidgetContext(dir, event["answer"], event["domain_meta"]);
     dateEntryContext.refresh();
   } else {
-    alert("unrecognized datatype [" + event["datatype"] + "]");
+    alert("unrecognized datatype [" + event.datatype + "]");
   }
 
   if (activeControl != null) {
@@ -488,14 +488,6 @@ function getQuestionAnswer () {
     return dateEntryContext.getDate();
   }
   */
-}
-
-function normalize_select_answer (ans, multi) {
-  if (ans != null) {
-    return (!multi ? [ans] : ans);
-  } else {
-    return null;
-  }
 }
 
 function answerQuestion () {
