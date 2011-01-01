@@ -201,11 +201,11 @@ function DateWidgetContext (args) {
 
     //all below MUST come after the widget is rendered (taken care of by the line above)
 
-    activeInputWidget = choice_info.get_buttons();
+    this.cur_buttons = choice_info.get_buttons();
 
-    for (var i = 0; i < activeInputWidget.length; i++) {
+    for (var i = 0; i < this.cur_buttons.length; i++) {
       if (choice_info.dateranges[i] != null && !rangeOverlap(this.mindate, this.maxdate, choice_info.dateranges[i].start, choice_info.dateranges[i].end)) {
-        activeInputWidget[i].setStatus('disabled');
+        this.cur_buttons[i].setStatus('disabled');
       }
     }
   }
@@ -233,8 +233,8 @@ function DateWidgetContext (args) {
       }
     } else {
       currentScreenUnchosen = true;
-      for (i = 0; i < activeInputWidget.length; i++) {
-        if (activeInputWidget[i].status == 'selected') {
+      for (i = 0; i < this.cur_buttons.length; i++) {
+        if (this.cur_buttons[i].status == 'selected') {
           currentScreenUnchosen = false;
           break;
         }
