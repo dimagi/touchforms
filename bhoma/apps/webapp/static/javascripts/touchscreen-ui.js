@@ -74,37 +74,6 @@ function initStaticWidgets () {
     answerBar,
     new Layout({id: 'kbd', margins: ['1.5%=', '1.5%=', 0, '.75%='], content: [freeEntryKeyboard]})
   ]});
-
-  dayText = new InputArea({id: 'dayinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {dateEntryContext.goto_('day');}});
-  monthText = new InputArea({id: 'monthinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {dateEntryContext.goto_('month');}});
-  yearText = new InputArea({id: 'yearinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {dateEntryContext.goto_('year');}});  
-  var make_date_answerbar = function () {
-    var dateSpacer = function () { return new TextCaption({color: TEXT_COLOR, caption: '\u2013', size: 1.7}); };
-
-    var content = [];
-    var widths = [];
-    for (var i = 0; i < 3; i++) {
-      var field = dateDisplayOrder()[i];
-      if (field == 'd') {
-        content.push(dayText);
-        widths.push('1.3@');
-      } else if (field == 'm') {
-        content.push(monthText);
-        widths.push(numericMonths() ? '1.3@' : '1.85@');
-      } else if (field == 'y') {
-        content.push(yearText);
-        widths.push('2.3@');
-      }
-
-      if (i < 2) {
-        content.push(dateSpacer());
-        widths.push('.5@');
-      }
-    }
-
-    return make_answerbar(content, widths, 'date-bar');
-  }
-  dateAnswer = make_date_answerbar();
 }
 
 BKSP = '_del';
@@ -179,8 +148,40 @@ function make_answerbar (content, widths, id) {
     ]});
 }
 
+function make_date_fields (datecontext) {
+  return {
+    d: new InputArea({id: 'dayinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {datecontext.goto_('day');}}),
+    m: new InputArea({id: 'monthinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {datecontext.goto_('month');}}),
+    y: new InputArea({id: 'yearinp', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {datecontext.goto_('year');}}),
+  }; 
+}
 
+function make_date_answerbar (datefields) {
+  var dateSpacer = function () { return new TextCaption({color: TEXT_COLOR, caption: '\u2013', size: 1.7}); };
 
+  var content = [];
+  var widths = [];
+  for (var i = 0; i < 3; i++) {
+    var field = dateDisplayOrder()[i];
+    if (field == 'd') {
+      content.push(datefields.d);
+      widths.push('1.3@');
+    } else if (field == 'm') {
+      content.push(datefields.m);
+      widths.push(numericMonths() ? '1.3@' : '1.85@');
+    } else if (field == 'y') {
+      content.push(datefields.y);
+      widths.push('2.3@');
+    }
+    
+    if (i < 2) {
+      content.push(dateSpacer());
+      widths.push('.5@');
+    }
+  }
+  
+  return make_answerbar(content, widths, 'date-bar');
+}
 
 function setting (varname, defval) {
   var val = window[varname];

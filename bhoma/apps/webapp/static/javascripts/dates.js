@@ -12,6 +12,7 @@ function DateWidgetContext (args) {
   this.DECADE_ROLLOVER = 4;
 
   this.args = args || {};
+  this.textfields = make_date_fields(this);
 
   this.init = function (answer, dir) {
     this.setAllowedRange(this.args);
@@ -131,11 +132,11 @@ function DateWidgetContext (args) {
 
   this.refresh = function () {
     questionEntry.update(freeEntry);
-    answerBar.update(dateAnswer);
+    answerBar.update(make_date_answerbar(this.textfields));
 
     var year_bucket = this.getYearBucket();
     if (this.year != null) {
-      yearText.setText(this.year + '');
+      this.textfields.y.setText(this.year + '');
     } else if (year_bucket != null) {
       sstart = year_bucket.start + '';
       send = year_bucket.end + '';
@@ -150,12 +151,12 @@ function DateWidgetContext (args) {
       while (syear.length < 4) {
         syear += '\u2022';
       }
-      yearText.setText(syear);
+      this.textfields.y.setText(syear);
     } else {
-      yearText.setText('');
+      this.textfields.y.setText('');
     }
-    monthText.setText(this.month != null ? (numericMonths() ? intpad(this.month, 2) : monthName(this.month)) : '');
-    dayText.setText(this.day != null ? intpad(this.day, 2) : '');
+    this.textfields.m.setText(this.month != null ? (numericMonths() ? intpad(this.month, 2) : monthName(this.month)) : '');
+    this.textfields.d.setText(this.day != null ? intpad(this.day, 2) : '');
 
     if (this.screen == 'decade') {
       this.showScreen(decadeSelect(this.make_decades(), this.getChoiceVal('decade'), this));
@@ -214,9 +215,9 @@ function DateWidgetContext (args) {
     var highlightField = function (domobj, field) {
       domobj.setBgColor(self.screensForField(field).indexOf(self.screen) != -1 ? HIGHLIGHT_COLOR : '#fff');
     }
-    highlightField(yearText, 'year');
-    highlightField(monthText, 'month');
-    highlightField(dayText, 'day');
+    highlightField(this.textfields.y, 'year');
+    highlightField(this.textfields.m, 'month');
+    highlightField(this.textfields.d, 'day');
   }
 
   this.next = function () {
