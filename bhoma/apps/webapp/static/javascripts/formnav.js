@@ -427,12 +427,8 @@ function renderQuestion (event, dir) {
 
   questionCaption.setText(event["caption"]);
  
-  if (event["customlayout"] != null) {
-    //todo: what to do about this
-    throw new Error('unfinished');
-    event["customlayout"](event);
-
-
+  if (event.customlayout != null) {
+    activeControl = event.customlayout(event);
   } else if (event.domain == 'phone') {
     activeControl = new PhoneNumberEntry();
   } else if (event.domain == 'bp') {
@@ -451,11 +447,8 @@ function renderQuestion (event, dir) {
     activeControl = new SingleSelectEntry({choices: event.choices, choicevals: event.choicevals});
   } else if (event.datatype == "multiselect") {
     activeControl = new MultiSelectEntry({choices: event.choices, choicevals: event.choicevals});
-
-
-  } else if (event["datatype"] == "date") {
-    dateEntryContext = new DateWidgetContext(dir, event["answer"], event["domain_meta"]);
-    dateEntryContext.refresh();
+  } else if (event.datatype == "date") {
+    activeControl = new DateEntry();
   } else {
     alert("unrecognized datatype [" + event.datatype + "]");
   }
@@ -468,26 +461,6 @@ function renderQuestion (event, dir) {
 
 function getQuestionAnswer () {
   return (activeControl != null ? activeControl.getAnswer() : null);
-
-  /*
-
-  } else if (type == "select" || type == "multiselect") {
-    selected = [];
-    for (i = 0; i < activeInputWidget.length; i++) {
-      if (activeInputWidget[i].status == 'selected') {
-        selected.push(activeInputWidget[i].value);
-      }
-    }
-    
-    if (type == "select") {
-      return selected.length > 0 ? selected[0] : null;
-    } else {
-      return selected;
-    }
-  } else if (type == "date") {
-    return dateEntryContext.getDate();
-  }
-  */
 }
 
 function answerQuestion () {

@@ -95,7 +95,7 @@ function FreeTextEntry (args) {
     return kbdForDomain(this.domain, this.typeFunc());
   }
 
-  //explicit 'self' parameter needed due to weirdness with javascript 'inheritance'
+  //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
   this.typeFunc = function (no_flash, self) {
     flash = no_flash || false;
     self = self || this;
@@ -279,8 +279,9 @@ function SingleSelectEntry (args) {
     return this.makeChoices(false);
   }
 
-  this.getAnswer = function () {
-    var selected = this._parent.getAnswer(this);
+  //'self' parameter is needed to circumvent javascript 'inheritance' shortcomings
+  this.getAnswer = function (self) {
+    var selected = this._parent.getAnswer(self || this);
     return selected.length > 0 ? selected[0] : null;
   }
 
@@ -288,9 +289,9 @@ function SingleSelectEntry (args) {
     this._parent.setAnswer(answer != null ? [answer] : null, this);
   }
 
-  this.selectFunc = function () {
+  this.selectFunc = function (self) {
     var togglefunc = this._parent.selectFunc();
-    var self = this;
+    var self = self || this;
     return function (ev, c, button) {
       var oldstatus = button.status;
       togglefunc(ev, c, button);
@@ -309,3 +310,24 @@ function clearButtons (buttons, except_for) {
     }
   }
 }
+
+function DateEntry () {
+  inherit(this, new Entry());
+
+  this.next = function () {
+    dateEntryContext.next();
+  }
+
+  this.back = function () {
+    dateEntryContext.back();
+  }
+
+  this.getAnswer = function () {
+    return dateEntryContext.getDate();
+  }
+
+    dateEntryContext = new DateWidgetContext(dir, event["answer"], event["domain_meta"]);
+    dateEntryContext.refresh();
+
+}
+

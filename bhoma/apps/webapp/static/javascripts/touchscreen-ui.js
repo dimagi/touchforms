@@ -258,9 +258,6 @@ function helpClicked () {
 
 function backClicked () {
   activeControl.back();
-  //  if (activeQuestion["datatype"] == 'date') {
-  //  dateEntryContext.back();
-  //} else {
 }
 
 function homeClicked (ev, x) {
@@ -282,21 +279,10 @@ function goHome () {
 
 function nextClicked () {
   activeControl.next();
-
-  //  if (activeQuestion["datatype"] == 'date') {
-  //  dateEntryContext.next();
-  //  return;
 }
 
 function clearClicked (ev, x) {
   activeControl.clear();
-
-  /*
-  } else if (type == "date") {
-    dateEntryContext.clear();
-  }
-  */
-
 }
 
 function autoAdvanceTrigger () {
