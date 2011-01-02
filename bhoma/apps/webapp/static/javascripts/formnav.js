@@ -414,6 +414,7 @@ function workflowAdapter (workflow) {
 
 function renderQuestion (event, dir) {
   activeQuestion = event;
+  activeControl = null;
 
   SHOW_ALERTS_ON_BACK = false;
   if (event["datatype"] == "info") {
