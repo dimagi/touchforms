@@ -200,8 +200,8 @@ function PasswordEntry (args) {
   }
 }
 
-function IntEntry () {
-  inherit(this, new FreeTextEntry({domain: 'numeric', length_limit: 9}));
+function IntEntry (length_limit) {
+  inherit(this, new FreeTextEntry({domain: 'numeric', length_limit: length_limit || 9}));
 
   this.getAnswer = function () {
     var val = this.super('getAnswer')();
@@ -235,29 +235,6 @@ function PhoneNumberEntry () {
 
   this._prevalidate = function (raw) {
     return (!(/^\+?[0-9]+$/.test(raw)) ? "This does not appear to be a valid phone number" : null);
-  }
-}
-
-function BloodPressureEntry () {
-  inherit(this, new FreeTextEntry({length_limit: 7}));
-
-  this.getKeyboard = function () {
-    return makeNumpad('/', this.typeFunc());
-  }
-
-  this._prevalidate = function (raw) {
-    var match = /^([0-9]+)\/([0-9]+)$/.exec(raw);
-    if (!match) {
-      return "This does not appear to be a valid blood pressure reading. Blood pressure should look like: 120/80";
-    }
-
-    syst = +match[1];
-    diast = +match[2];
-    if (syst > 300 || syst < 40 || diast > 210 || diast < 20) {
-      return "Blood pressure must be between 40/20 and 300/210";
-    }
-
-    return null;
   }
 }
 
@@ -379,5 +356,137 @@ function DateEntry (dir, args) {
 
   this.back = function () {
     this.context.back();
+  }
+}
+
+/*
+
+two int widgets side by side
+
+ */
+
+
+function BloodPressureEntry () {
+  inherit(this, new Entry());
+
+
+  this.load = function () {
+    this.make_fields(); 
+    
+    this.entry = {
+      syst: new ShadowField(this.fields.syst, new IntEntry(3)),
+      diast: new ShadowField(this.fields.diast, new IntEntry(3))
+    };
+    
+    this.activate('syst');
+
+    answerBar.update(this.make_answerbar());
+    questionEntry.update(freeEntry);
+
+    //    this.setAnswer(this.default_answer);
+  }
+
+  this.activate = function (which) {
+    this.entry[which].load();
+    this.fields.syst.setBgColor(which == 'syst' ? HIGHLIGHT_COLOR : '#fff');
+    this.fields.diast.setBgColor(which == 'diast' ? HIGHLIGHT_COLOR : '#fff');
+  }
+
+  this.goto_ = function (field) {
+    this.activate(field);
+  }
+
+  this.setAnswer = function (answer, postLoad) {
+    if (true /*rendered*/) {
+
+    } else {
+      this.default_answer = answer;
+    }
+  }
+
+  /*
+  setanswer;
+
+  getanswer;
+
+  next;
+
+  back;
+  */
+
+  this.make_fields = function () {
+    var self = this;
+    this.fields = {
+      syst: new InputArea({id: 'bp-syst', border: 3, child: new TextCaption({size: 1.6, align: 'center', color: TEXT_COLOR}), onclick: function () {console.log(self); self.goto_('syst');}}),
+      diast: new InputArea({id: 'bp-diast', border: 3, child: new TextCaption({size: 1.6, align: 'center', color: TEXT_COLOR}), onclick: function () {self.goto_('diast');}}),
+    };
+  }
+
+  this.make_answerbar = function () {
+    var bpSpacer = new TextCaption({color: TEXT_COLOR, caption: '/', size: 1.7});
+    var content = [this.fields.syst, bpSpacer, this.fields.diast];
+    var widths = ['1.8@', '.5@', '1.8@'];
+    return make_answerbar(content, widths, 'bp-bar');
+  }
+
+
+  this._prevalidate = function (raw) {
+    var match = /^([0-9]+)\/([0-9]+)$/.exec(raw);
+    if (!match) {
+      return "This does not appear to be a valid blood pressure reading. Blood pressure should look like: 120/80";
+    }
+
+    syst = +match[1];
+    diast = +match[2];
+    if (syst > 300 || syst < 40 || diast > 210 || diast < 20) {
+      return "Blood pressure must be between 40/20 and 300/210";
+    }
+
+    return null;
+  }
+}
+
+/* field that behaves like an <input>, but has no cursor and is otherwise not manipulable like a normal <input>
+ * this is accomplished by using a hidden <input>, whose contents are then copied to a <span>
+ */
+this.ShadowField = function (displayfield, prototype) {
+  inherit(this, prototype);
+  
+  this.displayfield = displayfield;
+
+  this.make_input = function () {
+    var inputfield = document.createElement('input');
+    $('body')[0].appendChild(inputfield);
+    inputfield.style.visibility = 'hidden';
+    if (this.length_limit) {
+      inputfield.maxLength = this.length_limit;
+    }
+    return inputfield;
+  }
+  this.inputfield = this.make_input();
+
+  this.getControl = function () {
+    return this.inputfield;
+  }
+  
+  this.load = function () {
+    freeEntryKeyboard.update(this.getKeyboard());
+  }
+  
+  this.fieldChanged = function () {
+    this.displayfield.setText(this.getRaw());
+  }
+  
+  this.setAnswer = function (answer, postLoad) {
+    this.super('setAnswer')(answer, postLoad);
+    this.fieldChanged();
+  }
+
+  this.typeFunc = function (no_flash) {
+    var self = this;
+    return function (ev, c, button) {
+      self.super('typeFunc')(no_flash)(ev, c, button);
+      self.fieldChanged();
+    }
   }
 }

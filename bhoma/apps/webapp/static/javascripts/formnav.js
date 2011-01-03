@@ -373,7 +373,7 @@ function workflowAdapter (workflow) {
       ev.eval();
       this._push_hist(ev.value, ev);
     } else if (ev instanceof wfAsyncQuery) {
-      self = this;
+      var self = this;
       ev.eval(function () { self._push_hist(ev.value, ev); });
     } else if (ev instanceof wfAlert) {
       this._activateQuestion(ev, true);

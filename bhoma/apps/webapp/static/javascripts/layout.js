@@ -500,7 +500,7 @@ function TextInput (args) {
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td valign="middle"><input></input></td></tr></table>'
     inp = parent_div.getElementsByTagName('input')[0];
     inp.id = uid(this.id);
-    
+
     set_color(parent_div, this.bgcolor, parent_div.style.backgroundColor);
     inp.style.backgroundColor = (this.bgcolor != null ? this.bgcolor : parent_div.style.backgroundColor);
     inp.style.color = this.color;
@@ -1050,7 +1050,7 @@ function Overlay (bg_color, fadeout) {
     if (state) {
       this.container.style.display = 'block';
       if (this.timeout != null && this.timeout > 0) {
-        self = this;
+        var self = this;
         this.timeout_id = setTimeout(function () {
           self.timeout_id = null;
           if (self.fadeout != null && self.fadeout > 0) {
@@ -1175,14 +1175,16 @@ function InputArea (args) {
   //yikes! this didn't turn out that well
   this.setBgColor = function (bg_color) {
     this.inside_color = bg_color;
-    if (this.padding > 0) {
-      this.layout.child_index[0].style.backgroundColor = bg_color;
-      this.layout.content[0].child_index[0].style.backgroundColor = bg_color;
-    } else {
-      this.layout.child_index[0].style.backgroundColor = bg_color;
-    }
-    if (this.child instanceof TextInput) {
-      this.child.control.style.backgroundColor = bg_color;
+    if (this.container) {
+      if (this.padding > 0) {
+        this.layout.child_index[0].style.backgroundColor = bg_color;
+        this.layout.content[0].child_index[0].style.backgroundColor = bg_color;
+      } else {
+        this.layout.child_index[0].style.backgroundColor = bg_color;
+      }
+      if (this.child instanceof TextInput) {
+        this.child.control.style.backgroundColor = bg_color;
+      }
     }
   }
   

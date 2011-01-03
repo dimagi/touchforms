@@ -375,7 +375,7 @@ function type_ (input_field, c, button, flash) {
     button.flash(KEYFLASH);
   }
   
-  if (jQuery.browser.mozilla){
+  if (jQuery.browser.mozilla) {
     // preserve firefox behavior, just send the keypress to the input
     if (c == BKSP) {
       var keyCode = 0x08;
