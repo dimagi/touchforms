@@ -311,7 +311,7 @@ function ChoiceButton (args) {
   }
 
   this.setClass = function() {
-    if (this.base_style) {
+    if (this.base_style && supportsGradient()) {
       if (this.status == 'default') {
         return this.button.setStyle(this.base_style);
       } else if (this.status == 'selected') {
@@ -1218,5 +1218,27 @@ function CustomContent (id, content) {
   this.render = function (parent_div) {
     this.container = parent_div;
     parent_div.innerHTML = this.content;
+  }
+}
+
+function cmp_arr (a, b) {
+  var cmp = function (a, b) {
+    return (a > b ? 1 : (a < b ? -1 : 0));
+  }
+
+  for (var i = 0; i < Math.min(a.length, b.length); i++) {
+    var c = cmp(a[i], b[i]);
+    if (c != 0) {
+      return c;
+    }
+  }
+  return cmp(a.length, b.length);
+}
+
+function supportsGradient () {
+  if (jQuery.browser.mozilla) {
+    return cmp_arr(jQuery.browser.version.split('.'), [1, 9, 2]) >= 0;
+  } else {
+    return true;
   }
 }
