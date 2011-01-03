@@ -94,6 +94,7 @@ function SimpleEntry () {
 function FreeTextEntry (args) {
   inherit(this, new SimpleEntry());
 
+  args = args || {};
   this.domain = args.domain || 'full';
   this.length_limit = args.length_limit || 500;
 
@@ -239,10 +240,80 @@ function PhoneNumberEntry () {
 }
 
 function PatientIDEntry () {
-  inherit(this, new FreeTextEntry({domain: 'numeric', length_limit: 13}));
+  inherit(this, new FreeTextEntry());
 
-  this.setAnswer = function (answer, postLoad) {
-    this.super('setAnswer')(!postLoad && !answer ? CLINIC_PREFIX : answer, postLoad);
+  this.PatIDField = function (cells) {
+    inherit(this, new ShadowField(cells, new FreeTextEntry({domain: 'numeric', length_limit: PATID_LEN})));
+
+    this.fieldChanged = function () {
+      var str = this.getRaw();
+      for (var i = 0; i < this.displayfield.length; i++) {
+        this.displayfield[i].setText(i < str.length ? str[i] : '');
+      }
+    }      
+
+    this.typeFunc = function () {
+      var self = this;
+      var type_ = this.super('typeFunc')(false);
+      return function (ev, c, button) {
+        type_(ev, c, button);
+        if (self.getRaw().length == self.displayfield.length) {
+          autoAdvanceTrigger();
+        }
+      }
+    }
+  }
+
+  this.load = function () {
+    questionEntry.update(freeEntry);
+    var answerBarControls = this.getAnswerBar();
+    answerBar.update(answerBarControls.component);
+    this.inputfield = answerBarControls.inputfield;
+    this.inputfield.load();
+    this.setAnswer(this.default_answer);
+  }
+
+  this.setAnswer = function (answer, postLoad) { 
+    if (!answer && !postLoad) {
+      answer = CLINIC_PREFIX;
+    }
+
+    if (this.inputfield) {
+      this.inputfield.setAnswer(answer);
+    } else {
+      this.default_answer = answer;
+    }
+  }
+
+  this.getControl = function () {
+    return (this.inputfield == null ? null : this.inputfield.getControl());
+  }
+
+  this.getAnswerBar = function () {
+    var mkspacer = function () { return new TextCaption({color: TEXT_COLOR, caption: '\u2013', size: 1.4}); };
+
+    var cells = [];
+    var content = [];
+    var widths = [];
+    for (var i = 0; i < PATID_LEN; i++) {
+      if ([PATID_LEN - 11, PATID_LEN - 9, PATID_LEN - 6, PATID_LEN - 1].indexOf(i) != -1) {
+        content.push(mkspacer());
+        widths.push('.33@');
+      }
+
+      var cell = new InputArea({id: 'patid-' + i, border: 2, child: new TextCaption({size: 1.6, align: 'center', color: TEXT_COLOR})});
+      cells.push(cell);
+      content.push(cell);
+      widths.push(PATID_LEN == 12 ? '.72@' : '.69@');
+    }
+
+    var answerText = new this.PatIDField(cells);
+    var freeTextAnswer = make_answerbar(content, widths, 'answer-bar');
+
+    return {
+      component: freeTextAnswer,
+      inputfield: answerText
+    };
   }
 }
 
