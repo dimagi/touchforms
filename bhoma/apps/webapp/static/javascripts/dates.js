@@ -34,7 +34,7 @@ function DateWidgetContext (args) {
       this.day = parsed.day;
     }
     this.year_bucket = null;
-    this.changed = (this.getDate() != olddate);
+    this.changed = (olddate != null && this.getDate() != olddate);
   }
 
   this.setAllowedRange = function (args) {
@@ -108,6 +108,11 @@ function DateWidgetContext (args) {
 
   this.isEmpty = function () {
     return (this.year_bucket == null && this.year == null && this.month == null && this.day == null);
+  }
+
+  //emptiness that factors in the pre-filling of fields for restricted input ranges
+  this.isEffectivelyEmpty = function () {
+    return this.isEmpty() || (!this.isFull() && !this.changed);
   }
 
   this.isValid = function () {
@@ -221,15 +226,15 @@ function DateWidgetContext (args) {
   }
 
   this.next = function () {
-    if (this.isEmpty() || this.isFull()) {
-      if (this.isEmpty() || this.isValid()) {
-        if (!this.isEmpty() && !this.isInRange()) {
-          showError(this.outofrangemsg.replace('{{range}}', readableDate(this.minyear, this.minmonth, this.minday) + ' \u2014 ' + readableDate(this.maxyear, this.maxmonth, this.maxday)));
-        } else {
-          answerQuestion();
-        }
-      } else {
+    var empty = this.isEffectivelyEmpty();
+
+    if (empty || this.isFull()) {
+      if (!empty && !this.isValid()) {
         showError('This is not a valid date.');
+      } else if (!empty && !this.isInRange()) {
+        showError(this.outofrangemsg.replace('{{range}}', readableDate(this.minyear, this.minmonth, this.minday) + ' \u2014 ' + readableDate(this.maxyear, this.maxmonth, this.maxday)));
+      } else {
+        answerQuestion();
       }
     } else {
       currentScreenUnchosen = true;
@@ -304,7 +309,7 @@ function DateWidgetContext (args) {
   }
   
   this.back = function () {
-    if (this.isEmpty() || (this.isFull() && !this.changed)) {
+    if (this.isEffectivelyEmpty() || (this.isFull() && !this.changed)) {
       prevQuestion();
     } else {
       pscr = this.getPrevScreen();
