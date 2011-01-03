@@ -78,17 +78,24 @@ function xformAjaxAdapter (formName, preloadTags) {
     this._step(false);
   }
 
+  this.domain_meta = function (event) {
+    var meta = {};
+
+    if (event.datatype == "date") {
+      meta.mindiff = event["style"]["before"] != null ? +event["style"]["before"] : null;
+      meta.maxdiff = event["style"]["after"] != null ? +event["style"]["after"] : null;
+    } else if (event.datatype == "int" || event.datatype == "float") {
+      meta.unit = event["style"]["unit"];
+    }
+
+    return meta;
+  }
+
   this._renderEvent = function (event, dirForward) {
     if (event["type"] == "question") {
       if (event["style"]["domain"])
         event["domain"] = event["style"]["domain"];
-
-      if (event["datatype"] == "date") {
-        event["domain_meta"] = {
-          mindiff: event["style"]["before"] != null ? +event["style"]["before"] : null,
-          maxdiff: event["style"]["after"] != null ? +event["style"]["after"] : null
-        };
-      }
+      event.domain_meta = this.domain_meta(event);
 
       renderQuestion(event, dirForward);
     } else if (event["type"] == "form-complete") {

@@ -441,8 +441,11 @@ function BloodPressureEntry () {
    * value of '20', we're probably still going to enter '220', but for a value
    * of '90', we are not going to enter '930', so we move on after the 9-0
    */
-  this.SYST_ADV_THRESH = 40;
-  this.DIAST_ADV_THRESH = 22;
+  this.getThreshold = function (min, max) {
+    return Math.max(min, Math.floor(max / 10) + 1);
+  }
+  this.SYST_ADV_THRESH = this.getThreshold(this.SYST_MIN, this.SYST_MAX);
+  this.DIAST_ADV_THRESH = this.getThreshold(this.DIAST_MIN, this.DIAST_MAX);
 
   inherit(this, new Entry());
 
