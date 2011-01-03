@@ -454,6 +454,11 @@ function renderQuestion (event, dir) {
     alert("unrecognized datatype [" + event.datatype + "]");
   }
 
+  if ((event.domain_meta || {}).unit) {
+    //should only be done for numeric fields
+    activeControl = new UnitEntry(event.domain_meta.unit, activeControl);
+  }
+
   if (activeControl != null) {
     activeControl.setAnswer(event.answer);
     activeControl.load();

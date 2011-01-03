@@ -452,7 +452,7 @@ function BloodPressureEntry () {
   this.getRaw = function () {
     return {
       syst: this.entry.syst.getAnswer(),
-      diast:this.entry.diast.getAnswer()
+      diast: this.entry.diast.getAnswer()
     };
   }
 
@@ -528,10 +528,35 @@ function BloodPressureEntry () {
   }
 }
 
+function UnitEntry (unit, prototype) {
+  this.unit = unit;
+
+  inherit(this, prototype);
+
+  this.getAnswerBar = function () {
+    //i think something isn't quite right with the text sizing... seems to ignore font size
+    //got it looking ok for now
+    var labelsz = (this.unit.length > 2 ? 1.1 : 1.3);
+    var height = getTextExtent('I', labelsz)[1];
+    var width = getTextExtent(this.unit, labelsz)[0];
+    var labelaspect = (labelsz / 1.75 * width / height);
+    var counterbalance = 2.
+
+    var answerText = new InputArea({id: 'textinp', border: 3, padding: 5, child: new TextInput({textsize: 1.2, align: 'center', spacing: 0})});  
+    var unitLabel = new TextCaption({color: TEXT_COLOR, caption: this.unit, size: labelsz, align: 'left'});
+    var freeTextAnswer = make_answerbar([null, answerText, unitLabel], [counterbalance + '@', '3.5@', labelaspect + '@'], 'answer-bar');
+    
+    return {
+      component: freeTextAnswer,
+      inputfield: answerText
+    };
+  }
+}
+
 /* field that behaves like an <input>, but has no cursor and is otherwise not manipulable like a normal <input>
  * this is accomplished by using a hidden <input>, whose contents are then copied to a <span>
  */
-this.ShadowField = function (displayfield, prototype) {
+function ShadowField (displayfield, prototype) {
   inherit(this, prototype);
   
   this.displayfield = displayfield;
