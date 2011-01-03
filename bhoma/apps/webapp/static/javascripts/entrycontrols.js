@@ -365,17 +365,53 @@ function BloodPressureEntry () {
   this.DIAST_MAX = 210;
   this.DIAST_MIN = 20;
 
+  /* thresholds mean: "once the value in the field is >= this threshold value
+   * we consider the field done and move on to the next. e.g., for a systolic
+   * value of '20', we're probably still going to enter '220', but for a value
+   * of '90', we are not going to enter '930', so we move on after the 9-0
+   */
+  this.SYST_ADV_THRESH = 40;
+  this.DIAST_ADV_THRESH = 22;
+
   inherit(this, new Entry());
 
   this.cur_field = null;
   this.default_answer = null;
 
+  this.BPField = function (field, threshold, trigger) {
+    this.threshold = threshold;
+    this.trigger = trigger;
+
+    inherit(this, new ShadowField(field, new IntEntry(3)));
+
+    this.isComplete = function () {
+      return this.getAnswer() >= threshold;
+    }
+
+    this.typeFunc = function () {
+      var self = this;
+      var type_ = this.super('typeFunc')(false);
+      return function (ev, c, button) {
+        if (self.isComplete() && c != BKSP) {
+          self.setAnswer(null);
+        }
+
+        type_(ev, c, button);
+
+        if (self.isComplete()) {
+          self.trigger();
+        }
+      }
+    }
+  }
+
   this.load = function () {
     this.make_fields(); 
     
+    var self = this;
     this.entry = {
-      syst: new ShadowField(this.fields.syst, new IntEntry(3)),
-      diast: new ShadowField(this.fields.diast, new IntEntry(3))
+      syst: new this.BPField(this.fields.syst, this.SYST_ADV_THRESH, function () { self.activate('diast'); }),
+      diast: new this.BPField(this.fields.diast, this.DIAST_ADV_THRESH, function () { autoAdvanceTrigger(); })
     };
     
     this.activate('syst');
@@ -383,18 +419,18 @@ function BloodPressureEntry () {
     questionEntry.update(freeEntry);
     this.setAnswer(this.default_answer);
   }
-
+  
   this.activate = function (which) {
     this.cur_field = which;
     this.entry[which].load();
     this.fields.syst.setBgColor(which == 'syst' ? HIGHLIGHT_COLOR : '#fff');
     this.fields.diast.setBgColor(which == 'diast' ? HIGHLIGHT_COLOR : '#fff');
   }
-
+  
   this.goto_ = function (field) {
     this.activate(field);
   }
-
+  
   this.setAnswer = function (answer, postLoad) {
     if (this.entry) {
       var match = /^([0-9]+) *\/ *([0-9]+)$/.exec(answer);
@@ -422,7 +458,6 @@ function BloodPressureEntry () {
 
   this.getAnswer = function () {
     return (this.isEmpty() ? null : this.fmtBp());
-    }
   }
 
   this.next = function () {
@@ -437,7 +472,7 @@ function BloodPressureEntry () {
         return;
       }
     }
-
+    
     if (advance) {
       answerQuestion();
     } else {
@@ -448,11 +483,11 @@ function BloodPressureEntry () {
       }
     }
   }
-
+  
   this.back = function () {
     prevQuestion();
   }
-
+  
   this.make_fields = function () {
     var self = this;
     this.fields = {
@@ -460,33 +495,33 @@ function BloodPressureEntry () {
       diast: new InputArea({id: 'bp-diast', border: 3, child: new TextCaption({size: 1.6, align: 'center', color: TEXT_COLOR}), onclick: function () {self.goto_('diast');}}),
     };
   }
-
+  
   this.make_answerbar = function () {
     var bpSpacer = new TextCaption({color: TEXT_COLOR, caption: '/', size: 1.7});
     var content = [this.fields.syst, bpSpacer, this.fields.diast];
     var widths = ['1.8@', '.5@', '1.8@'];
     return make_answerbar(content, widths, 'bp-bar');
   }
-
+  
   this.isFull = function () {
     var bp = this.getRaw();
     return (bp.syst != null && bp.diast != null);
   }
-
+  
   this.isEmpty = function () {
     var bp = this.getRaw();
     return (bp.syst == null && bp.diast == null);
   }
-
+  
   this.isInRange = function () {
     var bp = this.getRaw();
     return (bp.syst <= this.SYST_MAX && bp.syst >= this.SYST_MIN && bp.diast <= this.DIAST_MAX && bp.diast >= this.DIAST_MIN);
   }
-
+  
   this.outOfRangeMsg = function () {
     return 'Blood pressure must be between ' + this.fmtBp({syst: this.SYST_MIN, diast: this.DIAST_MIN}) + ' and ' + this.fmtBp({syst: this.SYST_MAX, diast: this.DIAST_MAX});
   }
-
+  
   this.fmtBp = function (bp) {
     bp = bp || this.getRaw();
     return bp.syst + '/' + bp.diast;
@@ -531,8 +566,9 @@ this.ShadowField = function (displayfield, prototype) {
 
   this.typeFunc = function (no_flash) {
     var self = this;
+    var type_ = this.super('typeFunc')(no_flash);
     return function (ev, c, button) {
-      self.super('typeFunc')(no_flash)(ev, c, button);
+      type_(ev, c, button);
       self.fieldChanged();
     }
   }
