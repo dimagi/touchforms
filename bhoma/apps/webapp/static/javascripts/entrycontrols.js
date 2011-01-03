@@ -359,16 +359,16 @@ function DateEntry (dir, args) {
   }
 }
 
-/*
-
-two int widgets side by side
-
- */
-
-
 function BloodPressureEntry () {
+  this.SYST_MAX = 300;
+  this.SYST_MIN = 40;
+  this.DIAST_MAX = 210;
+  this.DIAST_MIN = 20;
+
   inherit(this, new Entry());
 
+  this.cur_field = null;
+  this.default_answer = null;
 
   this.load = function () {
     this.make_fields(); 
@@ -379,14 +379,13 @@ function BloodPressureEntry () {
     };
     
     this.activate('syst');
-
     answerBar.update(this.make_answerbar());
     questionEntry.update(freeEntry);
-
-    //    this.setAnswer(this.default_answer);
+    this.setAnswer(this.default_answer);
   }
 
   this.activate = function (which) {
+    this.cur_field = which;
     this.entry[which].load();
     this.fields.syst.setBgColor(which == 'syst' ? HIGHLIGHT_COLOR : '#fff');
     this.fields.diast.setBgColor(which == 'diast' ? HIGHLIGHT_COLOR : '#fff');
@@ -397,27 +396,67 @@ function BloodPressureEntry () {
   }
 
   this.setAnswer = function (answer, postLoad) {
-    if (true /*rendered*/) {
+    if (this.entry) {
+      var match = /^([0-9]+) *\/ *([0-9]+)$/.exec(answer);
+      if (!match) {
+        var bp = {syst: null, diast: null};
+        this.activate('syst');
+      } else {
+        var bp = {syst: +match[1], diast: +match[2]};
+      }
 
+      for (t in bp) {
+        this.entry[t].setAnswer(bp[t]);
+      }
     } else {
       this.default_answer = answer;
     }
   }
 
-  /*
-  setanswer;
+  this.getRaw = function () {
+    return {
+      syst: this.entry.syst.getAnswer(),
+      diast:this.entry.diast.getAnswer()
+    };
+  }
 
-  getanswer;
+  this.getAnswer = function () {
+    return (this.isEmpty() ? null : this.fmtBp());
+    }
+  }
 
-  next;
+  this.next = function () {
+    var advance = false;
+    if (this.isEmpty()) {
+      advance = true;
+    } else if (this.isFull()) {
+      if (this.isInRange()) {
+        advance = true;
+      } else {
+        showError(this.outOfRangeMsg());
+        return;
+      }
+    }
 
-  back;
-  */
+    if (advance) {
+      answerQuestion();
+    } else {
+      if (this.getRaw()[this.cur_field] == null) {
+        showError('Enter a ' + (this.cur_field == 'syst' ? 'systolic' : 'diastolic') + ' blood pressure')
+      } else {
+        this.activate(this.cur_field == 'syst' ? 'diast' : 'syst');
+      }
+    }
+  }
+
+  this.back = function () {
+    prevQuestion();
+  }
 
   this.make_fields = function () {
     var self = this;
     this.fields = {
-      syst: new InputArea({id: 'bp-syst', border: 3, child: new TextCaption({size: 1.6, align: 'center', color: TEXT_COLOR}), onclick: function () {console.log(self); self.goto_('syst');}}),
+      syst: new InputArea({id: 'bp-syst', border: 3, child: new TextCaption({size: 1.6, align: 'center', color: TEXT_COLOR}), onclick: function () {self.goto_('syst');}}),
       diast: new InputArea({id: 'bp-diast', border: 3, child: new TextCaption({size: 1.6, align: 'center', color: TEXT_COLOR}), onclick: function () {self.goto_('diast');}}),
     };
   }
@@ -429,20 +468,28 @@ function BloodPressureEntry () {
     return make_answerbar(content, widths, 'bp-bar');
   }
 
+  this.isFull = function () {
+    var bp = this.getRaw();
+    return (bp.syst != null && bp.diast != null);
+  }
 
-  this._prevalidate = function (raw) {
-    var match = /^([0-9]+)\/([0-9]+)$/.exec(raw);
-    if (!match) {
-      return "This does not appear to be a valid blood pressure reading. Blood pressure should look like: 120/80";
-    }
+  this.isEmpty = function () {
+    var bp = this.getRaw();
+    return (bp.syst == null && bp.diast == null);
+  }
 
-    syst = +match[1];
-    diast = +match[2];
-    if (syst > 300 || syst < 40 || diast > 210 || diast < 20) {
-      return "Blood pressure must be between 40/20 and 300/210";
-    }
+  this.isInRange = function () {
+    var bp = this.getRaw();
+    return (bp.syst <= this.SYST_MAX && bp.syst >= this.SYST_MIN && bp.diast <= this.DIAST_MAX && bp.diast >= this.DIAST_MIN);
+  }
 
-    return null;
+  this.outOfRangeMsg = function () {
+    return 'Blood pressure must be between ' + this.fmtBp({syst: this.SYST_MIN, diast: this.DIAST_MIN}) + ' and ' + this.fmtBp({syst: this.SYST_MAX, diast: this.DIAST_MAX});
+  }
+
+  this.fmtBp = function (bp) {
+    bp = bp || this.getRaw();
+    return bp.syst + '/' + bp.diast;
   }
 }
 
