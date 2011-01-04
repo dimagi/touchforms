@@ -563,12 +563,13 @@ function ChoiceSelect (args) {
   this.onclick = args.action;
   this.selected = norm_selected(args.selected); //todo: improve this
   this.layout_override = args.layout_override || {};
+  this.style = args.style;
 
   this.buttons = null;
 
   this.render = function (parent_div) {
     var layout_params = layout_choices(parent_div, this.choices, this.multi, this.layout_override);
-    var render_data = render_button_grid(layout_params, this.choices, this.values, this.multi, this.selected, this.onclick);
+    var render_data = render_button_grid(layout_params, this.choices, this.values, this.multi, this.selected, this.onclick, this.style);
     var layout = render_data.layout;
     this.buttons = render_data.buttons;
     layout.render(parent_div);
@@ -578,17 +579,18 @@ function ChoiceSelect (args) {
 //given a set of choice captions, determine optimum layout of choice buttons to maximize aesthetics
 function layout_choices (parent_div, choices, multi, override) {
   //layout constants
-  var MAX_TEXT_SIZE_GRID = 2.5;
-  var MAX_TEXT_SIZE_LIST = 1.8;
+  var MAX_TEXT_SIZE_GRID = override.maxText || 2.5;
+  var MAX_TEXT_SIZE_LIST = override.maxText || 1.8;
   var MIN_TEXT_SIZE = .3;
   var MAX_LENGTH_FOR_GRID = 350.;  //px: need to dynamicize
   var MAX_LENGTH_DIFF_FOR_GRID_ABS = 125; //px: need to dynamicize
   var MAX_LENGTH_DIFF_FOR_GRID_REL = 2.2;
   var DIFF_REF_THRESHOLD = 50.; //px: need to dynamicize
-  var GOLDEN_RATIO = SCREEN_WIDTH / SCREEN_HEIGHT * CHOICE_LAYOUT_GOLDEN_RATIO;
   var BUFFER_MARGIN = override.margin || 32; //px: need to dynamicize
 
-  if (choices.length <= 6) {
+  if (override.spacing) {
+    var SPACING_RATIO = override.spacing;
+  } else if (choices.length <= 6) {
     var SPACING_RATIO = .15;
   } else if (choices.length <= 12) {
     var SPACING_RATIO = .1;
@@ -599,6 +601,7 @@ function layout_choices (parent_div, choices, multi, override) {
   //available size of choice area
   var W_MAX = parent_div.clientWidth - BUFFER_MARGIN;
   var H_MAX = parent_div.clientHeight - BUFFER_MARGIN;
+  var GOLDEN_RATIO = W_MAX / H_MAX;
 
   //determine whether to use grid-based layout (centered, buttons oriented in grid pattern)
   //or list-based layout (left-justified, vertical orientation)
@@ -619,8 +622,8 @@ function layout_choices (parent_div, choices, multi, override) {
       longest_choice = choices[i];
     }
   }
-  if (override.forceList != null) {
-    style = (override.forceList ? 'list' : 'grid');
+  if (override.forceMode != null) {
+    style = override.forceMode;
   } else if (max_w > MAX_LENGTH_FOR_GRID || max_w - min_w > MAX_LENGTH_DIFF_FOR_GRID_ABS || (min_w >= DIFF_REF_THRESHOLD && max_w/min_w > MAX_LENGTH_DIFF_FOR_GRID_REL)) {
     style = 'list';
   } else {
@@ -739,8 +742,8 @@ function buttonDimensions (textdim) {
   return [Math.round(1.1 * textdim[0] + 0.7 * textdim[1]), Math.round(textdim[1] * 1.5)];
 }
 
-function render_button_grid (layout_params, choices, values, multi, selected, onclick) {
-  var buttons = generate_choice_buttons(choices, values, multi, selected, layout_params, onclick);
+function render_button_grid (layout_params, choices, values, multi, selected, onclick, style) {
+  var buttons = generate_choice_buttons(choices, values, multi, selected, layout_params, onclick, style);
 
   var button_grid = [];
   for (var i = 0; i < layout_params.nrows * layout_params.ncols; i++) {
@@ -761,7 +764,7 @@ function render_button_grid (layout_params, choices, values, multi, selected, on
   return {layout: layout_info, buttons: buttons};
 }
 
-function generate_choice_buttons (choices, values, multi, selected, layout_params, onclick) {
+function generate_choice_buttons (choices, values, multi, selected, layout_params, onclick, style) {
   selected = norm_selected(selected);
   var buttons = [];
   for (var i = 0; i < choices.length; i++) {
@@ -770,7 +773,13 @@ function generate_choice_buttons (choices, values, multi, selected, layout_param
     var button_info = {label: choices[i], value: value, selected: isSelected};
     buttons.push(button_info);
   }
-  return btngrid(buttons, {textsize: layout_params.textscale, action: onclick, centered: layout_params.style == 'grid', multi: multi});
+
+  var params = style || {};
+  params.textsize = layout_params.textscale;
+  params.action = onclick;
+  params.centered = layout_params.style == 'grid';
+  params.multi = multi;
+  return btngrid(buttons, params);
 }
 
 function uid (id) {
@@ -961,11 +970,17 @@ function set_color (elem, color, fallback_color) {
   if (_color == null) {
     elem.style.background = null;
     elem.style.backgroundColor = null;
-  } else if (_color.substring(0, 2) == 'gr') {
-    var pcs = _color.split(' ');
-    elem.style.backgroundColor = null;
-    elem.style.background = '-moz-linear-gradient(top, ' + pcs[1] + ' 0%, ' + pcs[2] + ' 100%)';
   } else {
+    if (_color.substring(0, 2) == 'gr') {
+      var pcs = _color.split(' ');
+      if (supportsGradient()) {
+        elem.style.backgroundColor = null;
+        elem.style.background = '-moz-linear-gradient(top, ' + pcs[1] + ' 0%, ' + pcs[2] + ' 100%)';
+        return;
+      } else {
+        _color = pcs[3] || pcs[2];
+      }
+    }
     elem.style.background = null;
     elem.style.backgroundColor = _color;
   }

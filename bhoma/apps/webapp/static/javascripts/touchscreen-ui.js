@@ -8,7 +8,6 @@ FOOTER_HEIGHT = '10%!';
 FOOTER_BUTTON_WIDTH = '15%!';
 FOOTER_BUTTON_SPACING = SECTION_MARGIN;
 HELP_BUTTON_SPACING = SECTION_MARGIN;
-CHOICE_LAYOUT_GOLDEN_RATIO = 1.2 //should ~= w:h ratio of renderable choice area / w:h ratio of screen (which mainly depends on size of header and footer)
 
 BORDER_COLOR = '#000';
 MAIN_COLOR = '#eef';

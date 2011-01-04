@@ -256,8 +256,8 @@ function MultiSelectEntry (args) {
     this.buttons = choiceLayout.buttons;
   }
 
-  this.makeChoices = function () {
-    return new ChoiceSelect({choices: this.choices, choicevals: this.choicevals, selected: this.default_selections, multi: this.isMulti, action: this.selectFunc(), layout_override: this.layout_override});
+  this.makeChoices = function (style) {
+    return new ChoiceSelect({choices: this.choices, choicevals: this.choicevals, selected: this.default_selections, multi: this.isMulti, action: this.selectFunc(), layout_override: this.layout_override, style: style});
   }
 
   this.getAnswer = function () {
@@ -611,34 +611,39 @@ function ShadowField (displayfield, prototype) {
   }
 }
 
-function AutoCompleteEntry (lookup_key, prototype) {
-  this.MAX_SUGGESTIONS = 9;
-
+AUTOCOMPL_BLACK_ON_WHITE = true;
+function AutoCompleteEntry (lookup_key, prototype, style) {
   inherit(this, prototype);
 
   this.lookup_key = lookup_key;
+  this.style = style || 'sidebaralt';
 
-  this.ChoiceField = function (choices, parent, settext) {
-    inherit(this, new SingleSelectEntry({choices: choices, choicevals: choices, layout_override:
-                                         {forceList: true, listStretch: true, margin: 20}}));
+  this.ChoiceField = function (choices, parent, style, settext) {
+    this.style = style;
+    this.choiceStyling = function () {
+      if (this.style == 'list') {
+        return {forceMode: 'list', listStretch: true, margin: 20}
+      } else {
+        return {forceMode: 'grid', spacing: .05, margin: 5, maxText: 1.6};
+      }
+    }
+
+    inherit(this, new SingleSelectEntry({choices: choices, choicevals: choices, layout_override: this.choiceStyling()}));
 
     this.parent = parent;
     this.settext = settext;
     
     this.load = function () {
-      var choiceLayout = this.makeChoices();
+      var choiceLayout = this.makeChoices(AUTOCOMPL_BLACK_ON_WHITE ? {color: '#fff', textcolor: '#000'} : {color: 'gr #198 #044'});
       parent.update(choiceLayout);
       this.buttons = choiceLayout.buttons;
 
+      //hack - css annoyances
       for (var i = 0; i < this.buttons.length; i++) {
-        //        this.setButtonColor(this.buttons[i], 'gr rgb(75,29,135) rgb(29,12,99)');
+        var btn = this.buttons[i];
+        btn.base_style = null;
+        btn.setStatus(btn.status);
       }
-    }
-
-    this.setButtonColor = function (btn, color) {
-      btn.default_color = color;
-      btn.base_style = null;
-      btn.setStatus(btn.status);
     }
 
     this.selectFunc = function () {
@@ -656,19 +661,23 @@ function AutoCompleteEntry (lookup_key, prototype) {
     var keyboard = new Indirect();
     var answerBar = new Indirect();
 
-    this.top = new Layout({id: 'autocomp-split', ncols: 2, widths: ['*', '40%'], content: [
-      new Layout({id: 'ac-free-entry', nrows: 2, heights: ['18%', '*'], content: [
-        answerBar,
-        new Layout({id: 'ac-kbd', margins: ['1.5%=', '1.5%=', 0, '2%='], content: [keyboard]})
-      ]}),
-      this.suggestions
-    ]});
-
-    /*
-    this.top = new Layout({id: 'autocomp-split', nrows: 3, heights: ['18%', '30%', '52%'], content: [
-       answerBar,       this.suggestions, keyboard
-    ]});
-    */
+    if (this.style.substring(0, 7) == 'sidebar') {
+      this.top = new Layout({id: 'autocomp-split', ncols: 2, widths: ['*', '40%'], content: [
+          new Layout({id: 'ac-free-entry', nrows: 2, heights: ['18%', '*'], content: [
+            answerBar,
+            new Layout({id: 'ac-kbd', margins: ['1.5%=', '1.5%=', 0, '2%='], content: [keyboard]})
+          ]}),
+          this.suggestions
+        ]});
+      this.MAX_SUGGESTIONS = 9;
+    } else if (this.style == 'inline') {
+      this.top = new Layout({id: 'autocomp-split', nrows: 3, heights: ['18%', '*', '60%'], content: [
+          answerBar,
+          new Layout({margins: ['5%', 0], content: [this.suggestions]}),
+          new Layout({id: 'kbd', margins: ['1.5%=', '1.5%=', '3%=', '4%='], content: [keyboard]})
+        ]});
+      this.MAX_SUGGESTIONS = 6;
+    }
 
     /* very similar to FreeTextEntry.load() */
     questionEntry.update(this.top);
@@ -704,7 +713,7 @@ function AutoCompleteEntry (lookup_key, prototype) {
   }
 
   this.getKeyboard = function () {
-    return makeKeyboard(false, this.typeFunc(), 'supercondensed');
+    return makeKeyboard(false, this.typeFunc(), {inline: null, sidebar: 'condensed', sidebaralt: 'supercondensed'}[this.style]);
   }
 
   this.typeFunc = function () {
@@ -753,7 +762,7 @@ function AutoCompleteEntry (lookup_key, prototype) {
   this.setChoices = function (choices) {
     if (choices.length > 0) {
       var self = this;
-      this.choiceControl = new this.ChoiceField(choices, this.suggestions, function (x) { self.super('setAnswer')(x); });
+      this.choiceControl = new this.ChoiceField(choices, this.suggestions, this.style == 'inline' ? 'bar' : 'list', function (x) { self.super('setAnswer')(x); });
       this.choiceControl.load();
     } else {
       this.choiceControl = null;
