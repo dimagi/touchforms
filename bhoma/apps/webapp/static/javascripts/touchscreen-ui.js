@@ -384,7 +384,7 @@ function render_clean () {
 }
 
 function type_ (input_field, c, button, flash) {
-  if (flash) {
+  if (flash && button != null) {
     button.flash(KEYFLASH);
   }
   

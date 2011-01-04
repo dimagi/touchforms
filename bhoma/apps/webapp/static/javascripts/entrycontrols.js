@@ -375,10 +375,11 @@ function BloodPressureEntry () {
   this.cur_field = null;
   this.default_answer = null;
 
-  this.BPField = function (field, threshold, trigger) {
+  this.BPField = function (field, threshold, forward_trigger, backward_trigger) {
     this.threshold = threshold;
-    this.trigger = trigger;
-
+    this.forward_trigger = forward_trigger;
+    this.backward_trigger = backward_trigger || function () {};
+    
     inherit(this, new ShadowField(field, new IntEntry(3)));
 
     this.isComplete = function () {
@@ -391,12 +392,14 @@ function BloodPressureEntry () {
       return function (ev, c, button) {
         if (self.isComplete() && c != BKSP) {
           self.setAnswer(null);
+        } else if (self.getAnswer() == null && c == BKSP) {
+          self.backward_trigger();
         }
 
         type_(ev, c, button);
 
         if (self.isComplete()) {
-          self.trigger();
+          self.forward_trigger();
         }
       }
     }
@@ -407,8 +410,16 @@ function BloodPressureEntry () {
     
     var self = this;
     this.entry = {
-      syst: new this.BPField(this.fields.syst, this.SYST_ADV_THRESH, function () { self.activate('diast'); }),
-      diast: new this.BPField(this.fields.diast, this.DIAST_ADV_THRESH, function () { autoAdvanceTrigger(); })
+      syst: new this.BPField(this.fields.syst, this.SYST_ADV_THRESH, function () {
+          self.activate('diast');
+        }),
+      diast: new this.BPField(this.fields.diast, this.DIAST_ADV_THRESH, function () {
+          autoAdvanceTrigger();
+        },
+        function () {
+          self.activate('syst');
+          self.typeToEntry('syst', BKSP);
+        })
     };
     
     this.activate('syst');
@@ -417,6 +428,10 @@ function BloodPressureEntry () {
     this.setAnswer(this.default_answer);
   }
   
+  this.typeToEntry = function (field, c) {
+    this.entry[field].typeFunc()(null, c, null);
+  }
+
   this.activate = function (which) {
     this.cur_field = which;
     this.entry[which].load();
