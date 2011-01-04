@@ -89,6 +89,8 @@ function xformAjaxAdapter (formName, preloadTags) {
     } else if (event.datatype == 'str') {
       meta.autocomplete = (event["style"]["mode"] == 'autocomplete');
       meta.autocomplete_key = event["style"]["autocomplete-key"];
+      meta.mask = event["style"]["mask"];
+      meta.prefix = event["style"]["prefix"];
     }
 
     return meta;
@@ -446,8 +448,6 @@ function renderQuestion (event, dir) {
     activeControl = new PhoneNumberEntry();
   } else if (event.domain == 'bp') {
     activeControl = new BloodPressureEntry();
-  } else if (event.domain == 'pat-id') {
-    activeControl = new PatientIDEntry();
   } else if (event.datatype == "str") {
     activeControl = new FreeTextEntry({domain: event.domain});
   } else if (event.datatype == "int") {
@@ -472,6 +472,9 @@ function renderQuestion (event, dir) {
   }
   if (event.domain_meta.autocomplete) {
     activeControl = new AutoCompleteEntry(event.domain_meta.autocomplete_key || event.domain, activeControl);
+  }
+  if (event.domain_meta.mask) {
+    activeControl = new IDMaskEntry(event.domain_meta.mask, event.domain_meta.prefix, activeControl);
   }
 
   if (activeControl != null) {
