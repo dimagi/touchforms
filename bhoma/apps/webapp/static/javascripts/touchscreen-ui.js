@@ -33,7 +33,7 @@ ERR_BGCOLOR = '#d66';
 ALERT_BGCOLOR = '#dd6';
 
 AUTO_ADVANCE_DELAY = 150; //ms
-KEYFLASH = 0; //150; //ms
+KEYFLASH = 50; //ms
 
 function initStaticWidgets () {
   questionCaption = new TextCaption({id: 'q-caption', color: TEXT_COLOR, align: 'left', valign: 'top'});
