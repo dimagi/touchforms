@@ -73,17 +73,25 @@ function DateWidgetContext (args) {
     if (this.mindate > this.maxdate) {
       throw new Error('bad allowed date range');
     }
+
+    this.specificity = null;
+    if (this.minyear == this.maxyear) {
+      this.specificity = 'year';
+      if (this.minmonth == this.maxmonth) {
+        this.specificity = 'month';
+        //we don't pre-fill day even if it's the only allowed date, as it makes it impossible to
+        //submit a blank answer
+      }
+    }
   }
 
   this.prefill = function () {
-    if (this.minyear == this.maxyear) {
+    if (this.specificity == 'year') {
       this.year = this.minyear;
-      if (this.minmonth == this.maxmonth) {
-        this.month = this.minmonth;
-        if (this.minday == this.maxday) {
-          this.day = this.minday;
-        }
-      }
+    }
+    if (this.specificity == 'month') {
+      this.year = this.minyear;
+      this.month = this.minmonth;
     }
   }
 
@@ -289,7 +297,7 @@ function DateWidgetContext (args) {
     }
     
     var complete = false;
-    var nextscreen = this.getNextScreen();
+    var nextscreen = this.getNextScreen(this.screen);
     if (nextscreen == null) {
       if (!this.isFull()) {
         this.screen = this.getEmptyScreen();
@@ -312,7 +320,7 @@ function DateWidgetContext (args) {
     if (this.isEffectivelyEmpty() || (this.isFull() && !this.changed)) {
       prevQuestion();
     } else {
-      pscr = this.getPrevScreen();
+      pscr = this.getPrevScreen(this.screen);
       if (pscr != null) {
         this.screen = pscr;
         this.refresh();
@@ -344,25 +352,44 @@ function DateWidgetContext (args) {
     return null;
   }
 
-  this.getNextScreen = function () {
+  this.getNextScreen = function (screen) {
     var screens = this.screenOrder();
-    i = screens.indexOf(this.screen) + 1;
-    return (i >= screens.length ? null : screens[i]);
+    var i0 = (screen != null ? screens.indexOf(screen) : -1);
+    for (var i = i0 + 1; i < screens.length; i++) {
+      if (this.isRelevantScreen(screens[i])) {
+        return screens[i];
+      }
+    }
+    return null;
   }
 
-  this.getPrevScreen = function () {
+  this.getPrevScreen = function (screen) {
     var screens = this.screenOrder();
-    i = screens.indexOf(this.screen) - 1;
-    return (i < 0 ? null : screens[i]);
+    var i0 = (screen != null ? screens.indexOf(screen) : screens.length);
+    for (var i = i0 - 1; i >= 0; i--) {
+      if (this.isRelevantScreen(screens[i])) {
+        return screens[i];
+      }
+    }
+    return null;
   }
 
   this.getFirstScreen = function () {
-    var scr = this.getEmptyScreen();
-    return (scr != null ? scr : this.screenOrder()[0]);
+    return this.getNextScreen(null);
   }
 
   this.getLastScreen = function () {
-    return ainv(this.screenOrder(), -1);
+    return this.getPrevScreen(null);
+  }
+
+  this.isRelevantScreen = function (screen) {
+    if (this.specificity == null) {
+      return true;
+    } else if (this.specificity == 'year') {
+      return ['day', 'month', 'monthyear'].indexOf(screen) != -1;
+    } else if (this.specificity == 'month') {
+      return screen == 'day';
+    }
   }
 
   this.getFieldOrder = function () {
