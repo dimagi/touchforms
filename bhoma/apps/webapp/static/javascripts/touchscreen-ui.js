@@ -23,8 +23,9 @@ BUTTON_DISABLED_COLOR = '#888';
 HIGHLIGHT_COLOR = '#ffc';
 NUMPAD_COLOR = '#16c';
 NUMPAD_CLASS = 'numpad-button';
-SPC_COLOR = '#44e';
+SPC_COLOR = '#aef';
 SPC_CLASS = 'spacebar';
+BACKSPACE_COLOR = '#999';
 BACKSPACE_CLASS = 'clear-button';
 
 HELP_BGCOLOR = '#6d6';
@@ -77,9 +78,9 @@ function initStaticWidgets () {
 }
 
 BKSP = '_del';
-backspaceKey = {label: '\u21d0', value: BKSP, style: BACKSPACE_CLASS};
+backspaceKey = {label: '\u21d0', value: BKSP, style: BACKSPACE_CLASS, color: BACKSPACE_COLOR};
 hyphenKey = {label: '\u2013', value: '-'};
-spaceKey = {label: '\u2423', value: ' ', style: SPC_CLASS};
+spaceKey = {label: '\u2423', value: ' ', style: SPC_CLASS, color: SPC_COLOR};
 
 function makeNumpad (extraKey, action) {
   return aspect_margin('1.7%-',
