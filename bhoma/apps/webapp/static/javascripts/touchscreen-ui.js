@@ -87,7 +87,7 @@ function makeNumpad (extraKey, action) {
   );
 }
 
-function makeKeyboard (full, action) {
+function makeKeyboard (full, action, condensed) {
   if (qwertyKbd()) {
     kbdFull = [
       'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', {label: '7', style: NUMPAD_CLASS}, {label: '8', style: NUMPAD_CLASS}, {label: '9', style: NUMPAD_CLASS},
@@ -113,11 +113,20 @@ function makeKeyboard (full, action) {
       'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', hyphenKey, '\''
     ];
   }
+  kbdAlphaCondensed = [
+    'A', 'B', 'C', 'D', 'E', backspaceKey,
+    'F', 'G', 'H', 'I', 'J', ' ',
+    'K', 'L', 'M', 'N', 'O', hyphenKey, 
+    'P', 'Q', 'R', 'S', 'T', '\'',
+    'U', 'V', 'W', 'X', 'Y', 'Z'
+  ];
 
   if (full) {
     return new Layout({id: 'text-kbd', nrows: 4, ncols: 13, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btngrid(kbdFull, {textsize: 1.4, action: action})});
-  } else {
+  } else if (!condensed) {
     return new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btngrid(kbdAlpha, {textsize: 1.9, action: action})});
+  } else {
+    return new Layout({id: 'text-kbd', nrows: 5, ncols: 6, widths: '5@', heights: '5@', margins: '*', spacings: '0.36@', content: btngrid(kbdAlphaCondensed, {textsize: 1.8, action: action})});
   }
 }
 

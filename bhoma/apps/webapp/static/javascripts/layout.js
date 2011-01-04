@@ -311,15 +311,15 @@ function ChoiceButton (args) {
   }
 
   this.setClass = function() {
-    if (this.base_style && supportsGradient()) {
+    if (supportsGradient()) {
       if (this.status == 'default') {
         return this.button.setStyle(this.base_style);
       } else if (this.status == 'selected') {
-        return this.button.setStyle('selected ' + this.base_style);
+        return this.button.setStyle(this.base_style != null ? 'selected ' + this.base_style : null);
       } else if (this.status == 'disabled') {
         //'disabled' style doesn't exist; commenting out until it does as it prevent the disabled color from taking effect
         //not sure disabled buttons need the 3-d effect anyway
-        //this.button.setStyle(this.base_style + ' disabled');
+        //this.button.setStyle(this.base_style != null ? this.base_style + ' disabled' : null);
         return this.button.setStyle(null);
       }
     }
@@ -562,11 +562,12 @@ function ChoiceSelect (args) {
   this.multi = args.multi || false;
   this.onclick = args.action;
   this.selected = norm_selected(args.selected); //todo: improve this
+  this.layout_override = args.layout_override || {};
 
   this.buttons = null;
 
   this.render = function (parent_div) {
-    var layout_params = layout_choices(parent_div, this.choices, this.multi);
+    var layout_params = layout_choices(parent_div, this.choices, this.multi, this.layout_override);
     var render_data = render_button_grid(layout_params, this.choices, this.values, this.multi, this.selected, this.onclick);
     var layout = render_data.layout;
     this.buttons = render_data.buttons;
@@ -575,7 +576,7 @@ function ChoiceSelect (args) {
 }
 
 //given a set of choice captions, determine optimum layout of choice buttons to maximize aesthetics
-function layout_choices (parent_div, choices, multi) {
+function layout_choices (parent_div, choices, multi, override) {
   //layout constants
   var MAX_TEXT_SIZE_GRID = 2.5;
   var MAX_TEXT_SIZE_LIST = 1.8;
@@ -585,7 +586,7 @@ function layout_choices (parent_div, choices, multi) {
   var MAX_LENGTH_DIFF_FOR_GRID_REL = 2.2;
   var DIFF_REF_THRESHOLD = 50.; //px: need to dynamicize
   var GOLDEN_RATIO = SCREEN_WIDTH / SCREEN_HEIGHT * CHOICE_LAYOUT_GOLDEN_RATIO;
-  var BUFFER_MARGIN = 32; //px: need to dynamicize
+  var BUFFER_MARGIN = override.margin || 32; //px: need to dynamicize
 
   if (choices.length <= 6) {
     var SPACING_RATIO = .15;
@@ -618,11 +619,15 @@ function layout_choices (parent_div, choices, multi) {
       longest_choice = choices[i];
     }
   }
-  if (max_w > MAX_LENGTH_FOR_GRID || max_w - min_w > MAX_LENGTH_DIFF_FOR_GRID_ABS || (min_w >= DIFF_REF_THRESHOLD && max_w/min_w > MAX_LENGTH_DIFF_FOR_GRID_REL)) {
+  if (override.forceList != null) {
+    style = (override.forceList ? 'list' : 'grid');
+  } else if (max_w > MAX_LENGTH_FOR_GRID || max_w - min_w > MAX_LENGTH_DIFF_FOR_GRID_ABS || (min_w >= DIFF_REF_THRESHOLD && max_w/min_w > MAX_LENGTH_DIFF_FOR_GRID_REL)) {
     style = 'list';
   } else {
     style = 'grid';
   }
+
+  //todo: use binary search for text sizing?
 
   if (style == 'grid') {
     var margins = '*';
@@ -681,7 +686,7 @@ function layout_choices (parent_div, choices, multi) {
     spacing = best_spc;
   } else if (style == 'list') {
     dir = 'vert';
-    var margins = [BUFFER_MARGIN, '*', BUFFER_MARGIN, '*'];
+    var margins = [BUFFER_MARGIN, override.listStretch ? BUFFER_MARGIN : '*', BUFFER_MARGIN, '*'];
 
     //layout priority: maximize button size
     fits = false;
@@ -704,7 +709,7 @@ function layout_choices (parent_div, choices, multi) {
       throw new Error("choices too numerous or verbose to fit!");
     }
 
-    width = bw;
+    width = (override.listStretch ? '*' : bw);
     height = bh;
     text_scale = size;
     spacing = spc;
@@ -952,7 +957,18 @@ function offsets (dims) {
 }
 
 function set_color (elem, color, fallback_color) {
-  elem.style.backgroundColor = (color != null && color != '' ? color : fallback_color);
+  var _color = (color != null && color != '' ? color : fallback_color);
+  if (_color == null) {
+    elem.style.background = null;
+    elem.style.backgroundColor = null;
+  } else if (_color.substring(0, 2) == 'gr') {
+    var pcs = _color.split(' ');
+    elem.style.backgroundColor = null;
+    elem.style.background = '-moz-linear-gradient(top, ' + pcs[1] + ' 0%, ' + pcs[2] + ' 100%)';
+  } else {
+    elem.style.background = null;
+    elem.style.backgroundColor = _color;
+  }
 }
 
 function ainv (arr, i) {

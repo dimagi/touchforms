@@ -322,6 +322,7 @@ function MultiSelectEntry (args) {
 
   this.choices = args.choices;
   this.choicevals = args.choicevals;
+  this.layout_override = args.layout_override;
 
   this.isMulti = true;
   this.buttons = null;
@@ -334,7 +335,7 @@ function MultiSelectEntry (args) {
   }
 
   this.makeChoices = function () {
-    return new ChoiceSelect({choices: this.choices, choicevals: this.choicevals, selected: this.default_selections, multi: this.isMulti, action: this.selectFunc()});
+    return new ChoiceSelect({choices: this.choices, choicevals: this.choicevals, selected: this.default_selections, multi: this.isMulti, action: this.selectFunc(), layout_override: this.layout_override});
   }
 
   this.getAnswer = function () {
@@ -669,6 +670,149 @@ function ShadowField (displayfield, prototype) {
     return function (ev, c, button) {
       type_(ev, c, button);
       self.fieldChanged();
+    }
+  }
+}
+
+function AutoCompleteEntry (lookup_key, prototype) {
+  this.MAX_SUGGESTIONS = 9;
+
+  inherit(this, prototype);
+
+  this.lookup_key = lookup_key;
+
+  this.ChoiceField = function (choices, parent, settext) {
+    inherit(this, new SingleSelectEntry({choices: choices, choicevals: choices, layout_override:
+                                         {forceList: true, listStretch: true, margin: 20}}));
+
+    this.parent = parent;
+    this.settext = settext;
+    
+    this.load = function () {
+      var choiceLayout = this.makeChoices();
+      parent.update(choiceLayout);
+      this.buttons = choiceLayout.buttons;
+
+      //      this.setButtonColor(this.buttons[0], 'gr #dc2 #04b');
+    }
+
+    this.setButtonColor = function (btn, color) {
+      btn.default_color = color;
+      btn.base_style = null;
+      btn.setStatus(btn.status);
+    }
+
+    this.selectFunc = function () {
+      var selfunc = this.super('selectFunc')();
+      var self = this;
+      return function (ev, c, button) {
+        selfunc(ev, c, button);
+        self.settext(self.getAnswer());
+      }
+    }
+  }
+
+  this.load = function () {
+    this.suggestions = new Indirect();
+    var keyboard = new Indirect();
+    var answerBar = new Indirect();
+
+    this.top = new Layout({id: 'autocomp-split', ncols: 2, widths: ['*', '40%'], content: [
+      new Layout({id: 'ac-free-entry', nrows: 2, heights: ['18%', '*'], content: [
+        answerBar,
+        new Layout({id: 'ac-kbd', margins: ['1.5%=', '1.5%=', 0, '2%='], content: [keyboard]})
+      ]}),
+      this.suggestions
+    ]});
+
+    /* very similar to FreeTextEntry.load() */
+    questionEntry.update(this.top);
+    var answerBarControls = this.getAnswerBar();
+    answerBarControls.inputfield.setMaxLen(this.length_limit);
+    answerBar.update(answerBarControls.component);
+    keyboard.update(this.getKeyboard());
+    this.inputfield = answerBarControls.inputfield;
+    this.setAnswer(this.default_answer);
+    // ----
+  }
+
+  this.getAnswer = function () {
+    answer = null;
+    if (this.choiceControl) {
+      answer = this.choiceControl.getAnswer();
+    }
+    if (answer == null) {
+      answer = this.getTextAnswer();
+    }
+    return answer;
+  }
+
+  this.getTextAnswer = function () {
+    return this.super('getAnswer')();
+  }
+
+  this.setAnswer = function (answer, postLoad) {
+    this.super('setAnswer')(answer, postLoad);
+    if (this.suggestions) {
+      this.textChanged();
+    }
+  }
+
+  this.getKeyboard = function () {
+    return makeKeyboard(false, this.typeFunc(), true);
+  }
+
+  this.typeFunc = function () {
+    var self = this;
+    var type_ = this.super('typeFunc')(false);
+    return function (ev, c, button) {
+      type_(ev, c, button);
+      self.textChanged();
+    };
+  }
+
+  this.textChanged = function () {
+    this.refreshChoices();
+  }
+
+  this.getSearchKey = function () {
+    return this.getTextAnswer() || '';
+  }
+
+  this.refreshChoices = function () {
+    var params = {
+      domain: this.lookup_key,
+      max: this.MAX_SUGGESTIONS,
+      key: this.getSearchKey()
+    }
+    var self = this;
+    jQuery.get(AUTOCOMPLETE_URL, params, function (data) {
+        if (self.getSearchKey() != params.key) {
+          console.log('results no longer valid');
+        } else {
+          self.updateChoices(data);
+        }
+      }, 'json');
+  }
+
+  this.updateChoices = function (results) {
+    var names = [];
+    for (var i = 0; i < results.length; i++) {
+      console.log(results[i]);
+      names.push(results[i].name);
+    }
+    names.sort();
+    this.setChoices(names);
+  }
+
+  this.setChoices = function (choices) {
+    if (choices.length > 0) {
+      var self = this;
+      this.choiceControl = new this.ChoiceField(choices, this.suggestions, function (x) { self.super('setAnswer')(x); });
+      this.choiceControl.load();
+    } else {
+      this.choiceControl = null;
+      this.suggestions.update(new TextCaption({caption: 'no suggestions'}));
     }
   }
 }

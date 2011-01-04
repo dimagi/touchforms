@@ -58,3 +58,51 @@ def phone_home(request, tag):
         ping.payload = request.raw_post_data
     ping.save()
     return HttpResponse('ping', mimetype='text/plain')
+
+
+
+
+
+
+
+#TEMPORARY
+def lookup_names(domain, key, maxnum):
+    def load_names(path):
+        with open(path) as f:
+            lines = f.readlines()
+            for ln in lines:
+                name = ln[:15].strip()
+                prob = float(ln[15:20]) / 100.
+                yield {'name': name, 'p': prob}
+
+    path = '/home/drew/tmp/census/' + {
+        'firstname-male': 'dist.male.first',
+        'firstname-female': 'dist.female.first',
+        'lastname': 'dist.all.last'
+        }[domain]
+
+    matches = []
+    for k in load_names(path):
+        if k['name'].startswith(key):
+            matches.append(k)
+            if len(matches) == maxnum:
+                break
+    return matches
+
+def autocomplete(request):
+    domain = request.GET.get('domain')
+    key = request.GET.get('key', '')
+    max_results = int(request.GET.get('max', '20'))
+
+    if domain == 'firstname':
+        matchesm = lookup_names('firstname-male', key, max_results)
+        matchesf = lookup_names('firstname-female', key, max_results)
+        matches = []
+        matches.extend(matchesm)
+        matches.extend(matchesf)
+        matches.sort(key=lambda m: -m['prob'])
+        matches = matches[:max_results]
+    else:
+        matches = lookup_names(domain, key, max_results)
+
+    return HttpResponse(json.dumps(matches), 'text/json')

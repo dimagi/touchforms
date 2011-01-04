@@ -86,6 +86,9 @@ function xformAjaxAdapter (formName, preloadTags) {
       meta.maxdiff = event["style"]["after"] != null ? +event["style"]["after"] : null;
     } else if (event.datatype == "int" || event.datatype == "float") {
       meta.unit = event["style"]["unit"];
+    } else if (event.datatype == 'str') {
+      meta.autocomplete = (event["style"]["mode"] == 'autocomplete');
+      meta.autocomplete_key = event["style"]["autocomplete-key"];
     }
 
     return meta;
@@ -464,6 +467,9 @@ function renderQuestion (event, dir) {
   if ((event.domain_meta || {}).unit) {
     //should only be done for numeric fields
     activeControl = new UnitEntry(event.domain_meta.unit, activeControl);
+  }
+  if (event.domain_meta.autocomplete) {
+    activeControl = new AutoCompleteEntry(event.domain_meta.autocomplete_key || event.domain, activeControl);
   }
 
   if (activeControl != null) {
