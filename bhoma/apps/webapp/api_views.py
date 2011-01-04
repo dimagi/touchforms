@@ -94,15 +94,44 @@ def autocomplete(request):
     key = request.GET.get('key', '')
     max_results = int(request.GET.get('max', '20'))
 
-    if domain == 'firstname':
+    if domain == 'village':
+        matches = match_village(domain, key, max_results)
+    elif domain == 'firstname':
         matchesm = lookup_names('firstname-male', key, max_results)
         matchesf = lookup_names('firstname-female', key, max_results)
         matches = []
         matches.extend(matchesm)
         matches.extend(matchesf)
-        matches.sort(key=lambda m: -m['prob'])
+        matches.sort(key=lambda m: -m['p'])
         matches = matches[:max_results]
     else:
         matches = lookup_names(domain, key, max_results)
 
     return HttpResponse(json.dumps(matches), 'text/json')
+
+def match_village(domain, key, maxnum):
+    def load_villages(path):
+        with open(path) as f:
+            lines = f.readlines()
+            for ln in lines:
+                pcs = ln.split(';')
+                name = pcs[0].strip()
+                prob = int(pcs[1].strip())
+                yield {'name': name, 'p': prob}
+
+    path = '/home/drew/tmp/census/zamvillage'
+
+    villages = list(load_villages(path))
+    villages.sort(key=lambda v: -v['p'])
+
+    matches = []
+    for v in villages:
+        if village_match(key, v['name']):
+            matches.append(v)
+            if len(matches) == maxnum:
+                break
+    return matches
+
+def village_match(key, village):
+    return village.startswith(key)
+

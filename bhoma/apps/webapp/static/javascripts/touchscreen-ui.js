@@ -79,6 +79,7 @@ function initStaticWidgets () {
 BKSP = '_del';
 backspaceKey = {label: '\u21d0', value: BKSP, style: BACKSPACE_CLASS};
 hyphenKey = {label: '\u2013', value: '-'};
+spaceKey = {label: '\u2423', value: ' ', style: SPC_CLASS};
 
 function makeNumpad (extraKey, action) {
   return aspect_margin('1.7%-',
@@ -87,35 +88,35 @@ function makeNumpad (extraKey, action) {
   );
 }
 
-function makeKeyboard (full, action, condensed) {
+function makeKeyboard (full, action, style) {
   if (qwertyKbd()) {
     kbdFull = [
       'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', {label: '7', style: NUMPAD_CLASS}, {label: '8', style: NUMPAD_CLASS}, {label: '9', style: NUMPAD_CLASS},
       'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', {label: '4', style: NUMPAD_CLASS}, {label: '5', style: NUMPAD_CLASS}, {label: '6', style: NUMPAD_CLASS},
       'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '!', {label: '1', style: NUMPAD_CLASS}, {label: '2', style: NUMPAD_CLASS}, {label: '3', style: NUMPAD_CLASS},
-      hyphenKey, '+', '%', '&', '*', '/', ':', ';', '(', ')', {label: ' ', style: SPC_CLASS}, {label: '0', style: NUMPAD_CLASS}, backspaceKey     
+      hyphenKey, '+', '%', '&', '*', '/', ':', ';', '(', ')', spaceKey, {label: '0', style: NUMPAD_CLASS}, backspaceKey     
     ];
     kbdAlpha = [
       'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
       'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', backspaceKey,
-      'Z', 'X', 'C', 'V', 'B', 'N', 'M', hyphenKey, '\'', ' '
+      'Z', 'X', 'C', 'V', 'B', 'N', 'M', hyphenKey, '\'', spaceKey
     ];
   } else {
     kbdFull = [
       'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', {label: '7', style: NUMPAD_CLASS}, {label: '8', style: NUMPAD_CLASS}, {label: '9', style: NUMPAD_CLASS}, backspaceKey,
       'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', {label: '4', style: NUMPAD_CLASS}, {label: '5', style: NUMPAD_CLASS}, {label: '6', style: NUMPAD_CLASS}, '.',
-      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', {label: ' ', style: SPC_CLASS}, {label: '1', style: NUMPAD_CLASS}, {label: '2', style: NUMPAD_CLASS}, {label: '3', style: NUMPAD_CLASS}, ',',
+      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', spaceKey, {label: '1', style: NUMPAD_CLASS}, {label: '2', style: NUMPAD_CLASS}, {label: '3', style: NUMPAD_CLASS}, ',',
       hyphenKey, '+', '%', '&', '*', '/', ':', ';', '(', ')', {label: '0', style: NUMPAD_CLASS}, '!', '?'     
     ];
     kbdAlpha = [
       'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', backspaceKey,
-      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', ' ',
+      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', spaceKey,
       'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', hyphenKey, '\''
     ];
   }
   kbdAlphaCondensed = [
     'A', 'B', 'C', 'D', 'E', backspaceKey,
-    'F', 'G', 'H', 'I', 'J', ' ',
+    'F', 'G', 'H', 'I', 'J', spaceKey,
     'K', 'L', 'M', 'N', 'O', hyphenKey, 
     'P', 'Q', 'R', 'S', 'T', '\'',
     'U', 'V', 'W', 'X', 'Y', 'Z'
@@ -123,10 +124,12 @@ function makeKeyboard (full, action, condensed) {
 
   if (full) {
     return new Layout({id: 'text-kbd', nrows: 4, ncols: 13, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btngrid(kbdFull, {textsize: 1.4, action: action})});
-  } else if (!condensed) {
-    return new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btngrid(kbdAlpha, {textsize: 1.9, action: action})});
-  } else {
+  } else if (style == 'condensed') {
+    return new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: '4@', heights: '7@', margins: '*', spacings: '0.36@', content: btngrid(kbdAlpha, {textsize: 1.4, action: action})});
+  } else if (style == 'supercondensed') {
     return new Layout({id: 'text-kbd', nrows: 5, ncols: 6, widths: '5@', heights: '5@', margins: '*', spacings: '0.36@', content: btngrid(kbdAlphaCondensed, {textsize: 1.8, action: action})});
+  } else {
+    return new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btngrid(kbdAlpha, {textsize: 1.9, action: action})});
   }
 }
 

@@ -437,7 +437,9 @@ function renderQuestion (event, dir) {
   }
 
   questionCaption.setText(event["caption"]);
- 
+
+  event.domain_meta = event.domain_meta || {};
+
   if (event.customlayout != null) {
     activeControl = event.customlayout(event);
   } else if (event.domain == 'phone') {
@@ -464,7 +466,7 @@ function renderQuestion (event, dir) {
     alert("unrecognized datatype [" + event.datatype + "]");
   }
 
-  if ((event.domain_meta || {}).unit) {
+  if (event.domain_meta.unit) {
     //should only be done for numeric fields
     activeControl = new UnitEntry(event.domain_meta.unit, activeControl);
   }

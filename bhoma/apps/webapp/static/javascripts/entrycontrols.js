@@ -693,7 +693,9 @@ function AutoCompleteEntry (lookup_key, prototype) {
       parent.update(choiceLayout);
       this.buttons = choiceLayout.buttons;
 
-      //      this.setButtonColor(this.buttons[0], 'gr #dc2 #04b');
+      for (var i = 0; i < this.buttons.length; i++) {
+        //        this.setButtonColor(this.buttons[i], 'gr rgb(75,29,135) rgb(29,12,99)');
+      }
     }
 
     this.setButtonColor = function (btn, color) {
@@ -724,6 +726,12 @@ function AutoCompleteEntry (lookup_key, prototype) {
       ]}),
       this.suggestions
     ]});
+
+    /*
+    this.top = new Layout({id: 'autocomp-split', nrows: 3, heights: ['18%', '30%', '52%'], content: [
+       answerBar,       this.suggestions, keyboard
+    ]});
+    */
 
     /* very similar to FreeTextEntry.load() */
     questionEntry.update(this.top);
@@ -759,7 +767,7 @@ function AutoCompleteEntry (lookup_key, prototype) {
   }
 
   this.getKeyboard = function () {
-    return makeKeyboard(false, this.typeFunc(), true);
+    return makeKeyboard(false, this.typeFunc(), 'supercondensed');
   }
 
   this.typeFunc = function () {
