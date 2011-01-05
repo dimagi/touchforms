@@ -383,7 +383,7 @@ function TextButton (args) {
     span.style.fontSize = this.size_rel * 100. + '%';
     span.style.color = this.text_color;
     span.textContent = this.caption;
-    parent_div.onclick = this.onclick;
+    setClickEvent(parent_div, this.onclick);
     if (!this.centered) {
       span.style.marginLeft = .25 * parent_div.clientHeight + 'px';
     }
@@ -1236,7 +1236,7 @@ function InputArea (args) {
     this.layout = new Layout({id: this.id, margins: this.border, color: this.inside_color, margin_color: this.border_color, content: [inside]});
     this.layout.render(parent_div);
     this.container = this.layout.container;
-    this.container.onclick = this.onclick;
+    setClickEvent(this.container, this.onclick);
   }
 }
 
@@ -1271,5 +1271,14 @@ function supportsGradient () {
     return cmp_arr(jQuery.browser.version.split('.'), [1, 9, 2]) >= 0;
   } else {
     return true;
+  }
+}
+
+
+function setClickEvent (obj, handler) {
+  if (clickOnMouseDown()) {
+    obj.onmousedown = handler;
+  } else {
+    obj.onclick = handler;
   }
 }

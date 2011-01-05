@@ -221,6 +221,10 @@ function dateEntryOrder () {
   return (val == '-' ? dateDisplayOrder() : val);
 }
 
+function clickOnMouseDown () {
+  return setting('CLICK_MOUSEDOWN', true);
+}
+
 var clicksEnabled;
 var clickDisableCounter = 0;
 function setup () {
