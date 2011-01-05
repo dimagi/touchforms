@@ -248,7 +248,7 @@ function Workflow (flow, onFinish) {
 function wfQuestion (args) {
   this.caption = args.caption;
   this.type = args.type;
-  this.value = args.answer || null;
+  this.value = args.answer;
   this.choices = args.choices;
   this.required = args.required || false;
   this.validation = args.validation || function (ans) { return null; };

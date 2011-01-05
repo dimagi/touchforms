@@ -52,7 +52,7 @@ function init () {
   
 {% else %}
 
-  gFormAdapter = new workflowAdapter(new {{ form.wfobj }}());
+  gFormAdapter = new workflowAdapter(new {{ form.wfobj }}({{ form.wfargs|default:""|safe }}));
 
 {% endifequal %}
 
