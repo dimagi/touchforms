@@ -229,6 +229,10 @@ function autoCompleteStyle () {
   return setting('AUTOCOMPLETE_STYLE', 'inline');
 }
 
+function autoCompleteCurrentTextAsSuggestion () {
+  return setting('AUTOCOMPL_CURRENT_TEXT_AS_SUGGESTION', true);
+}
+
 var clicksEnabled;
 var clickDisableCounter = 0;
 function setup () {

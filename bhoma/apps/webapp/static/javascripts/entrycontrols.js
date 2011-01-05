@@ -626,8 +626,6 @@ function ShadowField (displayfield, prototype) {
 
 AUTOCOMPL_BLACK_ON_WHITE = true;
 function AutoCompleteEntry (lookup_key, prototype, style) {
-  this.CURRENT_TEXT_AS_SUGGESTION = true;
-
   inherit(this, prototype);
 
   this.lookup_key = lookup_key;
@@ -668,6 +666,7 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
       var selfunc = this.super('selectFunc')();
       var self = this;
       return function (ev, c, button) {
+        //override behavior of toggling when you click an already-selected button
         if (button.status == 'selected') {
           autoAdvanceTrigger();
           return;
@@ -775,7 +774,7 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
 
   this.updateChoices = function (results) {
     var current = this.getSearchKey();
-    if (this.CURRENT_TEXT_AS_SUGGESTION) {
+    if (autoCompleteCurrentTextAsSuggestion()) {
       if (results.length < this.MAX_SUGGESTIONS && current) {
         var exists = false;
         for (var i = 0; i < results.length; i++) {
