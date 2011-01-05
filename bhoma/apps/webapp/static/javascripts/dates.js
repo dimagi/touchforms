@@ -145,7 +145,10 @@ function DateWidgetContext (args) {
 
   this.refresh = function () {
     questionEntry.update(freeEntry);
-    answerBar.update(make_date_answerbar(this.textfields));
+    if (this.answerbar == null) {
+      this.answerbar = make_date_answerbar(this.textfields);
+    }
+    answerBar.update(this.answerbar);
 
     var year_bucket = this.getYearBucket();
     if (this.year != null) {

@@ -37,10 +37,19 @@ KEYFLASH = 150; //ms
 function initStaticWidgets () {
   questionCaption = new TextCaption({id: 'q-caption', color: TEXT_COLOR, align: 'left', valign: 'top'});
   
+  TactileButton = function (args) {
+    var action = args.action;
+    args.action = function (ev, c, button) {
+      button.flash(KEYFLASH);
+      action();
+    }
+    inherit(this, new ChoiceButton(args));
+  }
+
+  nextButton = new TactileButton({id: 'next-button', color: '#1a3', selcolor: '#8f8', textcolor: BUTTON_TEXT_COLOR, label: 'NEXT', textsize: 1.2, action: nextClicked});
+  backButton = new TactileButton({id: 'back-button', color: '#6ad', selcolor: '#7df', textcolor: BUTTON_TEXT_COLOR, label: 'BACK', textsize: .9, action: backClicked});
   helpButton = new TextButton({id: 'help-button', color: '#aaa', textcolor: BUTTON_TEXT_COLOR, caption: '?', textsize: 1., onclick: helpClicked});
-  backButton = new TextButton({id: 'back-button', color: '#6ad', textcolor: BUTTON_TEXT_COLOR, caption: 'BACK', textsize: .9, onclick: backClicked});
   homeButton = new TextButton({id: 'home-button', color: '#d23', textcolor: BUTTON_TEXT_COLOR, caption: 'HOME', textsize: .9, onclick: homeClicked});
-  nextButton = new TextButton({id: 'next-button', color: '#1a3', textcolor: BUTTON_TEXT_COLOR, caption: 'NEXT', textsize: 1.2, onclick: nextClicked});
   
   questionEntry = new Indirect();
   
@@ -151,7 +160,7 @@ function make_answerbar (content, widths, id) {
     }
   }
   
-  var clearButton = new TextButton({id: 'clear-button', color: '#aaa', textcolor: BUTTON_TEXT_COLOR, caption: 'CLEAR', textsize: 0.8, onclick: clearClicked});
+  var clearButton = new TactileButton({id: 'clear-button', color: '#aaa', selcolor: '#ddd', textcolor: BUTTON_TEXT_COLOR, label: 'CLEAR', textsize: 0.8, action: clearClicked});
   content.push(clearButton);
   widths.push('1.7@');
   
@@ -314,6 +323,7 @@ function autoAdvanceTrigger () {
   if (autoAdvance()) {
     disableInput();
     setTimeout(function () {
+        nextButton.flash(KEYFLASH);
         nextClicked();
         enableInput();
       }, AUTO_ADVANCE_DELAY);
