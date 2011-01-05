@@ -91,6 +91,10 @@ function xformAjaxAdapter (formName, preloadTags) {
       meta.autocomplete_key = event["style"]["autocomplete-key"];
       meta.mask = event["style"]["mask"];
       meta.prefix = event["style"]["prefix"];
+    } else if (event.datatype == "multiselect") {
+      if (event["style"]["as-select1"] != null) {
+        meta.as_single = +event["style"]["as-select1"];
+      }
     }
 
     return meta;
@@ -459,7 +463,7 @@ function renderQuestion (event, dir) {
   } else if (event.datatype == "select") {
     activeControl = new SingleSelectEntry({choices: event.choices, choicevals: event.choicevals});
   } else if (event.datatype == "multiselect") {
-    activeControl = new MultiSelectEntry({choices: event.choices, choicevals: event.choicevals});
+    activeControl = new MultiSelectEntry({choices: event.choices, choicevals: event.choicevals, meta: event.domain_meta});
   } else if (event.datatype == "date") {
     activeControl = new DateEntry(dir, event.domain_meta);
   } else {
@@ -471,7 +475,7 @@ function renderQuestion (event, dir) {
     activeControl = new UnitEntry(event.domain_meta.unit, activeControl);
   }
   if (event.domain_meta.autocomplete) {
-    activeControl = new AutoCompleteEntry(event.domain_meta.autocomplete_key || event.domain, activeControl);
+    activeControl = new AutoCompleteEntry(event.domain_meta.autocomplete_key || event.domain, activeControl, 'inline');
   }
   if (event.domain_meta.mask) {
     activeControl = new IDMaskEntry(event.domain_meta.mask, event.domain_meta.prefix, activeControl);

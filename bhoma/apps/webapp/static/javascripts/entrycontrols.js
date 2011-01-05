@@ -245,6 +245,7 @@ function MultiSelectEntry (args) {
   this.choices = args.choices;
   this.choicevals = args.choicevals;
   this.layout_override = args.layout_override;
+  this.as_single = (args.meta || {}).as_single;
 
   this.isMulti = true;
   this.buttons = null;
@@ -283,7 +284,19 @@ function MultiSelectEntry (args) {
   }
 
   this.selectFunc = function () {
-    return function (ev, c, button) { button.toggleStatus(); }
+    var self = this;
+    return function (ev, c, button) {
+      button.toggleStatus();
+
+      //one special value can be treated like a single-select, where if it is chosen the question
+      //is answered immediately; useful for 'none of the above'-type buttons
+      if (button.value == self.as_single) {
+        var ans = self.getAnswer();
+        if (ans.length == 1 && ans[0] == self.as_single) {
+          autoAdvanceTrigger();
+        }
+      }
+    }
   }
 }
 
