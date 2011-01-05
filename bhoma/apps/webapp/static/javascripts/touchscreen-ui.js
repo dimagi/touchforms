@@ -32,7 +32,7 @@ ERR_BGCOLOR = '#d66';
 ALERT_BGCOLOR = '#dd6';
 
 AUTO_ADVANCE_DELAY = 150; //ms
-KEYFLASH = 50; //ms
+KEYFLASH = 150; //ms
 
 function initStaticWidgets () {
   questionCaption = new TextCaption({id: 'q-caption', color: TEXT_COLOR, align: 'left', valign: 'top'});
@@ -219,6 +219,14 @@ function dateDisplayOrder () {
 function dateEntryOrder () {
   var val = setting('DATE_ENTRY_ORDER', '-');
   return (val == '-' ? dateDisplayOrder() : val);
+}
+
+function clickOnMouseDown () {
+  return setting('CLICK_MOUSEDOWN', true);
+}
+
+function autoCompleteStyle () {
+  return setting('AUTOCOMPLETE_STYLE', 'inline');
 }
 
 var clicksEnabled;

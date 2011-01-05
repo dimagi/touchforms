@@ -626,12 +626,14 @@ function ShadowField (displayfield, prototype) {
 
 AUTOCOMPL_BLACK_ON_WHITE = true;
 function AutoCompleteEntry (lookup_key, prototype, style) {
+  this.CURRENT_TEXT_AS_SUGGESTION = true;
+
   inherit(this, prototype);
 
   this.lookup_key = lookup_key;
   this.style = style || 'sidebaralt';
 
-  this.ChoiceField = function (choices, parent, style, settext) {
+  this.ChoiceField = function (choices, parent, selected, style, settext) {
     this.style = style;
     this.choiceStyling = function () {
       if (this.style == 'list') {
@@ -645,9 +647,12 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
 
     this.parent = parent;
     this.settext = settext;
+    this.selected = selected;
     
     this.load = function () {
-      var choiceLayout = this.makeChoices(AUTOCOMPL_BLACK_ON_WHITE ? {color: '#fff', textcolor: '#000'} : {color: 'gr #198 #044'});
+      this.setAnswer(this.selected);
+
+      var choiceLayout = this.makeChoices(AUTOCOMPL_BLACK_ON_WHITE ? {color: '#fff', textcolor: '#000', selcolor: '#fcc'} : {color: 'gr #198 #044'});
       parent.update(choiceLayout);
       this.buttons = choiceLayout.buttons;
 
@@ -663,6 +668,11 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
       var selfunc = this.super('selectFunc')();
       var self = this;
       return function (ev, c, button) {
+        if (button.status == 'selected') {
+          autoAdvanceTrigger();
+          return;
+        }
+
         selfunc(ev, c, button);
         self.settext(self.getAnswer());
       }
@@ -738,6 +748,7 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
     };
   }
 
+  //todo: should we wait until typing has stopped for a short delay before querying, to ease burden on the server?
   this.textChanged = function () {
     this.refreshChoices();
   }
@@ -763,6 +774,22 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
   }
 
   this.updateChoices = function (results) {
+    var current = this.getSearchKey();
+    if (this.CURRENT_TEXT_AS_SUGGESTION) {
+      if (results.length < this.MAX_SUGGESTIONS && current) {
+        var exists = false;
+        for (var i = 0; i < results.length; i++) {
+          if (results[i].name == current) {
+            exists = true;
+            break;
+          }
+        }
+        if (!exists) {
+          results.push({name: current, p: 0.});
+        }
+      }
+    }
+
     if (this.style == 'inline') {
       //sort by likelihood
       results.sort(function (a, b) { return cmp(b.p, a.p); });
@@ -777,13 +804,13 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
       console.log(results[i]);
       names.push(results[i].name);
     }
-    this.setChoices(names);
+    this.setChoices(names, current);
   }
 
-  this.setChoices = function (choices) {
+  this.setChoices = function (choices, selected) {
     if (choices.length > 0) {
       var self = this;
-      this.choiceControl = new this.ChoiceField(choices, this.suggestions, this.style == 'inline' ? 'bar' : 'list', function (x) { self.super('setAnswer')(x); });
+      this.choiceControl = new this.ChoiceField(choices, this.suggestions, selected, this.style == 'inline' ? 'bar' : 'list', function (x) { self.super('setAnswer')(x); });
       this.choiceControl.load();
     } else {
       this.choiceControl = null;
