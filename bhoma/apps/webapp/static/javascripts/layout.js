@@ -1252,11 +1252,11 @@ function CustomContent (id, content) {
   }
 }
 
-function cmp_arr (a, b) {
-  var cmp = function (a, b) {
-    return (a > b ? 1 : (a < b ? -1 : 0));
-  }
+function cmp (a, b) {
+  return (a > b ? 1 : (a < b ? -1 : 0));
+}
 
+function cmp_arr (a, b) {
   for (var i = 0; i < Math.min(a.length, b.length); i++) {
     var c = cmp(a[i], b[i]);
     if (c != 0) {

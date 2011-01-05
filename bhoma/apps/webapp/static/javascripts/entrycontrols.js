@@ -750,12 +750,20 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
   }
 
   this.updateChoices = function (results) {
+    if (this.style == 'inline') {
+      //sort by likelihood
+      results.sort(function (a, b) { return cmp(b.p, a.p); });
+    } else {
+      //sort by name
+      results.sort(function (a, b) { return cmp(a.name, b.name); });
+    }
+
+
     var names = [];
     for (var i = 0; i < results.length; i++) {
       console.log(results[i]);
       names.push(results[i].name);
     }
-    names.sort();
     this.setChoices(names);
   }
 
