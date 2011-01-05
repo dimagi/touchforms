@@ -730,7 +730,7 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
 
   this.setAnswer = function (answer, postLoad) {
     this.super('setAnswer')(answer, postLoad);
-    if (this.suggestions) {
+    if (this.suggestions && answer == null) {
       this.textChanged();
     }
   }
