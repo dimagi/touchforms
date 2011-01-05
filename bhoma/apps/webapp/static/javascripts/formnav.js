@@ -471,7 +471,7 @@ function renderQuestion (event, dir) {
     activeControl = new UnitEntry(event.domain_meta.unit, activeControl);
   }
   if (event.domain_meta.autocomplete) {
-    activeControl = new AutoCompleteEntry(event.domain_meta.autocomplete_key || event.domain, activeControl);
+    activeControl = new AutoCompleteEntry(event.domain_meta.autocomplete_key || event.domain, activeControl, autoCompleteStyle());
   }
   if (event.domain_meta.mask) {
     activeControl = new IDMaskEntry(event.domain_meta.mask, event.domain_meta.prefix, activeControl);
