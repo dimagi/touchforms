@@ -167,12 +167,12 @@ function DateWidgetContext (args) {
       while (syear.length < 4) {
         syear += '\u2022';
       }
-      this.textfields.y.setText(syear);
+      this.setText('y', syear);
     } else {
-      this.textfields.y.setText('');
+      this.setText('y', null);
     }
-    this.textfields.m.setText(this.month != null ? (numericMonths() ? intpad(this.month, 2) : monthName(this.month)) : '');
-    this.textfields.d.setText(this.day != null ? intpad(this.day, 2) : '');
+    this.setText('m', this.month != null ? (numericMonths() ? intpad(this.month, 2) : monthName(this.month)) : null);
+    this.setText('d', this.day != null ? intpad(this.day, 2) : null);
 
     if (this.screen == 'decade') {
       this.showScreen(decadeSelect(this.make_decades(), this.getChoiceVal('decade'), this));
@@ -185,6 +185,21 @@ function DateWidgetContext (args) {
     } else if (this.screen == 'monthyear') {
       this.showScreen(monthYearSelect(this.make_months(), this.getChoiceVal('monthyear'), this));
     }
+  }
+
+  this.setText = function (field, val) {
+    this.setFieldText(this.textfields[field], val, field);
+  }
+
+  this.setFieldText = function (textfield, val, default_) {
+    var use_default = false;
+    if (val == null) {
+      use_default = true;
+      val = default_;
+    }
+    val = val || def || '';
+    $('#' + textfield.id + ' span')[0].style.opacity = (use_default ? .1 : 1.); //hack
+    textfield.setText(val);
   }
 
   //it's asking for trouble to set choice values to types that are not comparable (i.e., lists, dicts), so we have to map certain date fields to ints

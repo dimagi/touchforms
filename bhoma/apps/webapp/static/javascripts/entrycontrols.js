@@ -390,13 +390,14 @@ function BloodPressureEntry () {
 
   this.BPField = function (field, threshold, forward_trigger, backward_trigger) {
     this.threshold = threshold;
+    this.maxlen = ((10 * this.threshold - 1) + '').length;
     this.forward_trigger = forward_trigger;
     this.backward_trigger = backward_trigger || function () {};
     
-    inherit(this, new ShadowField(field, new IntEntry(3)));
+    inherit(this, new ShadowField(field, new IntEntry(this.maxlen)));
 
     this.isComplete = function () {
-      return this.getAnswer() >= threshold;
+      return this.getAnswer() >= threshold || (this.getRaw() || '').length >= this.maxlen;
     }
 
     this.typeFunc = function () {
