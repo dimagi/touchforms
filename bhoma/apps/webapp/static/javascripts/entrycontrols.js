@@ -773,37 +773,78 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
   }
 
   this.updateChoices = function (results) {
+    var suggestions = results.suggestions;
+    var hinting = results.hinting;
+
     var current = this.getSearchKey();
     if (autoCompleteCurrentTextAsSuggestion()) {
-      if (results.length < this.MAX_SUGGESTIONS && current) {
+      if (suggestions.length < this.MAX_SUGGESTIONS && current) {
         var exists = false;
-        for (var i = 0; i < results.length; i++) {
-          if (results[i].name == current) {
+        for (var i = 0; i < suggestions.length; i++) {
+          if (suggestions[i].name == current) {
             exists = true;
             break;
           }
         }
         if (!exists) {
-          results.push({name: current, p: 0.});
+          suggestions.push({name: current, p: 0.});
         }
       }
     }
 
     if (this.style == 'inline') {
       //sort by likelihood
-      results.sort(function (a, b) { return cmp(b.p, a.p); });
+      suggestions.sort(function (a, b) { return cmp(b.p, a.p); });
     } else {
       //sort by name
-      results.sort(function (a, b) { return cmp(a.name, b.name); });
+      suggestions.sort(function (a, b) { return cmp(a.name, b.name); });
     }
 
 
     var names = [];
-    for (var i = 0; i < results.length; i++) {
-      console.log(results[i]);
-      names.push(results[i].name);
+    for (var i = 0; i < suggestions.length; i++) {
+      console.log(suggestions[i]);
+      names.push(suggestions[i].name);
     }
     this.setChoices(names, current);
+
+    //EXPERIMENTAL -- dynamically change keyboard to hint next most-likely chars
+    if (autoCompleteKeyboardHints() && hinting) {
+      var frequency = hinting.nextchar_freq;
+      var samplesize = hinting.sample_size;
+
+      var max = 0;
+      for (var c in frequency) {
+        if (frequency[c] > max) {
+          max = frequency[c];
+        }
+      }
+
+      var BASELINE = 1.; //characters with a frequency of zero are given this minimum
+      var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      //measurement of the disparity between most and least frequent (with correction for small sample sizes)
+      var pareto = alphabet.length * (max + BASELINE) / (samplesize + alphabet.length * BASELINE);
+      //size of most frequent letter -- a larger disparity give a larger max size
+      var maxsize = 1.9 /*base_size*/ + Math.log(pareto)/7.;
+      var opacity_skew = .75 / Math.pow(7.5, .75);
+
+      for (var i = 0; i < alphabet.length; i++) {
+        var c = alphabet[i];
+        var k = (max == 0 ? 0. : Math.min(-Math.log(Math.max(frequency[c] || 0., BASELINE) / max), 9.));
+        console.log(c, k, frequency[c], max, samplesize);
+
+        var opacity = 1. - opacity_skew * Math.pow(k, .75);
+        var shade = 1. - .035 * k;
+        var size = maxsize - (maxsize - 1.25) / 7.5 * k;
+
+        //changing the button properties this way is quite hacky
+        var domobj = $('#kbd #button-' + c + ' span')[0];
+        domobj.style.opacity = opacity;
+        domobj.style.fontSize = Math.round(100*size) + '%';
+        shade = Math.round(100*shade);
+        domobj.style.color = 'rgb(' + shade + '%,' + shade + '%,' + shade + '%)';
+      }
+    }
   }
 
   this.setChoices = function (choices, selected) {

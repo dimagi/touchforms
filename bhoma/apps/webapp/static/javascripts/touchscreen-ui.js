@@ -242,6 +242,10 @@ function autoCompleteCurrentTextAsSuggestion () {
   return setting('AUTOCOMPL_CURRENT_TEXT_AS_SUGGESTION', true);
 }
 
+function autoCompleteKeyboardHints () {
+  return setting('AUTOCOMPL_KEYBOARD_HINTS', true);
+}
+
 var clicksEnabled;
 var clickDisableCounter = 0;
 function setup () {

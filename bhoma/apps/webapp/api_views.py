@@ -138,11 +138,11 @@ def get_matches(data, key, maxnum, matchfunc=None):
             if c not in alpha:
                 alpha[c] = 0
             alpha[c] += d['p']
-            total += 1
+            total += d['p']
 
     print sorted(list(alpha.iteritems()))
 
-    return {'suggestions': matches, 'nextchar_dist': alpha, 'sample_size': total}
+    return {'suggestions': matches, 'hinting': {'nextchar_freq': alpha, 'sample_size': total}}
 
 def autocomplete(request):
     domain = request.GET.get('domain')
