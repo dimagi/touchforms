@@ -119,10 +119,11 @@ def match_village(domain, key, maxnum):
                 prob = int(pcs[1].strip())
                 yield {'name': name, 'p': prob}
 
-    path = '/home/drew/tmp/census/zamvillage'
+    path = '/home/drew/tmp/census/usplaces'
+#    path = '/home/drew/tmp/census/zamvillage'
 
     villages = list(load_villages(path))
-    villages.sort(key=lambda v: -v['p'])
+#    villages.sort(key=lambda v: -v['p'])
 
     matches = []
     for v in villages:
