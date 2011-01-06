@@ -650,7 +650,7 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
     this.load = function () {
       this.setAnswer(this.selected);
 
-      var choiceLayout = this.makeChoices(AUTOCOMPL_BLACK_ON_WHITE ? {color: '#fff', textcolor: '#000', selcolor: '#fcc'} : {color: 'gr #198 #044'});
+      var choiceLayout = this.makeChoices(AUTOCOMPL_BLACK_ON_WHITE ? {color: '#fff', textcolor: '#000', selcolor: '#cfc'} : {color: 'gr #198 #044'});
       parent.update(choiceLayout);
       this.buttons = choiceLayout.buttons;
 
