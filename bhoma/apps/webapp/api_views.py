@@ -66,28 +66,83 @@ def phone_home(request, tag):
 
 
 #TEMPORARY
-def lookup_names(domain, key, maxnum):
-    def load_names(path):
-        with open(path) as f:
-            lines = f.readlines()
-            for ln in lines:
-                name = ln[:15].strip()
-                prob = float(ln[15:20]) / 100.
-                yield {'name': name, 'p': prob}
 
-    path = '/home/drew/tmp/census/' + {
-        'firstname-male': 'dist.male.first',
-        'firstname-female': 'dist.female.first',
-        'lastname': 'dist.all.last'
-        }[domain]
+DATASET = 'zam'
+
+def load_census_file(path):
+    with open(path) as f:
+        lines = f.readlines()
+        for ln in lines:
+            name = ln[:15].strip()
+            prob = float(ln[15:20]) / 100.
+            yield {'name': name, 'p': prob}
+
+def load_raw_file(path):
+    with open(path) as f:
+        lines = f.readlines()
+        for ln in lines:
+            pcs = ln.split(';')
+            name = pcs[0].strip()
+            prob = int(pcs[1].strip())
+            yield {'name': name, 'p': prob}
+
+def lookup_names(domain, key, maxnum):
+    if DATASET == 'zam':
+        path = '/home/drew/tmp/census/' + {
+            'firstname-male': 'zamnamesfirstmale',
+            'firstname-female': 'zamnamesfirstfemale',
+            'lastname': 'zamnameslast'
+            }[domain]
+        loadfunc = load_raw_file
+    else:
+        path = '/home/drew/tmp/census/' + {
+            'firstname-male': 'dist.male.first',
+            'firstname-female': 'dist.female.first',
+            'lastname': 'dist.all.last'
+            }[domain]
+        loadfunc = load_census_file
+ 
+    return get_matches(loadfunc(path), key, maxnum)
+
+def lookup_villages(domain, key, maxnum):
+    if DATASET == 'zam':
+        path = '/home/drew/tmp/census/zamvillage'
+    else:
+        path = '/home/drew/tmp/census/usplaces'
+
+    villages = list(load_raw_file(path))
+
+    if DATASET == 'zam':
+        villages.sort(key=lambda v: -v['p'])
+
+    return get_matches(villages, key, maxnum)
+
+def get_matches(data, key, maxnum, matchfunc=None):
+    data = list(data)
+
+    if matchfunc == None:
+        matchfunc = lambda key, name: name.startswith(key)
 
     matches = []
-    for k in load_names(path):
-        if k['name'].startswith(key):
-            matches.append(k)
+    for d in data:
+        if matchfunc(key, d['name']):
+            matches.append(d)
             if len(matches) == maxnum:
                 break
-    return matches
+
+    alpha = {}
+    total = 0
+    for d in data:
+        if d['name'].startswith(key) and not d['name'] == key:
+            c = d['name'][len(key)]
+            if c not in alpha:
+                alpha[c] = 0
+            alpha[c] += d['p']
+            total += 1
+
+    print sorted(list(alpha.iteritems()))
+
+    return {'suggestions': matches, 'nextchar_dist': alpha, 'sample_size': total}
 
 def autocomplete(request):
     domain = request.GET.get('domain')
@@ -95,7 +150,7 @@ def autocomplete(request):
     max_results = int(request.GET.get('max', '20'))
 
     if domain == 'village':
-        matches = match_village(domain, key, max_results)
+        matches = lookup_villages(domain, key, max_results)
     elif domain == 'firstname':
         matchesm = lookup_names('firstname-male', key, max_results)
         matchesf = lookup_names('firstname-female', key, max_results)
@@ -109,30 +164,4 @@ def autocomplete(request):
 
     return HttpResponse(json.dumps(matches), 'text/json')
 
-def match_village(domain, key, maxnum):
-    def load_villages(path):
-        with open(path) as f:
-            lines = f.readlines()
-            for ln in lines:
-                pcs = ln.split(';')
-                name = pcs[0].strip()
-                prob = int(pcs[1].strip())
-                yield {'name': name, 'p': prob}
-
-    path = '/home/drew/tmp/census/usplaces'
-#    path = '/home/drew/tmp/census/zamvillage'
-
-    villages = list(load_villages(path))
-#    villages.sort(key=lambda v: -v['p'])
-
-    matches = []
-    for v in villages:
-        if village_match(key, v['name']):
-            matches.append(v)
-            if len(matches) == maxnum:
-                break
-    return matches
-
-def village_match(key, village):
-    return village.startswith(key)
 
