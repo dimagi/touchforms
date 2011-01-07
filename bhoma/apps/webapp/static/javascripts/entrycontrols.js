@@ -517,9 +517,10 @@ function CompoundNumericEntry () {
   this.make_fields = function () {
     var mkgoto = function (self, i) { return function () { self.goto_(i); }; };
 
+    var info = this.get_field_info();
     this.fields = [];
-    for (var i = 0; i < this.get_field_info().length; i++) {
-      this.fields.push(new InputArea({id: 'subfield-' + i, border: 3, child: new TextCaption({size: 1.6, align: 'center', color: TEXT_COLOR}), onclick: mkgoto(this, i)}));
+    for (var i = 0; i < info.length; i++) {
+      this.fields.push(new InputArea({id: 'subfield-' + i, default: info[i].label, border: 3, child: new TextCaption({size: 1.6, align: 'center', color: TEXT_COLOR}), onclick: mkgoto(this, i)}));
     }
   }
   

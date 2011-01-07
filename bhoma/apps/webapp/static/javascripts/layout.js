@@ -1199,6 +1199,7 @@ function InputArea (args) {
   this.inside_color = args.inside_color || '#fff';
   this.child = args.child;
   this.onclick = args.onclick;
+  this.default = args.default;
 
   this.layout;
   this.container = null;
@@ -1220,6 +1221,13 @@ function InputArea (args) {
   }
   
   this.setText = function (text) {
+    //kind of hacky
+    var elem = $('#' + this.id + ' span')[0];
+    if (elem != null) {
+      elem.style.opacity = (!text ? .1 : 1.);
+    }
+
+    text = text || this.default;
     this.child.setText(text);
   }
   

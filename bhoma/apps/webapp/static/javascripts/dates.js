@@ -152,7 +152,7 @@ function DateWidgetContext (args) {
 
     var year_bucket = this.getYearBucket();
     if (this.year != null) {
-      this.textfields.y.setText(this.year + '');
+      this.setText('y', this.year + '');
     } else if (year_bucket != null) {
       sstart = year_bucket.start + '';
       send = year_bucket.end + '';
@@ -188,18 +188,7 @@ function DateWidgetContext (args) {
   }
 
   this.setText = function (field, val) {
-    this.setFieldText(this.textfields[field], val, field);
-  }
-
-  this.setFieldText = function (textfield, val, default_) {
-    var use_default = false;
-    if (val == null) {
-      use_default = true;
-      val = default_;
-    }
-    val = val || def || '';
-    $('#' + textfield.id + ' span')[0].style.opacity = (use_default ? .1 : 1.); //hack
-    textfield.setText(val);
+    this.textfields[field].setText(val);
   }
 
   //it's asking for trouble to set choice values to types that are not comparable (i.e., lists, dicts), so we have to map certain date fields to ints

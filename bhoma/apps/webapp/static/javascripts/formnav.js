@@ -466,6 +466,8 @@ function renderQuestion (event, dir) {
     activeControl = new MultiSelectEntry({choices: event.choices, choicevals: event.choicevals, meta: event.domain_meta});
   } else if (event.datatype == "date") {
     activeControl = new DateEntry(dir, event.domain_meta);
+  } else if (event.datatype == "time") {
+    activeControl = new TimeOfDayEntry();
   } else {
     alert("unrecognized datatype [" + event.datatype + "]");
   }
