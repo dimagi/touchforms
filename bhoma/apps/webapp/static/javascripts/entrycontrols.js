@@ -367,6 +367,7 @@ function DateEntry (dir, args) {
 }
 
 function NumericSubfield (field, args, forward_trigger, backward_trigger) {
+  this.args = args;
   this.threshold = Math.max(args.min, Math.floor(args.max / 10) + 1);
   this.maxlen = ((10 * this.threshold - 1) + '').length;
   this.forward_trigger = forward_trigger;
@@ -375,7 +376,15 @@ function NumericSubfield (field, args, forward_trigger, backward_trigger) {
   inherit(this, new ShadowField(field, new IntEntry(this.maxlen)));
 
   this.isComplete = function () {
-    return this.getAnswer() >= this.threshold || (this.getRaw() || '').length >= this.maxlen;
+    return (this.getAnswer() >= this.threshold && !this.args.fixedwidth) || (this.getRaw() || '').length >= this.maxlen;
+  }
+
+  this.setAnswer = function (answer) {
+    var pad = this.args.fixedwidth || this.args.paddisplay;
+    if (pad && answer != null) {
+      answer = intpad(answer, this.maxlen);
+    }
+    this.super('setAnswer')(answer);
   }
 
   this.typeFunc = function () {
@@ -391,6 +400,7 @@ function NumericSubfield (field, args, forward_trigger, backward_trigger) {
       type_(ev, c, button);
       
       if (self.isComplete()) {
+        self.setAnswer(self.getAnswer());
         self.forward_trigger();
       }
     }
@@ -586,6 +596,48 @@ function BloodPressureEntry () {
 
   this.completeCurrentFieldMsg = function (field) {
     return 'Enter a ' + ['systolic', 'diastolic'][field] + ' blood pressure';
+  }
+}
+
+function TimeOfDayEntry () {
+  this.HOUR_MAX = 23;
+  this.MINUTE_MAX = 59;
+
+  inherit(this, new CompoundNumericEntry());
+
+  this.get_field_info = function () {
+    return [
+      {args: {min: 0, max: this.HOUR_MAX, paddisplay: true}, label: 'h'},
+      {args: {min: 0, max: this.MINUTE_MAX, fixedwidth: true}, label: 'm'}
+    ];
+  }
+
+  this.make_answerbar = function () {
+    var timeSpacer = new TextCaption({color: TEXT_COLOR, caption: ':', size: 1.7});
+    var content = [this.fields[0], timeSpacer, this.fields[1]];
+    var widths = ['1.3@', '.3@', '1.3@'];
+    return make_answerbar(content, widths, 'time-bar');
+  }
+
+  this.parseAnswer = function (answer) {
+    var match = /^([0-9]+) *\: *([0-9]+)$/.exec(answer);
+    if (!match) {
+      return null;
+    } else {
+      return [+match[1], +match[2]];
+    }
+  }
+
+  this.formatAnswer = function (answer) {
+    return answer[0] + ':' + answer[1];
+  }
+
+  this.outOfRangeMsg = function () {
+    return 'Time of day must be between 00:00 and 23:59';
+  }
+
+  this.completeCurrentFieldMsg = function (field) {
+    return 'Enter ' + ['an hour', 'a minute'][field];
   }
 }
 
