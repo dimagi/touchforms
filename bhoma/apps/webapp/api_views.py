@@ -68,6 +68,7 @@ def phone_home(request, tag):
 #TEMPORARY
 
 from django.core.cache import cache
+import os.path
 
 DATASET = 'us'
 #DATASET = 'zam'
@@ -93,6 +94,7 @@ def get_matches(data, key, maxnum, matchfunc=None):
     if matchfunc == None:
         matchfunc = lambda key, name: name.startswith(key)
 
+    #autocomplete suggestions
     matches = []
     for d in data:
         if matchfunc(key, d['name']):
@@ -100,6 +102,7 @@ def get_matches(data, key, maxnum, matchfunc=None):
             if len(matches) == maxnum:
                 break
 
+    #next-char statistics for keyboard hinting
     alpha = {}
     total = 0
     for d in data:
@@ -188,28 +191,30 @@ def get_response(domain, key, data):
     return response
 
 def load_data(domain):
+    rootdir = 'data/census'
+
     if domain == 'village':
         if DATASET == 'zam':
-            path = '/home/drew/tmp/census/zamvillage'
+            path = 'zamvillage'
         else:
-            path = '/home/drew/tmp/census/usplaces'
-        data = load_raw_file(path)
+            path = 'usplaces'
+        data = load_raw_file(os.path.join(rootdir, path))
     else:
         if DATASET == 'zam':
-            path = '/home/drew/tmp/census/' + {
+            path = {
                 'firstname-male': 'zamnamesfirstmale',
                 'firstname-female': 'zamnamesfirstfemale',
                 'lastname': 'zamnameslast'
                 }[domain]
             loadfunc = load_raw_file
         else:
-            path = '/home/drew/tmp/census/' + {
+            path = {
                 'firstname-male': 'dist.male.first',
                 'firstname-female': 'dist.female.first',
                 'lastname': 'dist.all.last'
                 }[domain]
             loadfunc = load_census_file
-        data = loadfunc(path)
+        data = loadfunc(os.path.join(rootdir, path))
     data = list(data)
     data.sort(key=lambda v: -v['p'])
     return data
