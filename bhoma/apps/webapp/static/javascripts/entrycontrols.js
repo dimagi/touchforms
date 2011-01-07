@@ -921,7 +921,7 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
       var pareto = alphabet.length * (max + BASELINE) / (samplesize + alphabet.length * BASELINE);
       //size of most frequent letter -- a larger disparity give a larger max size
       var maxsize = 1.9 /*base_size*/ + Math.log(pareto)/7.;
-      var opacity_skew = .75 / Math.pow(7.5, .75);
+      var opacity_skew = (.7 - .06 * Math.log(pareto)) / Math.pow(7.5, .75);
 
       for (var i = 0; i < alphabet.length; i++) {
         var c = alphabet[i];
