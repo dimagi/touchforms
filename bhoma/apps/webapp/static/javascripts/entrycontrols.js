@@ -814,8 +814,14 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
       var frequency = hinting.nextchar_freq;
       var samplesize = hinting.sample_size;
 
+      var sum = 0;
+      for (var c in frequency) {
+        sum += frequency[c];
+      }
+
       var max = 0;
       for (var c in frequency) {
+        frequency[c] *= samplesize / sum;
         if (frequency[c] > max) {
           max = frequency[c];
         }

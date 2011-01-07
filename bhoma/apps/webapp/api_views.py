@@ -67,7 +67,8 @@ def phone_home(request, tag):
 
 #TEMPORARY
 
-DATASET = 'zam'
+DATASET = 'us'
+#DATASET = 'zam'
 
 def load_census_file(path):
     with open(path) as f:
@@ -75,7 +76,7 @@ def load_census_file(path):
         for ln in lines:
             name = ln[:15].strip()
             prob = float(ln[15:20]) / 100.
-            yield {'name': name, 'p': prob}
+            yield {'name': name, 'p': 2e5 * prob}
 
 def load_raw_file(path):
     with open(path) as f:
