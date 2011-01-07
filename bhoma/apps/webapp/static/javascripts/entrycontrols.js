@@ -366,77 +366,63 @@ function DateEntry (dir, args) {
   }
 }
 
-function BloodPressureEntry () {
-  this.SYST_MAX = 300;
-  this.SYST_MIN = 40;
-  this.DIAST_MAX = 210;
-  this.DIAST_MIN = 20;
+function NumericSubfield (field, args, forward_trigger, backward_trigger) {
+  this.threshold = Math.max(args.min, Math.floor(args.max / 10) + 1);
+  this.maxlen = ((10 * this.threshold - 1) + '').length;
+  this.forward_trigger = forward_trigger;
+  this.backward_trigger = backward_trigger || function () {};
+  
+  inherit(this, new ShadowField(field, new IntEntry(this.maxlen)));
 
-  /* thresholds mean: "once the value in the field is >= this threshold value
-   * we consider the field done and move on to the next. e.g., for a systolic
-   * value of '20', we're probably still going to enter '220', but for a value
-   * of '90', we are not going to enter '930', so we move on after the 9-0
-   */
-  this.getThreshold = function (min, max) {
-    return Math.max(min, Math.floor(max / 10) + 1);
+  this.isComplete = function () {
+    return this.getAnswer() >= this.threshold || (this.getRaw() || '').length >= this.maxlen;
   }
-  this.SYST_ADV_THRESH = this.getThreshold(this.SYST_MIN, this.SYST_MAX);
-  this.DIAST_ADV_THRESH = this.getThreshold(this.DIAST_MIN, this.DIAST_MAX);
 
+  this.typeFunc = function () {
+    var self = this;
+    var type_ = this.super('typeFunc')(false);
+    return function (ev, c, button) {
+      if (self.isComplete() && c != BKSP) {
+        self.setAnswer(null);
+      } else if (self.getAnswer() == null && c == BKSP) {
+        self.backward_trigger();
+      }
+      
+      type_(ev, c, button);
+      
+      if (self.isComplete()) {
+        self.forward_trigger();
+      }
+    }
+  }
+}
+
+function CompoundNumericEntry () {
   inherit(this, new Entry());
 
   this.cur_field = null;
   this.default_answer = null;
 
-  this.BPField = function (field, threshold, forward_trigger, backward_trigger) {
-    this.threshold = threshold;
-    this.maxlen = ((10 * this.threshold - 1) + '').length;
-    this.forward_trigger = forward_trigger;
-    this.backward_trigger = backward_trigger || function () {};
-    
-    inherit(this, new ShadowField(field, new IntEntry(this.maxlen)));
-
-    this.isComplete = function () {
-      return this.getAnswer() >= threshold || (this.getRaw() || '').length >= this.maxlen;
-    }
-
-    this.typeFunc = function () {
-      var self = this;
-      var type_ = this.super('typeFunc')(false);
-      return function (ev, c, button) {
-        if (self.isComplete() && c != BKSP) {
-          self.setAnswer(null);
-        } else if (self.getAnswer() == null && c == BKSP) {
-          self.backward_trigger();
-        }
-
-        type_(ev, c, button);
-
-        if (self.isComplete()) {
-          self.forward_trigger();
-        }
-      }
-    }
-  }
-
   this.load = function () {
     this.make_fields(); 
+
+    var mkgonext = function (self, i) { return function () { self.activate(i + 1); }; }
+    var mkdelback = function (self, i) {
+      return function () {
+        self.activate(i - 1);
+        self.typeToEntry(i - 1, BKSP);
+      };
+    }
     
-    var self = this;
-    this.entry = {
-      syst: new this.BPField(this.fields.syst, this.SYST_ADV_THRESH, function () {
-          self.activate('diast');
-        }),
-      diast: new this.BPField(this.fields.diast, this.DIAST_ADV_THRESH, function () {
-          autoAdvanceTrigger();
-        },
-        function () {
-          self.activate('syst');
-          self.typeToEntry('syst', BKSP);
-        })
+    var info = this.get_field_info();
+    this.entry = [];
+    for (var i = 0; i < this.fields.length; i++) {
+      var forwardfunc = (i < this.fields.length - 1 ? mkgonext(this, i) : function () { autoAdvanceTrigger() });
+      var backwardfunc = (i > 0 ? mkdelback(this, i) : null);
+      this.entry.push(new NumericSubfield(this.fields[i], info[i].args, forwardfunc, backwardfunc));
     };
     
-    this.activate('syst');
+    this.activate(0);
     answerBar.update(this.make_answerbar());
     questionEntry.update(freeEntry);
     this.setAnswer(this.default_answer);
@@ -446,11 +432,12 @@ function BloodPressureEntry () {
     this.entry[field].typeFunc()(null, c, null);
   }
 
-  this.activate = function (which) {
-    this.cur_field = which;
-    this.entry[which].load();
-    this.fields.syst.setBgColor(which == 'syst' ? HIGHLIGHT_COLOR : '#fff');
-    this.fields.diast.setBgColor(which == 'diast' ? HIGHLIGHT_COLOR : '#fff');
+  this.activate = function (field) {
+    this.cur_field = field;
+    this.entry[field].load();
+    for (var i = 0; i < this.fields.length; i++) {
+      this.fields[i].setBgColor(i == field ? HIGHLIGHT_COLOR : '#fff');
+    }
   }
   
   this.goto_ = function (field) {
@@ -459,16 +446,12 @@ function BloodPressureEntry () {
   
   this.setAnswer = function (answer, postLoad) {
     if (this.entry) {
-      var match = /^([0-9]+) *\/ *([0-9]+)$/.exec(answer);
-      if (!match) {
-        var bp = {syst: null, diast: null};
-        this.activate('syst');
-      } else {
-        var bp = {syst: +match[1], diast: +match[2]};
+      var ans = this.parseAnswer(answer);
+      if (ans == null) {
+        this.activate(0);
       }
-
-      for (t in bp) {
-        this.entry[t].setAnswer(bp[t]);
+      for (var i = 0; i < this.entry.length; i++) {
+        this.entry[i].setAnswer(ans != null ? ans[i] : null);
       }
     } else {
       this.default_answer = answer;
@@ -476,14 +459,15 @@ function BloodPressureEntry () {
   }
 
   this.getRaw = function () {
-    return {
-      syst: this.entry.syst.getAnswer(),
-      diast: this.entry.diast.getAnswer()
-    };
+    var ans = [];
+    for (var i = 0; i < this.fields.length; i++) {
+      ans.push(this.entry[i].getAnswer());
+    }
+    return ans;
   }
 
   this.getAnswer = function () {
-    return (this.isEmpty() ? null : this.fmtBp());
+    return (this.isEmpty() ? null : this.formatAnswer(this.getRaw()));
   }
 
   this.next = function () {
@@ -503,9 +487,15 @@ function BloodPressureEntry () {
       answerQuestion();
     } else {
       if (this.getRaw()[this.cur_field] == null) {
-        showError('Enter a ' + (this.cur_field == 'syst' ? 'systolic' : 'diastolic') + ' blood pressure')
+        showError(this.completeCurrentFieldMsg(this.cur_field))
       } else {
-        this.activate(this.cur_field == 'syst' ? 'diast' : 'syst');
+        //find an empty field
+        for (var i = 0; i < this.fields.length; i++) {
+          if (this.getRaw()[i] == null) {
+            this.activate(i);
+            break;
+          }
+        }
       }
     }
   }
@@ -515,42 +505,87 @@ function BloodPressureEntry () {
   }
   
   this.make_fields = function () {
-    var self = this;
-    this.fields = {
-      syst: new InputArea({id: 'bp-syst', border: 3, child: new TextCaption({size: 1.6, align: 'center', color: TEXT_COLOR}), onclick: function () {self.goto_('syst');}}),
-      diast: new InputArea({id: 'bp-diast', border: 3, child: new TextCaption({size: 1.6, align: 'center', color: TEXT_COLOR}), onclick: function () {self.goto_('diast');}}),
-    };
-  }
-  
-  this.make_answerbar = function () {
-    var bpSpacer = new TextCaption({color: TEXT_COLOR, caption: '/', size: 1.7});
-    var content = [this.fields.syst, bpSpacer, this.fields.diast];
-    var widths = ['1.8@', '.5@', '1.8@'];
-    return make_answerbar(content, widths, 'bp-bar');
+    var mkgoto = function (self, i) { return function () { self.goto_(i); }; };
+
+    this.fields = [];
+    for (var i = 0; i < this.get_field_info().length; i++) {
+      this.fields.push(new InputArea({id: 'subfield-' + i, border: 3, child: new TextCaption({size: 1.6, align: 'center', color: TEXT_COLOR}), onclick: mkgoto(this, i)}));
+    }
   }
   
   this.isFull = function () {
-    var bp = this.getRaw();
-    return (bp.syst != null && bp.diast != null);
+    var ans = this.getRaw();
+    for (var i = 0; i < ans.length; i++) {
+      if (ans[i] == null) {
+        return false;
+      }
+    }
+    return true;
   }
   
   this.isEmpty = function () {
-    var bp = this.getRaw();
-    return (bp.syst == null && bp.diast == null);
+    var ans = this.getRaw();
+    for (var i = 0; i < ans.length; i++) {
+      if (ans[i] != null) {
+        return false;
+      }
+    }
+    return true;
   }
   
   this.isInRange = function () {
-    var bp = this.getRaw();
-    return (bp.syst <= this.SYST_MAX && bp.syst >= this.SYST_MIN && bp.diast <= this.DIAST_MAX && bp.diast >= this.DIAST_MIN);
+    var info = this.get_field_info();
+    var ans = this.getRaw();
+    for (var i = 0; i < ans.length; i++) {
+      if (ans[i] != null && (ans[i] < info[i].args.min || ans[i] > info[i].args.max)) {
+        return false;
+      }
+    }
+    return true;
   }
-  
+}
+
+function BloodPressureEntry () {
+  this.SYST_MAX = 300;
+  this.SYST_MIN = 40;
+  this.DIAST_MAX = 210;
+  this.DIAST_MIN = 20;
+
+  inherit(this, new CompoundNumericEntry());
+
+  this.get_field_info = function () {
+    return [
+      {args: {min: this.SYST_MIN, max: this.SYST_MAX}, label: null},
+      {args: {min: this.DIAST_MIN, max: this.DIAST_MAX}, label: null}
+    ];
+  }
+
+  this.make_answerbar = function () {
+    var bpSpacer = new TextCaption({color: TEXT_COLOR, caption: '/', size: 1.7});
+    var content = [this.fields[0], bpSpacer, this.fields[1]];
+    var widths = ['1.8@', '.5@', '1.8@'];
+    return make_answerbar(content, widths, 'bp-bar');
+  }
+
+  this.parseAnswer = function (answer) {
+    var match = /^([0-9]+) *\/ *([0-9]+)$/.exec(answer);
+    if (!match) {
+      return null;
+    } else {
+      return [+match[1], +match[2]];
+    }
+  }
+
+  this.formatAnswer = function (answer) {
+    return answer[0] + '/' + answer[1];
+  }
+
   this.outOfRangeMsg = function () {
-    return 'Blood pressure must be between ' + this.fmtBp({syst: this.SYST_MIN, diast: this.DIAST_MIN}) + ' and ' + this.fmtBp({syst: this.SYST_MAX, diast: this.DIAST_MAX});
+    return 'Blood pressure must be between ' + this.formatAnswer([this.SYST_MIN, this.DIAST_MIN]) + ' and ' + this.formatAnswer([this.SYST_MAX, this.DIAST_MAX]);
   }
-  
-  this.fmtBp = function (bp) {
-    bp = bp || this.getRaw();
-    return bp.syst + '/' + bp.diast;
+
+  this.completeCurrentFieldMsg = function (field) {
+    return 'Enter a ' + ['systolic', 'diastolic'][field] + ' blood pressure';
   }
 }
 
