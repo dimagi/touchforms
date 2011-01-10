@@ -1227,7 +1227,7 @@ function InputArea (args) {
       elem.style.opacity = (!text ? .1 : 1.);
     }
 
-    text = text || this.default;
+    text = text || this.default || '';
     this.child.setText(text);
   }
   
