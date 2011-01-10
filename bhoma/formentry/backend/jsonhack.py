@@ -23,5 +23,7 @@ def dumps (data):
     return '{%s}' % ', '.join('%s: %s' % (dumps(k), dumps(v)) for (k, v) in data.iteritems())
   elif dt in ('datetime.datetime', 'datetime.date'):
     return dumps(data.strftime('%Y-%m-%d'))
+  elif dt == 'datetime.time':
+    return dumps(data.strftime('%H:%M'))
   elif dt.endswith('.choice'):
     return dumps(data.to_json())
