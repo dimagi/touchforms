@@ -30,6 +30,7 @@ urlpatterns = patterns('',
     url(r'^api/usernames/$', views.get_usernames),
     url(r'^api/roles/$', views.get_roles),
     url(r'^api/user_exists/$', views.user_exists),
+    url(r'^api/autocomplete/$', views.autocomplete),
     
     url(r'^api/diagnostics/$', views.diagnostics),
     url(r'^api/phonehome/(?P<tag>\w+)/$', views.phone_home),

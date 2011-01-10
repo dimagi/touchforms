@@ -1,12 +1,13 @@
 
 
-SCREEN_BORDER = 10;
-SCREEN_MARGIN = 10;
-SECTION_MARGIN = 6;
-HEADER_HEIGHT = 60;
-FOOTER_HEIGHT = 80;
-FOOTER_BUTTON_WIDTH = 150;
-FOOTER_BUTTON_SPACING = 6;
+SCREEN_BORDER = '1.1%=!'; //10px @ 1024x768;
+SCREEN_MARGIN = '1.1%=!'; //10px @ 1024x768;
+SECTION_MARGIN = '0.68%=!';
+HEADER_HEIGHT = '8%!';
+FOOTER_HEIGHT = '10%!';
+FOOTER_BUTTON_WIDTH = '15%!';
+FOOTER_BUTTON_SPACING = SECTION_MARGIN;
+HELP_BUTTON_SPACING = SECTION_MARGIN;
 
 BORDER_COLOR = '#000';
 MAIN_COLOR = '#eef';
@@ -15,51 +16,62 @@ FOOTER_COLOR = '#abd';
 BUTTON_TEXT_COLOR = '#fff';
 TEXT_COLOR = '#000';
 KEYBUTTON_COLOR = '#118';
-KEYBUTTON_CLASS = 'shiny-button';
+KEYBUTTON_CLASS = 'key-button';
 BUTTON_SELECTED_COLOR = '#0bf';
+BUTTON_DISABLED_COLOR = '#888';
 HIGHLIGHT_COLOR = '#ffc';
 NUMPAD_COLOR = '#16c';
-SPC_COLOR = '#44e';
-
-KEYBUTTON_CLASS = 'key-button';
-BACKSPACE_CLASS = 'clear-button';
 NUMPAD_CLASS = 'numpad-button';
-SPC_CLASS= 'spacebar';
+SPC_COLOR = '#aef';
+SPC_CLASS = 'spacebar';
+BACKSPACE_COLOR = '#999';
+BACKSPACE_CLASS = 'clear-button';
 
-
-BACKSPACE_LABEL = '\u21d0';
+HELP_BGCOLOR = '#6d6';
+ERR_BGCOLOR = '#d66';
+ALERT_BGCOLOR = '#dd6';
 
 AUTO_ADVANCE_DELAY = 150; //ms
+KEYFLASH = 150; //ms
 
 function initStaticWidgets () {
-  questionCaption = new TextCaption('q-caption', TEXT_COLOR, '', 1., 'left', 'top');
+  questionCaption = new TextCaption({id: 'q-caption', color: TEXT_COLOR, align: 'left', valign: 'top'});
   
-  helpButton = new TextButton('help-button', '#aaa', BUTTON_TEXT_COLOR, null, null, '?', 1., helpClicked);
-  backButton = new TextButton('back-button', '#6ad', BUTTON_TEXT_COLOR, null, null, 'BACK', .9, backClicked);
-  homeButton = new TextButton('home-button', '#d23', BUTTON_TEXT_COLOR, null, null, 'HOME', .9, homeClicked);
-  nextButton = new TextButton('next-button', '#1a3', BUTTON_TEXT_COLOR, null, null, 'NEXT', 1.2, nextClicked);
+  TactileButton = function (args) {
+    var action = args.action;
+    args.action = function (ev, c, button) {
+      button.flash(KEYFLASH);
+      action();
+    }
+    inherit(this, new ChoiceButton(args));
+  }
+
+  nextButton = new TactileButton({id: 'next-button', color: '#1a3', selcolor: '#8f8', textcolor: BUTTON_TEXT_COLOR, label: 'NEXT', textsize: 1.2, action: nextClicked});
+  backButton = new TactileButton({id: 'back-button', color: '#6ad', selcolor: '#7df', textcolor: BUTTON_TEXT_COLOR, label: 'BACK', textsize: .9, action: backClicked});
+  helpButton = new TextButton({id: 'help-button', color: '#aaa', textcolor: BUTTON_TEXT_COLOR, caption: '?', textsize: 1., onclick: helpClicked});
+  homeButton = new TextButton({id: 'home-button', color: '#d23', textcolor: BUTTON_TEXT_COLOR, caption: 'HOME', textsize: .9, onclick: homeClicked});
   
   questionEntry = new Indirect();
   
-  overlay = new Overlay('#d66', HEADER_COLOR, 3., 2., '');
+  overlay = new Overlay(HEADER_COLOR, 2.);
   touchscreenUI = new Top(
     // main content
-    new Layout('main', 3, 1, '*', [HEADER_HEIGHT, '*', FOOTER_HEIGHT], SCREEN_BORDER, 0, MAIN_COLOR, BORDER_COLOR, null, [
-      new Layout('header', 1, 1, '*', '*', [SCREEN_MARGIN, SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN], 0, HEADER_COLOR, HEADER_COLOR, HEADER_COLOR, [
-        new Layout('top-bar', 1, 2, ['*', 50], '*', 0, 5, null, null, null, [
+    new Layout({id: 'main', nrows: 3, heights: [HEADER_HEIGHT, '*', FOOTER_HEIGHT], margins: SCREEN_BORDER, color: MAIN_COLOR, margin_color: BORDER_COLOR, content: [
+      new Layout({id: 'header', margins: [SCREEN_MARGIN, SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN], color: HEADER_COLOR, margin_color: '-', content: [
+        new Layout({id: 'top-bar', ncols: 2, widths: ['*', '1.1@'], heights: '@', spacings: HELP_BUTTON_SPACING, content: [
           questionCaption,
           helpButton
-        ])
-      ]),
-      new Layout('entry', 1, 1, '*', '*', [SCREEN_MARGIN, SCREEN_MARGIN, 0, 0], 0, null, null, null, [questionEntry]),
-      new Layout('footer', 1, 4, [FOOTER_BUTTON_WIDTH, FOOTER_BUTTON_WIDTH, '*', FOOTER_BUTTON_WIDTH], '*',
-                 [SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN, SCREEN_MARGIN], FOOTER_BUTTON_SPACING, FOOTER_COLOR, FOOTER_COLOR, FOOTER_COLOR, [
+        ]})
+      ]}),
+      new Layout({id: 'entry', margins: [SCREEN_MARGIN, 0], content: [questionEntry]}),
+      new Layout({id: 'footer', ncols: 4, widths: [FOOTER_BUTTON_WIDTH, FOOTER_BUTTON_WIDTH, '*', FOOTER_BUTTON_WIDTH], 
+                 margins: [SCREEN_MARGIN, SCREEN_MARGIN, SECTION_MARGIN, SCREEN_MARGIN], spacings: FOOTER_BUTTON_SPACING, color: FOOTER_COLOR, margin_color: '-', spacing_color: '-', content: [
         backButton, 
         homeButton,
         null, // progress bar 
         nextButton
-      ]),
-    ])
+      ]}),
+    ]})
   ,
     //notifications overlay
     overlay
@@ -67,85 +79,183 @@ function initStaticWidgets () {
 
   answerBar = new Indirect();
   freeEntryKeyboard = new Indirect();
-  freeEntry = new Layout('free-entry', 2, 1, '*', [110, '*'], 0, 0, null, null, null, [
+  freeEntry = new Layout({id: 'free-entry', nrows: 2, heights: ['18%', '*'], content: [
     answerBar,
-    new Layout('kbd', 1, 1, '*', '*', [10, 10, 0, 5], 0, null, null, null, [freeEntryKeyboard])
-  ]);
+    new Layout({id: 'kbd', margins: ['1.5%=', '1.5%=', 0, '.75%='], content: [freeEntryKeyboard]})
+  ]});
+}
 
-  numPad = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', null, '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_));
-  numPadDecimal = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_));
-  numPadPhone = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_));
-  numPadBP = new Layout('numpad', 4, 3, 105, 105, '*', 15, null, null, null,
-            kbs(['1', '2', '3', '4', '5', '6', '7', '8', '9', '/', '0', [BACKSPACE_LABEL, BACKSPACE_CLASS]], null, 2., type_));
-  
-  if (kbdQwerty) {
+BKSP = '_del';
+backspaceKey = {label: '\u21d0', value: BKSP, style: BACKSPACE_CLASS, color: BACKSPACE_COLOR};
+hyphenKey = {label: '\u2013', value: '-'};
+spaceKey = {label: '\u2423', value: ' ', style: SPC_CLASS, color: SPC_COLOR};
+
+function makeNumpad (extraKey, action) {
+  return aspect_margin('1.7%-',
+    new Layout({id: 'numpad', nrows: 4, ncols: 3, widths: '7@', heights: '7@', margins: '*', spacings: '@', 
+                content: btngrid(['1', '2', '3', '4', '5', '6', '7', '8', '9', extraKey, '0', backspaceKey], {textsize: 2., action: action})})
+  );
+}
+
+function makeKeyboard (full, action, style) {
+  if (qwertyKbd()) {
     kbdFull = [
-      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', ['7', NUMPAD_CLASS], ['8', NUMPAD_CLASS], ['9', NUMPAD_CLASS],
-      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', ['4', NUMPAD_CLASS], ['5', NUMPAD_CLASS], ['6', NUMPAD_CLASS],
-      'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '!', ['1', NUMPAD_CLASS], ['2', NUMPAD_CLASS], ['3', NUMPAD_CLASS],
-      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['', SPC_CLASS], ['0', NUMPAD_CLASS], [BACKSPACE_LABEL, BACKSPACE_CLASS]     
+      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', {label: '7', style: NUMPAD_CLASS}, {label: '8', style: NUMPAD_CLASS}, {label: '9', style: NUMPAD_CLASS},
+      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', '?', {label: '4', style: NUMPAD_CLASS}, {label: '5', style: NUMPAD_CLASS}, {label: '6', style: NUMPAD_CLASS},
+      'Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '!', {label: '1', style: NUMPAD_CLASS}, {label: '2', style: NUMPAD_CLASS}, {label: '3', style: NUMPAD_CLASS},
+      hyphenKey, '+', '%', '&', '*', '/', ':', ';', '(', ')', spaceKey, {label: '0', style: NUMPAD_CLASS}, backspaceKey     
     ];
     kbdAlpha = [
       'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
-      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', [BACKSPACE_LABEL, BACKSPACE_CLASS],
-      'Z', 'X', 'C', 'V', 'B', 'N', 'M', '\u2013', '\'', ''
+      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', backspaceKey,
+      'Z', 'X', 'C', 'V', 'B', 'N', 'M', hyphenKey, '\'', spaceKey
     ];
   } else {
     kbdFull = [
-      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', ['7', NUMPAD_CLASS], ['8', NUMPAD_CLASS], ['9', NUMPAD_CLASS], [BACKSPACE_LABEL, BACKSPACE_CLASS],
-      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', ['4', NUMPAD_CLASS], ['5', NUMPAD_CLASS], ['6', NUMPAD_CLASS], '.',
-      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', ['', SPC_CLASS], ['1', NUMPAD_CLASS], ['2', NUMPAD_CLASS], ['3', NUMPAD_CLASS], ',',
-      '\u2013', '+', '%', '&', '*', '/', ':', ';', '(', ')', ['0', NUMPAD_CLASS], '!', '?'     
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', {label: '7', style: NUMPAD_CLASS}, {label: '8', style: NUMPAD_CLASS}, {label: '9', style: NUMPAD_CLASS}, backspaceKey,
+      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', {label: '4', style: NUMPAD_CLASS}, {label: '5', style: NUMPAD_CLASS}, {label: '6', style: NUMPAD_CLASS}, '.',
+      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', spaceKey, {label: '1', style: NUMPAD_CLASS}, {label: '2', style: NUMPAD_CLASS}, {label: '3', style: NUMPAD_CLASS}, ',',
+      hyphenKey, '+', '%', '&', '*', '/', ':', ';', '(', ')', {label: '0', style: NUMPAD_CLASS}, '!', '?'     
     ];
     kbdAlpha = [
-      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', [BACKSPACE_LABEL, BACKSPACE_CLASS],
-      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', '',
-      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '\u2013', '\''
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', backspaceKey,
+      'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', spaceKey,
+      'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', hyphenKey, '\''
     ];
   }
+  kbdAlphaCondensed = [
+    'A', 'B', 'C', 'D', 'E', backspaceKey,
+    'F', 'G', 'H', 'I', 'J', spaceKey,
+    'K', 'L', 'M', 'N', 'O', hyphenKey, 
+    'P', 'Q', 'R', 'S', 'T', '\'',
+    'U', 'V', 'W', 'X', 'Y', 'Z'
+  ];
 
-  keyboard = new Layout('text-kbd', 4, 13, 68, 85, '*', 6, null, null, null, kbs(kbdFull, null, 1.4, type_));
-  keyboardAlphaOnly = new Layout('text-kbd', 3, 10, 88, 110, '*', 8, null, null, null, kbs(kbdAlpha, null, 1.9, type_));
+  if (full) {
+    return new Layout({id: 'text-kbd', nrows: 4, ncols: 13, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btngrid(kbdFull, {textsize: 1.4, action: action})});
+  } else if (style == 'condensed') {
+    return new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: '4@', heights: '7@', margins: '*', spacings: '0.36@', content: btngrid(kbdAlpha, {textsize: 1.4, action: action})});
+  } else if (style == 'supercondensed') {
+    return new Layout({id: 'text-kbd', nrows: 5, ncols: 6, widths: '5@', heights: '5@', margins: '*', spacings: '0.36@', content: btngrid(kbdAlphaCondensed, {textsize: 1.8, action: action})});
+  } else {
+    return new Layout({id: 'text-kbd', nrows: 3, ncols: 10, widths: '4@', heights: '5@', margins: '*', spacings: '0.36@', content: btngrid(kbdAlpha, {textsize: 1.9, action: action})});
+  }
+}
 
+//append a 'clear' button to input field(s) and size appropriately
+function make_answerbar (content, widths, id) {
+  if (!(content instanceof Array)) {
+    content = [content];
+  }
+  if (!(widths instanceof Array)) {
+    widths = [widths];
+  }
   
-  answerText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.2, 'left', 0));
-  freeTextAnswer = new Layout('answer-bar', 1, 2, ['7*', '*'], '*', [30, 30, 20, 20], 6, null, null, null, [
-    answerText,
-    new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
-  ]);
+  //todo: find a way to generalize this?
+  var expands = false;
+  for (var i = 0; i < widths.length; i++) {
+    if (widths[i].indexOf('*') != -1) {
+      expands = true;
+      break;
+    }
+  }
+  
+  var clearButton = new TactileButton({id: 'clear-button', color: '#aaa', selcolor: '#ddd', textcolor: BUTTON_TEXT_COLOR, label: 'CLEAR', textsize: 0.8, action: clearClicked});
+  content.push(clearButton);
+  widths.push('1.7@');
+  
+  return new Layout({margins: ['3%', '18%'], content: [
+      new Layout({id: id, ncols: content.length, heights: '@', widths: widths, margins: [expands ? 0 : '*', '*'], spacings: '.08@', content: content})
+    ]});
+}
 
-  passwdText = new InputArea('textinp', 3, '#000', 5, '#fff', new TextInput('', '#000', null, '', 1.3, 'center', 0, true));
-  passwdAnswer = new Layout('answer-bar', 1, 2, ['3*', '*'], '*', [235, 235, 20, 20], 6, null, null, null, [
-    passwdText,
-    new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
-  ]);
+function make_date_fields (datecontext) {
+  return {
+    d: new InputArea({id: 'dayinp', default: 'd', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {datecontext.goto_('day');}}),
+    m: new InputArea({id: 'monthinp',  default: 'm', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {datecontext.goto_('month');}}),
+    y: new InputArea({id: 'yearinp',  default: 'y', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {datecontext.goto_('year');}}),
+  }; 
+}
+
+function make_date_answerbar (datefields) {
+  var dateSpacer = function () { return new TextCaption({color: TEXT_COLOR, caption: '\u2013', size: 1.7}); };
+
+  var content = [];
+  var widths = [];
+  for (var i = 0; i < 3; i++) {
+    var field = dateDisplayOrder()[i];
+    if (field == 'd') {
+      content.push(datefields.d);
+      widths.push('1.3@');
+    } else if (field == 'm') {
+      content.push(datefields.m);
+      widths.push(numericMonths() ? '1.3@' : '1.85@');
+    } else if (field == 'y') {
+      content.push(datefields.y);
+      widths.push('2.3@');
+    }
+    
+    if (i < 2) {
+      content.push(dateSpacer());
+      widths.push('.5@');
+    }
+  }
   
-  dayText = new InputArea('dayinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '06', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('day');});
-  monthText = new InputArea('monthinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, 'Oct', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('month');});
-  yearText = new InputArea('yearinp', 3, '#000', 0, '#fff', new TextCaption('', TEXT_COLOR, '20\u2022\u2022', 1.6, 'center', 'middle'), function () {dateEntryContext.goto_('year');});  
-  dateAnswer = new Layout('date-bar', 1, 6, [90, 36, 130, 36, 160, 110], '*', ['*', '*', 20, 20], 6, null, null, null, [
-    dayText,
-    new TextCaption('q-caption', TEXT_COLOR, '\u2013', 1.7, 'center', 'middle'),
-    monthText,
-    new TextCaption('q-caption', TEXT_COLOR, '\u2013', 1.7, 'center', 'middle'),
-    yearText,
-    new TextButton('clear-button', '#aaa', BUTTON_TEXT_COLOR, null, null, 'CLEAR', 0.8, clearClicked)
-  ]);
-  
-  tmp = render_button_grid('grid', 5, 2, 350, 70, 20, 'vert', decades, [], decadeSelected, 1.4);
-  decadeChoices = tmp[0];
-  decadeButtons = tmp[1];
-  tmp = render_button_grid('grid', 3, 4, 180, 120, 30, 'horiz', monthNames, [], monthSelected, 1.8);
-  monthChoices = tmp[0];
-  monthButtons = tmp[1];
+  return make_answerbar(content, widths, 'date-bar');
+}
+
+function setting (varname, defval) {
+  var val = window[varname];
+  return (val != null ? val : defval);
+}
+
+function numericMonths () {
+  return setting('NUMERIC_MONTHS', false);
+}
+
+function qwertyKbd () {
+  return setting('KBD_QWERTY', false);
+}
+
+function autoAdvance () {
+  return setting('AUTO_ADVANCE', true);
+}
+
+function dateDisplayOrder () {
+  return setting('DATE_DISPLAY_ORDER', 'ymd');
+}
+
+function dateEntryOrder () {
+  var val = setting('DATE_ENTRY_ORDER', '-');
+  return (val == '-' ? dateDisplayOrder() : val);
+}
+
+function clickOnMouseDown () {
+  return setting('CLICK_MOUSEDOWN', true);
+}
+
+function autoCompleteStyle () {
+  return setting('AUTOCOMPLETE_STYLE', 'inline');
+}
+
+function autoCompleteCurrentTextAsSuggestion () {
+  return setting('AUTOCOMPL_CURRENT_TEXT_AS_SUGGESTION', true);
+}
+
+function autoCompleteKeyboardHints () {
+  return setting('AUTOCOMPL_KEYBOARD_HINTS', true);
 }
 
 var clicksEnabled;
 var clickDisableCounter = 0;
 function setup () {
+  SCREEN_WIDTH = $('#viewport')[0].clientWidth;
+  SCREEN_HEIGHT = $('#viewport')[0].clientHeight;
+
+  $('#staging')[0].style.top = (SCREEN_HEIGHT + 500) + 'px';
+  $('#staging')[0].style.width = (1.5 * SCREEN_WIDTH) + 'px';
+  $('#staging')[0].style.height =  '600px';
+
   clicksEnabled = true;
   $('body')[0].addEventListener('click', function (ev) {
       if (!clicksEnabled) {
@@ -155,6 +265,12 @@ function setup () {
         return true;
       }
     }, true);
+
+  //shortcuts
+  var shortcut_args = {'type': 'keydown', 'propagate': false, 'target': document};
+  shortcut.add("Alt+N", function() { answerQuestion(); }, shortcut_args);
+  shortcut.add("Alt+P", function() { prevQuestion(); }, shortcut_args);
+  shortcut.add("esc", function() { overlay.setActive(false); }, shortcut_args);
 }
 
 function disableInput() {
@@ -174,20 +290,12 @@ function enableInput(force) {
   }
 }
 
-function helpClicked (ev, x) {
-  overlay.setText(activeQuestion["help"] || "There is no help text for this question.");
-  overlay.setBgColor('#6d6');
-  overlay.setTimeout(15.);
-  overlay.setDismiss(null);
-  overlay.setActive(true);
+function helpClicked () {
+  activeControl.help();
 }
 
-function backClicked (ev, x) {
-  if (activeQuestion["datatype"] == 'date') {
-    dateEntryContext.back();
-  } else {
-    prevQuestion();
-  }
+function backClicked () {
+  activeControl.back();
 }
 
 function homeClicked (ev, x) {
@@ -207,720 +315,130 @@ function goHome () {
   }
 }
 
-function nextClicked (ev, x) {
-  if (activeQuestion["datatype"] == 'date') {
-    dateEntryContext.next();
-    return;
-  } else if (activeQuestion["datatype"] == 'float' && answerText.child.control.value != '' && isNaN(+answerText.child.control.value)) {
-    showError("Not a valid number");
-    return;
-  } else if (activeQuestion["domain"] == 'phone' && answerText.child.control.value != '' && !(/^\+?[0-9]+$/.test(answerText.child.control.value))) {
-    showError("This does not appear to be a valid phone number");
-    return;
-  } else if (activeQuestion["domain"] == 'bp' && answerText.child.control.value != '') {
-    var val = answerText.child.control.value;
-    var match = /^([0-9]+)\/([0-9]+)$/.exec(val);
-    if (!match) {
-      showError("This does not appear to be a valid blood pressure reading. Blood pressure should look like: 120/80");
-      return;
-    }
-
-    syst = +match[1];
-    diast = +match[2];
-    if (syst > 300 || syst < 40 || diast > 210 || diast < 20) {
-      showError("Blood pressure must be between 40/20 and 300/210");
-      return;
-    }
-  }
-
-  answerQuestion();
+function nextClicked () {
+  activeControl.next();
 }
 
 function clearClicked (ev, x) {
-  type = activeQuestion["datatype"];
-  if (type == "str" || type == "int" || type == "float" || type == "passwd") {
-    activeInputWidget.setText('');
-  } else if (type == "select" || type == "multiselect") {
-    //not handled yet
-  } else if (type == "date") {
-    dateEntryContext.clear();
-  }
+  activeControl.clear();
 }
 
-monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-decades = ['2000\u2014' + ((new Date()).getFullYear() + 1), '1990\u20141999', '1980\u20141989', '1970\u20141979', '1960\u20141969',
-	   '1950\u20141959', '1940\u20141949', '1930\u20141939', '1920\u20141929', '1910\u20141919'];
-function DateWidgetContext (dir, answer) {
-  this.init = function (dir, answer) {
-    this.screen = (dir || answer == null ? 'decade' : 'day');
-    this.setDate(answer);
+function autoAdvanceTrigger () {
+  if (autoAdvance()) {
+    disableInput();
+    setTimeout(function () {
+        nextButton.flash(KEYFLASH);
+        nextClicked();
+        enableInput();
+      }, AUTO_ADVANCE_DELAY);
   }
-
-  this.setDate = function (datestr) {
-    if (datestr == null) {
-      this.decade = null;
-      this.year = null;
-      this.month = null;
-      this.day = null;
-    } else {
-      this.year = +datestr.substring(0, 4);
-      month = +datestr.substring(5, 7);
-      this.day = +datestr.substring(8, 10);
-      this.month = monthNames[month - 1];
-      this.decade = this.decadeForYear(this.year);
-    }
-    this.changed = false;
-  }
-
-  this.decadeForYear = function (year) {
-    for (i = 0; i < decades.length; i++) {
-      startyear = +decades[i].substring(0, 4);
-      endyear = +decades[i].substring(5, 9);
-      if (startyear <= year && year <= endyear) {
-        return [startyear, endyear];
-      }
-    }
-    return null;
-  }
-
-  this.isFull = function () {
-    return (this.decade != null && this.year != null && this.month != null && this.day != null);
-  }
-
-  this.isEmpty = function () {
-    return (this.decade == null && this.year == null && this.month == null && this.day == null);
-  }
-
-  this.isValid = function () {
-    return (this.isFull() && this.day <= daysInMonth(this.month, this.year));
-  }
-
-  this.getDate = function () {
-    if (this.isFull()) {
-      dateout = this.year + '-';
-      monthnum = monthNames.indexOf(this.month) + 1;
-      dateout += (monthnum < 10 ? '0' : '') + monthnum + '-';
-      dateout += (this.day < 10 ? '0' : '') + this.day;
-      return dateout;
-    } else {
-      return null;
-    }				   
-  }
-
-  this.refresh = function () {
-    questionEntry.update(freeEntry);
-    answerBar.update(dateAnswer);
-    if (this.year != null) {
-      yearText.setText(this.year + '');
-    } else if (this.decade != null) {
-      sstart = this.decade[0] + '';
-      send = this.decade[1] + '';
-      syear = '';
-      for (i = 0; i < 4; i++) {
-        if (sstart[i] == send[i]) {
-          syear += sstart[i];
-        } else {
-          break;
-        }
-      }
-      while (syear.length < 4) {
-        syear += '\u2022';
-      }
-      yearText.setText(syear);
-    } else {
-      yearText.setText('');
-    }
-    monthText.setText(this.month != null ? this.month : '');
-    dayText.setText(this.day != null ? (this.day < 10 ? '0' : '') + this.day : '');
-
-    if (this.screen == 'decade') {
-      selectWidget = decadeChoices;
-      activeInputWidget = decadeButtons;
-      this.select(this.decade, this.decade != null ? this.decade[0] + '\u2014' + this.decade[1] : null);
-      this.highlight();
-    } else if (this.screen == 'year') {
-      tmp = yearSelect(this.decade[0], this.decade[1]);
-      selectWidget = tmp[0];
-      activeInputWidget = tmp[1];
-      this.select(this.year);
-      this.highlight();
-    } else if (this.screen == 'month') {
-      selectWidget = monthChoices;
-      activeInputWidget = monthButtons;
-      this.select(this.month);
-      this.highlight();
-    } else if (this.screen == 'day') {
-      tmp = daySelect(daysInMonth(this.month, this.year));
-      selectWidget = tmp[0];
-      activeInputWidget = tmp[1];
-      this.select(this.day);
-      this.highlight();
-    }
-    freeEntryKeyboard.update(selectWidget);
-  }
-
-  this.select = function (val, caption) {
-    clearButtons();
-    if (val != null) {
-      b = getButtonByCaption((caption != null ? caption : val) + '');
-      if (b != null) {
-        b.setStatus('selected');
-      }
-    }
-  }
-
-  this.highlight = function () {
-    yearText.setBgColor(this.screen == 'decade' || this.screen == 'year' ? HIGHLIGHT_COLOR : '#fff');
-    monthText.setBgColor(this.screen == 'month' ? HIGHLIGHT_COLOR : '#fff');
-    dayText.setBgColor(this.screen == 'day' ? HIGHLIGHT_COLOR : '#fff');
-  }
-
-  this.clear = function () {
-    if (this.getDate() != null)
-      this.changed = true;
-
-    this.decade = null;
-    this.year = null;
-    this.month = null;
-    this.day = null;
-    this.screen = 'decade';
-    this.refresh();
-  }
-
-  this.next = function () {
-    if (this.isEmpty() || this.isFull()) {
-      if (this.isEmpty() || this.isValid()) {
-        answerQuestion();
-      } else {
-        showError('This is not a valid date.');
-      }
-    } else {
-      currentScreenVal = null;
-      for (i = 0; i < activeInputWidget.length; i++) {
-        if (activeInputWidget[i].status == 'selected') {
-          currentScreenVal = activeInputWidget[i].caption;
-          break;
-        }
-      }
-      
-      if (currentScreenVal == null) {
-        showError('Please pick a ' + (this.screen == 'decade' ? 'year' : this.screen) + '. To skip this question and leave it blank, click \'CLEAR\' first.');
-        return;
-      } else {
-        this.screen = this.getEmptyScreen();
-      }
-      this.refresh();
-    }
-  }
-  
-  this.getEmptyScreen = function () {
-    if (this.decade == null) {
-      return 'decade';
-    } else if (this.year == null) {
-      return 'year';
-    } else if (this.month == null) {
-      return 'month';
-    } else if (this.day == null) {
-      return 'day';
-    } else {
-      return null;
-    }
-  }
-
-  this.getNextScreen = function () {
-    screens = ['decade', 'year', 'month', 'day'];
-    i = screens.indexOf(this.screen) + 1;
-    return (i >= screens.length ? null : screens[i]);
-  }
-
-  this.getPrevScreen = function () {
-    screens = ['decade', 'year', 'month', 'day'];
-    i = screens.indexOf(this.screen) - 1;
-    return (i < 0 ? null : screens[i]);
-  }
-
-  this.selected = function (field, val) {
-    if (field == 'decade') {
-      olddecade = this.decade;
-      startyear = +val.substring(0, 4);
-      endyear = +val.substring(5, 9);
-      this.decade = [startyear, endyear];
-      if (olddecade == null || olddecade[0] != this.decade[0] || olddecade[1] != this.decade[1]) {
-        this.changed = true;
-        this.year = null;
-      }
-    } else if (field == 'year') {
-      oldyear = this.year;
-      this.year = val;
-      if (oldyear != this.year) {
-        this.changed = true;
-        this.decade = this.decadeForYear(val);
-      }
-    } else if (field == 'month') {
-      oldmonth = this.month;
-      this.month = val;
-      if (oldmonth != this.month)
-        this.changed = true;
-    } else if (field == 'day') {
-      oldday = this.day;
-      this.day = val;
-      if (oldday != this.day)
-        this.changed = true;
-    }
-    this.select(val);
-    
-    if (this.screen == 'day') {
-      if (!this.isFull()) {
-        this.screen = this.getEmptyScreen();
-      } else {
-        //stay on current screen; must click 'next' to advance question
-      }
-    } else {
-      this.screen = this.getNextScreen();
-    }
-    
-    this.refresh();
-
-    if (field == 'day' && this.isFull() && autoAdvance) {
-      doAutoAdvance();
-    }
-  }
-  
-  this.back = function () {
-    if (this.isEmpty() || (this.isFull() && !this.changed)) {
-      prevQuestion();
-    } else {
-      pscr = this.getPrevScreen();
-      if (pscr != null) {
-        this.screen = pscr;
-        this.refresh();
-      } else {
-        prevQuestion();
-      }
-    }
-  }
-
-  this.goto_ = function (field) {
-    this.screen = (field == 'year' ? 'decade' : field);
-    this.refresh();
-  }
-
-  this.init(dir, answer);
-}
-
-function isLeap (year) {
-  return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
-}
-
-function daysInMonth (month, year) {
-  if (month == null)
-    return 31;
-  if (year == null && month == 'Feb')
-    return 28;
-
-  if (month == 'Feb') {
-    return 28 + (isLeap(year) ? 1 : 0);
-  } else if (month == 'Apr' || month == 'Jun' || month == 'Sep' || month == 'Nov') {
-    return 30;
-  } else {
-    return 31;
-  }
-}
-
-function decadeSelected (ev, x) {
-  dateEntryContext.selected('decade', x);
-}
-
-function yearSelected (ev, x) {
-  dateEntryContext.selected('year', x);
-}
-
-function monthSelected (ev, x) {
-  dateEntryContext.selected('month', x);
-}
-
-function daySelected (ev, x) {
-  dateEntryContext.selected('day', x);
-}
-
-function normcap (caption) {
-  if (caption.length >= 2 && (caption.substring(0, 1) == '\u2610' || caption.substring(0, 1) == '\u2612')) {
-    return caption.substring(2);
-  } else {
-    return caption;
-  }
-}
-
-function getButtonByCaption (caption) {
-  for (i = 0; i < activeInputWidget.length; i++) {
-    if (normcap(activeInputWidget[i].caption) == normcap(caption)) {
-      return activeInputWidget[i];
-    }
-  }
-  return null;
-}
-
-function getButtonID (button) {
-  for (i = 0; i < activeInputWidget.length; i++) {
-    if (activeInputWidget[i] == button) {
-      return i + 1;
-    }
-  }
-  return -1;
-}
-
-function clearButtons (except) {
-  for (i = 0; i < activeInputWidget.length; i++) {
-    if (activeInputWidget[i] != except) {
-      activeInputWidget[i].setStatus('default');
-    }
-  }
-}
-
-function choiceSelected (ev, x) {
-  b = getButtonByCaption(x);
-  oldstatus = b.status
-
-  b.toggleStatus();
-  if (activeQuestion["datatype"] == "select") {
-    clearButtons(b);
-  } else {
-    b.setText((b.status == 'selected' ? '\u2612 ' : '\u2610 ') + b.caption.substring(2));
-  }
-
-  if (autoAdvance && activeQuestion["datatype"] == "select" && oldstatus == "default") {
-    doAutoAdvance();
-  }
-}
-
-function doAutoAdvance () {
-  disableInput();
-  setTimeout(function () {
-      nextClicked();
-      enableInput();
-    }, AUTO_ADVANCE_DELAY);
 }
 
 function showError (text) {
-  overlay.setText(text);
-  overlay.setBgColor('#d66');
-  overlay.setTimeout(3.);
-  overlay.setDismiss(null);
-  overlay.setActive(true);
+  overlay.activate({
+      text: text,
+      color: ERR_BGCOLOR,
+      timeout: 3.,
+    });
 }
 
 function showAlert (text, ondismiss) {
-  overlay.setText(text);
-  overlay.setBgColor('#dd6');
-  overlay.setTimeout(0.);
-  overlay.setDismiss(ondismiss);
-  overlay.setActive(true);
+  overlay.activate({
+      text: text,
+      color: ALERT_BGCOLOR,
+      ondismiss: ondismiss
+    });
 }
 
 function showActionableAlert (text, choices, actions) {
-  overlay.setText(text, choices, actions);
-  overlay.setBgColor('#dd6');
-  overlay.setTimeout(0.);
-  overlay.setActive(true);
+  overlay.activate({
+      text: text,
+      choices: choices,
+      actions: actions,
+      color: ALERT_BGCOLOR
+    });
 }
 
-/* utility function to generate a single keyboard button */
-function kb (lab, sz, col, onclick, centered, cls) {
-  if (col == null)
-    col = KEYBUTTON_COLOR;
-  if (cls == null) 
-    cls = KEYBUTTON_CLASS;
-  return new TextButton('button-' + lab, col, BUTTON_TEXT_COLOR, BUTTON_SELECTED_COLOR, null, lab, sz, (onclick != null ? function (ev) { onclick(ev, lab); } : null), centered, cls);
+function make_button (label, args) {
+  args.color = args.color || KEYBUTTON_COLOR;
+  args.style = args.style || KEYBUTTON_CLASS;
+  args.textcolor = args.textcolor || BUTTON_TEXT_COLOR;
+  args.selcolor = args.selcolor || BUTTON_SELECTED_COLOR;
+  args.inactcolor = args.inactcolor || BUTTON_DISABLED_COLOR;
+  args.label = label;
+
+  return new ChoiceButton(args);
 }
   
-/* utility function to generate an array of keybaord buttons for... a keyboard */
-function kbs (infos, def_cls, def_sz, onclick, centered) {
-  var stuff = new Array();
-  for (var i = 0; i < infos.length; i++) {
-    var info = infos[i];
-    if (info != null) {
-      if (info instanceof Array) {
-        var lab = info[0];
-        var cls = info.length > 1 && info[1] != null ? info[1] : def_cls;
-        var sz = info.length > 2 && info[2] != null ? info[2] : def_sz;
-        var selected = info.length > 3 ? info[3] : false;
-      } else {
-        var lab = info;
-        var cls = def_cls;
-        var sz = def_sz;
-        var selected = false;
+/* utility function to generate a grid array of buttons */
+function btngrid (buttons_info, template) {
+  var content = [];
+  for (var i = 0; i < buttons_info.length; i++) {
+    var buttonspec = buttons_info[i];
+    if (buttonspec != null) {
+      var args = {};
+      for (var key in template) {
+        args[key] = template[key];
       }
-      var st = kb(lab, sz, null, onclick, centered, cls);
-      if (selected) {
-        st.setStatus('selected');
+      if (buttonspec instanceof Object) {
+        for (var key in buttonspec) {
+          args[key] = buttonspec[key];
+        }
+        var label = buttonspec.label;
+      } else {
+        var label = buttonspec;
+      }
+      var button = make_button(label, args);
+      if (args.selected) {
+        button.setStatus('selected');
       }
     } else {
-      var st = null;
+      var button = null;
     }
-    stuff.push(st);
+    content.push(button); 
   }
-  return stuff;
+  return content;
 }
 
-//todo: support ranges other than decade
-function yearSelect (minyear, maxyear) {
-  if (maxyear == null)
-    maxyear = minyear + 9;
-
-  var years = [];
-  for (var o = minyear; o <= maxyear; o++) {
-    years.push(o + '');
-  }
-
-  return render_button_grid('grid', 5, Math.ceil((maxyear - minyear + 1) / 5), (maxyear - minyear) > 9 ? 220 : 350, 70, 20, 'vert', years, [], yearSelected, 1.4);
-}
-
-function daySelect (monthLength) {
-  var days = new Array();
-  for (var i = 1; i <= monthLength; i++) {
-    days.push(i + '');
-  }
-  return render_button_grid('grid', 5, 7, 85, 85, 15, 'horiz', days, [], daySelected, 1.4);
-}
-
-function getTextExtent (text, size, bounding_width) {
-  if (bounding_width == null) {
-    bounding_width = 1500;
-  }
-
-  snippet = document.getElementById('snippet');
-  snippet.style.width = bounding_width + 'px';
-  snippet.textContent = text;
-  snippet.style.fontSize = 100. * size + '%';
-  return [snippet.offsetWidth, snippet.offsetHeight];
-}
-
-function buttonDimensions (textdim) {
-  return [Math.round(1.1 * textdim[0] + 0.7 * textdim[1]), Math.round(textdim[1] * 1.5)];
-}
-
-function choiceSelect (choices, selected, multi, W_MAX, H_MAX) {
-  if (multi) {
-    for (i = 0; i < choices.length; i++) {
-      choices[i] = '\u2610 ' + choices[i];
-    }
-  }
-
-  //1) analysis of choices to determine optimum layout
-
-  //available size of choice area (ideally we should determine this dynamically; too tough for now)
-  W_MAX = W_MAX || 922;
-  H_MAX = H_MAX || 571;
-
-  var MAX_TEXT_SIZE_GRID = 2.5;
-  var MAX_TEXT_SIZE_LIST = 1.8;
-  var MIN_TEXT_SIZE = .3;
-  var MAX_LENGTH_FOR_GRID = 350.;
-  var MAX_LENGTH_DIFF_FOR_GRID_ABS = 125;
-  var MAX_LENGTH_DIFF_FOR_GRID_REL = 2.2;
-  var DIFF_REF_THRESHOLD = 50.;
-  var GOLDEN_RATIO = 1.6;
-  
-  if (choices.length <= 6) {
-    var SPACING_RATIO = .15;
-  } else if (choices.length <= 12) {
-    var SPACING_RATIO = .1;
-  } else {
-    var SPACING_RATIO = .05;
-  }
-    
-  //determine whether to use grid-based layout (centered, buttons oriented in grid pattern)
-  //or list-based layout (left-justified, vertical orientation)
-  var lengths = [];
-  var min_w = -1;
-  var max_w = -1;
-  var h = -1;
-  var longest_choice = null;
-  for (i = 0; i < choices.length; i++) {
-    var ext = getTextExtent(choices[i], 1.);
-    var w = ext[0];
-    h = ext[1];
-    lengths.push(w);
-    if (min_w == -1 || w < min_w)
-      min_w = w;
-    if (max_w == -1 || w > max_w) {
-      max_w = w;
-      longest_choice = choices[i];
-    }
-  }
-  if (max_w > MAX_LENGTH_FOR_GRID || max_w - min_w > MAX_LENGTH_DIFF_FOR_GRID_ABS || (min_w >= DIFF_REF_THRESHOLD && max_w/min_w > MAX_LENGTH_DIFF_FOR_GRID_REL)) {
-    style = 'list';
-  } else {
-    style = 'grid';
-  }
-
-  if (style == 'grid') {
-    //determine best grid dimensions -- layout that best approaches GOLDEN_RATIO
-    buttondim = buttonDimensions([max_w, h]);
-    best_arrangement = null;
-    zvalue = -1;
-    for (var r = 1; r <= choices.length; r++) {
-      c = Math.ceil(choices.length / r);
-      spc = buttondim[1] * .33;
-      spc = (spc > 40 ? 40 : (spc < 15 ? 15 : spc));
-      ratio = (buttondim[0] * c + spc * (c - 1)) / (buttondim[1] * r + spc * (r - 1));
-      z = (ratio < GOLDEN_RATIO ? GOLDEN_RATIO / ratio : ratio / GOLDEN_RATIO);
-      if (r * c == choices.length) { //bonus for grid being completely filled
-        z -= .75
-      }
-      if (zvalue == -1 || z < zvalue) {
-        zvalue = z;
-        best_arrangement = [r, c];
-      }
-    }
-    rows = best_arrangement[0];
-    cols = best_arrangement[1];    
-    var dir = (rows > cols ? 'vert' : 'horiz'); //determine orientation
-
-    //determine best button sizing -- largest sizing that will fit within allowed area
-    for (size = MAX_TEXT_SIZE_GRID; size >= MIN_TEXT_SIZE; size -= .1) {
-      var ext = buttonDimensions(getTextExtent(longest_choice, size));
-      bw = ext[0];
-      bh = ext[1];
-      best_spc = -1;
-      zvalue = -1;
-      //determine best inter-button spacing for given size -- where ratio of button area to inter-button area best approaches SPACING_RATIO
-      for (spc = 5; spc <= 50; spc += 5) {
-        w_total = (cols * bw + (cols - 1) * spc);
-        h_total = (rows * bh + (rows - 1) * spc);
-        k0 = bw * bh * rows * cols;
-        k1 = w_total * h_total;
-        ratio = (k1 - k0) / (k0 + k1);
-        z = (ratio < SPACING_RATIO ? SPACING_RATIO / ratio : ratio / SPACING_RATIO);
-        if (zvalue == -1 || z < zvalue) {
-          zvalue = z;
-          best_spc = spc;
-        }
-      }
-      w_total = (cols * bw + (cols - 1) * best_spc);
-      h_total = (rows * bh + (rows - 1) * best_spc);
-      if (w_total <= W_MAX && h_total <= H_MAX) {
-        break;
-      }
-    }
-    width = bw;
-    height = bh;
-    text_scale = size;
-    spacing = best_spc;
-  } else if (style == 'list') {
-    dir = 'vert';
-
-    //layout priority: maximize button size
-    fits = false;
-    for (size = MAX_TEXT_SIZE_LIST; size >= MIN_TEXT_SIZE; size -= .1) {
-      var ext = buttonDimensions(getTextExtent(longest_choice, size));
-      bw = ext[0];
-      bh = ext[1];
-      spc = Math.max(Math.round(bh * .1), 5);
-
-      rows = Math.floor((H_MAX + spc) / (bh + spc));
-      cols = Math.ceil(choices.length / rows)
-      w_total = (cols * bw + (cols - 1) * spc);
-      h_total = (rows * bh + (rows - 1) * spc);
-      if (w_total <= W_MAX && h_total <= H_MAX) {
-        fits = true;
-        break;
-      }
-    }
-    if (!fits) {
-      throw Error("choices too numerous or verbose to fit!");
-    }
-
-    width = bw;
-    height = bh;
-    text_scale = size;
-    spacing = spc;
-  }
-    
-  //2) render choices according to layout parameters
-  return render_button_grid(style, rows, cols, width, height, spacing, dir, choices, selected, choiceSelected, text_scale, multi);
-}
-
-function render_button_grid (style, rows, cols, width, height, spacing, dir, choices, selected, func, text_scale, multi) {
-  if (style == 'list') {
-    var margins = [30, '*', 30, '*'];
-  } else if (style == 'grid') {
-    var margins = '*';
-  }
-  
-  var cells = [];
-  for (var r = 0; r < rows; r++) {
-    for (var c = 0; c < cols; c++) {
-      var i = (dir == 'horiz' ? cols * r + c : rows * c + r);
-      if (i >= choices.length) {
-        var cell = null;
-      } else {
-        if (selected != null && selected.indexOf(i + 1) != -1) {
-          var cell = [(multi ? '\u2612' + choices[i].substring(1) : choices[i]), null, null, true];
-	} else {
-	  var cell = choices[i];
-	}
-      }
-      cells.push(cell);
-    }
-  }
-
-  button_grid = kbs(cells, null, text_scale, func, style == 'grid');
-  buttons = []
-  for (var r = 0; r < rows; r++) {
-    for (var c = 0; c < cols; c++) {
-      var i = (dir == 'horiz' ? cols * r + c : rows * c + r);
-      if (i < choices.length) {
-        buttons[i] = button_grid[cols * r + c];
-      }
-    }
-  }  
-
-  layout_info = new Layout('ch', rows, cols, width, height, margins, spacing, null, null, null, button_grid);
-  return [layout_info, buttons];
+function aspect_margin (margin, inner) {
+  return new Layout({margins: margin, content: [inner]});
 }
 
 function render_clean () {
   render_viewport('viewport', touchscreenUI);
 }
 
-function type_ (e, c) {  
-  if (c == BACKSPACE_LABEL) {
-    keyCode = 0x08;
-    charCode = 0;
-  } else {
-    if (c == '\u2012' || c == '\u2013' || c == '\u2014') {
-      c = '-';
-    } else if (c == '') {
-      c = ' ';
-    }
-    
-    keyCode = 0;
-    charCode = c.charCodeAt(0);
+function type_ (input_field, c, button, flash) {
+  if (flash && button != null) {
+    button.flash(KEYFLASH);
   }
+  
+  if (jQuery.browser.mozilla) {
+    // preserve firefox behavior, just send the keypress to the input
+    if (c == BKSP) {
+      var keyCode = 0x08;
+      var charCode = 0;
+    } else {
+      var keyCode = 0;
+      var charCode = c.charCodeAt(0);
+    }
 
-  if (jQuery.browser.mozilla){
-      // preserve firefox behavior, just send the keypress to the input
 	  var evt = document.createEvent("KeyboardEvent");
 	  evt.initKeyEvent("keypress", true, true, window,
 	                   0, 0, 0, 0,
-	                   keyCode, charCode) 
-	  elem = document.getElementsByTagName('input')[0];
-	  elem.dispatchEvent(evt);
+	                   keyCode, charCode); 
+	  input_field.dispatchEvent(evt);
   } else {
     // only difference here is that the cursor is always assumed to be at the end of the input
-    elem = $($("input")[0]);
-    prev_text = elem.val();
-    if (c == BACKSPACE_LABEL) {
-        if (prev_text) {
-            elem.val(prev_text.substring(0, prev_text.length - 1));        
-        }
+    var elem = $(input_field);
+    var prev_text = elem.val();
+    if (c == BKSP) {
+      if (prev_text) {
+        elem.val(prev_text.substring(0, prev_text.length - 1));        
+      }
     } else {
-        text = String.fromCharCode(charCode);
-        elem.val(prev_text + text);
-            
+      elem.val(prev_text + c);
     }
   }
-  
 }
 

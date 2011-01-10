@@ -3,7 +3,7 @@ function wfLogin () {
   var flow = function (data) {
     var q_username = qUsernameList();
     yield q_username;
-    username = usernames[q_username.value - 1];
+    username = q_username.value;
     
     //enter password
     var auth_validation = function(password) {
@@ -27,8 +27,7 @@ function wfLogin () {
                                });
         return auth_res.result;
     }
-    var q_password = new wfQuestion('Password', 'passwd', null, null, true, 
-                                    auth_validation, null, 'numeric');
+    var q_password = new wfQuestion({caption: 'Password', type: 'passwd', required: true, validation: auth_validation, domain: 'numeric'});
     yield q_password;
     
     data["username"] = username;

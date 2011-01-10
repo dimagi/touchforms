@@ -12,7 +12,7 @@ function render_viewport (vp, scene_graph) {
 }
 
 function Indirect (key) {
-  this.key
+  this.key;
   this.parent = null;
   this.content = null;
   
@@ -26,44 +26,86 @@ function Indirect (key) {
   }
 }
 
-function Layout (id, num_rows, num_cols, widths, heights, margins, spacings, color, margin_color, spacing_color, content) {
-  this.id = id;
+/*
+ * make a grid layout, where each grid cell can have pluggable child content
+ * args == {id, nrows, ncols, widths, heights, margins, spacings, color, margin_color, spacing_color, content}
+ * id: id of the containing div
+ * nrows: number of grid rows, default: 1
+ * ncols: number of grid columns, default: 1
+ * widths: widths of columns; either an array of individual widths, or a scalar width for all columns; default: '*'
+ * heights: heights of rows; either an array of individual heights, or a scalar height for all rows; default: '*'
+ * margins: margins around the edge of the grid; either a 4-element array (left, right, top, bottom), 2-elem (left/right, top/bottom), or scalar (same for all); default: 0
+ * spacings: intra-cell spacings; 2-elem array (horizontal, vertical), or scalar to use the same for both; default: 0
+ * color: grid cell color, uses parent's color if null
+ * margin_color: margin color, uses parent's color if null, '-' to re-use 'color'
+ * spacing_color: inter-cell space color, uses parent's color if null, '-' to re-use 'color'
+ * content: array of child elements for each grid cell, left-to-right, then top-to-bottom
+ * 
+ * dimension spec for width/height/margin/spacing; dimensions can be specified as:
+ *   - raw pixels (e.g., 86)
+ *   - percentage of available space (e.g., '10%')
+ *     percentages can have an optional modifier afterward:
+ *     - 10%- -- 10% of the smaller of the horizontal or vertical dimension
+ *     - 10%+ -- 10% of the larger of the horizontal or vertical dimension
+ *     - 10%= -- 10% of the geometric mean of the two dimensions
+       note that +, -, and = will give an aspect-ratio-locked result
+ *     - appending ! will calculate relative to the total screen size dimensions, ignoring the dimensions of the current pane
+ *   - proportional share of aspect-ratio-locked remaining space (e.g., '0.6@') -- similar to '*', but a unit of '@' is guaranteed to be equal in both the horizontal and vertical dimension
+ *   - proportional share of remaining space (e.g., '2.5*') after all other space is allocated
+ *   directives take precedence in the order listed
+ *   if you're not careful, it's possible to choose sizes that exceed the available space; layout and behavior may become unpredictable
+ */
+function Layout (args) {
+  this.id = args.id;
 
-  this.num_rows = num_rows;
-  this.num_cols = num_cols;
-  if (num_rows < 1 || num_cols < 1) {
+  this.nrows = args.nrows || 1;
+  this.ncols = args.ncols || 1;
+  if (this.nrows < 1 || this.ncols < 1) {
     throw new Error("invalid dimensions");
   }
   
+  var widths = args.widths || '*';
   if (widths instanceof Array) {
-    if (widths.length != num_cols) {
+    if (widths.length != this.ncols) {
       throw new Error("widths don't match # cols");
     }
     this.widths = widths;
   } else { //single width to use for all columns
     this.widths = [];
-    for (i = 0; i < num_cols; i++) {
+    for (i = 0; i < this.ncols; i++) {
       this.widths.push(widths)
     }
   }
 
+  var heights = args.heights || '*';
   if (heights instanceof Array) {
-    if (heights.length != num_rows) {
+    if (heights.length != this.nrows) {
       throw new Error("heights don't match # rows");
     }
     this.heights = heights;
-  } else { //single width to use for all columns
+  } else { //single height to use for all rows
     this.heights = [];
-    for (i = 0; i < num_rows; i++) {
+    for (i = 0; i < this.nrows; i++) {
       this.heights.push(heights)
     }
   }
 
+  var margins = args.margins || 0;
   if (margins instanceof Array) {
-    this.l_margin = margins[0];
-    this.r_margin = margins[1];
-    this.t_margin = margins[2];
-    this.b_margin = margins[3];  
+    if (margins.length != 2 && margins.length != 4) {
+      throw new Error("invalid margins");
+    }
+    if (margins.length == 2) {
+      this.l_margin = margins[0];
+      this.r_margin = margins[0];
+      this.t_margin = margins[1];
+      this.b_margin = margins[1];  
+    } else {
+      this.l_margin = margins[0];
+      this.r_margin = margins[1];
+      this.t_margin = margins[2];
+      this.b_margin = margins[3];  
+    }
   } else {
     this.l_margin = margins;
     this.r_margin = margins;
@@ -71,7 +113,11 @@ function Layout (id, num_rows, num_cols, widths, heights, margins, spacings, col
     this.b_margin = margins;
   }
   
+  var spacings = args.spacings || 0;
   if (spacings instanceof Array) {
+    if (spacings.length != 2) {
+      throw new Error("invalid margins");
+    }
     this.h_spacing = spacings[0];
     this.v_spacing = spacings[1];
   } else {
@@ -79,16 +125,19 @@ function Layout (id, num_rows, num_cols, widths, heights, margins, spacings, col
     this.v_spacing = spacings;
   }
   
-  this.content = content;
+  this.content = args.content;
+  if (this.content.length != this.nrows * this.ncols) {
+    throw new Error('not enough child content for layout! expected: ' + (this.nrows * this.ncols) + ' got: ' + this.content.length);
+  }
   for (var i = 0; i < this.content.length; i++) {
     if (this.content[i] instanceof Indirect) {
       this.content[i].setParent(this);
     }
   }
   
-  this.color = color;
-  this.margin_color = margin_color;
-  this.spacing_color = spacing_color;
+  this.color = args.color;
+  this.margin_color = (args.margin_color == '-' ? args.color : args.margin_color);
+  this.spacing_color = (args.spacing_color == '-' ? args.color : args.spacing_color);
 
   this.container = null;
   this.child_index = []; //[list of div for each child]
@@ -105,8 +154,8 @@ function Layout (id, num_rows, num_cols, widths, heights, margins, spacings, col
       this.container.replaceChild(domNew, this.child_index[position]);
     } else {
       domOld = this.child_index[position];
-      r = Math.floor(position / this.num_cols);
-      c = position % this.num_cols;
+      r = Math.floor(position / this.ncols);
+      c = position % this.ncols;
       x = domOld.offsetLeft;
       y = domOld.offsetTop;
       w = domOld.clientWidth;
@@ -128,8 +177,23 @@ function Layout (id, num_rows, num_cols, widths, heights, margins, spacings, col
 }
 
 function render_layout (layout, parent_div) {
-  var widths = partition(parent_div.clientWidth, layout.widths, layout.l_margin, layout.r_margin, layout.h_spacing);
-  var heights = partition(parent_div.clientHeight, layout.heights, layout.t_margin, layout.b_margin, layout.v_spacing);
+  var dimensions = partition({
+      id: layout.id,
+      screen_width: SCREEN_WIDTH,
+      screen_height: SCREEN_HEIGHT,
+      pane_width: parent_div.clientWidth,
+      pane_height: parent_div.clientHeight,
+      widths: layout.widths,
+      heights: layout.heights,
+      lmargin: layout.l_margin,
+      rmargin: layout.r_margin,
+      tmargin: layout.t_margin,
+      bmargin: layout.b_margin,
+      hspacing: layout.h_spacing,
+      vspacing: layout.v_spacing
+    });
+  var widths = dimensions[0];
+  var heights = dimensions[1];
   var woff = offsets(widths);
   var hoff = offsets(heights);
   var parent_color = parent_div.style.backgroundColor;
@@ -147,14 +211,14 @@ function render_layout (layout, parent_div) {
   }
   
   layout.child_index = [];
-  for (var r = 0; r < layout.num_rows; r++) {
-    for (var c = 0; c < layout.num_cols; c++) {
+  for (var r = 0; r < layout.nrows; r++) {
+    for (var c = 0; c < layout.ncols; c++) {
       var x = woff[2*c + 1];
       var y = hoff[2*r + 1];
       var w = widths[2*c + 1];
       var h = heights[2*r + 1];
       
-      var subcontent = layout.content[layout.num_cols * r + c];
+      var subcontent = layout.content[layout.ncols * r + c];
       if (subcontent instanceof Indirect) {
         subcontent = subcontent.content;
       }
@@ -186,34 +250,140 @@ function has_spacing (widths, heights) {
   return (widths.length > 3 || heights.length > 3) && (widths[2] > 0 || heights[2] > 0);
 }
 
+function ChoiceButton (args) {
+  this.label = args.label;
+  this.value = (args.value != null ? args.value : this.label);
+  this.multi = args.multi || false;
+  this.default_color = args.color;
+  this.selected_color = args.selcolor;
+  this.inactive_color = args.inactcolor;
+  this.base_style = args.style;
+  this.centered = args.centered;
+
+  this.flashcounter = 0;
+
+  this.init = function (args) {
+    this.make_button = function (args) {
+      var button = this;
+      var onclick = function (ev) {
+        if (args.action != null && button.status != 'disabled') {
+          args.action(ev, button.value, button);
+        }
+      };
+
+      return new TextButton({
+          id: 'button-' + this.value,
+          caption: '',
+          color: null,
+          style: null,
+          textcolor: args.textcolor,
+          textsize: args.textsize,
+          onclick: onclick,
+          centered: this.centered && !this.multi
+        });
+    }
+    this.button = this.make_button(args);
+    this.setStatus('default');
+  }
+
+  this.setStatus = function (stat) {
+    this.status = stat;
+
+    this.button.setText((this.multi ? (this.status == 'selected' ? '\u2612' : '\u2610') + ' ' : '') + this.label);
+    var styleSet = this.setClass();
+    if (!styleSet) {
+      this.setColor();
+    }
+  }
+
+  this.setColor = function () {
+    if (this.status == 'default') {
+      this.button.setColor(this.default_color);
+    } else if (this.status == 'selected') {
+      if (this.selected_color == null)
+        console.log('no selected color set!');
+      this.button.setColor(this.selected_color);
+    } else if (this.status == 'disabled') {
+      if (this.inactive_color == null)
+        console.log('no disabled color set!');
+      this.button.setColor(this.inactive_color);
+    }
+  }
+
+  this.setClass = function() {
+    if (supportsGradient()) {
+      if (this.status == 'default') {
+        return this.button.setStyle(this.base_style);
+      } else if (this.status == 'selected') {
+        return this.button.setStyle(this.base_style != null ? 'selected ' + this.base_style : null);
+      } else if (this.status == 'disabled') {
+        //'disabled' style doesn't exist; commenting out until it does as it prevent the disabled color from taking effect
+        //not sure disabled buttons need the 3-d effect anyway
+        //this.button.setStyle(this.base_style != null ? this.base_style + ' disabled' : null);
+        return this.button.setStyle(null);
+      }
+    }
+    return false;
+  }    
+
+  this.toggleStatus = function () {
+    if (this.status != 'disabled') {
+      this.setStatus(this.status == 'default' ? 'selected' : 'default');
+    }
+  }
+
+  this.resetStatus = function () {
+    if (this.status != 'disabled') {
+      this.setStatus('default');
+    }
+  }
+
+  this.flash = function(len) {
+    if (len > 0) {
+      this.setStatus('selected');
+      this.flashcounter++;
+      var button = this;
+      setTimeout(function () {
+          button.flashcounter--;
+          if (button.flashcounter == 0) {
+            button.setStatus('default');
+          }
+        }, len);
+    }
+  }
+
+  this.render = function (parent_div) {
+    this.button.render(parent_div);
+  }
+
+  this.init(args);
+}
+
 //todo: auto-sizing?
-function TextButton (id, color, text_color, selected_color, inactive_color, caption, size_rel, onclick, centered, cls) {
-  this.id = id;
-  this.color = color;
-  this.text_color = text_color;
-  this.selected_color = selected_color;
-  this.inactive_color = inactive_color;
-  this.caption = caption;
-  this.size_rel = size_rel;
-  this.onclick = onclick;
-  this.centered = (centered != null ? centered : true);
-  this.cls = cls
-  this.status = 'default';
+function TextButton (args) {
+  this.id = args.id;
+  this.caption = args.caption;
+  this.color = args.color;
+  this.text_color = args.textcolor;
+  this.size_rel = args.textsize;
+  this.onclick = args.onclick;
+  this.centered = (args.centered != null ? args.centered : true);
+  this.style = args.style;
 
   this.container = null;
   this.span = null;
   this.render = function (parent_div) {  
     this.container = parent_div;
     parent_div.id = uid(this.id);
-    this.setColor();
-    this.setClass();
+    this.setColor(this.color);
+    this.setStyle(this.style);
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td align="' + (this.centered ? 'center' : 'left') + '" valign="middle"><span></span></td></tr></table>'
     span = parent_div.getElementsByTagName('span')[0];
     span.style.fontWeight = 'bold';
     span.style.fontSize = this.size_rel * 100. + '%';
     span.style.color = this.text_color;
     span.textContent = this.caption;
-    parent_div.onclick = this.onclick;
+    setClickEvent(parent_div, this.onclick);
     if (!this.centered) {
       span.style.marginLeft = .25 * parent_div.clientHeight + 'px';
     }
@@ -221,8 +391,6 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
     parent_div.style.MozBorderRadius = '10px';
     parent_div.style.BorderRadius = '10px';
     parent_div.style.WebkitBorderRadius = '10px';
-    
-    
   }
 
   this.setText = function (text) {
@@ -231,54 +399,29 @@ function TextButton (id, color, text_color, selected_color, inactive_color, capt
       this.span.textContent = text;
   }
 
-  this.setClass = function() {
-    if (this.cls && this.container) {
-      if (this.status == 'default') {
-	    this.container.setAttribute("class", this.cls);
-	  } else if (this.status == 'selected') {
-	    this.container.setAttribute("class", "selected " + this.cls);
-	  }
-	  else if (this.status == 'disabled') {
-	    this.container.setAttribute("class", this.cls + " disabled");
-	  }
-	}
-  }
-    
-  this.setColor = function () {
-    if (this.status == 'default') {
-      set_color(this.container, this.color, this.container.style.backgroundColor);
-    } else if (this.status == 'selected') {
-      if (this.selected_color == null)
-        alert('no selected color set!');
-      set_color(this.container, this.selected_color, null);
-    } else if (this.status == 'disabled') {
-      if (this.inactive_color == null)
-        alert('no disabled color set!');
-      set_color(this.container, this.inactive_color, null);
+  this.setColor = function (color) {
+    this.color = color;
+    if (this.container != null) {
+      set_color(this.container, this.color);
     }
   }
 
-  this.toggleStatus = function () {
-    if (this.status != 'disabled') {
-      this.setStatus(this.status == 'default' ? 'selected' : 'default');
+  this.setStyle = function (style) {
+    this.style = style;
+    if (this.container != null) {
+      this.container.setAttribute("class", this.style);
     }
-  }
-
-  this.setStatus = function (stat) {
-    this.status = stat;
-    if (this.container != null)
-      this.setColor();
-      this.setClass();
+    return (style != null);
   }
 }
 
-function TextCaption (id, color, caption, size_rel, align, valign) {
-  this.id = id;
-  this.color = color;
-  this.caption = caption;
-  this.size_rel = size_rel;
-  this.align = align;
-  this.valign = valign;
+function TextCaption (args) {
+  this.id = args.id;
+  this.color = args.color || '#444';
+  this.caption = args.caption || '';
+  this.size_rel = args.size || 1.;
+  this.align = args.align || 'center';
+  this.valign = args.valign || 'middle';
   
   this.container = null;
   this.span = null;
@@ -339,16 +482,16 @@ function TextCaption (id, color, caption, size_rel, align, valign) {
   }
 }
 
-function TextInput (id, color, bgcolor, content, size_rel, align, spacing, passwd) {
-  this.id = id;
-  this.color = color;
-  this.bgcolor = bgcolor;
-  this.content = content;
-  this.size_rel = size_rel;
-  this.align = align;
-  this.spacing = spacing;
-  this.passwd = passwd;
-  this.maxlen = -1;
+function TextInput (args) {
+  this.id = args.id;
+  this.color = args.color || '#000';
+  this.bgcolor = args.bgcolor;
+  this.content = args.content || '';
+  this.size_rel = args.textsize || 1.;
+  this.align = args.align || 'center';
+  this.spacing = args.spacing;
+  this.passwd = args.passwd || false;
+  this.maxlen = args.maxlen || -1;
 
   this.container = null;
   this.control = null;
@@ -357,7 +500,7 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing, passw
     parent_div.innerHTML = '<table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%"><tr><td valign="middle"><input></input></td></tr></table>'
     inp = parent_div.getElementsByTagName('input')[0];
     inp.id = uid(this.id);
-    
+
     set_color(parent_div, this.bgcolor, parent_div.style.backgroundColor);
     inp.style.backgroundColor = (this.bgcolor != null ? this.bgcolor : parent_div.style.backgroundColor);
     inp.style.color = this.color;
@@ -370,9 +513,10 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing, passw
     if (this.spacing != null) {
       inp.style.letterSpacing = this.spacing + 'px';
     }
-    inp.value = content;
+    inp.value = this.content;
     inp.type = (this.passwd ? 'password' : 'text');
     this.control = inp;
+    this.setMaxLen(this.maxlen);
   }
   
   this.setText = function (text) {
@@ -387,6 +531,255 @@ function TextInput (id, color, bgcolor, content, size_rel, align, spacing, passw
     if (this.control != null)
       this.control.maxLength = maxlen;
   }
+}
+
+function norm_selected (sel) {
+  if (sel == null) {
+    return null;
+  } else {
+    return (sel instanceof Array ? sel : [sel]);
+  }
+}
+
+function unzip_choices (labels, values) {
+  if (labels[0] instanceof Object && values == null) {
+    var labs = [];
+    var vals = [];
+    for (var i = 0; i < labels.length; i++) {
+      labs.push(labels[i].lab);
+      vals.push(labels[i].val);      
+    }
+    return {labels: labs, values: vals}
+  } else {
+    return {labels: labels, values: values}
+  }
+}
+
+function ChoiceSelect (args) {
+  var cv = unzip_choices(args.choices, args.choicevals);
+  this.choices = cv.labels;
+  this.values = cv.values;
+  this.multi = args.multi || false;
+  this.onclick = args.action;
+  this.selected = norm_selected(args.selected); //todo: improve this
+  this.layout_override = args.layout_override || {};
+  this.style = args.style;
+
+  this.buttons = null;
+
+  this.render = function (parent_div) {
+    var layout_params = layout_choices(parent_div, this.choices, this.multi, this.layout_override);
+    var render_data = render_button_grid(layout_params, this.choices, this.values, this.multi, this.selected, this.onclick, this.style);
+    var layout = render_data.layout;
+    this.buttons = render_data.buttons;
+    layout.render(parent_div);
+  }
+}
+
+//given a set of choice captions, determine optimum layout of choice buttons to maximize aesthetics
+function layout_choices (parent_div, choices, multi, override) {
+  //layout constants
+  var MAX_TEXT_SIZE_GRID = override.maxText || 2.5;
+  var MAX_TEXT_SIZE_LIST = override.maxText || 1.8;
+  var MIN_TEXT_SIZE = .3;
+  var MAX_LENGTH_FOR_GRID = 350.;  //px: need to dynamicize
+  var MAX_LENGTH_DIFF_FOR_GRID_ABS = 125; //px: need to dynamicize
+  var MAX_LENGTH_DIFF_FOR_GRID_REL = 2.2;
+  var DIFF_REF_THRESHOLD = 50.; //px: need to dynamicize
+  var BUFFER_MARGIN = override.margin || 32; //px: need to dynamicize
+
+  if (override.spacing) {
+    var SPACING_RATIO = override.spacing;
+  } else if (choices.length <= 6) {
+    var SPACING_RATIO = .15;
+  } else if (choices.length <= 12) {
+    var SPACING_RATIO = .1;
+  } else {
+    var SPACING_RATIO = .05;
+  }
+
+  //available size of choice area
+  var W_MAX = parent_div.clientWidth - BUFFER_MARGIN;
+  var H_MAX = parent_div.clientHeight - BUFFER_MARGIN;
+  var GOLDEN_RATIO = W_MAX / H_MAX;
+
+  //determine whether to use grid-based layout (centered, buttons oriented in grid pattern)
+  //or list-based layout (left-justified, vertical orientation)
+  var lengths = [];
+  var min_w = -1;
+  var max_w = -1;
+  var h = -1;
+  var longest_choice = null;
+  for (i = 0; i < choices.length; i++) {
+    var ext = getChoiceExtent(choices[i], 1.);
+    var w = ext[0];
+    h = ext[1];
+    lengths.push(w);
+    if (min_w == -1 || w < min_w)
+      min_w = w;
+    if (max_w == -1 || w > max_w) {
+      max_w = w;
+      longest_choice = choices[i];
+    }
+  }
+  if (override.forceMode != null) {
+    style = override.forceMode;
+  } else if (max_w > MAX_LENGTH_FOR_GRID || max_w - min_w > MAX_LENGTH_DIFF_FOR_GRID_ABS || (min_w >= DIFF_REF_THRESHOLD && max_w/min_w > MAX_LENGTH_DIFF_FOR_GRID_REL)) {
+    style = 'list';
+  } else {
+    style = 'grid';
+  }
+
+  //todo: use binary search for text sizing?
+
+  if (style == 'grid') {
+    var margins = '*';
+
+    //determine best grid dimensions -- layout that best approaches GOLDEN_RATIO
+    buttondim = buttonDimensions([max_w, h]);
+    best_arrangement = null;
+    zvalue = -1;
+    for (var r = 1; r <= choices.length; r++) {
+      c = Math.ceil(choices.length / r);
+      spc = buttondim[1] * .33;
+      spc = (spc > 40 ? 40 : (spc < 15 ? 15 : spc));
+      ratio = (buttondim[0] * c + spc * (c - 1)) / (buttondim[1] * r + spc * (r - 1));
+      z = (ratio < GOLDEN_RATIO ? GOLDEN_RATIO / ratio : ratio / GOLDEN_RATIO);
+      if (r * c == choices.length) { //bonus for grid being completely filled
+        z -= .75
+          }
+      if (zvalue == -1 || z < zvalue) {
+        zvalue = z;
+        best_arrangement = [r, c];
+      }
+    }
+    rows = best_arrangement[0];
+    cols = best_arrangement[1];    
+    var dir = (rows > cols ? 'vert' : 'horiz'); //determine orientation
+
+    //determine best button sizing -- largest sizing that will fit within allowed area
+    for (size = MAX_TEXT_SIZE_GRID; size >= MIN_TEXT_SIZE; size -= .1) {
+      var ext = buttonDimensions(getChoiceExtent(longest_choice, size, multi));
+      bw = ext[0];
+      bh = ext[1];
+      best_spc = -1;
+      zvalue = -1;
+      //determine best inter-button spacing for given size -- where ratio of button area to inter-button area best approaches SPACING_RATIO
+      for (spc = 5; spc <= 50; spc += 5) {
+        w_total = (cols * bw + (cols - 1) * spc);
+        h_total = (rows * bh + (rows - 1) * spc);
+        k0 = bw * bh * rows * cols;
+        k1 = w_total * h_total;
+        ratio = (k1 - k0) / (k0 + k1);
+        z = (ratio < SPACING_RATIO ? SPACING_RATIO / ratio : ratio / SPACING_RATIO);
+        if (zvalue == -1 || z < zvalue) {
+          zvalue = z;
+          best_spc = spc;
+        }
+      }
+      w_total = (cols * bw + (cols - 1) * best_spc);
+      h_total = (rows * bh + (rows - 1) * best_spc);
+      if (w_total <= W_MAX && h_total <= H_MAX) {
+        break;
+      }
+    }
+    width = bw;
+    height = bh;
+    text_scale = size;
+    spacing = best_spc;
+  } else if (style == 'list') {
+    dir = 'vert';
+    var margins = [BUFFER_MARGIN, override.listStretch ? BUFFER_MARGIN : '*', BUFFER_MARGIN, '*'];
+
+    //layout priority: maximize button size
+    fits = false;
+    for (size = MAX_TEXT_SIZE_LIST; size >= MIN_TEXT_SIZE; size -= .1) {
+      var ext = buttonDimensions(getChoiceExtent(longest_choice, size, multi));
+      bw = ext[0];
+      bh = ext[1];
+      spc = Math.max(Math.round(bh * .1), 5);
+
+      rows = Math.floor((H_MAX + spc) / (bh + spc));
+      cols = Math.ceil(choices.length / rows)
+        w_total = (cols * bw + (cols - 1) * spc);
+      h_total = (rows * bh + (rows - 1) * spc);
+      if (w_total <= W_MAX && h_total <= H_MAX) {
+        fits = true;
+        break;
+      }
+    }
+    if (!fits) {
+      throw new Error("choices too numerous or verbose to fit!");
+    }
+
+    width = (override.listStretch ? '*' : bw);
+    height = bh;
+    text_scale = size;
+    spacing = spc;
+  }
+
+  return {style: style, nrows: rows, ncols: cols, width: width, height: height, spacing: spacing, dir: dir, textscale: text_scale, margins: margins};
+}
+
+function getChoiceExtent (text, size, multi, bounding_width) {
+  //increase text length to account for checkbox
+  return getTextExtent((multi ? '\u2610 ' : '') + text, size, bounding_width);
+}
+
+function getTextExtent (text, size, bounding_width) {
+  if (bounding_width == null) {
+    bounding_width = $('#staging')[0].clientWidth;
+  }
+
+  snippet = document.getElementById('snippet');
+  snippet.style.width = bounding_width + 'px';
+  snippet.textContent = text;
+  snippet.style.fontSize = 100. * size + '%';
+  return [snippet.offsetWidth, snippet.offsetHeight];
+}
+
+function buttonDimensions (textdim) {
+  return [Math.round(1.1 * textdim[0] + 0.7 * textdim[1]), Math.round(textdim[1] * 1.5)];
+}
+
+function render_button_grid (layout_params, choices, values, multi, selected, onclick, style) {
+  var buttons = generate_choice_buttons(choices, values, multi, selected, layout_params, onclick, style);
+
+  var button_grid = [];
+  for (var i = 0; i < layout_params.nrows * layout_params.ncols; i++) {
+    var c = i % layout_params.ncols;
+    var r = (i - c) / layout_params.ncols;
+    var j =  (layout_params.dir == 'horiz' ? layout_params.ncols * r + c : layout_params.nrows * c + r);
+    button_grid.push(j < choices.length ? buttons[j] : null);
+  }
+
+  layout_info = new Layout({id: 'ch',
+                            nrows: layout_params.nrows,
+                            ncols: layout_params.ncols,
+                            widths: layout_params.width,
+                            heights: layout_params.height,
+                            margins: layout_params.margins,
+                            spacings: layout_params.spacing,
+                            content: button_grid});
+  return {layout: layout_info, buttons: buttons};
+}
+
+function generate_choice_buttons (choices, values, multi, selected, layout_params, onclick, style) {
+  selected = norm_selected(selected);
+  var buttons = [];
+  for (var i = 0; i < choices.length; i++) {
+    var value = (values == null ? i + 1 : values[i]);
+    var isSelected = (selected != null && selected.indexOf(value) != -1);
+    var button_info = {label: choices[i], value: value, selected: isSelected};
+    buttons.push(button_info);
+  }
+
+  var params = style || {};
+  params.textsize = layout_params.textscale;
+  params.action = onclick;
+  params.centered = layout_params.style == 'grid';
+  params.multi = multi;
+  return btngrid(buttons, params);
 }
 
 function uid (id) {
@@ -411,75 +804,155 @@ function endswith (x, suffix) {
   return sx.substring(sx.length - suffix.length) == suffix;
 }
 
-function partition (dim, cells, margin_lo, margin_hi, spacing) {
+function partition (p) {
+  var EPSILON = 1.0e-3;
+
   //create partitions
-  var sizes = new Array();
-  var count = 2*cells.length + 1;
-  for (var i = 0; i < count; i++) {
-    if (i == 0) {
-      sizes[i] = margin_lo;
-    } else if (i == count - 1) {
-      sizes[i] = margin_hi;
-    } else if (i % 2 == 0) {
-      sizes[i] = spacing;
-    } else {
-      sizes[i] = cells[(i - 1) / 2];
+  var make_partitions = function (cells, margin_lo, margin_hi, spacing) {
+    var sizes = new Array();
+    var count = 2*cells.length + 1;
+    for (var i = 0; i < count; i++) {
+      if (i == 0) {
+        sizes[i] = margin_lo;
+      } else if (i == count - 1) {
+        sizes[i] = margin_hi;
+      } else if (i % 2 == 0) {
+        sizes[i] = spacing;
+      } else {
+        sizes[i] = cells[(i - 1) / 2];
+      }
+    }
+    return sizes;
+  }
+  var hSizes = make_partitions(p.widths, p.lmargin, p.rmargin, p.hspacing);
+  var vSizes = make_partitions(p.heights, p.tmargin, p.bmargin, p.vspacing);
+
+  //normalize raw pixel values
+  var px_norm = function (sizes) {
+    for (var i = 0; i < sizes.length; i++) {
+      var val = sizes[i] + '';
+      if (val.indexOf('@') == -1 && val.indexOf('*') == -1 && val.indexOf('%') == -1) {
+        sizes[i] = parseFloat(val);
+      }
     }
   }
-  
+  px_norm(hSizes);
+  px_norm(vSizes);
+
   //normalize percentage-based widths
-  var pct0 = 0.;
-  var px0 = 0;
-  for (var i = 0; i < sizes.length; i++) {
-    if (endswith(sizes[i], '%')) {
-      var pct = parseFloat(sizes[i].substring(0, sizes[i].length - 1)) / 100.;
-      var px = Math.round(dim * (pct0 + pct)) - px0;
-      sizes[i] = px;
-      pct0 += pct;
-      px0 += px;
+  var pct_norm = function (sizes, pane_dim, screen_dim) {
+    var avg_size = Math.sqrt(p.pane_width * p.pane_height);
+    var min_size = Math.min(p.pane_width, p.pane_height);
+    var max_size = Math.max(p.pane_width, p.pane_height);
+    var abs_avg_size = Math.sqrt(p.screen_width * p.screen_height);
+    var abs_min_size = Math.min(p.screen_width, p.screen_height);
+    var abs_max_size = Math.max(p.screen_width, p.screen_height);
+
+    for (var i = 0; i < sizes.length; i++) {
+      var d = sizes[i] + '';
+      if (d.indexOf('%') != -1) {
+        var pct = parseFloat(d.substring(0, d.indexOf('%'))) / 100.;
+        if (endswith(d, '-')) {
+          var total = min_size;
+        } else if (endswith(d, '+')) {
+          var total = max_size;
+        } else if (endswith(d, '=')) {
+          var total = avg_size;
+        } else if (endswith(d, '-!')) {
+          var total = abs_min_size;
+        } else if (endswith(d, '+!')) {
+          var total = abs_max_size;
+        } else if (endswith(d, '=!')) {
+          var total = abs_avg_size;
+        } else if (endswith(d, '!')) {
+          var total = screen_dim;
+        } else {
+          var total = pane_dim;
+        }
+
+        sizes[i] = total * pct;
+      }
     }
   }
-  //pct0 and px0 needed to evenly distribute rounding error
-  
-  //normalize proportional-based widths
-  var sum = 0;
-  var proport = new Array();
-  var sum_proport = 0.;
-  for (var i = 0; i < sizes.length; i++) {
-    if (endswith(sizes[i], '*')) {
-      var sfactor = sizes[i].substring(0, sizes[i].length - 1);
-      var prop = Math.round(sfactor.length > 0 ? parseFloat(sfactor) : 1.);
-      proport.push(prop)
-      sum_proport += prop;
-    } else {
+  pct_norm(hSizes, p.pane_width, p.screen_width);
+  pct_norm(vSizes, p.pane_height, p.screen_height);
+
+  var extract_proportions = function (sizes, c, total_size) {
+    var proport = new Array();
+    var sum_proport = 0.;
+    var sum_alloc = 0;
+    for (var i = 0; i < sizes.length; i++) {
+      if (endswith(sizes[i], c)) {
+        var sfactor = sizes[i].substring(0, sizes[i].length - 1);
+        var prop = (sfactor.length > 0 ? parseFloat(sfactor) : 1.);
+        proport.push(prop);
+        sum_proport += prop;
+      } else {
+        proport.push(-1);
+        if (!isNaN(sizes[i])) {
+          sum_alloc += sizes[i];
+        }
+      }
+    }
+    if (sum_alloc > total_size + EPSILON) {
+      throw new Error('inconsistent dimension spec for layout; too big for allowed size');
+    }
+    return {psizes: proport, propsum: sum_proport, allocsum: sum_alloc};
+  }
+
+  var set_prop_sizes = function (sizes, propsizes, unitsize) {
+    for (var i = 0; i < sizes.length; i++) {
+      if (propsizes[i] != -1) {
+        sizes[i] = propsizes[i] * unitsize;
+      }
+    }
+  }
+
+  //normalize aspect-locked proportial widths
+  var haprop = extract_proportions(hSizes, '@', p.pane_width);
+  var vaprop = extract_proportions(vSizes, '@', p.pane_height);
+  //  determine size of '@'
+  var asize = Math.min((p.pane_width - haprop.allocsum) / haprop.propsum,
+                       (p.pane_height - vaprop.allocsum) / vaprop.propsum);
+  set_prop_sizes(hSizes, haprop.psizes, asize);
+  set_prop_sizes(vSizes, vaprop.psizes, asize);
+
+  //normalize leftover proportional widths
+  var hprop = extract_proportions(hSizes, '*', p.pane_width);
+  var vprop = extract_proportions(vSizes, '*', p.pane_height);
+  set_prop_sizes(hSizes, hprop.psizes, (p.pane_width - hprop.allocsum) / hprop.propsum);
+  set_prop_sizes(vSizes, vprop.psizes, (p.pane_height - vprop.allocsum) / vprop.propsum);
+
+  //check that all space consumed
+  var check_size_used = function (sizes, ttl_size) {
+    var sum = 0;
+    for (var i = 0; i < sizes.length; i++) {
       sum += sizes[i];
-      proport.push(-1);
+    }
+    if (sum < ttl_size - EPSILON) {
+      throw new Error('inconsistent dimension spec for layout; not all space consumed');
     }
   }
-  if (sum > dim) {
-    throw Error("too big for allowed width!")
-  }
-  var pp0 = 0.;
-  var px0 = 0;
-  for (var i = 0; i < proport.length; i++) {
-    if (proport[i] != -1) {
-      var px = Math.round((dim - sum) * (pp0 + proport[i]) / sum_proport) - px0;
-      sizes[i] = px;
-      pp0 += proport[i];
-      px0 += px;
+  check_size_used(hSizes, p.pane_width);
+  check_size_used(vSizes, p.pane_height);
+
+  //distribute rounding error
+  var round_sizes = function(sizes) {
+    var sum0 = 0;
+    var fsum0 = 0;
+    for (var i = 0; i < sizes.length; i++) {
+      var fsum1 = fsum0 + sizes[i];
+      var sum1 = Math.round(fsum1);
+      sizes[i] = sum1 - sum0;
+      fsum0 = fsum1;
+      sum0 = sum1;
     }
   }
-  //pp0 and px0 needed to evenly distribute rounding error
-  
-  var sum = 0;
-  for (var i = 0; i < sizes.length; i++) {
-    sum += sizes[i];
-  }
-  if (sum != dim) {
-    throw Error("not all space consumed!");
-  }
-  
-  return sizes;
+  round_sizes(hSizes);
+  round_sizes(vSizes);
+
+  console.log(hSizes, vSizes, p.id);
+  return [hSizes, vSizes];
 }
 
 function offsets (dims) {
@@ -493,7 +966,24 @@ function offsets (dims) {
 }
 
 function set_color (elem, color, fallback_color) {
-  elem.style.backgroundColor = (color != null && color != '' ? color : fallback_color);
+  var _color = (color != null && color != '' ? color : fallback_color);
+  if (_color == null) {
+    elem.style.background = null;
+    elem.style.backgroundColor = null;
+  } else {
+    if (_color.substring(0, 2) == 'gr') {
+      var pcs = _color.split(' ');
+      if (supportsGradient()) {
+        elem.style.backgroundColor = null;
+        elem.style.background = '-moz-linear-gradient(top, ' + pcs[1] + ' 0%, ' + pcs[2] + ' 100%)';
+        return;
+      } else {
+        _color = pcs[3] || pcs[2];
+      }
+    }
+    elem.style.background = null;
+    elem.style.backgroundColor = _color;
+  }
 }
 
 function ainv (arr, i) {
@@ -552,11 +1042,13 @@ function htmlescape (raw) {
   return raw;
 }
 
-function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
-  this.mask_color = mask_color;
+function Overlay (bg_color, fadeout) {
   this.bg_color = bg_color;
   this.fadeout = fadeout * 1000.;
-  this.text = text_content;
+
+  this.mask_color = null;
+  this.text = '';
+  this.timeout = null;
   this.ondismiss = null;
   this.choices = null;
   this.actions = null;
@@ -564,12 +1056,21 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
   this.active = null;  
   this.container = null;
   this.timeout_id = null;
-  
+  this.span = null;
+  this.mask = null;
+
   this.setTimeout = function (to) {
     this.timeout = to * 1000.;
   }
-  this.setTimeout(timeout);
-  
+
+  this.activate = function (args) {
+    this.setMaskColor(args.color);
+    this.setTimeout(args.timeout || 0.);
+    this.ondismiss = args.ondismiss;
+    this.setText(args.text || '', args.choices, args.actions);
+    this.setActive(true);
+  }
+
   this.setActive = function (state, manual) {
     if (this.active && state) {
       return; //do nothing if already active
@@ -580,7 +1081,7 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     if (state) {
       this.container.style.display = 'block';
       if (this.timeout != null && this.timeout > 0) {
-        self = this;
+        var self = this;
         this.timeout_id = setTimeout(function () {
           self.timeout_id = null;
           if (self.fadeout != null && self.fadeout > 0) {
@@ -602,9 +1103,6 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     } 
   }
   
-  this.span = null;
-  this.mask = null;
-  
   this.setText = function (text, choices, actions) {
     this.text = text;
     this.choices = choices;
@@ -614,16 +1112,12 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
       this.renderContent();
   }
   
-  this.setBgColor = function (color) {
+  this.setMaskColor = function (color) {
     this.mask_color = color;
     if (this.mask != null)
       this.mask.style.backgroundColor = color;
   }
   
-  this.setDismiss = function (ondismiss) {
-    this.ondismiss = ondismiss;
-  }
-
   this.renderContent = function () {
     var content = htmlescape(this.text);
 
@@ -641,7 +1135,7 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
 
     if (this.choices.length > 0) {
       for (var i = 0; i < this.choices.length; i++) {
-        document.getElementById('alert-ch' + i).onclick = this.omfg(i);
+        document.getElementById('alert-ch' + i).onclick = this.actionable(i);
       }
       this.container.onclick = null;
     } else {
@@ -650,11 +1144,10 @@ function Overlay (mask_color, bg_color, timeout, fadeout, text_content) {
     }
   }
 
-  //javascript has a HUGE gotcha if you try to define function closures inside a for loop
-  this.omfg = function (i) {
+  this.actionable = function (i) {
     var self = this;
     return function () {
-      self.setDismiss(self.actions[i]);
+      self.ondismiss = self.actions[i];
       self.setActive(false, true);
     };
   }
@@ -698,14 +1191,15 @@ function oneOffButtonHTML (id, text, align, padding, custom_style) {
   return '<table class="shiny-button rounded" id="' + id + '" ' + (align ? 'align="' + align + '" ' : '') + 'cellpadding="' + padding + '" style="color: white; font-weight: bold; ' + custom_style + '"><tr><td><strong>&nbsp;' + htmlescape(text) + '&nbsp;</strong></td></tr></table>';
 }
 
-function InputArea (id, border, border_color, padding, inside_color, child, onclick) {
-  this.id = id;
-  this.border = border;
-  this.border_color = border_color;
-  this.padding = padding;
-  this.inside_color = inside_color;
-  this.child = child;
-  this.onclick = onclick;
+function InputArea (args) {
+  this.id = args.id;
+  this.border = args.border;
+  this.border_color = args.border_color || '#000';
+  this.padding = args.padding || 0;
+  this.inside_color = args.inside_color || '#fff';
+  this.child = args.child;
+  this.onclick = args.onclick;
+  this.default = args.default;
 
   this.layout;
   this.container = null;
@@ -713,18 +1207,27 @@ function InputArea (id, border, border_color, padding, inside_color, child, oncl
   //yikes! this didn't turn out that well
   this.setBgColor = function (bg_color) {
     this.inside_color = bg_color;
-    if (this.padding > 0) {
-      this.layout.child_index[0].style.backgroundColor = bg_color;
-      this.layout.content[0].child_index[0].style.backgroundColor = bg_color;
-    } else {
-      this.layout.child_index[0].style.backgroundColor = bg_color;
-    }
-    if (this.child instanceof TextInput) {
-      this.child.control.style.backgroundColor = bg_color;
+    if (this.container) {
+      if (this.padding > 0) {
+        this.layout.child_index[0].style.backgroundColor = bg_color;
+        this.layout.content[0].child_index[0].style.backgroundColor = bg_color;
+      } else {
+        this.layout.child_index[0].style.backgroundColor = bg_color;
+      }
+      if (this.child instanceof TextInput) {
+        this.child.control.style.backgroundColor = bg_color;
+      }
     }
   }
   
   this.setText = function (text) {
+    //kind of hacky
+    var elem = $('#' + this.id + ' span')[0];
+    if (elem != null) {
+      elem.style.opacity = (!text ? .1 : 1.);
+    }
+
+    text = text || this.default || '';
     this.child.setText(text);
   }
   
@@ -734,14 +1237,14 @@ function InputArea (id, border, border_color, padding, inside_color, child, oncl
 
   this.render = function (parent_div) {
     if (this.padding > 0) {
-      inside = new Layout(id + '-padded', 1, 1, '*', '*', padding, 0, null, null, null, [this.child]);
+      inside = new Layout({id: this.id + '-padded', margins: this.padding, content: [this.child]});
     } else {
       inside = this.child;
     }
-    this.layout = new Layout(id, 1, 1, '*', '*', border, 0, this.inside_color, this.border_color, null, [inside]);
+    this.layout = new Layout({id: this.id, margins: this.border, color: this.inside_color, margin_color: this.border_color, content: [inside]});
     this.layout.render(parent_div);
     this.container = this.layout.container;
-    this.container.onclick = this.onclick;
+    setClickEvent(this.container, this.onclick);
   }
 }
 
@@ -754,5 +1257,36 @@ function CustomContent (id, content) {
   this.render = function (parent_div) {
     this.container = parent_div;
     parent_div.innerHTML = this.content;
+  }
+}
+
+function cmp (a, b) {
+  return (a > b ? 1 : (a < b ? -1 : 0));
+}
+
+function cmp_arr (a, b) {
+  for (var i = 0; i < Math.min(a.length, b.length); i++) {
+    var c = cmp(a[i], b[i]);
+    if (c != 0) {
+      return c;
+    }
+  }
+  return cmp(a.length, b.length);
+}
+
+function supportsGradient () {
+  if (jQuery.browser.mozilla) {
+    return cmp_arr(jQuery.browser.version.split('.'), [1, 9, 2]) >= 0;
+  } else {
+    return true;
+  }
+}
+
+
+function setClickEvent (obj, handler) {
+  if (clickOnMouseDown()) {
+    obj.onmousedown = handler;
+  } else {
+    obj.onclick = handler;
   }
 }

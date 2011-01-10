@@ -10,7 +10,7 @@ from java.util import Vector
 from java.io import StringReader
 
 import preloadhandler
-from util import to_jdate, to_pdate, to_vect
+from util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect
     
 from setup import init_classpath
 import logging
@@ -193,6 +193,7 @@ class XFormSession:
               Constants.DATATYPE_INTEGER: 'int',
               Constants.DATATYPE_DECIMAL: 'float',
               Constants.DATATYPE_DATE: 'date',
+              Constants.DATATYPE_TIME: 'time',
               Constants.DATATYPE_CHOICE: 'select',
               Constants.DATATYPE_CHOICE_LIST: 'multiselect',
             }[q.getDataType()]
@@ -213,6 +214,8 @@ class XFormSession:
                 event['answer'] = value.getValue()
             elif event['datatype'] == 'date':
                 event['answer'] = to_pdate(value.getValue())
+            elif event['datatype'] == 'time':
+                event['answer'] = to_ptime(value.getValue())              
             elif event['datatype'] == 'select':
                 event['answer'] = value.getValue().index + 1
             elif event['datatype'] == 'multiselect':
@@ -253,6 +256,8 @@ class XFormSession:
             ans = StringData(str(answer))
         elif datatype == 'date':
             ans = DateData(to_jdate(datetime.strptime(str(answer), '%Y-%m-%d').date()))
+        elif datatype == 'time':
+            ans = TimeData(to_jtime(datetime.strptime(str(answer), '%H:%M').time()))
         elif datatype == 'select':
             ans = SelectOneData(self.cur_event['choices'][int(answer) - 1].to_sel())
         elif datatype == 'multiselect':
