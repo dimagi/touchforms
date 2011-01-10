@@ -121,7 +121,7 @@ function FreeTextEntry (args) {
   }
 
   this.getAnswer = function () {
-    var raw = this.getRaw();
+    var raw = $.trim(this.getRaw());
     return (raw == '' ? null : raw);
   }
 
