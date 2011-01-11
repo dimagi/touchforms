@@ -2,20 +2,33 @@
  * Common workflow methods/widgets go here.
  */ 
 
-function qSelectReqd (caption, choices, help) {
-  return new wfQuestion(caption, 'select', null, uniqifyChoices(choices), true, null, help);
+function qSelectReqd (caption, choices, help, ans) {
+  return new wfQuestion({caption: caption, type: 'select', choices: uniqifyChoices(choices), required: true, helptext: help, answer: ans});
 }
 
 function uniqifyChoices (choices) {
+  var getcapt = function (choice) {
+    return (choice instanceof Object ? choice.lab : choice);
+  }
+
+  var setcapt = function (choices, i, capt) {
+    if (choices[i] instanceof Object) {
+      choices[i].lab = capt;
+    } else {
+      choices[i] = capt;
+    }
+  }
+
   var duplicateChoices = true;
   while (duplicateChoices) {
     captions = []
     indices = []
     for (var i = 0; i < choices.length; i++) {
-      var k = captions.indexOf(choices[i]);
+      var capt = getcapt(choices[i]);
+      var k = captions.indexOf(capt);
       if (k == -1) {
         k = captions.length;
-        captions.push(choices[i]);
+        captions.push(capt);
         indices[k] = []
       }
       indices[k].push(i);
@@ -26,7 +39,7 @@ function uniqifyChoices (choices) {
       if (indices[i].length > 1) {
         duplicateChoices = true;
         for (var j = 0; j < indices[i].length; j++) {
-          choices[indices[i][j]] += ' (' + (j + 1) + ')'
+          setcapt(choices, indices[i][j], getcapt(choices[indices[i][j]]) + ' (' + (j + 1) + ')');
         }
       }
     }
@@ -48,10 +61,9 @@ function get_usernames() {
 }
         
 function qUsernameList(title) {
-    usernames = get_usernames();
-    if (title == null) 
-        title = "Please select your username";
-    return qSelectReqd(title, usernames);
+    var usernames = get_usernames();
+    title = title || "Please select your username";
+    return qSelectReqd(title, zip_choices(usernames, usernames));
 }
 
 function get_roles() {
@@ -68,19 +80,26 @@ function get_roles() {
         
 
 function qRoleList(title) {
-    roles = get_roles();
-    if (title == null) 
-        title = "Please choose the user's role";
-    return qSelectReqd(title, roles);
+    var roles = get_roles();
+    title = title || "Please choose the user's role";
+    return qSelectReqd(title, zip_choices(roles, roles));
 }
 
 function chwZoneChoices (num_zones) {
   var choices = [];
   for (var i = 1; i <= num_zones; i++) {
-    choices.push("Zone " + i);
+    choices.push({lab: "Zone " + i, val: 'zone' + i});
   }
-  choices.push("Lives outside catchment area");
-  choices.push("Don't know which zone");
+  choices.push({lab: "Lives outside catchment area", val: 'outside_catchment_area'});
+  choices.push({lab: "Don't know which zone", val: 'unknown'});
 
+  return choices;
+}
+
+function zip_choices (labels, values) {
+  var choices = [];
+  for (var i = 0; i < labels.length; i++) {
+    choices.push({lab: labels[i], val: values[i]});
+  }
   return choices;
 }
