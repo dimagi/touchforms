@@ -288,11 +288,12 @@ function MultiSelectEntry (args) {
     return function (ev, c, button) {
       button.toggleStatus();
 
-      //one special value can be treated like a single-select, where if it is chosen the question
-      //is answered immediately; useful for 'none of the above'-type buttons
-      if (button.value == self.as_single) {
+      //certain special values can be treated like a single-select, where if it is chosen
+      //the question is answered immediately; useful for 'none of the above'-type buttons
+      var as_single = self.as_single || [];
+      if (as_single.indexOf(button.value) != -1) {
         var ans = self.getAnswer();
-        if (ans.length == 1 && ans[0] == self.as_single) {
+        if (ans.length == 1 && ans[0] == button.value) {
           autoAdvanceTrigger();
         }
       }

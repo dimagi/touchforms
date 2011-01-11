@@ -93,7 +93,14 @@ function xformAjaxAdapter (formName, preloadTags) {
       meta.prefix = event["style"]["prefix"];
     } else if (event.datatype == "multiselect") {
       if (event["style"]["as-select1"] != null) {
-        meta.as_single = +event["style"]["as-select1"];
+        meta.as_single = [];
+        var vs = event["style"]["as-select1"].split(',');
+        for (var i = 0; i < vs.length; i++) {
+          var k = +vs[i];
+          if (k != 0) {
+            meta.as_single.push(k);
+          }
+        }
       }
     }
 
