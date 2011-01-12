@@ -567,8 +567,8 @@ function BloodPressureEntry () {
 
   this.get_field_info = function () {
     return [
-      {args: {min: this.SYST_MIN, max: this.SYST_MAX}, label: null},
-      {args: {min: this.DIAST_MIN, max: this.DIAST_MAX}, label: null}
+      {args: {min: this.SYST_MIN, max: this.SYST_MAX}, label: 'sys'},
+      {args: {min: this.DIAST_MIN, max: this.DIAST_MAX}, label: 'dia'}
     ];
   }
 
