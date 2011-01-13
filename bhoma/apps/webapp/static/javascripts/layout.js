@@ -422,7 +422,9 @@ function TextCaption (args) {
   this.size_rel = args.size || 1.;
   this.align = args.align || 'center';
   this.valign = args.valign || 'middle';
-  
+  this.fit = (args.fit == null ? true : args.fit);
+  this.minsize = args.minsize || this.size_rel / 2.;
+
   this.container = null;
   this.span = null;
   this.render = function (parent_div) {
@@ -441,44 +443,41 @@ function TextCaption (args) {
     this.caption = text;
     if (this.span != null) {
       this.span.textContent = text;
-      this.span.style.fontSize = this.fitText(text, this.container.offsetWidth, 50., this.size_rel * 100., span.style) + '%';
+      if (this.fit) {
+        this.span.style.fontSize = Math.round(100. * this.fitText(text, this.container, this.minsize, this.size_rel)) + '%';
+      }
     }
   }
 
 
-  this.fitText = function(text, width, min_size, max_size, style) {
-	var tmp = document.createElement("span");
-	
-	tmp.style.visibility = "hidden";
-	tmp.style.padding = "0px";
-	document.body.appendChild(tmp);
-	tmp.innerHTML = text;
+  this.fitText = function(text, container, min_size, max_size) {
+    var EPSILON = 0.005;
+    var BUFFER = 0.02;
 
-	tmp.style.cssText = this.span.style.cssText;
+    var w = container.clientWidth * (1. - BUFFER);
+    var h = container.clientHeight;
+    var curSize = max_size;
 
-	tmp.style.fontSize = max_size + '%';
-	var curSize = max_size;
+    var ext = getTextExtent(text, curSize, w);
+    if (ext[0] > w || ext[1] > h) {
+      var minSize = min_size;
+      var maxSize = max_size;
 
-	if (tmp.offsetWidth > width) {
-		var minSize = min_size;
-		var maxSize = max_size;
+      while (true) {
+        curSize = (minSize + maxSize) / 2;
+        if (Math.abs(maxSize - curSize) < EPSILON || Math.abs(minSize - curSize) < EPSILON) {
+          break;
+        }
+        ext = getTextExtent(text, curSize, w);
+        if (ext[0] > w || ext[1] > h) {
+          maxSize = curSize;
+        } else {
+          minSize = curSize;
+        }		
+      }
+    }
 
-		while(true){
-			curSize = minSize + Math.floor((maxSize - minSize) / 2);
-			tmp.textContent = text;
-			tmp.style.fontSize = curSize + '%';
-			if (curSize == maxSize || curSize == minSize) {
-				break;
-			} else if (tmp.offsetWidth > width) {
-				maxSize = curSize;
-			} else {
-				minSize = curSize;
-			}		
-		};
-	}
-
-	document.body.removeChild(tmp);
-	return curSize;
+    return curSize;
   }
 }
 
@@ -734,7 +733,7 @@ function getTextExtent (text, size, bounding_width) {
   snippet = document.getElementById('snippet');
   snippet.style.width = bounding_width + 'px';
   snippet.textContent = text;
-  snippet.style.fontSize = 100. * size + '%';
+  snippet.style.fontSize = Math.round(100. * size) + '%';
   return [snippet.offsetWidth, snippet.offsetHeight];
 }
 
