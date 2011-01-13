@@ -33,17 +33,34 @@ ALERT_BGCOLOR = '#dd6';
 
 AUTO_ADVANCE_DELAY = 150; //ms
 KEYFLASH = 150; //ms
+AUTO_ADVANCE_NEXT_LOCKOUT = 800; //ms
 
 function initStaticWidgets () {
   questionCaption = new TextCaption({id: 'q-caption', color: TEXT_COLOR, align: 'left', valign: 'top'});
-  
+
   TactileButton = function (args) {
     var action = args.action;
+    this.activectr = 0;
+    var self = this;
     args.action = function (ev, c, button) {
-      button.flash(KEYFLASH);
-      action();
+      if (self.activectr == 0) {
+        button.flash(KEYFLASH);
+        action();
+      }
     }
+
     inherit(this, new ChoiceButton(args));
+
+    this.activate = function () {
+      this.activectr--;
+      if (this.activectr < 0) {
+        this.activectr = 0;
+      }
+    }
+
+    this.deactivate = function () {
+      this.activectr++;
+    }
   }
 
   nextButton = new TactileButton({id: 'next-button', color: '#1a3', selcolor: '#8f8', textcolor: BUTTON_TEXT_COLOR, label: 'NEXT', textsize: 1.2, action: nextClicked});
@@ -257,7 +274,7 @@ function setup () {
   $('#staging')[0].style.height =  '600px';
 
   clicksEnabled = true;
-  $('body')[0].addEventListener('click', function (ev) {
+  $('body')[0].addEventListener(clickOnMouseDown() ? 'mousedown' : 'click', function (ev) {
       if (!clicksEnabled) {
         ev.stopPropagation();
         return false; 
@@ -326,9 +343,14 @@ function clearClicked (ev, x) {
 function autoAdvanceTrigger () {
   if (autoAdvance()) {
     disableInput();
+    nextButton.flash(AUTO_ADVANCE_DELAY + KEYFLASH);
     setTimeout(function () {
-        nextButton.flash(KEYFLASH);
         nextClicked();
+        nextButton.deactivate();
+        setTimeout(function () {
+            nextButton.activate();
+          }, AUTO_ADVANCE_NEXT_LOCKOUT);
+
         enableInput();
       }, AUTO_ADVANCE_DELAY);
   }
