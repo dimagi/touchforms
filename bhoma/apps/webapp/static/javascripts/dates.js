@@ -508,7 +508,15 @@ function decadeSelect (decades, selval, context) {
   var values = [];
   var ranges = [];
   for (var i = 0; i < decades.length; i++) {
-    labels.push(decades[i].start + '\u2014' + decades[i].end);
+    if (decades[i].end - decades[i].start == 9 && decades[i].start % 10 == 0) {
+      var label = (decades[i].start - decades[i].start % 10) + 's';
+    } else if (decades[i].start % 10 == 0) {
+      var label = decades[i].start + '+';
+    } else {
+      var label = decades[i].start + '\u2014' + decades[i].end;
+    }
+
+    labels.push(label);
     values.push(decades[i].start);
     ranges.push({start: mkNewYearsDay(decades[i].start), end: mkNewYearsEve(decades[i].end)});
   }
