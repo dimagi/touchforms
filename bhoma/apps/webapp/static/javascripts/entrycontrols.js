@@ -433,9 +433,9 @@ function CompoundNumericEntry () {
       this.entry.push(new NumericSubfield(this.fields[i], info[i].args, forwardfunc, backwardfunc));
     };
     
-    this.activate(0);
-    answerBar.update(this.make_answerbar());
     questionEntry.update(freeEntry);
+    answerBar.update(this.make_answerbar());
+    this.activate(0);
     this.setAnswer(this.default_answer);
   }
   

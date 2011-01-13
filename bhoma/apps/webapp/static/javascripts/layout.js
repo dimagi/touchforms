@@ -143,23 +143,23 @@ function Layout (args) {
   this.child_index = []; //[list of div for each child]
   
   this.update = function (ind) {
-    position = this.content.indexOf(ind);
+    var position = this.content.indexOf(ind);
     
     if (this.container == null)
       return; //do nothing else if layout object has not been rendered yet
     
-    subcontent = ind.content;
+    var subcontent = ind.content;
     if (subcontent != null && subcontent.container != null) {
-      domNew = subcontent.container;
+      var domNew = subcontent.container;
       this.container.replaceChild(domNew, this.child_index[position]);
     } else {
-      domOld = this.child_index[position];
-      r = Math.floor(position / this.ncols);
-      c = position % this.ncols;
-      x = domOld.offsetLeft;
-      y = domOld.offsetTop;
-      w = domOld.clientWidth;
-      h = domOld.clientHeight;
+      var domOld = this.child_index[position];
+      var r = Math.floor(position / this.ncols);
+      var c = position % this.ncols;
+      var x = domOld.offsetLeft;
+      var y = domOld.offsetTop;
+      var w = domOld.clientWidth;
+      var h = domOld.clientHeight;
       var domNew = new_div(subcontent != null ? subcontent.id : this.container.id + '-' + null + '-' + r + '-' + c, y, x, w, h);
       set_color(domNew, this.color, this.container.style.backgroundColor);
 
@@ -448,7 +448,6 @@ function TextCaption (args) {
       }
     }
   }
-
 
   this.fitText = function(text, container, min_size, max_size) {
     var EPSILON = 0.005;
@@ -804,6 +803,12 @@ function endswith (x, suffix) {
 }
 
 function partition (p) {
+  //try to catch bug from swapping display widgets out of order (alternative to fixing the bug more deeply)
+  if (p.pane_width == 0 || p.pane_height == 0) {
+    console.log('debug: pane dimensions are zero (' + p.pane_width + ', ' + p.pane_height + '); this means you are \
+probably updating an Indirect widget that is not currently on-screen; re-order your rendering calls');
+  }
+
   var EPSILON = 1.0e-3;
 
   //create partitions
