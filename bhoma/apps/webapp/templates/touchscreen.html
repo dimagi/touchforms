@@ -33,7 +33,10 @@ AUTOCOMPLETE_URL = "{% url bhoma.apps.webapp.views.autocomplete %}";
 XFORM_NAME = "{{form.name}}";
 XFORM_UID = null;
 
-CLINIC_PREFIX = {{ clinic.prefix }};
+PREFIXES = {
+  _clinic: '{{ clinic.prefix }}',
+  _chwref: '{{ clinic.ref_prefix }}',
+};
 CLINIC_NUM_CHW_ZONES = {{ clinic.num_chw_zones|default:"8" }};
 
 NUMERIC_MONTHS = true;

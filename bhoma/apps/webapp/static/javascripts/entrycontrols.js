@@ -960,6 +960,10 @@ function IDMaskEntry (mask, prefix, prototype) {
 
   this.mask = mask;
   this.prefix = prefix;
+  var prefix_map = window.PREFIXES || {};
+  if (prefix_map[this.prefix]) {
+    this.prefix = prefix_map[this.prefix];
+  }
 
   this.MaskedField = function (cells, domain) {
     inherit(this, new ShadowField(cells, new FreeTextEntry({domain: domain, length_limit: cells.length})));
