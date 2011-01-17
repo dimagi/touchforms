@@ -74,7 +74,7 @@ class Command(BaseCommand):
 
     @status_report('net')
     def net_status_simple(self, iface=DEFAULT_IFACE):
-        with os.popen('ifconfig') as f:
+        with os.popen('/sbin/ifconfig') as f:
             lines = f.readlines()
 
         current_iface = None
