@@ -96,7 +96,7 @@
 }
 
 .big-button {
-    width: 400px; 
+    width: 380px; 
     height: 64px;
     cursor: pointer;
     -moz-border-radius: 10px;
@@ -151,7 +151,7 @@
 }
 
 .big-button-disabled {
-    width: 400px; 
+    width: 380px; 
     height: 64px;
     -moz-border-radius: 10px;
     border-radius: 10px;
@@ -235,11 +235,20 @@
     background-position:center;
 }
 
-
 .case_info .none {
     color:grey;
 }
 
 .case_info .open {
     font-weight:bold;
+}
+
+th.table-heading {
+    text-align: center;
+    background-color: rgb(221, 221, 238);
+    border: 1px solid grey;
+}
+
+td.prompt {
+    text-align: right;
 }
