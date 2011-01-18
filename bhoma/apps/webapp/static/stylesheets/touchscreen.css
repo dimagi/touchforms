@@ -104,7 +104,6 @@
     -webkit-border-radius: 10px;
     margin: 15px;
     background: #111188; /* old browsers */
-
 }
 
 #clear-button, .clear-button, #help-button {
@@ -250,7 +249,7 @@ th.table-heading {
 }
 
 td.prompt {
-    text-align: right;
+    text-align: left;
 }
 
 .important {
