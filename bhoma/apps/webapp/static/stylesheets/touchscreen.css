@@ -253,6 +253,6 @@ td.prompt {
 }
 
 .important {
-    color: red;
+    color: #e11;
     font-weight: bold;
 }
