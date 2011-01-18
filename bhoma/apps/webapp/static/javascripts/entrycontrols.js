@@ -255,6 +255,17 @@ function MultiSelectEntry (args) {
     var choiceLayout = this.makeChoices();
     questionEntry.update(choiceLayout);
     this.buttons = choiceLayout.buttons;
+
+    //HACK for as-select1
+    var as_single = this.as_single || [];
+    for (var i = 0; i < as_single.length; i++) {
+      var button = this.buttons[as_single[i] - 1];
+      console.log(button);
+      button.multi = false;
+      button.base_style = null;
+      button.default_color = 'gr #52a #209';
+      button.setStatus(button.status);
+    }
   }
 
   this.makeChoices = function (style) {
