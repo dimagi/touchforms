@@ -1,10 +1,10 @@
 {% load tabs_tags %}
 <div id="header">
     <div class="container">
-        <div class="span-12">
+        <div class="span-7">
             <a href="/"><h1>BHOMA</h1></a>
 		</div>
-        <div class="span-12 last" style="text-align:right">
+        <div class="span-17 last" style="text-align:right">
             {% if user.is_authenticated %}        
                 Logged in as <strong>{{user}}@{{ clinic.name }}</strong>&nbsp;&nbsp;|&nbsp;&nbsp;  
                 <a href="{% url bhoma.apps.webapp.views.logout %}">Log out</a>          
@@ -18,12 +18,12 @@
                 <ul id="tabs">
                      {% for tab in tabs %}
                          {% if tab.visible %}
-	                         {% if tab.is_active %}
-	                             <li class="app-{{ tab.name }} active"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
-	                         {% else %}
-	                             <li class="app-{{ tab.name }}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
-	                         {% endif %}
-	                     {% endif %}
+                             {% if tab.is_active %}
+                                 <li class="app-{{ tab.name }} active"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
+                             {% else %}
+                                 <li class="app-{{ tab.name }}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
+                             {% endif %}
+                         {% endif %}
                      {% endfor %}
                 </ul>
                 

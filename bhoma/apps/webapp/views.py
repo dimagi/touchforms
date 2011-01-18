@@ -29,14 +29,11 @@ def clinic_landing_page(req):
 
 @require_GET
 def landing_page(req):
-    def manager_view(req):
-        return render_to_response(req, "national_landing_page.html",
-                                  {"options": TouchscreenOptions.default()})
     if is_clinic():
         return clinic_landing_page(req)
     else:
-        return manager_view(req)
-    
+        return HttpResponseRedirect(reverse("report_list"))
+        
 @require_GET
 def dashboard(req):
     return HttpResponseRedirect(reverse("patient_search"))
