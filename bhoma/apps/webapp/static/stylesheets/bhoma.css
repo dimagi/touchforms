@@ -27,16 +27,7 @@ ul.tabs
     padding-left: 0;
 }
 
-.tabs li 
-{
-    display: inline;
-    padding-right: 20px;
-}
 
-.tabs li.active
-{
-    font-weight:bold;
-}
 
 .boxed {
     border: 1px solid #cccccc;
@@ -54,3 +45,37 @@ ul.tabs
     position: relative;
 }
 
+ul#top-nav{
+	padding-top: 10px;
+	list-style-type: none;
+    border-collapse: collapse;
+    font-size: 1.2em;
+}
+ul#top-nav li {
+	display: inline;
+}
+
+nav ul {
+        float: right;
+        padding-top: 3px;
+        padding-bottom: 0;
+        margin: 0;
+}
+
+nav li {
+    padding: 0 11px 0 6px;
+    font-weight: normal;
+    font-size: 1.2em;
+    border-right: 1px solid #96989B;
+    margin: 0;
+}
+
+nav li.active
+{   
+	font-weight:bold;
+}
+
+nav li:last-child {
+    border-right: none;
+    padding-right: 0px;
+}

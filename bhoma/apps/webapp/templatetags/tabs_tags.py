@@ -12,15 +12,10 @@ from django.utils.importlib import import_module
 # loads this module via django.templatetags, we must do the same, to
 # share state. to avoid this confusion, explode with an explanation
 # unless this seemingly-arbitrary rule is followed.
-if not __name__.startswith("django."):
-    raise ImportError(
-        "The tabs_tags module must be imported via the " +\
-        "django.templatetags.tabs_tags package.")
-
 register = template.Library()
 
 class Tab(object):
-    def __init__(self, callback, caption=None):
+    def __init__(self, callback, caption=None, permission=None):
         if isinstance(callback, basestring):
             module = '.'.join(callback.split('.')[:-1])
             view = callback.split('.')[-1]
@@ -29,6 +24,7 @@ class Tab(object):
             self.callback = callback
         self._caption = caption
         self._view = None
+        self._permission = permission
 
     @staticmethod
     def _looks_like(a, b):
@@ -38,7 +34,7 @@ class Tab(object):
     def _auto_caption(self):
         func_name = self.callback.__name__         # my_view
         return func_name.replace("_", " ").title() # My View
-
+    
     @property
     def view(self):
         """
@@ -71,13 +67,15 @@ class Tab(object):
         will silently ignore the exception, and return the value of the
         TEMPLATE_STRING_IF_INVALID setting.
         """
-
         return reverse(self.callback)
 
     @property
     def caption(self):
         return self._caption or self._auto_caption()
 
+    def has_permission(self, user):
+        if self._permission:    return user.has_perm(self._permission)
+        else:                   return True
 
 # adapted from ubernostrum's django-template-utils. it didn't seem
 # substantial enough to add a dependency, so i've just pasted it.
@@ -89,7 +87,9 @@ class TabsNode(template.Node):
     def render(self, context):
         request = Variable("request").resolve(context)
         for tab in self.tabs:
-            tab.is_active = tab.url == request.get_full_path()
+            tab.is_active = tab.url in request.get_full_path()
+            tab.visible = tab.has_permission(request.user)                    
+        
         context[self.varname] = self.tabs
         return ""
 
@@ -118,5 +118,5 @@ def get_tabs(parser, token):
         raise template.TemplateSyntaxError(
             'The second argument to the {%% %s %%} tag must be "as"' % (tag_name))
 
-    tabs = [Tab(callback, caption) for callback, caption in settings.TABS]
+    tabs = [Tab(*tab_args) for tab_args in settings.TABS]
     return TabsNode(tabs, str(args[1]))
