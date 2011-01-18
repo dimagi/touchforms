@@ -1,3 +1,4 @@
+{% load tabs_tags %}
 <div id="header">
     <div class="container">
         <div class="span-12">
@@ -11,5 +12,22 @@
                 <a href="{% url bhoma.apps.webapp.views.bhoma_login %}">Log in</a>
             {% endif %}
        </div>
+       <nav>
+            <ul id="top-nav">
+                {% get_tabs as tabs %}
+                <ul id="tabs">
+                     {% for tab in tabs %}
+                         {% if tab.visible %}
+	                         {% if tab.is_active %}
+	                             <li class="app-{{ tab.name }} active"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
+	                         {% else %}
+	                             <li class="app-{{ tab.name }}"><a href="{{ tab.url }}">{{ tab.caption }}</a></li>
+	                         {% endif %}
+	                     {% endif %}
+                     {% endfor %}
+                </ul>
+                
+            </ul>
+        </nav>
     </div><!-- End Container Class -->
 </div>
