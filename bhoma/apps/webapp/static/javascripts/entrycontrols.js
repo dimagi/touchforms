@@ -1009,6 +1009,11 @@ function IDMaskEntry (mask, prefix, prototype) {
     }
   }
 
+  this.getAnswer = function () {
+    var ans = this.super('getAnswer')();
+    return (ans == this.prefix ? null : ans);
+  }
+
   this.getControl = function () {
     return (this.inputfield == null ? null : this.inputfield.getControl());
   }
