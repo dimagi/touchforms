@@ -252,3 +252,8 @@ th.table-heading {
 td.prompt {
     text-align: right;
 }
+
+.important {
+    color: red;
+    font-weight: bold;
+}
