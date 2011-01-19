@@ -12,6 +12,7 @@
                 <a href="{% url bhoma.apps.webapp.views.bhoma_login %}">Log in</a>
             {% endif %}
        </div>
+       {% if user.is_authenticated %}        
        <nav>
             <ul id="top-nav">
                 {% get_tabs as tabs %}
@@ -29,5 +30,6 @@
                 
             </ul>
         </nav>
+        {% endif %}
     </div><!-- End Container Class -->
 </div>
