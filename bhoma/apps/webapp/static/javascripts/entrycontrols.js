@@ -911,7 +911,7 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
 
     if (autoCompleteKeyboardHints() && hinting) {
       var frequency = hinting.nextchar_freq;
-      var error_margin = hinting.margin; //lower-bound on character frequency
+      var error_margin = hinting.margin || 1.; //lower-bound on character frequency
 
       var max = 0;
       var sum = 0;
