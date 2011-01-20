@@ -263,7 +263,7 @@ function MultiSelectEntry (args) {
       console.log(button);
       button.multi = false;
       button.base_style = null;
-      button.default_color = 'gr #52a #209';
+      button.default_color = 'gr #008855 #004422';
       button.setStatus(button.status);
     }
   }
