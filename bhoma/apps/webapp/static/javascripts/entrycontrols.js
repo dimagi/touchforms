@@ -909,36 +909,30 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
     }
     this.setChoices(names, current);
 
-    //EXPERIMENTAL -- dynamically change keyboard to hint next most-likely chars
     if (autoCompleteKeyboardHints() && hinting) {
       var frequency = hinting.nextchar_freq;
-      var samplesize = hinting.sample_size;
+      var error_margin = hinting.margin; //lower-bound on character frequency
 
+      var max = 0;
       var sum = 0;
       for (var c in frequency) {
         sum += frequency[c];
-      }
-
-      var max = 0;
-      for (var c in frequency) {
-        frequency[c] *= samplesize / sum;
         if (frequency[c] > max) {
           max = frequency[c];
         }
       }
 
-      var BASELINE = 1.; //characters with a frequency of zero are given this minimum
       var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
       //measurement of the disparity between most and least frequent (with correction for small sample sizes)
-      var pareto = alphabet.length * (max + BASELINE) / (samplesize + alphabet.length * BASELINE);
+      var pareto = alphabet.length * (max + error_margin) / (sum + alphabet.length * error_margin);
       //size of most frequent letter -- a larger disparity give a larger max size
       var maxsize = 1.9 /*base_size*/ + Math.log(pareto)/7.;
       var opacity_skew = (.7 - .06 * Math.log(pareto)) / Math.pow(7.5, .75);
 
       for (var i = 0; i < alphabet.length; i++) {
         var c = alphabet[i];
-        var k = (max == 0 ? 0. : Math.min(-Math.log(Math.max(frequency[c] || 0., BASELINE) / max), 9.));
-        console.log(c, k, frequency[c], max, samplesize);
+        var k = (max == 0 ? 0. : Math.min(-Math.log(Math.max(frequency[c] || 0., error_margin) / max), 9.));
+        console.log(c, k, frequency[c], max, sum, error_margin);
 
         var opacity = 1. - opacity_skew * Math.pow(k, .75);
         var shade = 1. - .035 * k;
