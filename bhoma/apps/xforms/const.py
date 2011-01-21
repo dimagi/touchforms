@@ -13,6 +13,6 @@ TAG_META_TIMESTART = "TimeStart"
 TAG_META_TIMEEND = "TimeEnd"
 TAG_META_USERNAME = "username"
 TAG_META_USER_ID = "user_id"
-TAG_META_UID = "uid" #TODO: remove?
+TAG_META_UID = "uid" 
 
 PRELOADER_TAG_UID = "<uid>"

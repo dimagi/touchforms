@@ -13,7 +13,7 @@ def bootstrap():
         files = os.listdir(settings.XFORMS_FORM_BOOTSTRAP_PATH)
         logging.debug("bootstrapping forms in %s" % settings.XFORMS_FORM_BOOTSTRAP_PATH)
         for filename in files:
-            # TODO: is this sneaky lazy loading a reasonable idea?
+            # is this sneaky lazy loading a reasonable idea?
             full_name = os.path.join(settings.XFORMS_FORM_BOOTSTRAP_PATH, filename)
             file = open(full_name, "r")
             try:
