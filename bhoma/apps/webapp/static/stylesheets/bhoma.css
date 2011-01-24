@@ -91,3 +91,8 @@ nav li:last-child {
     font-weight:bold;
 }
  
+/* ripped off from the blueprint, to plug into django messages framework */
+.warning, .info {padding:.8em;margin-bottom:1em;border:2px solid #ddd;}
+.warning, .info {background:#FFF6BF;color:#514721;border-color:#FFD324;}
+.warning a, .info a {color:#514721;}
+ 
