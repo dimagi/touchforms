@@ -1,0 +1,16 @@
+{% extends "touchscreen/wrapper-raw.html" %}
+{% block header %}
+SHUTDOWN {{ success|yesno:"SUCCESSFUL,FAILED" }}
+{% endblock %}
+{% block touchscreen_content %}
+{% if success %}
+<span style="color:green">
+<p style="padding-top:20px;">The system is now shutting down...</p>
+<p>Please wait until it stops being responsive before disconnecting the power.</p>
+</span>
+{% else %}
+<span style="color:blue; ">
+<p style="padding-top:20px;">There was a problem shutting down the system.</p>
+<p>Please try again in a few moments. If you keep seeing this message you may have to physically power it off or turn off the power.</p>
+{% endif %}
+{% endblock %}

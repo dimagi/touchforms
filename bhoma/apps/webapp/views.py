@@ -3,7 +3,7 @@
 
 from datetime import datetime
 from django.conf import settings 
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth.views import login as django_login
 from django.contrib.auth.views import logout as django_logout
 from bhoma.utils import render_to_response
@@ -20,12 +20,16 @@ from bhoma.apps.webapp.config import is_clinic
 from django.template import loader
 from django.template.context import Context, RequestContext
 from bhoma.utils.logging import log_exception
+from bhoma.apps.webapp.system import shutdown
+from django.core.exceptions import PermissionDenied
+from django.contrib import messages
 
 
 @require_GET
 def clinic_landing_page(req):
     return render_to_response(req, "clinic_landing_page.html",
-                              {"options": TouchscreenOptions.default()})
+                              {"options": TouchscreenOptions.default(),
+                               "can_power_down_server": settings.BHOMA_CAN_POWER_DOWN_SERVER})
 
 @require_GET
 def landing_page(req):
@@ -43,11 +47,31 @@ def timeout(req):
     log_exception(TimeoutException("A touchscreen view has timed out and was aborted"))
     return HttpResponseRedirect(reverse("landing_page"))
 
+@require_POST
+def power_down(req):
+    try:
+        success = shutdown()
+        return render_to_response(req, "touchscreen/shutdown.html", {"success": success, "options": TouchscreenOptions.default()})
+    except PermissionDenied, e:
+        messages.error(req, str(e))
+        # if we raise permission denied django displays a different web page
+        # so force a 500 with a generic exception
+        raise Exception(e)
+
 def server_error(request, template_name='500.html'):
     """
     500 error handler.
     """
     # hat tip: http://www.arthurkoziel.com/2009/01/15/passing-mediaurl-djangos-500-error-view/
+    t = loader.get_template(template_name) 
+    return HttpResponseServerError(t.render(RequestContext(request, 
+                                                           {'MEDIA_URL': settings.MEDIA_URL,
+                                                            "options": TouchscreenOptions.default()})))
+    
+def not_found(request, template_name='404.html'):
+    """
+    404 error handler.
+    """
     t = loader.get_template(template_name) 
     return HttpResponseServerError(t.render(RequestContext(request, 
                                                            {'MEDIA_URL': settings.MEDIA_URL,

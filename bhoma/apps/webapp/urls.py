@@ -11,6 +11,8 @@ from django.contrib.auth.decorators import permission_required
 urlpatterns = patterns('',
     url(r'^$', views.landing_page, name="landing_page"),
     url(r'^clinic/$', views.clinic_landing_page, name="clinic_landing_page"),
+    url(r'^shutdown/$', views.power_down, name="power_down"),
+    url(r'^fail/$', views.server_error, name="fail"),
     
     url(r'^accounts/login_ts/$', views.touchscreen_login, name="touchscreen_login"),
     url(r'^accounts/logout_ts/$', views.touchscreen_logout, name="touchscreen_logout"),

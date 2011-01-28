@@ -1,10 +1,12 @@
 {% extends "touchscreen/wrapper-raw.html" %}
 {% load touchscreen_tags %}
+{% block page_head %}
+    <script type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/confirm.js"></script>
+{% endblock %}
 {% block header %}
-BHOMA Main Menu
+What would you like to do?
 {% endblock %}
 {% block touchscreen_content %}
-<h4>What would you like to do?</h4>
 <center>
 {% if perms.webapp.bhoma_enter_data %}
     {% url patient_select as pat_select_url %}
@@ -17,6 +19,11 @@ BHOMA Main Menu
 {% if perms.webapp.bhoma_administer_clinic %}
 	{% url bhoma_admin as b_admin_url %}
 	{% ts_button "Administration" b_admin_url %}
+{% endif %}
+{% if can_power_down_server %}
+    <form action="shutdown/" method="POST" onsubmit="return confirmSubmit('Really power down the system? No one will be able to enter data until you turn it back on.');">
+        <input id="power-button" type="submit" value="Power Down"/>
+    </form>
 {% endif %}
 </center>
 {% endblock %}

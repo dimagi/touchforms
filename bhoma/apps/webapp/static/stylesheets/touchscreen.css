@@ -166,6 +166,24 @@
     font-size: xx-large; 
 }
 
+#power-button, #power-button:active {
+    width: 250px; 
+    height: 64px;
+    cursor: pointer;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    -webkit-border-radius: 10px;
+    margin: 15px;
+    font-size: xx-large;
+    font-weight: bold;
+    border:none;
+    margin:0px;
+    padding:0px;
+    color: #fff;
+    background: #dd2233; /* old browsers */
+    background: -moz-linear-gradient(top, #dd2233 0%, #bb0011 100%); /* firefox */
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#dd2233), color-stop(100%,#bb0011)); /* webkit */
+}
 
 #back-button, .numpad-button {
     position: absolute; 
@@ -185,6 +203,7 @@
     background: #dd2233; /* old browsers */
     background: -moz-linear-gradient(top, #dd2233 0%, #bb0011 100%); /* firefox */
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#dd2233), color-stop(100%,#bb0011)); /* webkit */
+    
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#dd2233', endColorstr='#bb0011',GradientType=0 ); /* ie */
 }
 

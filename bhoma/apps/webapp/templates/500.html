@@ -5,7 +5,12 @@
 <br></br>
 <center>
 <h3 style="color: blue;">
-Sorry, something just went wrong, causing an unexpected error.
+{% if messages %}{% for message in messages %}
+    <p>{{ message }}</p>
+{% endfor %}
+{% else %}
+       Sorry, something just went wrong, causing an unexpected error.
+{% endif %}
 </h3>
 <h5>
 Please try again to complete what you were doing.  If you keep
