@@ -1,6 +1,7 @@
 from subprocess import PIPE, Popen
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+import os
 
 
 def shutdown():
@@ -8,7 +9,8 @@ def shutdown():
     Shutdown the system. Return success or no.
     """
     if settings.BHOMA_CAN_POWER_DOWN_SERVER:
-        shutdown_proc = Popen("sudo shutdown -P now", stdout=PIPE, stderr=PIPE, shell=True)
+        command = os.path.join(settings.BHOMA_ROOT_DIR, "scripts", "shutdown", "shutdown-wrapper") 
+        shutdown_proc = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
         ret = shutdown_proc.wait()
         return ret == 0
     else:
