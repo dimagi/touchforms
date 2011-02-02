@@ -16,7 +16,6 @@
        <nav>
             <ul id="top-nav">
                 {% get_tabs as tabs %}
-                <ul id="tabs">
                      {% for tab in tabs %}
                          {% if tab.visible %}
                              {% if tab.is_active %}
@@ -26,8 +25,6 @@
                              {% endif %}
                          {% endif %}
                      {% endfor %}
-                </ul>
-                
             </ul>
         </nav>
         {% endifnotequal %}{% endif %}
