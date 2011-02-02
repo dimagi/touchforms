@@ -8,6 +8,7 @@ xform_info = {
 
 urlpatterns = patterns('',
     url(r'^$', 'bhoma.apps.xforms.views.xform_list', name="xform_list"),
+    url(r'^data/(?P<instance_id>\w+)/$', 'bhoma.apps.xforms.views.xform_data', name="xform_data"),
     url(r'^enter/(?P<xform_id>.*)$', 'bhoma.apps.xforms.views.play', name='xform_play'),
     url(r'^download/(?P<xform_id>.*)$', 'bhoma.apps.xforms.views.download', name='xform_download'),
     url(r'^download_excel/$', 'bhoma.apps.xforms.views.download_excel', name='xform_download_excel'),

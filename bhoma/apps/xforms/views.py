@@ -25,6 +25,12 @@ def xform_list(request):
         'forms_by_namespace': dict(forms_by_namespace),
     })
 
+def xform_data(request, instance_id):
+    instance = CXFormInstance.get(instance_id)
+    return render_to_response(request, "xforms/single_instance_raw.html", 
+                              {"instance": instance})
+    
+
 def download(request, xform_id):
     """
     Download an xform

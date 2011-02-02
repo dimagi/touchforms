@@ -271,6 +271,10 @@ td.prompt {
     text-align: left;
 }
 
+li .value {
+    font-weight: bold;	
+}
+
 .important {
     color: #e11;
     font-weight: bold;

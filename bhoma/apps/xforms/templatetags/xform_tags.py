@@ -15,6 +15,8 @@ def render_form_data(form):
     def render_node(nodekey, nodevalue):
         
         def is_hidden_field(field_key):
+            # hackity hack this static list of things we don't actually 
+            # want to display
             SYSTEM_FIELD_NAMES = ("drugs_prescribed", "case", "meta", "clinic_ids", "drug_drill_down", "tmp", "info_hack_done") 
             return field_key.startswith("#") or field_key.startswith("@") or field_key.startswith("_") \
                    or field_key.lower() in SYSTEM_FIELD_NAMES
@@ -24,7 +26,7 @@ def render_form_data(form):
         
         def render_base_type(key, value):
             if not value: return ""
-            return "<li>%s: <strong>%s</strong></li>" % (format_name(key), format_name(value))
+            return "<li><span class='prompt'>%s:</span> <span class='value'>%s</span></li>" % (format_name(key), format_name(value))
             
         
         def is_base_type(value):
@@ -74,4 +76,4 @@ def render_form_data(form):
             else:
                 return render_base_type(nodekey, nodevalue)
     
-    return "<ul>%s</ul>" % "".join(render_node(key, val) for key, val in form.top_level_tags().items())
+    return "<ul id='formdata'>%s</ul>" % "".join(render_node(key, val) for key, val in form.top_level_tags().items())
