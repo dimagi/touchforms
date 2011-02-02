@@ -32,7 +32,8 @@ ul.tabs
 .boxed {
     border: 1px solid #cccccc;
     padding: 5px;
-    background-color: #f3f3f3;
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
  
 .code  {
@@ -96,3 +97,24 @@ nav li:last-child {
 .warning, .info {background:#FFF6BF;color:#514721;border-color:#FFD324;}
 .warning a, .info a {color:#514721;}
  
+ table.summary {
+    border: 1px solid #ccc;
+ }
+ 
+ .summary td.prompt {
+    font-weight: bold;
+    text-align: right;
+ } 
+ 
+.dashboard {
+    padding-bottom: 10px;  
+}
+.dashboard .prompt {
+	font-weight: bold;
+}   
+.dashboard .value {
+	text-align: center;
+    font-size: 150%;
+    margin-bottom: 5px;
+    padding-bottom: 20px;
+}
