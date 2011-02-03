@@ -11,13 +11,16 @@ import time
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
+DEFAULT_PORT = 4444
+
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     pass
 
 class XFormHTTPGateway(threading.Thread):
-    def __init__(self, port):
+    def __init__(self, port, extensions=[]):
         threading.Thread.__init__(self)
         self.server = ThreadingHTTPServer(('', port), XFormRequestHandler)
+        self.server.extensions = extensions
 
     def run(self):
         self.server.serve_forever()
@@ -27,6 +30,7 @@ class XFormHTTPGateway(threading.Thread):
 
 class XFormRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
+
         if 'content-length' in self.headers.dict:
             length = int(self.headers.dict['content-length'])
         else:
@@ -47,7 +51,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            data_out = handle_request(data_in)
+            data_out = handle_request(data_in, extensions=self.server.extensions)
         except (Exception, java.lang.Exception), e:
             if isinstance(e, java.lang.Exception):
                 e.printStackTrace() #todo: log the java stacktrace
@@ -63,7 +67,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(reply.encode('utf-8'))
         logging.debug('returned: [%s]' % reply)
 
-def handle_request (content):
+def handle_request (content, **kwargs):
     if 'action' not in content:
         return {'error': 'action required'}
 
@@ -73,7 +77,7 @@ def handle_request (content):
             if 'form-name' not in content:
                 return {'error': 'form identifier required'}
             preload_data = content["preloader-data"] if "preloader-data" in content else {}
-            return xformplayer.open_form(content['form-name'], preload_data)
+            return xformplayer.open_form(content['form-name'], kwargs.get('extensions', []), preload_data)
 
         elif action == 'edit-form':
             return {'error': 'unsupported'}
@@ -137,12 +141,14 @@ def handle_request (content):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) > 1:
+    try:
         port = int(sys.argv[1])
-    else:
-        port = 4444
+    except IndexError:
+        port = DEFAULT_PORT
 
-    gw = XFormHTTPGateway(port)
+    extension_modules = sys.argv[2:]
+
+    gw = XFormHTTPGateway(port, extension_modules)
     gw.start()
     logging.info('started server on port %d' % port)
 

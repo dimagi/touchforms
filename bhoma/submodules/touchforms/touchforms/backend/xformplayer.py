@@ -9,7 +9,7 @@ from java.util import Date
 from java.util import Vector
 from java.io import StringReader
 
-import preloadhandler
+import customhandlers
 from util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect
     
 from setup import init_classpath
@@ -68,22 +68,13 @@ class global_state_mgr:
 global_state = global_state_mgr()
   
 
-def load_form(xform, instance=None, preload_data={}):
+def load_form(xform, instance=None, extensions=[], preload_data={}):
     form = XFormParser.getFormDef(StringReader(xform))
     if instance != None:
     #todo: support hooking up a saved instance
         pass
 
-    #todo: fix circular import
-    for key, data_dict in preload_data.items():
-        handler = preloadhandler.StaticPreloadHandler(key, data_dict)
-        logging.debug("Adding preloader for %s data: %s" % (key, data_dict))
-        form.getPreloader().addPreloadHandler(handler)
-    
-    for funchandler in [preloadhandler.XFuncPrettify]:
-        handler = funchandler()
-        logging.debug("Adding function handler for [%s]" % handler.getName())
-        form.exprEvalContext.addFunctionHandler(handler)
+    customhandlers.attach_handlers(form, preload_data, extensions)
 
     form.initialize(instance == None)
     return form
@@ -93,7 +84,7 @@ class SequencingException(Exception):
 
 class XFormSession:
     def __init__(self, xform_raw=None, xform_path=None, instance_raw=None, instance_path=None,
-                 preload_data={}):
+                 preload_data={}, extensions=[]):
         self.lock = threading.Lock()
 
         def content_or_path(content, path):
@@ -111,7 +102,7 @@ class XFormSession:
         if instance != None:
             raise ValueError('don\'t support loading saved forms yet')
 
-        self.form = load_form(xform, instance, preload_data)
+        self.form = load_form(xform, instance, extensions, preload_data)
         self.fem = FormEntryModel(self.form)
         self.fec = FormEntryController(self.fem)
         self._parse_current_event()
@@ -305,11 +296,11 @@ class choice(object):
     def to_json(self):
         return self.q.getSelectChoiceText(self.select_choice)
 
-def open_form (form_name, preload_data={}):
+def open_form (form_name, extensions=[], preload_data={}):
     if not os.path.exists(form_name):
         return {'error': 'no form found at %s' % form_name}
 
-    xfsess = XFormSession(xform_path=form_name, preload_data=preload_data)
+    xfsess = XFormSession(xform_path=form_name, preload_data=preload_data, extensions=extensions)
     sess_id = global_state.new_session(xfsess)
     first_event = xfsess.next_event()
     return {'session_id': sess_id, 'event': first_event}
