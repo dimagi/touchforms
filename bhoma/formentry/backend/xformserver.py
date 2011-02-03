@@ -7,6 +7,7 @@ import jsonhack as json  #todo: replace with real json library
 import xformplayer
 import os
 import java.lang
+import time
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
@@ -147,7 +148,9 @@ if __name__ == "__main__":
 
     try:
         while True:
-            pass
+            time.sleep(.01) #yield thread
     except KeyboardInterrupt:
+        #note: the keyboardinterrupt event doesn't seem to be triggered in
+        #jython, nor does jython2.5 support the httpserver 'shutdown' method
         logging.info('interrupted; shutting down...')
         gw.terminate()
