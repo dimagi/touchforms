@@ -87,7 +87,7 @@ class TabsNode(template.Node):
     def render(self, context):
         request = Variable("request").resolve(context)
         for tab in self.tabs:
-            tab.is_active = tab.url in request.get_full_path()
+            tab.is_active = request.get_full_path().startswith(tab.url)
             tab.visible = tab.has_permission(request.user)                    
         
         context[self.varname] = self.tabs

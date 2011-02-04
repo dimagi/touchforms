@@ -11,3 +11,19 @@
     margin-left: 0px;
     
 }
+
+#formdata {
+    background-color: #fff;
+    border: 1px solid #000;
+    list-style-type: none;
+    padding-left: 10px;
+}
+
+#formdata ul {
+    list-style-type: none;
+    padding-left: 10px;
+}
+
+#formdata .value {
+    font-weight: bold;
+}
