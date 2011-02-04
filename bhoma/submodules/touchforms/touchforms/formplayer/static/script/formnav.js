@@ -65,7 +65,7 @@ function xformAjaxAdapter (formName, preloadTags) {
             if (resp["type"] == "required") {
               showError("An answer is required");
             } else if (resp["type"] == "constraint") {
-              showError(resp["reason"]);      
+              showError(resp["reason"] || 'This answer is outside the allowed range.');      
             }
           } else {
             adapter._renderEvent(resp["event"], true);
