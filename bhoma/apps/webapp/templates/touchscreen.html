@@ -4,15 +4,15 @@
     <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
     <link rel="stylesheet" href="{{MEDIA_URL}}webapp/stylesheets/touchscreen.css" type="text/css">
 
-    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/layout.js?version={{app_version}}"></script>   
-    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/touchscreen-ui.js?version={{app_version}}"></script>   
-    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/formnav.js?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/dates.js?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/entrycontrols.js?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}webapp/javascripts/workflow.js?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}touchforms/script/layout.js?version={{app_version}}"></script>   
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}touchforms/script/touchscreen-ui.js?version={{app_version}}"></script>   
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}touchforms/script/formnav.js?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}touchforms/script/dates.js?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}touchforms/script/entrycontrols.js?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}touchforms/script/workflow.js?version={{app_version}}"></script>
    
-    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/jquery-1.4.2.min.js"></script>
-    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}webapp/javascripts/shortcut.js"></script>
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}touchforms/script/jquery-1.4.2.min.js"></script>
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}touchforms/script/shortcut.js"></script>
 
 {% for script in dynamic_scripts %}
     <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}{{script}}?version={{app_version}}"></script>   
@@ -28,19 +28,15 @@ if (!window.console) {
 
 XFORM_URL = "{% url xform_player_proxy %}";
 PRELOADER_URL = "{% url xform_preloader %}";
-AUTOCOMPLETE_URL = "{% url bhoma.apps.webapp.views.autocomplete %}";
+AUTOCOMPLETE_URL = "{% url touchforms_autocomplete %}";
+FORCE_ABORT_URL = "{% url touchforms_force_abort %}";
 
 XFORM_NAME = "{{form.name}}";
 XFORM_UID = null;
 
-PREFIXES = {
-  _clinic: '{{ clinic.prefix }}',
-  _chwref: '{{ clinic.ref_prefix }}',
-};
-CLINIC_NUM_CHW_ZONES = {{ clinic.num_chw_zones|default:"8" }};
+PREFIXES = {};
 
-NUMERIC_MONTHS = true;
-DATE_DISPLAY_ORDER = 'dmy';
+{% block custom_init %}{% endblock %}
 
 function init () {
 

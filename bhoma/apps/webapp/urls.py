@@ -26,13 +26,13 @@ urlpatterns = patterns('',
     url(r'^accounts/new/$', views.new_user, name="new_user"),
     url(r'^accounts/delete/$', views.delete_user, name="delete_user"),
     
-    url(r'^touchscreen-abort/', views.timeout, name="touchscreen_timeout"),
+    url(r'^touchscreen-abort/', views.timeout, name="touchforms_force_abort"),
         
     url(r'^api/auth/$', views.authenticate_user),
     url(r'^api/usernames/$', views.get_usernames),
     url(r'^api/roles/$', views.get_roles),
     url(r'^api/user_exists/$', views.user_exists),
-    url(r'^api/autocomplete/$', views.autocomplete),
+    url(r'^api/autocomplete/$', views.autocomplete, name="touchforms_autocomplete"),
     
     url(r'^api/diagnostics/$', views.diagnostics),
     url(r'^api/phonehome/(?P<tag>\w+)/$', views.phone_home),

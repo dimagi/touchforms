@@ -1019,7 +1019,7 @@ function Top (main, overlay) {
     this.waitdiv.style.zIndex = 1000;
     this.waitdiv.innerHTML = '<div style="background: #fff; opacity: .7; height: 100%;"></div><div style="position: absolute; top: 150px; width: 100%; text-align: center; font-weight: bold; font-size: 200%; color: #222;">Please wait&hellip;<br><br><img src="/static/webapp/images/loading.png"></div><div id="abort-popup" style="display: none; position: absolute; left: 40px; bottom: 40px;"><p style="max-width: 35em; font-size: medium; font-weight: bold;">This is taking a long time. There might be a problem. You can click the ABORT button to go back to the main screen, but you will lose the form you were working on if you do.</p>' + oneOffButtonHTML ('abort', 'ABORT') + '</div>';
     parent_div.appendChild(this.waitdiv);
-    $('#abort')[0].onclick = function () { window.location='/touchscreen-abort/'; };
+    $('#abort')[0].onclick = function () { window.location = FORCE_ABORT_URL; };
   }
 
   this.abortTimer = null;

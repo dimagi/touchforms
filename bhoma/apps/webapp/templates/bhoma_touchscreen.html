@@ -1,0 +1,12 @@
+{% extends "touchscreen.html" %}
+
+{% block custom_init %}
+
+PREFIXES._clinic = '{{ clinic.prefix }}';
+PREFIXES._chwref = '{{ clinic.ref_prefix }}';
+CLINIC_NUM_CHW_ZONES = {{ clinic.num_chw_zones|default:"8" }};
+
+NUMERIC_MONTHS = true;
+DATE_DISPLAY_ORDER = 'dmy';
+
+{% endblock %}
