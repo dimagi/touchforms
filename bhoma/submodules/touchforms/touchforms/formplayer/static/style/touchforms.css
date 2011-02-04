@@ -59,3 +59,8 @@
   background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#11ab33), color-stop(100%,#008911)); /* webkit */
   filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#11ab33', endColorstr='#008911',GradientType=0 ); /* ie */
 }
+
+.important {
+    color: #e11;
+    font-weight: bold;
+}
