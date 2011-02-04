@@ -14,9 +14,7 @@ function(doc, req) {
         
     var getUuid = function(req, doc) {
         // search for a uuid in some known places
-        // CZUE: stop using the uid from the form.  It creates all kinds of other problems
-        // with document update conflicts
-        
+        // this one is when it's specified in the request
         if (req.query && req.query.uid) return req.query.uid;
         if (doc["uuid"]) return doc["uuid"];
         if (doc["Meta"] && doc["Meta"]["uid"]) return doc["Meta"]["uid"];
