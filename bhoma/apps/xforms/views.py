@@ -88,7 +88,7 @@ def play(request, xform_id, callback=None, preloader_data={}):
             return HttpResponseRedirect(reverse("xform_list"))
     
     preloader_data_js = json.dumps(preloader_data)
-    return render_to_response(request, "touchscreen.html",
+    return render_to_response(request, "bhoma_touchscreen.html",
                               {"form": xform,
                                "mode": 'xform',
                                "preloader_data": preloader_data_js })
