@@ -1,90 +1,76 @@
 
-function xformAjaxAdapter (formName, preloadData) {
+function xformAjaxAdapter (formName, preloadTags) {
   this.formName = formName;
-  this.preloadData = preloadData;
+  this.preloadTags = preloadTags;
   this.session_id = -1;
 
   this.loadForm = function () {
     adapter = this;
-    jQuery.post(XFORM_URL, JSON.stringify({'action': 'new-form', 
-                                           'form-name': this.formName,
-                                           'preloader-data': this.preloadData}),
+    preload_data = {};
+    for (var type in this.preloadTags) {
+        var dict = this.preloadTags[type];
+        preload_data[type] = {};
+        for (var key in dict) {
+            var val = dict[key];
+            // this special character indicates a server preloader, which 
+            // we make a synchronous request for
+            if (val.indexOf("<") === 0) {
+                valback = jQuery.ajax({url: PRELOADER_URL, type: 'GET', data:{"param": val}, async: false}).responseText;
+                preload_data[type][key] = valback;
+            } else {
+                preload_data[type][key] = val
+            }
+        }
+    }
+    this.serverRequest(XFORM_URL, {'action': 'new-form', 
+                                   'form-name': this.formName,
+                                   'preloader-data': preload_data},
       function (resp) {
         adapter.session_id = resp["session_id"];
         adapter._renderEvent(resp["event"], true);
-      },
-      "json");
+      });
   }
 
-
-  this.NEW_REPEATS = true;
   this.answerQuestion = function (answer) {
     adapter = this;
     if (activeQuestion["type"] == "repeat-juncture") {
-      //ugh, we _really_ need dictionary based select questions
-      var addIx = (activeQuestion["add-choice"] != null ? activeQuestion["repetitions"].length + 1 : -1);
-      var delIx = (activeQuestion["del-choice"] != null ? activeQuestion["choices"].length - 1 : -1);
-      var doneIx = activeQuestion["choices"].length;
-
       if (answer == null) {
         showError("An answer is required");
-      } else if (answer <= activeQuestion["repetitions"].length) {
-        jQuery.post(XFORM_URL, JSON.stringify({'action': (activeQuestion["repeat-delete"] ? 'delete-repeat' :'edit-repeat'), 
-                'session-id': this.session_id, 'ix': answer}),
+      } else if (answer.substring(0, 3) == 'rep') {
+        var repIx = +answer.substring(3);
+        this.serverRequest(XFORM_URL, {'action': (activeQuestion["repeat-delete"] ? 'delete-repeat' :'edit-repeat'), 
+                'session-id': this.session_id, 'ix': repIx},
           function (resp) {
             adapter._renderEvent(resp["event"], true);
-          },
-          "json");
-      } else if (answer == addIx) {
-        jQuery.post(XFORM_URL, JSON.stringify({'action': 'new-repeat', 'session-id': this.session_id}),
+          });
+      } else if (answer == 'add') {
+        this.serverRequest(XFORM_URL, {'action': 'new-repeat', 'session-id': this.session_id},
           function (resp) {
             adapter._renderEvent(resp["event"], true);
-          },
-          "json");
-      } else if (answer == delIx) {
+          });
+      } else if (answer == 'del') {
         activeQuestion["repeat-delete"] = true;
         this._renderEvent(activeQuestion, true);
-      } else if (answer == doneIx) {
+      } else if (answer == 'done') {
         this._step(true);
       } else {
         alert('oops');
       }
-    } else if (activeQuestion["repeatable"]) {
-      if (answer == 1 && !activeQuestion["exists"]) {
-        //create repeat
-        jQuery.post(XFORM_URL, JSON.stringify({'action': 'add-repeat', 'session-id': this.session_id}),
-          function (resp) {
-            adapter._renderEvent(resp["event"], true);
-          },
-          "json");
-      } else if (answer == 2 && activeQuestion["exists"]) {
-        //delete repeat
-        alert('i should probably delete all the subsequent existing repeats here, but i don\'t support that currently. also, that\'s probably not the best user interaction');
-        this._step(true);
-      } else {
-        //nothing changed; advance
-        this._step(true);
-      }
     } else {
-      jQuery.post(XFORM_URL, JSON.stringify({'action': 'answer',
-                                             'session-id': this.session_id,
-                                             'answer': answer}),
+      this.serverRequest(XFORM_URL, {'action': 'answer',
+                                     'session-id': this.session_id,
+                                     'answer': answer},
         function (resp) {
           if (resp["status"] == "validation-error") {
             if (resp["type"] == "required") {
               showError("An answer is required");
             } else if (resp["type"] == "constraint") {
-		if (resp["reason"] !== null && resp["reason"] !== undefined) {
-		    showError(resp["reason"]);
-		} else {
-		    showError("Not a valid answer, please try again.");
-		}
+              showError(resp["reason"] || 'This answer is outside the allowed range.');      
             }
           } else {
             adapter._renderEvent(resp["event"], true);
           }
-        },
-        "json");
+        });
     }
   }
 
@@ -92,44 +78,63 @@ function xformAjaxAdapter (formName, preloadData) {
     this._step(false);
   }
 
+  this.domain_meta = function (event) {
+    var meta = {};
+
+    if (event.datatype == "date") {
+      meta.mindiff = event["style"]["before"] != null ? +event["style"]["before"] : null;
+      meta.maxdiff = event["style"]["after"] != null ? +event["style"]["after"] : null;
+    } else if (event.datatype == "int" || event.datatype == "float") {
+      meta.unit = event["style"]["unit"];
+    } else if (event.datatype == 'str') {
+      meta.autocomplete = (event["style"]["mode"] == 'autocomplete');
+      meta.autocomplete_key = event["style"]["autocomplete-key"];
+      meta.mask = event["style"]["mask"];
+      meta.prefix = event["style"]["prefix"];
+    } else if (event.datatype == "multiselect") {
+      if (event["style"]["as-select1"] != null) {
+        meta.as_single = [];
+        var vs = event["style"]["as-select1"].split(',');
+        for (var i = 0; i < vs.length; i++) {
+          var k = +vs[i];
+          if (k != 0) {
+            meta.as_single.push(k);
+          }
+        }
+      }
+    }
+
+    return meta;
+  }
+
   this._renderEvent = function (event, dirForward) {
     if (event["type"] == "question") {
       if (event["style"]["domain"])
         event["domain"] = event["style"]["domain"];
+      event.domain_meta = this.domain_meta(event);
 
       renderQuestion(event, dirForward);
     } else if (event["type"] == "form-complete") {
       this._formComplete(event);
     } else if (event["type"] == "sub-group") {
-      if (!this.NEW_REPEATS && event["repeatable"]) {
-        event["item"] = event["caption"];
-        event["caption"] = "Add a " + event["item"] + "?";
-        event["datatype"] = "select";
-        event["choices"] = ["Yes", "No"];
-        event["answer"] = (event["exists"] ? 1 : (dirForward ? null : 2));
-        event["required"] = true;
-
-        renderQuestion(event, dirForward);
-      } else {
-        this._step(dirForward);
-      }
+      this._step(dirForward);
     } else if (event["type"] == "repeat-juncture") {
       if (!event["repeat-delete"]) {
         event["caption"] = event["main-header"];
         event["datatype"] = "select";
         
-        var options = []
+        var options = [];
         for (var i = 0; i < event["repetitions"].length; i++) {
-          options.push(event["repetitions"][i]);
+          options.push({lab: event["repetitions"][i], val: 'rep' + (i + 1)});
         }
         if (event["add-choice"] != null) {
-          options.push(event["add-choice"]);
+          options.push({lab: event["add-choice"], val: 'add'});
         }
         if (event["del-choice"] != null) {
-          options.push(event["del-choice"]);
+          options.push({lab: event["del-choice"], val: 'del'});
         }
-        options.push(event["done-choice"]);
-        
+        options.push({lab: event["done-choice"], val: 'done'});
+
         event["choices"] = options;
         event["answer"] = null;
         event["required"] = true;
@@ -137,9 +142,9 @@ function xformAjaxAdapter (formName, preloadData) {
         event["caption"] = event["del-header"];
         event["datatype"] = "select";
         
-        var options = []
+        var options = [];
         for (var i = 0; i < event["repetitions"].length; i++) {
-          options.push(event["repetitions"][i]);
+          options.push({lab: event["repetitions"][i], val: 'rep' + (i + 1)});
         }
         event["choices"] = options;
         event["answer"] = null;
@@ -163,24 +168,23 @@ function xformAjaxAdapter (formName, preloadData) {
     }
 
     adapter = this;
-    jQuery.post(XFORM_URL, JSON.stringify({'action': (dirForward ? 'next' : 'back'),
-                                           'session-id': this.session_id}),
+    this.serverRequest(XFORM_URL, {'action': (dirForward ? 'next' : 'back'),
+                                   'session-id': this.session_id},
       function (resp) {
         if (!dirForward && resp["at-start"] && BACK_AT_START_ABORTS) {
           adapter.abort();
         } else {
           adapter._renderEvent(resp["event"], dirForward || resp["at-start"]);
         }
-      },
-      "json");
+      });
   }
 
-  this._formComplete = function (params, path, method) {
-    submit_redirect(params, path, method);
+  this._formComplete = function (params) {
+    interactionComplete(function () { submit_redirect(params); });
   }
 
   this.abort = function () {
-    submit_redirect({type: 'form-aborted'});
+    interactionComplete(function () { submit_redirect({type: 'form-aborted'}); });
   }
 
   this.quitWarning = function () {
@@ -190,6 +194,37 @@ function xformAjaxAdapter (formName, preloadData) {
       'cancel': 'Stay and finish form'
     }
   }
+
+  this.serverRequest = function (url, params, callback) {
+    serverRequest(
+      function (cb) {
+        jQuery.post(url, JSON.stringify(params), cb, "json");
+      },
+      callback
+    );
+  }
+}
+
+var requestInProgress = false;
+function serverRequest (makeRequest, callback) {
+  if (requestInProgress) {
+    //console.log('request is already in progress; aborting');
+    return;
+  }
+  
+  requestInProgress = true;
+  disableInput();
+  var waitingTimer = setTimeout(function () { touchscreenUI.showWaiting(true); }, 300);
+  
+  makeRequest(function (resp) {
+    requestInProgress = false;
+
+    callback(resp);
+
+    enableInput();
+    clearTimeout(waitingTimer);
+    touchscreenUI.showWaiting(false);
+    });
 }
 
 function Workflow (flow, onFinish) {
@@ -202,8 +237,13 @@ function Workflow (flow, onFinish) {
     return this.flow(this.data);
   }
 
-  this.finish = function () {
+  this._finish = function () {
     this.onFinish(this.data);
+  }
+
+  this.finish = function () {
+    var wf = this;
+    interactionComplete(function () { wf._finish(); });
   }
 
   this.abort = function () {
@@ -212,16 +252,17 @@ function Workflow (flow, onFinish) {
   }
 }
 
-function wfQuestion (caption, type, answer, choices, required, validation, helptext, domain, custom_layout) {
-  this.caption = caption;
-  this.type = type;
-  this.value = answer || null;
-  this.choices = choices;
-  this.required = required || false;
-  this.validation = validation || function (ans) { return null; };
-  this.domain = domain;
-  this.custom_layout = custom_layout;
-  this.helptext = helptext;
+function wfQuestion (args) {
+  this.caption = args.caption;
+  this.type = args.type;
+  this.value = args.answer;
+  this.choices = args.choices;
+  this.required = args.required || false;
+  this.validation = args.validation || function (ans) { return null; };
+  this.domain = args.domain;
+  this.domain_meta = args.meta;
+  this.helptext = args.helptext;
+  this.custom_layout = args.custom_layout;
 
   this.to_q = function () {
     return {'caption': this.caption,
@@ -231,6 +272,7 @@ function wfQuestion (caption, type, answer, choices, required, validation, helpt
             'required': this.required,
             'help': this.helptext,
             'domain': this.domain,
+            'domain_meta': this.domain_meta,
             'customlayout': this.custom_layout};
   }
 
@@ -257,10 +299,15 @@ function wfAsyncQuery (query) {
 
   this.eval = function (callback) {
     queryObj = this;
-    this.query(function (val) {
-        queryObj.value = val;
-        callback();
-      });
+    serverRequest(
+      function (cb) {
+        queryObj.query(function (val) {
+            queryObj.value = val;
+            cb();
+          });
+      },
+      callback
+    );
   }
 }
 
@@ -289,10 +336,6 @@ function workflowAdapter (workflow) {
   }
 
   this.answerQuestion = function (answer) {
-    //type = this.active_question.type;
-    //if (type == 'date')
-    //  answer = new Date(answer);
-
     this.active_question.value = answer;
 
     var val_error = null;
@@ -353,7 +396,7 @@ function workflowAdapter (workflow) {
       ev.eval();
       this._push_hist(ev.value, ev);
     } else if (ev instanceof wfAsyncQuery) {
-      self = this;
+      var self = this;
       ev.eval(function () { self._push_hist(ev.value, ev); });
     } else if (ev instanceof wfAlert) {
       this._activateQuestion(ev, true);
@@ -394,6 +437,7 @@ function workflowAdapter (workflow) {
 
 function renderQuestion (event, dir) {
   activeQuestion = event;
+  activeControl = null;
 
   SHOW_ALERTS_ON_BACK = false;
   if (event["datatype"] == "info") {
@@ -406,110 +450,54 @@ function renderQuestion (event, dir) {
   }
 
   questionCaption.setText(event["caption"]);
- 
-  if (event["customlayout"] != null) {
-    event["customlayout"](event);
-  } else if (event["datatype"] == "str" ||
-             event["datatype"] == "int" ||
-             event["datatype"] == "float" ||
-             event["datatype"] == "passwd") {
-    questionEntry.update(freeEntry);
 
-    if (event["datatype"] == "passwd") {
-      answerWidget = passwdAnswer;
-      entryWidget = passwdText;
-    } else {
-      answerWidget = freeTextAnswer;
-      entryWidget = answerText;
-    }
-    entryWidget.setMaxLen(500);
+  event.domain_meta = event.domain_meta || {};
 
-    answerBar.update(answerWidget);
-
-    if (event["datatype"] == "str" || event["datatype"] == "passwd") {
-      if (event["domain"] == "alpha") {
-        kbd = keyboardAlphaOnly;
-      } else if (event["domain"] == "numeric" || event["domain"] == "pat-id") {
-        kbd = numPad;
-      } else if (event["domain"] == "bp") {
-        kbd = numPadBP;
-      } else if (event["domain"] == "phone") {
-        kbd = numPadPhone;
-      } else {
-        kbd = keyboard;
-      }
-
-      if (event["domain"] == "pat-id" && event["answer"] == null) {
-        event["answer"] = CLINIC_PREFIX;
-      }
-    } else if (event["datatype"] == "int") {
-      kbd = numPad;
-      entryWidget.setMaxLen(9);
-    } else if (event["datatype"] == "float") {
-      kbd = numPadDecimal;
-    }
-
-    freeEntryKeyboard.update(kbd);    
-    activeInputWidget = entryWidget;
-    
-    if (event["answer"] != null) {
-      entryWidget.setText(event["answer"]);
-    }
-  } else if (event["datatype"] == "select" || event["datatype"] == "multiselect") {
-    selections = normalize_select_answer(event["answer"], event["datatype"] == "multiselect");
-    chdata = choiceSelect(event["choices"], selections, event["datatype"] == "multiselect");
-    questionEntry.update(chdata[0]);
-    activeInputWidget = chdata[1];
-  } else if (event["datatype"] == "date") {
-    dateEntryContext = new DateWidgetContext(dir, event["answer"]);
-    dateEntryContext.refresh();
+  if (event.customlayout != null) {
+    activeControl = event.customlayout(event);
+  } else if (event.domain == 'phone') {
+    activeControl = new PhoneNumberEntry();
+  } else if (event.domain == 'bp') {
+    activeControl = new BloodPressureEntry();
+  } else if (event.datatype == "str") {
+    activeControl = new FreeTextEntry({domain: event.domain});
+  } else if (event.datatype == "int") {
+    activeControl = new IntEntry();
+  } else if (event.datatype == "float") {
+    activeControl = new FloatEntry();
+  } else if (event.datatype == "passwd") {
+    activeControl = new PasswordEntry({domain: event.domain});
+  } else if (event.datatype == "select") {
+    activeControl = new SingleSelectEntry({choices: event.choices, choicevals: event.choicevals});
+  } else if (event.datatype == "multiselect") {
+    activeControl = new MultiSelectEntry({choices: event.choices, choicevals: event.choicevals, meta: event.domain_meta});
+  } else if (event.datatype == "date") {
+    activeControl = new DateEntry(dir, event.domain_meta);
+  } else if (event.datatype == "time") {
+    activeControl = new TimeOfDayEntry();
   } else {
-    alert("unrecognized datatype [" + event["datatype"] + "]");
+    alert("unrecognized datatype [" + event.datatype + "]");
   }
 
-  if (event["answer"] == null) {
-    clearClicked();
+  if (event.domain_meta.unit) {
+    //should only be done for numeric fields
+    activeControl = new UnitEntry(event.domain_meta.unit, activeControl);
+  }
+  if (event.domain_meta.autocomplete) {
+    activeControl = new AutoCompleteEntry(event.domain_meta.autocomplete_key || event.domain, activeControl, autoCompleteStyle());
+  }
+  if (event.domain_meta.mask) {
+    activeControl = new IDMaskEntry(event.domain_meta.mask, event.domain_meta.prefix, activeControl);
+  }
+
+  if (activeControl != null) {
+    activeControl.setAnswer(event.answer);
+    activeControl.load();
   }
 }
 
 function getQuestionAnswer () {
-  type = activeQuestion["datatype"];
-
-  if (type == "str" || type == "int" || type == "float" || type == "passwd") {
-    var val = activeInputWidget.child.control.value;
-    if (val == "") {
-      return null;
-    } else if (type == "str" || type == "passwd") {
-      return val;
-    } else {
-      return +val;
-    }
-  } else if (type == "select" || type == "multiselect") {
-    selected = [];
-    for (i = 0; i < activeInputWidget.length; i++) {
-      if (activeInputWidget[i].status == 'selected') {
-        selected.push(getButtonID(activeInputWidget[i]));
-      }
-    }
-    
-    if (type == "select") {
-      return selected.length > 0 ? selected[0] : null;
-    } else {
-      return selected;
-    }
-  } else if (type == "date") {
-    return dateEntryContext.getDate();
-  } else if (type == "info") {
-    return null;
-  }
-}
-
-function normalize_select_answer (ans, multi) {
-  if (ans != null) {
-    return (!multi ? [ans] : ans);
-  } else {
-    return null;
-  }
+  return (activeControl != null ? activeControl.getAnswer() : null);
 }
 
 function answerQuestion () {
@@ -518,6 +506,20 @@ function answerQuestion () {
 
 function prevQuestion () {
   gFormAdapter.prevQuestion();
+}
+
+var interactionDone = false;
+function interactionComplete (submit) {
+  if (interactionDone) {
+    //console.log('interaction already done; ignoring');
+    return;
+  }
+  
+  interactionDone = true;
+  disableInput();
+  var waitingTimer = setTimeout(function () { touchscreenUI.showWaiting(true); }, 300);
+  
+  submit();
 }
 
 function submit_redirect(params, path, method) {

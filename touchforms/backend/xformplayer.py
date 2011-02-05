@@ -1,14 +1,16 @@
+from __future__ import with_statement
 import sys
 import os
 from datetime import datetime
 import threading
+import codecs
 
 from java.util import Date
 from java.util import Vector
 from java.io import StringReader
 
-import preloadhandler
-from util import to_jdate, to_pdate, to_vect
+import customhandlers
+from util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect
     
 from setup import init_classpath
 import logging
@@ -21,6 +23,8 @@ from org.javarosa.core.model.data import *
 from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
 
+class NoSuchSession(Exception):
+  pass
 
 class global_state_mgr:
   instances = {}
@@ -33,35 +37,30 @@ class global_state_mgr:
     self.lock = threading.Lock()
   
   def new_session(self, xfsess):
-    self.lock.acquire()
-    self.session_id_counter += 1
-    self.session_cache[self.session_id_counter] = xfsess
-    self.lock.release()
+    with self.lock:
+      self.session_id_counter += 1
+      self.session_cache[self.session_id_counter] = xfsess
     return self.session_id_counter
   
   def get_session(self, session_id):
-    self.lock.acquire()
-    try:
-      return self.session_cache[session_id]
-    except KeyError:
-      return None
-    finally:
-      self.lock.release()
+    with self.lock:
+      try:
+        return self.session_cache[session_id]
+      except KeyError:
+        raise NoSuchSession()
     
   #todo: we're not calling this currently, but should, or else xform sessions will hang around in memory forever    
   def destroy_session(self, session_id):
-    self.lock.acquire()
-    try:
-      del self.session_cache[session_id]
-    except KeyError:
-      pass
-    self.lock.release()
+    with self.lock:
+      try:
+        del self.session_cache[session_id]
+      except KeyError:
+        raise NoSuchSession()
     
   def save_instance(self, data):        
-    self.lock.acquire()
-    self.instance_id_counter += 1
-    self.instances[self.instance_id_counter] = data
-    self.lock.release()
+    with self.lock:
+      self.instance_id_counter += 1
+      self.instances[self.instance_id_counter] = data
     return self.instance_id_counter
 
   #todo: add ways to get xml, delete xml, and option not to save xml at all
@@ -69,33 +68,31 @@ class global_state_mgr:
 global_state = global_state_mgr()
   
 
-def load_form(xform, instance=None, preload_data={}):
+def load_form(xform, instance=None, extensions=[], preload_data={}):
     form = XFormParser.getFormDef(StringReader(xform))
     if instance != None:
     #todo: support hooking up a saved instance
         pass
 
-    #todo: fix circular import
-    for key, data_dict in preload_data.items():
-        handler = preloadhandler.StaticPreloadHandler(key, data_dict)
-        logging.debug("Adding preloader for %s data: %s" % (key, data_dict))
-        form.getPreloader().addPreloadHandler(handler)
-    
+    customhandlers.attach_handlers(form, preload_data, extensions)
+
     form.initialize(instance == None)
     return form
 
+class SequencingException(Exception):
+    pass
+
 class XFormSession:
     def __init__(self, xform_raw=None, xform_path=None, instance_raw=None, instance_path=None,
-                 preload_data={}):
+                 preload_data={}, extensions=[]):
+        self.lock = threading.Lock()
+
         def content_or_path(content, path):
             if content != None:
                 return content
             elif path != None:
-                f = open(path)
-                try:
+                with codecs.open(path, encoding='utf-8') as f:
                     return f.read()
-                finally:
-                    f.close()
             else:
                 return None
 
@@ -105,11 +102,19 @@ class XFormSession:
         if instance != None:
             raise ValueError('don\'t support loading saved forms yet')
 
-        self.form = load_form(xform, instance, preload_data)
+        self.form = load_form(xform, instance, extensions, preload_data)
         self.fem = FormEntryModel(self.form)
         self.fec = FormEntryController(self.fem)
         self._parse_current_event()
 
+    def __enter__(self):
+        if not self.lock.acquire(False):
+            raise SequencingException()
+        return self
+
+    def __exit__(self, *_):
+        self.lock.release()
+ 
     def output(self):
         if self.cur_event['type'] != 'form-complete':
             #warn that not at end of form
@@ -126,7 +131,7 @@ class XFormSession:
             event['type'] = 'form-start'
         elif status == self.fec.EVENT_END_OF_FORM:
             event['type'] = 'form-complete'
-	    self.fem.getForm().postProcessInstance()
+            self.fem.getForm().postProcessInstance() 
         elif status == self.fec.EVENT_QUESTION:
             event['type'] = 'question'
             self._parse_question(event)
@@ -179,6 +184,7 @@ class XFormSession:
               Constants.DATATYPE_INTEGER: 'int',
               Constants.DATATYPE_DECIMAL: 'float',
               Constants.DATATYPE_DATE: 'date',
+              Constants.DATATYPE_TIME: 'time',
               Constants.DATATYPE_CHOICE: 'select',
               Constants.DATATYPE_CHOICE_LIST: 'multiselect',
             }[q.getDataType()]
@@ -199,6 +205,8 @@ class XFormSession:
                 event['answer'] = value.getValue()
             elif event['datatype'] == 'date':
                 event['answer'] = to_pdate(value.getValue())
+            elif event['datatype'] == 'time':
+                event['answer'] = to_ptime(value.getValue())              
             elif event['datatype'] == 'select':
                 event['answer'] = value.getValue().index + 1
             elif event['datatype'] == 'multiselect':
@@ -239,6 +247,8 @@ class XFormSession:
             ans = StringData(str(answer))
         elif datatype == 'date':
             ans = DateData(to_jdate(datetime.strptime(str(answer), '%Y-%m-%d').date()))
+        elif datatype == 'time':
+            ans = TimeData(to_jtime(datetime.strptime(str(answer), '%H:%M').time()))
         elif datatype == 'select':
             ans = SelectOneData(self.cur_event['choices'][int(answer) - 1].to_sel())
         elif datatype == 'multiselect':
@@ -286,74 +296,53 @@ class choice(object):
     def to_json(self):
         return self.q.getSelectChoiceText(self.select_choice)
 
-def open_form (form_name, preload_data={}):
+def open_form (form_name, extensions=[], preload_data={}):
     if not os.path.exists(form_name):
         return {'error': 'no form found at %s' % form_name}
 
-    xfsess = XFormSession(xform_path=form_name, preload_data=preload_data)
+    xfsess = XFormSession(xform_path=form_name, preload_data=preload_data, extensions=extensions)
     sess_id = global_state.new_session(xfsess)
     first_event = xfsess.next_event()
     return {'session_id': sess_id, 'event': first_event}
 
 def answer_question (session_id, answer):
-    xfsess = global_state.get_session(session_id)
-    if xfsess == None:
-        return {'error': 'invalid session id'}
-
-    result = xfsess.answer_question(answer)
-    if result['status'] == 'success':
-        return {'status': 'accepted', 'event': next_event(xfsess)}
-    else:
-        result['status'] = 'validation-error'
-        return result
+    with global_state.get_session(session_id) as xfsess:
+        result = xfsess.answer_question(answer)
+        if result['status'] == 'success':
+            return {'status': 'accepted', 'event': next_event(xfsess)}
+        else:
+            result['status'] = 'validation-error'
+            return result
 
 def edit_repeat (session_id, ix):
-    xfsess = global_state.get_session(session_id)
-    if xfsess == None:
-        return {'error': 'invalid session id'}
-
-    ev = xfsess.descend_repeat(ix)
-    return {'event': ev}
+    with global_state.get_session(session_id) as xfsess:
+        ev = xfsess.descend_repeat(ix)
+        return {'event': ev}
 
 def new_repeat (session_id):
-    xfsess = global_state.get_session(session_id)
-    if xfsess == None:
-        return {'error': 'invalid session id'}
-
-    ev = xfsess.descend_repeat()
-    return {'event': ev}
+    with global_state.get_session(session_id) as xfsess:
+        ev = xfsess.descend_repeat()
+        return {'event': ev}
 
 def delete_repeat (session_id, ix):
-    xfsess = global_state.get_session(session_id)
-    if xfsess == None:
-        return {'error': 'invalid session id'}
-
-    ev = xfsess.delete_repeat(ix)
-    return {'event': ev}
+    with global_state.get_session(session_id) as xfsess:
+        ev = xfsess.delete_repeat(ix)
+        return {'event': ev}
 
 def new_repetition (session_id):
-    xfsess = global_state.get_session(session_id)
-    if xfsess == None:
-        return {'error': 'invalid session id'}
-
-    #new repeat creation currently cannot fail, so just blindly proceed to the next event
-    xfsess.new_repetition()
-    return {'event': next_event(xfsess)}
+    with global_state.get_session(session_id) as xfsess:
+        #new repeat creation currently cannot fail, so just blindly proceed to the next event
+        xfsess.new_repetition()
+        return {'event': next_event(xfsess)}
 
 def skip_next (session_id):
-    xfsess = global_state.get_session(session_id)
-    if xfsess == None:
-        return {'error': 'invalid session id'}
-
-    return {'event': next_event(xfsess)}
+    with global_state.get_session(session_id) as xfsess:
+        return {'event': next_event(xfsess)}
 
 def go_back (session_id):
-    xfsess = global_state.get_session(session_id)
-    if xfsess == None:
-        return {'error': 'invalid session id'}
-
-    (at_start, event) = prev_event(xfsess)
-    return {'event': event, 'at-start': at_start}
+    with global_state.get_session(session_id) as xfsess:
+        (at_start, event) = prev_event(xfsess)
+        return {'event': event, 'at-start': at_start}
 
 def next_event (xfsess):
     ev = xfsess.next_event()

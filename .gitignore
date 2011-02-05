@@ -1,8 +1,7 @@
 *.pyc
 .project
 .pydevproject
-*localsettings.py
-xformplayerproject/data/*
+local*settings.py
 *~
 *.class
 *.db
