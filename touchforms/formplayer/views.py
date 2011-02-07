@@ -160,3 +160,16 @@ def _post_data(data, url, content_type):
     results = resp.read()
     return results
     
+def api_preload_provider(request):
+    pass
+
+def api_autocomplete(request):
+    domain = request.GET.get('domain')
+    key = request.GET.get('key', '')
+    max_results = int(request.GET.get('max', str(10)))
+
+    return HttpResponse(json.dumps(''), 'text/json')
+    pass
+
+def player_abort(request):
+    pass
