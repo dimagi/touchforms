@@ -100,7 +100,7 @@ def play(request, xform_id, callback=None, preloader_data={}):
         return response
     
     preloader_data_js = json.dumps(preloader_data)
-    return render_to_response("touchscreen.html",
+    return render_to_response("touchforms/touchscreen.html",
                               {"form": xform,
                                "mode": 'xform',
                                "preloader_data": preloader_data_js },

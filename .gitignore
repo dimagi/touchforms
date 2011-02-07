@@ -6,3 +6,4 @@ local*settings.py
 *.class
 *.db
 .idea
+data/
