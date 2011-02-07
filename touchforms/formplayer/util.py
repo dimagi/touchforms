@@ -1,4 +1,4 @@
-from formplayer.models import XForm
+from touchforms.formplayer.models import XForm
 
 def get_xform_by_namespace(namespace):
     matches = XForm.objects.filter(namespace=namespace).order_by("-version", "-created")

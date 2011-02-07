@@ -5,7 +5,7 @@ def syncdb(app, created_models, verbosity=2, **kwargs):
     app_name = app.__name__.rsplit('.', 1)[0]
     app_label = app_name.split('.')[-1]
     if app_label == "formplayer":
-        from formplayer.bootstrap import bootstrap
+        from touchforms.formplayer.bootstrap import bootstrap
         bootstrap()
     
 signals.post_syncdb.connect(syncdb)

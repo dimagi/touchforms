@@ -3,7 +3,7 @@ import logging
 import hashlib
 from django.db import transaction
 from django.conf import settings
-from formplayer.models import XForm
+from touchforms.formplayer.models import XForm
 
 def bootstrap():
     try:

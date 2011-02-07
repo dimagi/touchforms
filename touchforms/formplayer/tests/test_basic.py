@@ -1,6 +1,6 @@
 import os
 from django.test import TestCase
-from formplayer.models import XForm
+from touchforms.formplayer.models import XForm
 from django.conf import settings
 class XFormTest(TestCase):
     

@@ -1,8 +1,8 @@
 from django.shortcuts import get_object_or_404
 from django.conf import settings
-from formplayer.models import XForm, PlaySession
-from formplayer.const import *
-from formplayer.autocomplete import autocompletion, DEFAULT_NUM_SUGGESTIONS
+from touchforms.formplayer.models import XForm, PlaySession
+from touchforms.formplayer.const import *
+from touchforms.formplayer.autocomplete import autocompletion, DEFAULT_NUM_SUGGESTIONS
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseServerError, HttpRequest
 from django.core.urlresolvers import reverse
@@ -15,7 +15,7 @@ from django.views.decorators.http import require_POST
 import json
 from collections import defaultdict
 from StringIO import StringIO
-from formplayer.signals import xform_received
+from touchforms.formplayer.signals import xform_received
 from django.template.context import RequestContext
 from django.shortcuts import render_to_response
 import tempfile
@@ -164,9 +164,14 @@ def _post_data(data, url, content_type):
     
 def api_preload_provider(request):
     param = request.GET.get('param', "")
-    if param.lower() == PRELOADER_TAG_UID:
-        return HttpResponse(uid.new())
-    return HttpResponse(param)
+    param = param.strip().lower()
+
+    value = param
+    if param == PRELOADER_TAG_UID:
+        import uuid
+        value = uuid.uuid4().hex
+
+    return HttpResponse(value)
 
 def api_autocomplete(request):
     domain = request.GET.get('domain')
