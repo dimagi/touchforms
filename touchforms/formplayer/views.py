@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from formplayer.models import XForm, PlaySession
+from formplayer.const import *
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseServerError, HttpRequest
 from django.core.urlresolvers import reverse
@@ -161,7 +162,10 @@ def _post_data(data, url, content_type):
     return results
     
 def api_preload_provider(request):
-    pass
+    param = request.GET.get('param', "")
+    if param.lower() == PRELOADER_TAG_UID:
+        return HttpResponse(uid.new())
+    return HttpResponse(param)
 
 def api_autocomplete(request):
     domain = request.GET.get('domain')
@@ -169,7 +173,19 @@ def api_autocomplete(request):
     max_results = int(request.GET.get('max', str(10)))
 
     return HttpResponse(json.dumps(''), 'text/json')
-    pass
 
 def player_abort(request):
-    pass
+    class TimeoutException(Exception):
+        pass
+
+    try:
+        raise TimeoutException("A touchscreen view has timed out and was aborted")
+    except TimeoutException:
+        logging.exception('')
+
+    try:
+        redirect_to = reverse(settings.TOUCHFORMS_ABORT_DEST)
+    except AttributeError:
+        redirect_to = '/'
+
+    return HttpResponseRedirect(redirect_to)

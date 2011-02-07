@@ -15,5 +15,5 @@ urlpatterns = patterns('',
     url(r'^player_proxy$', 'formplayer.views.player_proxy', name='xform_player_proxy'),
     url(r'^api/preload/$', 'formplayer.views.api_preload_provider', name='xform_preloader'),
     url(r'^api/autocomplete/$', 'formplayer.views.api_autocomplete', name='touchforms_autocomplete'),
-    url(r'^abort/$', 'formplayer.views.player_abort', name='touchforms_force_abort'),    
+    url(r'^player-abort/$', 'formplayer.views.player_abort', name='touchforms_force_abort'),    
 )
