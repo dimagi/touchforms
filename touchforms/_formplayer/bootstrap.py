@@ -9,12 +9,12 @@ def bootstrap():
     try:
         # create xform objects for everything in the configured directory,
         # if we don't already have them
-        files = os.listdir(settings.XFORMS_FORM_BOOTSTRAP_PATH)
-        logging.debug("bootstrapping forms in %s" % settings.XFORMS_FORM_BOOTSTRAP_PATH)
+        files = os.listdir(settings.XFORMS_BOOTSTRAP_PATH)
+        logging.debug("bootstrapping forms in %s" % settings.XFORMS_BOOTSTRAP_PATH)
         for filename in files:
             try:
                 # TODO: is this sneaky lazy loading a reasonable idea?
-                full_name = os.path.join(settings.XFORMS_FORM_BOOTSTRAP_PATH, filename)
+                full_name = os.path.join(settings.XFORMS_BOOTSTRAP_PATH, filename)
                 file = open(full_name, "r")
                 checksum = hashlib.sha1(file.read()).hexdigest()
                 file.close()

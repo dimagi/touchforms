@@ -6,7 +6,7 @@ from django.conf import settings
 
 urlpatterns = patterns('',
     # Example:
-    (r'^', include('xformplayerproject.xformplayer.urls')),
+    (r'^', include('touchforms.formplayer.urls')),
     (r'^site_media/(?P<path>.*)$', 'django.views.static.serve',
         {'document_root': settings.STATIC_DOC_ROOT}),
 
