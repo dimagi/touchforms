@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 from django.conf import settings
 from formplayer.models import XForm, PlaySession
 from formplayer.const import *
+from formplayer.autocomplete import autocompletion, DEFAULT_NUM_SUGGESTIONS
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseServerError, HttpRequest
 from django.core.urlresolvers import reverse
@@ -170,9 +171,9 @@ def api_preload_provider(request):
 def api_autocomplete(request):
     domain = request.GET.get('domain')
     key = request.GET.get('key', '')
-    max_results = int(request.GET.get('max', str(10)))
+    max_results = int(request.GET.get('max', str(DEFAULT_NUM_SUGGESTIONS)))
 
-    return HttpResponse(json.dumps(''), 'text/json')
+    return HttpResponse(json.dumps(autocompletion(domain, key, max_results)), 'text/json')
 
 def player_abort(request):
     class TimeoutException(Exception):

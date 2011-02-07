@@ -95,10 +95,12 @@ INSTALLED_APPS = (
 )
 
 import os
-STATIC_DOC_ROOT = os.path.join(os.path.dirname(__file__), "formplayer", "static")
+ROOT_DIR = os.path.normpath(os.path.dirname(__file__))
+STATIC_DOC_ROOT = os.path.join(ROOT_DIR, "formplayer", "static")
 XFORMS_BOOTSTRAP_PATH = "static/demo_forms"
 XFORMS_PATH = "data/xforms"
 XFORMS_PLAYER_URL = "http://localhost:4444/"
+TOUCHFORMS_AUTOCOMPL_DATA_DIR = os.path.join(ROOT_DIR, 'static', 'census')
 
 try:
     from localsettings import *
