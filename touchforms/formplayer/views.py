@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.conf import settings
-from xformplayer.models import XForm, PlaySession
+from formplayer.models import XForm, PlaySession
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseServerError, HttpRequest
 from django.core.urlresolvers import reverse
@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 import json
 from collections import defaultdict
 from StringIO import StringIO
-from xformplayer.signals import xform_received
+from formplayer.signals import xform_received
 from django.template.context import RequestContext
 from django.shortcuts import render_to_response
 import tempfile
@@ -45,7 +45,7 @@ def xform_list(request):
             
     for form in XForm.objects.all():
         forms_by_namespace[form.namespace].append(form)
-    return render_to_response("xformplayer/xform_list.html", 
+    return render_to_response("formplayer/xform_list.html", 
                               {'forms_by_namespace': dict(forms_by_namespace),
                                "success": success,
                                "notice": notice},
@@ -91,7 +91,7 @@ def play(request, xform_id, callback=None, preloader_data={}):
         elif request.POST["type"] == 'form-aborted':
             return HttpResponseRedirect("/")
         # call the callback, if there, otherwise route back to the 
-        # xformplayer list
+        # formplayer list
     if callback and instance is not None:
         return callback(xform, instance)
     elif instance is not None:
