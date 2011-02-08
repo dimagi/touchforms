@@ -980,10 +980,18 @@ function set_color (elem, color, fallback_color) {
       var pcs = _color.split(' ');
       if (supportsGradient()) {
         elem.style.backgroundColor = null;
-        elem.style.background = '-moz-linear-gradient(top, ' + pcs[1] + ' 0%, ' + pcs[2] + ' 100%)';
+        var _bg = null;
+        if (jQuery.browser.mozilla) {
+          _bg = '-moz-linear-gradient(top, ' + pcs[1] + ' 0%, ' + pcs[2] + ' 100%)';
+        } else if (jQuery.browser.webkit) {
+          _bg = '-webkit-gradient(linear, left top, left bottom, color-stop(0%, ' + pcs[1] + '), color-stop(100%, ' + pcs[2] + '))'; 
+        } else {
+          //is there a css standard?
+        }
+        elem.style.background = _bg;
         return;
       } else {
-        _color = pcs[3] || pcs[2];
+        _color = ainv(pcs, -1);
       }
     }
     elem.style.background = null;
@@ -1282,8 +1290,10 @@ function cmp_arr (a, b) {
 function supportsGradient () {
   if (jQuery.browser.mozilla) {
     return cmp_arr(jQuery.browser.version.split('.'), [1, 9, 2]) >= 0;
-  } else {
+  } else if (jQuery.browser.webkit) { //all versions support it?
     return true;
+  } else {
+    return true; //hope for the best
   }
 }
 
