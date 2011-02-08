@@ -102,11 +102,12 @@ def play(request, xform_id, callback=None, preloader_data={}):
         return response
     
     preloader_data_js = json.dumps(preloader_data)
-    return render_to_response("touchforms/touchscreen.html",
-                              {"form": xform,
-                               "mode": 'xform',
-                               "preloader_data": preloader_data_js },
-                               context_instance=RequestContext(request))
+    return render_to_response("touchforms/touchscreen.html", {
+            "form": xform,
+            "mode": 'xform',
+            "preloader_data": preloader_data_js,
+            "dim": get_player_dimensions(request),
+            }, context_instance=RequestContext(request))
 
 def play_remote(request, session_id=None):
     if not session_id:
@@ -143,7 +144,20 @@ def play_remote(request, session_id=None):
         callback = None
     return play(request, session.xform_id, callback, session.data)
 
-    
+def get_player_dimensions(request):
+    def get_dim(getparam, settingname):
+        dim = request.GET.get(getparam)
+        if not dim:
+            try:
+                dim = getattr(settings, settingname)
+            except AttributeError:
+                pass
+        return dim
+
+    return {
+        'width': get_dim('w', 'TOUCHSCREEN_WIDTH'),
+        'height': get_dim('h', 'TOUCHSCREEN_HEIGHT')
+    }
 
 def player_proxy(request):
     """Proxy to an xform player, to avoid cross-site scripting issues"""

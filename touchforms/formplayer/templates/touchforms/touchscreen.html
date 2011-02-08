@@ -76,8 +76,8 @@ function init () {
       position: absolute;
       left: 0px;
       top: 0px;
-      width: 1024px;
-      height: 768px;
+      width: {{ dim.width|default:"1024" }}px;
+      height: {{ dim.height|default:"768" }}px;
       background-color: red;
       margin: 0px;">
     </div>
