@@ -119,14 +119,16 @@ function xformAjaxAdapter (formName, preloadTags) {
     } else if (event["type"] == "sub-group") {
       this._step(dirForward);
     } else if (event["type"] == "repeat-juncture") {
+      event["datatype"] = "select";
+
+      var options = [];
+      for (var i = 0; i < event["repetitions"].length; i++) {
+        options.push({lab: event["repetitions"][i], val: 'rep' + (i + 1)});
+      }
+
       if (!event["repeat-delete"]) {
         event["caption"] = event["main-header"];
-        event["datatype"] = "select";
         
-        var options = [];
-        for (var i = 0; i < event["repetitions"].length; i++) {
-          options.push({lab: event["repetitions"][i], val: 'rep' + (i + 1)});
-        }
         if (event["add-choice"] != null) {
           options.push({lab: event["add-choice"], val: 'add'});
         }
@@ -134,22 +136,13 @@ function xformAjaxAdapter (formName, preloadTags) {
           options.push({lab: event["del-choice"], val: 'del'});
         }
         options.push({lab: event["done-choice"], val: 'done'});
-
-        event["choices"] = options;
-        event["answer"] = null;
-        event["required"] = true;
       } else {
         event["caption"] = event["del-header"];
-        event["datatype"] = "select";
-        
-        var options = [];
-        for (var i = 0; i < event["repetitions"].length; i++) {
-          options.push({lab: event["repetitions"][i], val: 'rep' + (i + 1)});
-        }
-        event["choices"] = options;
-        event["answer"] = null;
-        event["required"] = true;  
       }
+
+      event["choices"] = options;
+      event["answer"] = null;
+      event["required"] = true;
 
       renderQuestion(event, dirForward);
     } else {
