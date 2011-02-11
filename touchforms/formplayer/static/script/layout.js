@@ -444,7 +444,7 @@ function TextCaption (args) {
     if (this.span != null) {
       this.span.textContent = text;
       if (this.fit) {
-        this.span.style.fontSize = Math.round(100. * fitText(text, this.container, this.minsize, this.size_rel)) + '%';
+        this.span.style.fontSize = (100. * fitText(text, this.container, this.minsize, this.size_rel)) + '%';
       }
     }
   }
@@ -452,29 +452,32 @@ function TextCaption (args) {
 }
 
 fitText = function(text, container, min_size, max_size) {
-  var EPSILON = 0.005;
   var BUFFER = 0.02;
-
   var w = container.clientWidth * (1. - BUFFER);
   var h = container.clientHeight;
-  var curSize = max_size;
+  var EPSILON = BUFFER * min_size / 2.;
 
+  var curSize = max_size;
   var ext = getTextExtent(text, curSize, w);
   if (ext[0] > w || ext[1] > h) {
     var minSize = min_size;
     var maxSize = max_size;
 
-    while (true) {
+    while (Math.abs(maxSize - minSize) > EPSILON) {
       curSize = (minSize + maxSize) / 2;
-      if (Math.abs(maxSize - curSize) < EPSILON || Math.abs(minSize - curSize) < EPSILON) {
-        break;
-      }
       ext = getTextExtent(text, curSize, w);
       if (ext[0] > w || ext[1] > h) {
         maxSize = curSize;
       } else {
         minSize = curSize;
       }		
+    }
+
+    //pixels don't perfectly scale with text size, so we do this final 'nudging' to
+    //correct for any irregularities
+    while (ext[0] > w || ext[1] > h) {
+      curSize -= EPSILON;
+      ext = getTextExtent(text, curSize, w);
     }
   }
   
@@ -733,7 +736,7 @@ function getTextExtent (text, size, bounding_width) {
   snippet = document.getElementById('snippet');
   snippet.style.width = bounding_width + 'px';
   snippet.textContent = text;
-  snippet.style.fontSize = Math.round(100. * size) + '%';
+  snippet.style.fontSize = (100. * size) + '%';
   return [snippet.offsetWidth, snippet.offsetHeight];
 }
 
