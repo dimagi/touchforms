@@ -188,9 +188,9 @@ function make_answerbar (content, widths, id) {
 
 function make_date_fields (datecontext) {
   return {
-    d: new InputArea({id: 'dayinp', default: 'd', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {datecontext.goto_('day');}}),
-    m: new InputArea({id: 'monthinp',  default: 'm', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {datecontext.goto_('month');}}),
-    y: new InputArea({id: 'yearinp',  default: 'y', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {datecontext.goto_('year');}}),
+    d: new InputArea({id: 'dayinp', label: 'd', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {datecontext.goto_('day');}}),
+    m: new InputArea({id: 'monthinp',  label: 'm', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {datecontext.goto_('month');}}),
+    y: new InputArea({id: 'yearinp',  label: 'y', border: 3, child: new TextCaption({color: TEXT_COLOR, size: 1.6}), onclick: function () {datecontext.goto_('year');}}),
   }; 
 }
 

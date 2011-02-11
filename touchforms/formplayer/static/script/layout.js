@@ -1212,7 +1212,7 @@ function InputArea (args) {
   this.inside_color = args.inside_color || '#fff';
   this.child = args.child;
   this.onclick = args.onclick;
-  this.default = args.default;
+  this.bglabel = args.label;
 
   this.layout;
   this.container = null;
@@ -1240,7 +1240,7 @@ function InputArea (args) {
       elem.style.opacity = (!text ? .1 : 1.);
     }
 
-    text = text || this.default || '';
+    text = text || this.bglabel || '';
     this.child.setText(text);
   }
   
