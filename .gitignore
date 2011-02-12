@@ -7,3 +7,4 @@ local*settings.py
 *.db
 .idea
 data/
+*.log

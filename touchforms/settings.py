@@ -1,13 +1,10 @@
-# Django settings for couchforms project.
+import util
 
 DEBUG = True
-TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
     # ('Your Name', 'your_email@domain.com'),
 )
-
-MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
@@ -19,15 +16,6 @@ DATABASES = {
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     }
 }
-
-# Local time zone for this installation. Choices can be found here:
-# http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
-# although not all choices may be available on all operating systems.
-# On Unix systems, a value of None will cause Django to use the same
-# timezone as the operating system.
-# If running in a Windows environment this must be set to the same as your
-# system time zone.
-TIME_ZONE = 'America/Chicago'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -56,9 +44,6 @@ MEDIA_URL = '/static/'
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
 ADMIN_MEDIA_PREFIX = '/media/'
-
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = 'v&*&bnbm^$qn77rp=4v!(e5r=pxmpqq7j&fe=aci+8@k!a+x73'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -94,6 +79,10 @@ INSTALLED_APPS = (
     'formplayer'
 )
 
+#e.g., 1.0, 1.1a, 1.2b, 1.3rc2
+#this should ONLY be set in a release/maintenance branch, NEVER in the dev branch!
+RELEASE_VERSION = None
+
 import os
 ROOT_DIR = os.path.normpath(os.path.dirname(__file__))
 STATIC_DOC_ROOT = os.path.join(ROOT_DIR, "formplayer", "static")
@@ -102,10 +91,19 @@ XFORMS_PATH = "data/xforms"
 XFORMS_PLAYER_URL = "http://localhost:4444/"
 TOUCHFORMS_AUTOCOMPL_DATA_DIR = os.path.join(ROOT_DIR, 'static', 'census')
 
+LOG_FILE = os.path.join(ROOT_DIR, 'touchforms.log')
+init_logging = lambda: util.default_logging(LOG_FILE)
+
+#### IMPORT LOCALSETTINGS ####
 try:
     from localsettings import *
 except ImportError:
     pass
+
+TEMPLATE_DEBUG = DEBUG
+MANAGERS = ADMINS
+
+util.initialize_logging(init_logging)
 
 COUCHDB_DATABASE = 'http://%s%s/%s' % (
     "%s:%s@" % (COUCH_USERNAME, COUCH_PASSWORD) if COUCH_USERNAME else "",
@@ -113,3 +111,7 @@ COUCHDB_DATABASE = 'http://%s%s/%s' % (
     COUCH_DATABASE_NAME
 )
 COUCHDB_DATABASES = [('formplayer', COUCHDB_DATABASE)]
+
+REVISION = util.get_revision('git', ROOT_DIR, 'nonce')
+
+print REVISION
