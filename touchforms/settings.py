@@ -52,6 +52,14 @@ TEMPLATE_LOADERS = (
 #     'django.template.loaders.eggs.Loader',
 )
 
+TEMPLATE_CONTEXT_PROCESSORS = ( 
+    "django.core.context_processors.debug",
+    "django.core.context_processors.i18n",
+    "django.core.context_processors.media",
+    "django.core.context_processors.request",
+    "touchforms.context_processors.meta",
+)
+
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -112,4 +120,4 @@ COUCHDB_DATABASE = 'http://%s%s/%s' % (
 )
 COUCHDB_DATABASES = [('formplayer', COUCHDB_DATABASE)]
 
-REVISION = util.get_revision('git', ROOT_DIR, 'nonce')
+REVISION = util.get_revision('git', ROOT_DIR, 'flag')

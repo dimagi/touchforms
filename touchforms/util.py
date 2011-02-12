@@ -45,7 +45,7 @@ def shell_exec(cmd, cwd=None):
 
 def get_revision(vcs, reporoot, dirtymode=None):
     REV_HASH_LENGTH = 12
-    DIRTY_NONCE_LENGTH = 3
+    DIRTY_NONCE_LENGTH = 5
 
     #untracked files don't count as dirty
     if vcs == 'git':
