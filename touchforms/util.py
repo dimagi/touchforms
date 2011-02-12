@@ -51,13 +51,13 @@ def get_revision(vcs, reporoot, dirtymode=None):
     if vcs == 'git':
         def raw_revision():
             return shell_exec('git log --format=%H -1', reporoot)
-        def is_dirty():
-            return bool(shell_exec('git status --porcelain -uno', reporoot))
+        def is_dirty(excl_untracked=True):
+            return bool(shell_exec('git status --porcelain %s' % ('-uno' if excl_untracked else ''), reporoot))
     elif vcs == 'hg':
         def raw_revision():
             return shell_exec('hg parents --template "{node}"', reporoot)
-        def is_dirty():
-            return bool(shell_exec('hg status -q', reporoot))
+        def is_dirty(excl_untracked=True):
+            return bool(shell_exec('hg status %s' % ('-q' if excl_untracked else ''), reporoot))
 
     rev = raw_revision()
     if rev:
