@@ -107,7 +107,8 @@ def play(request, xform_id, callback=None, preloader_data={}):
             "mode": 'xform',
             "preloader_data": preloader_data_js,
             "dim": get_player_dimensions(request),
-            }, context_instance=RequestContext(request))
+            "fullscreen": request.GET.get('mode', '').startswith('full')
+        }, context_instance=RequestContext(request))
 
 def play_remote(request, session_id=None):
     if not session_id:

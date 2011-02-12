@@ -3,6 +3,11 @@
   <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 
+    {% if fullscreen %}
+    <meta name="HandheldFriendly" content="true" />
+    <meta name="viewport" content="initial-scale=1.0; user-scalable=no;" />
+    {% endif %}
+
     <link rel="stylesheet" href="{{MEDIA_URL}}formplayer/style/touchforms.css" type="text/css">
     <!-- warning; the formplayer is a highly-dynamic app, and doesn't get along all that well with static stylesheets -->
 
@@ -42,7 +47,7 @@ PREFIXES = {};
 
 function init () {
 
-  setup();
+  setup({% if fullscreen %}true{% endif %});
   initStaticWidgets();
   render_clean();
   
