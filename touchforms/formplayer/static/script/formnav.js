@@ -115,7 +115,18 @@ function xformAjaxAdapter (formName, preloadTags) {
 
       renderQuestion(event, dirForward);
     } else if (event["type"] == "form-complete") {
-      this._formComplete(event);
+      var self = this;
+      var done = function () { self._formComplete(event); };
+
+      if (xformAreYouDone()) {
+        disableInput();
+        setTimeout(function () { enableInput(); }, ADVANCE_LOCKOUT);
+        showActionableAlert('The form is finished. If you made any mistakes, GO BACK and make changes. SUBMIT the form when you are done. You can\'t make any more changes after you submit the form.',
+                            ['SUBMIT', 'GO BACK and make changes'],
+                            [done, backClicked]);
+      } else {
+        done();
+      }
     } else if (event["type"] == "sub-group") {
       this._step(dirForward);
     } else if (event["type"] == "repeat-juncture") {

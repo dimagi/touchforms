@@ -33,7 +33,7 @@ ALERT_BGCOLOR = '#dd6';
 
 AUTO_ADVANCE_DELAY = 150; //ms
 KEYFLASH = 150; //ms
-AUTO_ADVANCE_NEXT_LOCKOUT = 800; //ms
+ADVANCE_LOCKOUT = 800; //ms
 
 function initStaticWidgets () {
   questionCaption = new TextCaption({id: 'q-caption', color: TEXT_COLOR, align: 'left', valign: 'top'});
@@ -263,6 +263,10 @@ function autoCompleteKeyboardHints () {
   return setting('AUTOCOMPL_KEYBOARD_HINTS', true);
 }
 
+function xformAreYouDone () {
+  return setting('XFORM_ARE_YOU_DONE', true);
+}
+
 var clicksEnabled;
 var clickDisableCounter = 0;
 function setup (fullscreen) {
@@ -354,7 +358,7 @@ function autoAdvanceTrigger () {
         nextButton.deactivate();
         setTimeout(function () {
             nextButton.activate();
-          }, AUTO_ADVANCE_NEXT_LOCKOUT);
+          }, ADVANCE_LOCKOUT);
 
         enableInput();
       }, AUTO_ADVANCE_DELAY);
