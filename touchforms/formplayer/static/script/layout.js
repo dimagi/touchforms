@@ -1300,10 +1300,32 @@ function supportsGradient () {
   }
 }
 
+function isEventSupported(eventName) {
+  var element = document.createElement('div');
+  var eventName = 'on' + eventName;
+  
+  var isSupported = (eventName in element);
+  if (!isSupported) {
+    if (element.setAttribute) {
+      element.setAttribute(eventName, function () {});
+      isSupported = (typeof element[eventName] == 'function');
+    }
+  }
+  return isSupported;
+}
+
+function isMobileDevice () {
+  //alternatively, we could check user agent string for any of: android, iphone, ipad, ipod, mobile
+  return isEventSupported('touchstart');
+}
 
 function setClickEvent (obj, handler) {
   if (clickOnMouseDown()) {
-    obj.onmousedown = handler;
+    if (isMobileDevice()) {
+      obj.ontouchstart = handler;
+    } else {
+      obj.onmousedown = handler;
+    }
   } else {
     obj.onclick = handler;
   }
