@@ -443,13 +443,9 @@ function renderQuestion (event, dir) {
   activeQuestion = event;
   activeControl = null;
 
-  SHOW_ALERTS_ON_BACK = false;
   if (event["datatype"] == "info") {
-    if (dir || SHOW_ALERTS_ON_BACK) {
-      showAlert(event["caption"], dir ? nextClicked : backClicked);
-    } else {
-      backClicked();
-    }
+    activeControl = new InfoEntry(event["caption"], dir);
+    activeControl.load();
     return;
   }
 
@@ -497,11 +493,13 @@ function renderQuestion (event, dir) {
   if (activeControl != null) {
     activeControl.setAnswer(event.answer);
     activeControl.load();
+  } else {
+    console.log('no active control');
   }
 }
 
 function getQuestionAnswer () {
-  return (activeControl != null ? activeControl.getAnswer() : null);
+  return activeControl.getAnswer();
 }
 
 function answerQuestion () {

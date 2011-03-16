@@ -267,6 +267,10 @@ function xformAreYouDone () {
   return setting('XFORM_ARE_YOU_DONE', true);
 }
 
+function showAlertsOnBack () {
+  return setting('SHOW_ALERTS_ON_BACK', false);
+}
+
 var clicksEnabled;
 var clickDisableCounter = 0;
 function setup (fullscreen) {

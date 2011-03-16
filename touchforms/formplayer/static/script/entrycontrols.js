@@ -91,6 +91,25 @@ function SimpleEntry () {
   }
 }
 
+function InfoEntry (text, dir) {
+  inherit(this, new SimpleEntry());
+
+  this.text = text;
+  this.dir = dir;
+
+  this.getAnswer = function () {
+    return null;
+  }
+
+  this.load = function () {
+    if (this.dir || showAlertsOnBack()) {
+      showAlert(this.text, this.dir ? nextClicked : backClicked);
+    } else {
+      backClicked();
+    }
+  }
+}
+
 function FreeTextEntry (args) {
   inherit(this, new SimpleEntry());
 
