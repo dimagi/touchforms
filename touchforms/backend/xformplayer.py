@@ -103,7 +103,7 @@ class XFormSession:
             raise ValueError('don\'t support loading saved forms yet')
 
         self.form = load_form(xform, instance, extensions, preload_data)
-        self.fem = FormEntryModel(self.form)
+        self.fem = FormEntryModel(self.form, FormEntryModel.REPEAT_STRUCTURE_NON_LINEAR)
         self.fec = FormEntryController(self.fem)
         self._parse_current_event()
 
