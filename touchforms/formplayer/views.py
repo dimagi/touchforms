@@ -30,7 +30,7 @@ def xform_list(request):
             file = request.FILES["file"]
             try:
                 tmp_file_handle, tmp_file_path = tempfile.mkstemp()
-                tmp_file = open(tmp_file_path, "w")
+                tmp_file = os.fdopen(tmp_file_handle, 'w')
                 tmp_file.write(file.read())
                 tmp_file.close()
                 new_form = XForm.from_file(tmp_file_path, str(file))
@@ -115,7 +115,7 @@ def play_remote(request, session_id=None):
         xform = request.POST.get('xform')
         try:
             tmp_file_handle, tmp_file_path = tempfile.mkstemp()
-            tmp_file = open(tmp_file_path, "w")
+            tmp_file = os.fdopen(tmp_file_handle, 'w')
             tmp_file.write(xform.encode('utf-8'))
             tmp_file.close()
             new_form = XForm.from_file(tmp_file_path, str(file))
