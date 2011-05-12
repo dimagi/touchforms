@@ -8,11 +8,12 @@ import time
 server_url = '127.0.0.1:4444'
 concurrent_sessions = 100
 form = 'asdfasdfasdf.xml'
-furiosity = 1. #avg events / second
 
 BACK_FREQ = .1
 BLANK_FREQ = .1
 OUT_OF_RANGE_FREQ = .1
+
+MIN_DELAY = .01 #s
 
 def request(server, payload):
     conn = urllib2.urlopen('http://' + server, json.dumps(payload))
@@ -49,7 +50,7 @@ def random_answer(datatype, num_choices):
     elif datatype == 'float':
         return round(30 * random.random(), random.randint(0, 4))
     elif datatype == 'str':
-        return ''.join(random.choice('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ    ') for i in range(random.randint(3, 12)))
+        return ''.join(random.choice('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ        ') for i in range(random.randint(3, 12)))
     elif datatype == 'date':
         # before, after
         future = (random.random() < .1)
@@ -70,7 +71,7 @@ def rand_date(max_range, max_rel_likelihood):
     days_diff = (math.exp(k * resolution + 1.) - 1.) / (max_rel_likelihood - 1.) * -max_range
     return date.today() + timedelta(days=days_diff)
 
-def run_monkey(g, delay_factor):
+def run_monkey(g, avg_delay):
     session_id = None
 
     def mk_payload(action, args):
@@ -95,14 +96,29 @@ def run_monkey(g, delay_factor):
 
             #handle constraint violation
 
-            time.sleep(delay_factor)
+            delay = calc_delay(avg_delay)
+            sleep(delay)
 
             if not session_id:
                 session_id = resp['session_id']
     except StopIteration:
         pass
 
-run_monkey(monkey_loop('/home/drew/dev/bhoma/bhoma/submodules/touchforms/touchforms/data/xforms/tmpWHuqy6'), .3)
+def calc_delay(avg_delay, std_dev=None):
+    if std_dev == None:
+        std_dev = .3 * avg_delay
+    return max(random.normalvariate(avg_delay, std_dev), 0.)
+
+clock = 0
+def sleep(delay):
+    global clock
+    clock += delay
+    if clock > MIN_DELAY:
+        sleep_for = clock - clock % MIN_DELAY
+        time.sleep(sleep_for)
+        clock -= sleep_for
+
+run_monkey(monkey_loop('/home/drew/dev/bhoma/bhoma/submodules/touchforms/touchforms/data/xforms/tmpWHuqy6'), 0.)
 
 #while True:
     
