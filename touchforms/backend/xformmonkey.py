@@ -14,6 +14,7 @@ BLANK_FREQ = .1
 OUT_OF_RANGE_FREQ = .1
 
 MIN_DELAY = .01 #s
+VALIDATION_BACKOFF = .25
 
 def request(server, payload):
     conn = urllib2.urlopen('http://' + server, json.dumps(payload))
@@ -84,19 +85,27 @@ def run_monkey(g, avg_delay):
     try:
         resp = None
         req = None
+        validation_fail_count = 0
         while True:
             action, args = (g.send(resp) if req is None else req)
             print '<< %s %s' % (action, str(args))
             resp = request(server_url, mk_payload(action, args))
             print '>> %s' % str(resp)
 
+            #handle form nav steps that are completely non-interactive
             req = None
             if resp.get('event') and resp['event']['type'] == 'sub-group':
                 req = ('next', {})
 
-            #handle constraint violation
+            #keep track of how many times the validation has failed, and speed
+            #things up if so
+            if resp.get('status') and resp['status'] != 'accepted':
+                validation_fail_count += 1
+            else:
+                validation_fail_count = 0
 
             delay = calc_delay(avg_delay)
+            delay *= math.exp(-validation_fail_count * VALIDATION_BACKOFF)
             sleep(delay)
 
             if not session_id:
@@ -106,8 +115,8 @@ def run_monkey(g, avg_delay):
 
 def calc_delay(avg_delay, std_dev=None):
     if std_dev == None:
-        std_dev = .3 * avg_delay
-    return max(random.normalvariate(avg_delay, std_dev), 0.)
+        std_dev = .4 * avg_delay
+    return max(random.normalvariate(avg_delay, std_dev), 1.)
 
 clock = 0
 def sleep(delay):
