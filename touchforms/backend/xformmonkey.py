@@ -13,6 +13,13 @@ BACK_FREQ = .1
 BLANK_FREQ = .1
 OUT_OF_RANGE_FREQ = .1
 
+REPEAT_FREQ = {
+    'edit': .2,
+    'delete': .1,
+    'done': .1,
+    'add': .6,
+}
+
 MIN_DELAY = .01 #s
 VALIDATION_BACKOFF = .25
 
@@ -37,7 +44,7 @@ def monkey_loop(form_id):
             answer = random_answer(evt['datatype'], len(evt['choices']) if evt.get('choices') else None)
             resp, evt, evt_type = r((yield ('answer', {'answer': answer})))
         elif evt_type == 'repeat-juncture':
-            resp, evt, evt_type = r((yield repeat_juncture()))
+            resp, evt, evt_type = r((yield repeat_juncture(evt)))
 
 def random_answer(datatype, num_choices):
     if random.random() < BLANK_FREQ:
@@ -47,11 +54,13 @@ def random_answer(datatype, num_choices):
     in_range = (random.random() > OUT_OF_RANGE_FREQ)
 
     if datatype == 'int':
-        return random.randint(0, 30)
+        return random.randint(0, 100)
     elif datatype == 'float':
-        return round(30 * random.random(), random.randint(0, 4))
+        return round(100 * random.random(), random.randint(0, 4))
     elif datatype == 'str':
-        return ''.join(random.choice('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ        ') for i in range(random.randint(3, 12)))
+        numeric = (random.random() < .1)
+        alphabet = '0123456789' if numeric else 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ        '
+        return ''.join(random.choice(alphabet) for i in range(random.randint(3, 12)))
     elif datatype == 'date':
         # before, after
         future = (random.random() < .1)
@@ -71,6 +80,36 @@ def rand_date(max_range, max_rel_likelihood):
     k = random.randint(0, int((exp_max - 1.) / resolution))
     days_diff = (math.exp(k * resolution + 1.) - 1.) / (max_rel_likelihood - 1.) * -max_range
     return date.today() + timedelta(days=days_diff)
+
+def choose_weighted(choices):
+    total = sum(ch[1] for ch in choices)
+    r = random.random() * total
+    for choice, weight in choices:
+        if r < weight:
+            return choice
+        else:
+            r -= weight
+
+def repeat_juncture(evt):
+    actions = REPEAT_FREQ.copy()
+    num_reps = len(evt['repetitions'])
+
+    if not evt['add-choice']:
+        del actions['add']
+    if not evt['del-choice'] or num_reps == 0:
+        del actions['delete']
+    if num_reps == 0:
+        del actions['edit']
+
+    action = choose_weighted(actions.items())
+    if action == 'done':
+        return ('next', {})
+    elif action == 'add':
+        return ('new-repeat', {})
+    elif action == 'edit':
+        return ('edit-repeat', {'ix': random.randint(1, num_reps)})
+    elif action == 'delete':
+        return ('delete-repeat', {'ix': random.randint(1, num_reps)})
 
 def run_monkey(g, avg_delay):
     session_id = None
@@ -92,6 +131,9 @@ def run_monkey(g, avg_delay):
             resp = request(server_url, mk_payload(action, args))
             print '>> %s' % str(resp)
 
+            if not session_id:
+                session_id = resp['session_id']
+
             #handle form nav steps that are completely non-interactive
             req = None
             if resp.get('event') and resp['event']['type'] == 'sub-group':
@@ -108,15 +150,13 @@ def run_monkey(g, avg_delay):
             delay *= math.exp(-validation_fail_count * VALIDATION_BACKOFF)
             sleep(delay)
 
-            if not session_id:
-                session_id = resp['session_id']
     except StopIteration:
         pass
 
 def calc_delay(avg_delay, std_dev=None):
     if std_dev == None:
         std_dev = .4 * avg_delay
-    return max(random.normalvariate(avg_delay, std_dev), 1.)
+    return max(random.normalvariate(avg_delay, std_dev), 0.)
 
 clock = 0
 def sleep(delay):
@@ -127,37 +167,5 @@ def sleep(delay):
         time.sleep(sleep_for)
         clock -= sleep_for
 
-run_monkey(monkey_loop('/home/drew/dev/bhoma/bhoma/submodules/touchforms/touchforms/data/xforms/tmpWHuqy6'), 0.)
+run_monkey(monkey_loop('/home/drew/dev/bhoma/bhoma/submodules/touchforms/touchforms/data/xforms/tmphdurfX'), 0.)
 
-#while True:
-    
-
-#    resp = request(server_url, mk_payload(action, args))
-
-
-#generator consumer handles server communication
-  #action, args
-
-"""
-    if (event["type"] == "question") {
-
-      renderQuestion(event, dirForward);
-    } else if (event["type"] == "form-complete") {
-
-    } else if (event["type"] == "sub-group") {
-
-    } else if (event["type"] == "repeat-juncture") {
-        options.push({lab: event["repetitions"][i], val: 'rep' + (i + 1)});
-      }
-
-        if (event["add-choice"] != null) {
-          options.push({lab: event["add-choice"], val: 'add'});
-        }
-        if (event["del-choice"] != null) {
-          options.push({lab: event["del-choice"], val: 'del'});
-        }
-        options.push({lab: event["done-choice"], val: 'done'});
-      } else {
-        event["caption"] = event["del-header"];
-      }
-"""
