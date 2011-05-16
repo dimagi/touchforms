@@ -5,10 +5,10 @@ import math
 from datetime import date, timedelta
 import time
 import threading
-
-server_url = '127.0.0.1:4444'
-concurrent_sessions = 100
-form = 'asdfasdfasdf.xml'
+import sys
+from optparse import OptionParser
+import os
+import os.path
 
 #how often to click the 'back' button
 BACK_FREQ = .05
@@ -119,7 +119,7 @@ def repeat_juncture(evt):
     elif action == 'delete':
         return ('delete-repeat', {'ix': random.randint(1, num_reps)})
 
-def run_monkey(g, avg_delay):
+def run_monkey(g, server_url, avg_delay):
     session_id = None
 
     def mk_payload(action, args):
@@ -135,9 +135,9 @@ def run_monkey(g, avg_delay):
         validation_fail_count = 0
         while True:
             action, args = (g.send(resp) if req is None else req)
-            print '<< %s %s' % (action, str(args))
+            log('<< %s %s' % (action, str(args)))
             resp = request(server_url, mk_payload(action, args))
-            print '>> %s' % str(resp)
+            log('>> %s' % str(resp))
 
             if not session_id:
                 session_id = resp['session_id']
@@ -169,6 +169,9 @@ def calc_delay(avg_delay, std_dev=None):
 
 clock = 0
 def sleep(delay):
+    if delay > 0:
+        log('pause %1.5s' % delay)
+
     global clock
     clock += delay
     if clock > MIN_DELAY:
@@ -176,27 +179,78 @@ def sleep(delay):
         time.sleep(sleep_for)
         clock -= sleep_for
 
+def log(msg):
+    thread_tag = threading.current_thread().tag
+    sys.stderr.write('%s %s\n' % (thread_tag, msg))
+
 class runner(threading.Thread):
-    def __init__(self, form_id, delay, delay_start=False):
+    def __init__(self, server_url, form_id, delay, output_dir, delay_start=False):
         threading.Thread.__init__(self)
+        TAG_LEN = 5
+        self.tag = '%0*x' % (TAG_LEN, random.randint(0, 16**TAG_LEN))
+
+        self.server_url = server_url
         self.form_id = form_id
         self.delay = delay
+        self.output_dir = output_dir
         self.delay_start = delay_start
 
     def run(self):
         if self.delay_start:
             sleep(random.random() * 2. * self.delay)
 
-        run_monkey(monkey_loop(self.form_id), self.delay)
+        run_monkey(monkey_loop(self.form_id), self.server_url, self.delay)
 
+if __name__ == "__main__":
 
-THREAD_MAX = 5
+    DEFAULT_DELAY = 1.
 
-threads = []
-while True:
-    threads = [th for th in threads if th.is_alive()]
-    while len(threads) < THREAD_MAX:
-        th = runner('/home/drew/dev/bhoma/bhoma/xforms/bhoma_general.xhtml', 1., True)
-        threads.append(th)
-        th.start()
-    time.sleep(.01)
+    parser = OptionParser(usage='usage: %prog [options] xforms (files or directories containing solely xforms)')
+    parser.add_option("-s", "--server", dest="server", default='127.0.0.1:4444',
+                      help="touchforms server", metavar="SERVER")
+    parser.add_option("-c", "--sessions", dest="sessions", default=1, type="int",
+                      help="number of concurrent sessions", metavar="#CONCURRENT")
+    parser.add_option("-n", "--total", dest="total", default=0, type="int",
+                      help="total number of forms to generate", metavar="#FORMS")
+    parser.add_option("-d", "--delay", dest="delay", type="float",
+                      help="average delay between actions", metavar="DELAY")
+    parser.add_option("-o", "--output", dest="outdir",
+                      help="output directory for generated forms ('-' for stdout)", metavar="OUTPUTDIR")
+    (opt, args) = parser.parse_args()
+
+    if opt.sessions < 1:
+        raise ValueError('# sessions must be >= 1')
+    if opt.total < 0:
+        raise ValueError('total # of forms must be >= 0')
+
+    if opt.delay is None:
+        opt.delay = DEFAULT_DELAY if opt.sessions > 1 else 0.
+    elif opt.delay < 0:
+        raise ValueError('delay must be non-negative')
+    if opt.outdir == '-':
+        opt.outdir = None
+
+    forms = []
+    for arg in args:
+        path = os.path.normpath(os.path.join(os.getcwd(), arg))
+        if not os.path.exists(path):
+            raise ValueError('%s doesn\'t exist' % path)
+        elif os.path.isdir(path):
+            for sub in os.listdir(path):
+                subpath = os.path.join(path, sub)
+                if os.path.isfile(subpath):
+                    # assume all files in the dir are xforms!
+                    forms.append(subpath)
+        else:
+            forms.append(path)    
+
+    total_count = 0
+    threads = []
+    while opt.total == 0 or total_count < opt.total:
+        threads = [th for th in threads if th.is_alive()]
+        while len(threads) < opt.sessions:
+            th = runner(opt.server, random.choice(forms), opt.delay, opt.outdir, True)
+            threads.append(th)
+            total_count += 1
+            th.start()
+        time.sleep(.01)
