@@ -69,7 +69,7 @@ global_state = global_state_mgr()
   
 
 def load_form(xform, instance=None, extensions=[], preload_data={}):
-    form = XFormParser.getFormDef(StringReader(xform))
+    form = XFormParser(StringReader(xform)).parse()
     if instance != None:
     #todo: support hooking up a saved instance
         pass
