@@ -4,15 +4,23 @@ import random
 import math
 from datetime import date, timedelta
 import time
+import threading
 
 server_url = '127.0.0.1:4444'
 concurrent_sessions = 100
 form = 'asdfasdfasdf.xml'
 
-BACK_FREQ = .1
+#how often to click the 'back' button
+BACK_FREQ = .05
+
+#how often to answer with blank
 BLANK_FREQ = .1
+
+#how often to give a knowingly out-of-range answer (for
+#most questions we don't know the allowed range)
 OUT_OF_RANGE_FREQ = .1
 
+#relative frequencies of repeat actions
 REPEAT_FREQ = {
     'edit': .2,
     'delete': .1,
@@ -58,7 +66,7 @@ def random_answer(datatype, num_choices):
     elif datatype == 'float':
         return round(100 * random.random(), random.randint(0, 4))
     elif datatype == 'str':
-        numeric = (random.random() < .1)
+        numeric = (random.random() < .2)
         alphabet = '0123456789' if numeric else 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ        '
         return ''.join(random.choice(alphabet) for i in range(random.randint(3, 12)))
     elif datatype == 'date':
@@ -147,6 +155,7 @@ def run_monkey(g, avg_delay):
                 validation_fail_count = 0
 
             delay = calc_delay(avg_delay)
+            #this doesn't work as planned because the 'back' action resets the counter
             delay *= math.exp(-validation_fail_count * VALIDATION_BACKOFF)
             sleep(delay)
 
@@ -167,5 +176,27 @@ def sleep(delay):
         time.sleep(sleep_for)
         clock -= sleep_for
 
-run_monkey(monkey_loop('/home/drew/dev/bhoma/bhoma/submodules/touchforms/touchforms/data/xforms/tmphdurfX'), 0.)
+class runner(threading.Thread):
+    def __init__(self, form_id, delay, delay_start=False):
+        threading.Thread.__init__(self)
+        self.form_id = form_id
+        self.delay = delay
+        self.delay_start = delay_start
 
+    def run(self):
+        if self.delay_start:
+            sleep(random.random() * 2. * self.delay)
+
+        run_monkey(monkey_loop(self.form_id), self.delay)
+
+
+THREAD_MAX = 5
+
+threads = []
+while True:
+    threads = [th for th in threads if th.is_alive()]
+    while len(threads) < THREAD_MAX:
+        th = runner('/home/drew/dev/bhoma/bhoma/xforms/bhoma_general.xhtml', 1., True)
+        threads.append(th)
+        th.start()
+    time.sleep(.01)
