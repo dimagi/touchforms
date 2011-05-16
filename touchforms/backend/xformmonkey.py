@@ -2,13 +2,14 @@ import urllib2
 import json
 import random
 import math
-from datetime import date, timedelta
+from datetime import datetime, date, timedelta
 import time
 import threading
 import sys
 from optparse import OptionParser
 import os
 import os.path
+from StringIO import StringIO
 
 #how often to click the 'back' button
 BACK_FREQ = .05
@@ -160,7 +161,7 @@ def run_monkey(g, server_url, avg_delay):
             sleep(delay)
 
     except StopIteration:
-        pass
+        return resp['event']['output']
 
 def calc_delay(avg_delay, std_dev=None):
     if std_dev == None:
@@ -183,11 +184,21 @@ def log(msg):
     thread_tag = threading.current_thread().tag
     sys.stderr.write('%s %s\n' % (thread_tag, msg))
 
+def hash_tag(len):
+    return '%0*x' % (len, random.randint(0, 16**len - 1))
+
+def pretty_xml(raw):
+    try:
+        import lxml.etree as etree
+    except ImportError:
+        return raw
+
+    return etree.tostring(etree.parse(StringIO(raw)), pretty_print=True)
+
 class runner(threading.Thread):
     def __init__(self, server_url, form_id, delay, output_dir, delay_start=False):
         threading.Thread.__init__(self)
-        TAG_LEN = 5
-        self.tag = '%0*x' % (TAG_LEN, random.randint(0, 16**TAG_LEN))
+        self.tag = hash_tag(5)
 
         self.server_url = server_url
         self.form_id = form_id
@@ -199,7 +210,15 @@ class runner(threading.Thread):
         if self.delay_start:
             sleep(random.random() * 2. * self.delay)
 
-        run_monkey(monkey_loop(self.form_id), self.server_url, self.delay)
+        output = run_monkey(monkey_loop(self.form_id), self.server_url, self.delay)
+
+        if self.output_dir is None:
+            print output
+        else:
+            filename = os.path.join(self.output_dir, '%s.%s.xml' % (datetime.now().strftime('%Y%m%d%H%M%S'), hash_tag(5)))
+            with open(filename, 'w') as f:
+                f.write(pretty_xml(output))
+            log('wrote to %s' % filename)
 
 if __name__ == "__main__":
 
