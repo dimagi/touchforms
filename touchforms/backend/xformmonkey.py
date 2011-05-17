@@ -10,6 +10,8 @@ from optparse import OptionParser
 import os
 import os.path
 from StringIO import StringIO
+import logging
+import logging.handlers
 
 #how often to click the 'back' button
 BACK_FREQ = .05
@@ -171,9 +173,9 @@ def calc_delay(avg_delay, std_dev=None):
         std_dev = .4 * avg_delay
     return max(random.normalvariate(avg_delay, std_dev), 0.)
 
-def log(msg):
+def log(msg, level=logging.DEBUG):
     thread_tag = threading.current_thread().tag
-    sys.stderr.write('%s %s\n' % (thread_tag, msg))
+    logging.log(level, '%s %s' % (thread_tag, msg))
 
 def hash_tag(len):
     return '%0*x' % (len, random.randint(0, 16**len - 1))
@@ -199,18 +201,21 @@ class runner(threading.Thread):
         self.delay_start = delay_start
 
     def run(self):
-        if self.delay_start:
-            self.sleep(random.random() * 2. * self.delay)
+        try:
+            if self.delay_start:
+                self.sleep(random.random() * 2. * self.delay)
 
-        output = run_monkey(monkey_loop(self.form_id), self.server_url, self.delay)
+            output = run_monkey(monkey_loop(self.form_id), self.server_url, self.delay)
 
-        if self.output_dir is None:
-            print output
-        else:
-            filename = os.path.join(self.output_dir, '%s.%s.xml' % (datetime.now().strftime('%Y%m%d%H%M%S'), hash_tag(5)))
-            with open(filename, 'w') as f:
-                f.write(pretty_xml(output))
-            log('wrote to %s' % filename)
+            if self.output_dir is None:
+                print output
+            else:
+                filename = os.path.join(self.output_dir, '%s.%s.xml' % (datetime.now().strftime('%Y%m%d%H%M%S'), hash_tag(5)))
+                with open(filename, 'w') as f:
+                    f.write(pretty_xml(output))
+                log('wrote to %s' % filename, logging.INFO)
+        except:
+            logging.exception('unexpected')
 
     def sleep(self, delay):
         if delay > 0:
@@ -225,9 +230,40 @@ class runner(threading.Thread):
 def sleep(delay):
     threading.current_thread().sleep(delay)
 
+def initialize_logging(loginitfunc):
+    """call in settings.py after importing localsettings to initialize logging.
+    ensures that logging is only initialized once. 'loginitfunc' actually does
+    the initialization"""
+    if not hasattr(logging, '_initialized'):
+        loginitfunc()
+        logging.info('logging initialized')
+        logging._initialized = True
+
+def config_logging(logfile):
+    """standard logging configuration useful for development. this should be
+    the default argument passed to initialize_logging in settings.py. it should
+    be overridden with a different function in localsettings.py when in a
+    deployment environment"""
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG)
+
+    h1 = logging.StreamHandler()
+    h1.setLevel(logging.DEBUG)
+    h1.setFormatter(logging.Formatter('%(message)s'))
+    root.addHandler(h1)
+
+    h2 = logging.handlers.RotatingFileHandler(logfile, maxBytes=2**24, backupCount=3)
+    h2.setLevel(logging.ERROR)
+    h2.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(message)s'))
+    root.addHandler(h2)
+
+
 if __name__ == "__main__":
 
+    ERR_LOG = '/tmp/xformmonkey.err.log'
     DEFAULT_DELAY = 1.
+
+    initialize_logging(lambda: config_logging(ERR_LOG))
 
     parser = OptionParser(usage='usage: %prog [options] xforms (files or directories containing solely xforms)')
     parser.add_option("-s", "--server", dest="server", default='127.0.0.1:4444',
@@ -267,6 +303,8 @@ if __name__ == "__main__":
                     forms.append(subpath)
         else:
             forms.append(path)    
+    if len(forms) == 0:
+        raise ValueError('specify one or more forms')
 
     total_count = 0
     threads = []
