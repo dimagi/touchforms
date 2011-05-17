@@ -20,7 +20,7 @@ Syncdb::
     
 Run the backend::
     cd backend
-    jython xformserver.py 444
+    jython xformserver.py 4444
 
 Run the django frontend::
     python manage.py runserver
