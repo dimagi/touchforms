@@ -81,14 +81,17 @@ def random_answer(datatype, num_choices):
         return random.randint(1, num_choices)
     elif datatype == 'multiselect':
         # as-select1
-        return random.sample(xrange(1, num_choices + 1), random.randint(0, num_choices))
+        how_many = [(i, 1./i**.5) for i in range(1, num_choices + 1)]
+        how_many.append((0, .3))
+        return random.sample(xrange(1, num_choices + 1), choose_weighted(how_many))
 
 def rand_date(max_range, max_rel_likelihood):
-    exp_max = math.log(max_rel_likelihood)
-    resolution = (max_rel_likelihood - 1.) / abs(max_range)
-    k = random.randint(0, int((exp_max - 1.) / resolution))
-    days_diff = (math.exp(k * resolution + 1.) - 1.) / (max_rel_likelihood - 1.) * -max_range
-    return date.today() + timedelta(days=days_diff)
+    return date.today() + timedelta(days=exp_dist(-max_range, max_rel_likelihood))
+
+def exp_dist(max_range, max_rel_resolution):
+    exp_max = math.log(max_rel_resolution)
+    k = exp_max * random.random()
+    return (math.exp(k) - 1.) / (max_rel_resolution - 1.) * max_range
 
 def choose_weighted(choices):
     total = sum(ch[1] for ch in choices)
