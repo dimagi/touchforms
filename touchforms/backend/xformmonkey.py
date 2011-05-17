@@ -168,18 +168,6 @@ def calc_delay(avg_delay, std_dev=None):
         std_dev = .4 * avg_delay
     return max(random.normalvariate(avg_delay, std_dev), 0.)
 
-clock = 0
-def sleep(delay):
-    if delay > 0:
-        log('pause %1.5s' % delay)
-
-    global clock
-    clock += delay
-    if clock > MIN_DELAY:
-        sleep_for = clock - clock % MIN_DELAY
-        time.sleep(sleep_for)
-        clock -= sleep_for
-
 def log(msg):
     thread_tag = threading.current_thread().tag
     sys.stderr.write('%s %s\n' % (thread_tag, msg))
@@ -199,6 +187,7 @@ class runner(threading.Thread):
     def __init__(self, server_url, form_id, delay, output_dir, delay_start=False):
         threading.Thread.__init__(self)
         self.tag = hash_tag(5)
+        self.clock = 0
 
         self.server_url = server_url
         self.form_id = form_id
@@ -208,7 +197,7 @@ class runner(threading.Thread):
 
     def run(self):
         if self.delay_start:
-            sleep(random.random() * 2. * self.delay)
+            self.sleep(random.random() * 2. * self.delay)
 
         output = run_monkey(monkey_loop(self.form_id), self.server_url, self.delay)
 
@@ -219,6 +208,19 @@ class runner(threading.Thread):
             with open(filename, 'w') as f:
                 f.write(pretty_xml(output))
             log('wrote to %s' % filename)
+
+    def sleep(self, delay):
+        if delay > 0:
+            log('pause %1.5s' % delay)
+
+        self.clock += delay
+        if self.clock > MIN_DELAY:
+            sleep_for = self.clock - self.clock % MIN_DELAY
+            self.clock -= sleep_for
+            time.sleep(sleep_for)
+
+def sleep(delay):
+    threading.current_thread().sleep(delay)
 
 if __name__ == "__main__":
 
