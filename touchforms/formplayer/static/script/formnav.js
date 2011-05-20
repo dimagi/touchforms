@@ -449,7 +449,8 @@ function renderQuestion (event, dir) {
     return;
   }
 
-  questionCaption.setText(event["caption"]);
+  //questionCaption.setText(event["caption"]);
+  $('#question')[0].textContent = event["caption"];
 
   event.domain_meta = event.domain_meta || {};
 

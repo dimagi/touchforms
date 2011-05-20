@@ -9,6 +9,7 @@ xform_info = {
 urlpatterns = patterns('',
     url(r'^$', 'touchforms.formplayer.views.xform_list', name="xform_list"),
     url(r'^enter/(?P<xform_id>.*)$', 'touchforms.formplayer.views.play', name='xform_play'),
+    url(r'^enterkb/(?P<xform_id>.*)$', 'touchforms.formplayer.views.playkb', name='xform_play_kb'),
     url(r'^play_remote/$', 'touchforms.formplayer.views.play_remote', name='xform_play_remote'),    
     url(r'^play_remote/(?P<session_id>\w*)/$', 'touchforms.formplayer.views.play_remote', name='xform_play_remote'),
     url(r'^download/(?P<xform_id>.*)$', 'touchforms.formplayer.views.download', name='xform_download'),
