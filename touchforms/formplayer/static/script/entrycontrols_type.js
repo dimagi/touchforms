@@ -118,19 +118,18 @@ function FreeTextEntry (args) {
   this.default_answer = null;
 
   this.load = function () {
-    $('#answer')[0].innerHTML = '<input type="text"/>';
+    this.mkWidget();
 
-    //    questionEntry.update(freeEntry);
-    //var answerBarControls = this.getAnswerBar();
-    //answerBarControls.inputfield.setMaxLen(this.length_limit);
-    //answerBar.update(answerBarControls.component);
-    //freeEntryKeyboard.update(this.getKeyboard());
-    //this.inputfield = answerBarControls.inputfield;
     this.setAnswer(this.default_answer);
   }
 
+  this.mkWidget = function () {
+    $('#answer')[0].innerHTML = '<input id="textfield" maxlength="' + this.length_limit + '" type="text"/>';
+    this.inputfield = $('#textfield')[0];
+  }
+
   this.getControl = function () {
-    return (this.inputfield == null ? null : this.inputfield.child.control);
+    return this.inputfield;
   }
 
   this.getRaw = function () {
@@ -152,32 +151,12 @@ function FreeTextEntry (args) {
     }
   }
 
-  this.getAnswerBar = function () {
-    var answerText = new InputArea({id: 'textinp', border: 3, padding: 5, child: new TextInput({textsize: 1.2, align: 'left', spacing: 0})});  
-    var freeTextAnswer = make_answerbar(answerText, '*', 'answer-bar');
-
-    return {
-      component: freeTextAnswer,
-      inputfield: answerText
-    };
-  }
-
-  this.getKeyboard = function () {
-    return kbdForDomain(this.domain, this.typeFunc());
-  }
-
-  this.typeFunc = function (no_flash) {
-    flash = no_flash || false;
-    var self = this;
-    return function (ev, c, button) { type_(self.getControl(), c, button, !no_flash); };
-  }
-
   this.prevalidate = function () {
     var raw = this.getRaw();
     if (raw) {
       var errmsg = this._prevalidate(raw);
       if (errmsg) {
-        showError(errmsg);
+        alert(errmsg);
         return false;
       }
     }
@@ -189,33 +168,13 @@ function FreeTextEntry (args) {
   }
 }
 
-function kbdForDomain (domain, typefunc) {
-  if (domain == 'full') {
-    return makeKeyboard(true, typefunc);
-  } else if (domain == 'alpha') {
-    return makeKeyboard(false, typefunc);
-  } else if (domain == 'numeric') {
-    return makeNumpad(null, typefunc);
-  }
-}
-
 function PasswordEntry (args) {
   args.length_limit = args.length_limit || 9;
   inherit(this, new FreeTextEntry(args));
 
-  this.getAnswerBar = function () {
-    var passwdText = new InputArea({id: 'textinp', border: 3, padding: 5, child: new TextInput({textsize: 1.3, spacing: 0, passwd: true})});
-    var passwdAnswer = make_answerbar(passwdText, '5@', 'passwd-bar');
-
-    return {
-      component: passwdAnswer,
-      inputfield: passwdText
-    };
-  }
-
-  this.typeFunc = function () {
-    //turn off keyflash
-    return this.super('typeFunc')(true);
+  this.mkWidget = function () {
+    $('#answer')[0].innerHTML = '<input id="textfield" maxlength="' + this.length_limit + '" type="passwd"/>';
+    this.inputfield = $('#textfield')[0];
   }
 }
 
@@ -226,6 +185,10 @@ function IntEntry (length_limit) {
     var val = this.super('getAnswer')();
     return (val != null ? +val : val);
   }
+
+  this._prevalidate = function(raw) {
+    return (isNaN(+raw) || +raw != Math.floor(+raw) ? "Not a valid whole number" : null);
+  }
 }
 
 function FloatEntry () {
@@ -234,10 +197,6 @@ function FloatEntry () {
   this.getAnswer = function () {
     var val = this.super('getAnswer')();
     return (val != null ? +val : val);
-  }
-
-  this.getKeyboard = function () {
-    return makeNumpad('.', this.typeFunc());
   }
 
   this._prevalidate = function (raw) {
@@ -270,42 +229,52 @@ function MultiSelectEntry (args) {
   this.default_selections = null;
 
   this.load = function () {
-    var choiceLayout = this.makeChoices();
-    questionEntry.update(choiceLayout);
-    this.buttons = choiceLayout.buttons;
 
-    //HACK for as-select1
-    var as_single = this.as_single || [];
-    for (var i = 0; i < as_single.length; i++) {
-      var button = this.buttons[as_single[i] - 1];
-      console.log(button);
-      button.multi = false;
-      button.base_style = null;
-      button.default_color = 'gr #085 #042';
-      button.setStatus(button.status);
+    //var choiceLayout = this.makeChoices();
+    //questionEntry.update(choiceLayout);
+    //this.buttons = choiceLayout.buttons;
+
+    ////HACK for as-select1
+    //var as_single = this.as_single || [];
+    //for (var i = 0; i < as_single.length; i++) {
+    //  var button = this.buttons[as_single[i] - 1];
+    //  console.log(button);
+    //  button.multi = false;
+    //  button.base_style = null;
+    //  button.default_color = 'gr #085 #042';
+    //  button.setStatus(button.status);
+    // }
+
+    content = '';
+    for (var i = 0; i < this.choices.length; i++) {
+      content += '<input id="ch-' + i + '" type="' + (this.isMulti ? 'checkbox' : 'radio') + '" name="opt" value="' + i + '"> ' + this.choices[i] + '<br>';
     }
-  }
+    $('#answer')[0].innerHTML = content;
+    this.initted = true;
 
-  this.makeChoices = function (style) {
-    return new ChoiceSelect({choices: this.choices, choicevals: this.choicevals, selected: this.default_selections, multi: this.isMulti, action: this.selectFunc(), layout_override: this.layout_override, style: style});
+    this.setAnswer(this.default_selections);
   }
 
   this.getAnswer = function () {
     var selected = [];
-    for (i = 0; i < this.buttons.length; i++) {
-      if (this.buttons[i].status == 'selected') {
-        selected.push(this.buttons[i].value);
+    for (i = 0; i < this.choices.length; i++) {
+      if ($('#ch-' + i)[0].checked) {
+        selected.push(this.valAt(i));
       }
     }
     return selected;
   }
 
+  this.valAt = function (i) {
+    return (this.choicevals != null ? this.choicevals[i] : i + 1);
+  }
+
   //answer is null or list
   this.setAnswer = function (answer, postLoad) {
-    if (this.buttons) {
-      for (var i = 0; i < this.buttons.length; i++) {
-        var button = this.buttons[i];
-        button.setStatus(answer != null && answer.indexOf(button.value) != -1 ? 'selected': 'default');
+    if (this.initted) {
+      for (var i = 0; i < this.choices.length; i++) {
+        var button = $('#ch-' + i)[0];
+        button.checked = (answer != null && answer.indexOf(this.valAt(i)) != -1);
       }
     } else {
       this.default_selections = answer;
@@ -341,7 +310,11 @@ function SingleSelectEntry (args) {
   }
 
   this.setAnswer = function (answer, postLoad) {
-    this.super('setAnswer')(answer != null ? [answer] : null, postLoad);
+    if (this.initted) {
+      this.super('setAnswer')(answer != null ? [answer] : null, postLoad);
+    } else {
+      this.default_selections = answer;
+    }
   }
 
   this.selectFunc = function () {
