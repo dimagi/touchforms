@@ -340,33 +340,39 @@ function clearButtons (buttons, except_for) {
 }
 
 function DateEntry (dir, args) {
-  inherit(this, new Entry());
+  inherit(this, new SimpleEntry());
 
   this.dir = dir;
-  this.context = new DateWidgetContext(args);
+  this.ans = null;
 
   this.load = function () {
-    this.context.refresh();
+    $('#answer')[0].innerHTML = '<div id="picker" />';
+    
+    var self = this;
+		$("#picker").datepicker({
+      dateFormat: 'yy-mm-dd',
+      onSelect: function(dateText, inst) { self.ans = dateText; }
+    });
+
+    this.initted = true;
+
+    this.setAnswer(this.def_ans);
   }
 
   this.setAnswer = function (answer, postLoad) {
-    this.context.init(answer, this.dir || postLoad);
-    if (postLoad) {
-      this.context.refresh();
+    if (this.initted) {
+      $('#picker').datepicker('setDate', answer);
+      this.ans = answer;
+    } else {
+      this.def_ans = answer;
     }
+
   }
 
   this.getAnswer = function () {
-    return this.context.getDate();
+    return this.ans;
   }
 
-  this.next = function () {
-    this.context.next();
-  }
-
-  this.back = function () {
-    this.context.back();
-  }
 }
 
 function NumericSubfield (field, args, forward_trigger, backward_trigger) {
@@ -1047,3 +1053,7 @@ function IDMaskEntry (mask, prefix, prototype) {
   }
 }
 
+//move this to typeforms-ui.js ?
+function showError (msg) {
+  alert(msg);
+}
