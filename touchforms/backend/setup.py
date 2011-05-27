@@ -8,3 +8,6 @@ def init_classpath():
         if jar not in sys.path:
             sys.path.append(os.path.join(CUR_DIR, "jrlib", jar))
 
+def init_jr_engine():
+    from org.javarosa.model.xform import XFormsModule
+    XFormsModule().registerModule()

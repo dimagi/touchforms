@@ -12,9 +12,10 @@ from java.io import StringReader
 import customhandlers
 from util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect
     
-from setup import init_classpath
+from setup import init_classpath, init_jr_engine
 import logging
 init_classpath()
+init_jr_engine()
 
 from org.javarosa.xform.parse import XFormParser
 from org.javarosa.form.api import FormEntryModel, FormEntryController
@@ -71,8 +72,7 @@ global_state = global_state_mgr()
 def load_form(xform, instance=None, extensions=[], preload_data={}):
     form = XFormParser(StringReader(xform)).parse()
     if instance != None:
-    #todo: support hooking up a saved instance
-        pass
+        XFormParser.loadXmlInstance(form, StringReader(instance))
 
     customhandlers.attach_handlers(form, preload_data, extensions)
 
@@ -98,9 +98,6 @@ class XFormSession:
 
         xform = content_or_path(xform_raw, xform_path)
         instance = content_or_path(instance_raw, instance_path)
-
-        if instance != None:
-            raise ValueError('don\'t support loading saved forms yet')
 
         self.form = load_form(xform, instance, extensions, preload_data)
         self.fem = FormEntryModel(self.form, FormEntryModel.REPEAT_STRUCTURE_NON_LINEAR)
@@ -296,11 +293,11 @@ class choice(object):
     def to_json(self):
         return self.q.getSelectChoiceText(self.select_choice)
 
-def open_form (form_name, extensions=[], preload_data={}):
+def open_form (form_name, instance_xml=None, extensions=[], preload_data={}):
     if not os.path.exists(form_name):
         return {'error': 'no form found at %s' % form_name}
 
-    xfsess = XFormSession(xform_path=form_name, preload_data=preload_data, extensions=extensions)
+    xfsess = XFormSession(xform_path=form_name, instance_raw=instance_xml, preload_data=preload_data, extensions=extensions)
     sess_id = global_state.new_session(xfsess)
     first_event = xfsess.next_event()
     return {'session_id': sess_id, 'event': first_event}
