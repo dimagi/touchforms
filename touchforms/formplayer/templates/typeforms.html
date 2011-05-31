@@ -74,8 +74,26 @@ touchscreenUI = {
 
   <body id="body" onLoad="init();" style="font-family: sans-serif; ">
 
-    <div id="question" style="background: #fcc;">asdf</div>
-    <div id="answer" style="background: #cfc;">qwer</div>
+    <style>
+      .histq {
+        background: #fca;
+        padding: 5px;
+      }
+
+      .histans {
+        background: #fcc;
+        padding: 5px;
+        text-align: right;
+      }
+
+    </style>
+
+    <div id="history" style="float: right; border: 2px solid black; width: 25em; margin: 0px 0px 10px 10px; min-height: 500px;">
+    </div>
+
+    <h3 id="question" style="background: #fff; min-height: 4em;">asdf</h3>
+    <hr>
+    <div id="answer" style="background: #fff;">qwer</div>
 
     <button id="back" onclick="backClicked();">back</button>
     <button id="help" onclick="helpClicked();">help</button>

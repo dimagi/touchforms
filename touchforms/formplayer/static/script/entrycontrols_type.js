@@ -61,7 +61,7 @@ function invokeSuper (self, funcName) {
 
 function Entry () {
   this.help = function () {
-    alert(activeQuestion["help"] || "There is no help text for this question.");
+    showError(activeQuestion["help"] || "There is no help text for this question.");
   }
 
   this.clear = function () {
@@ -346,7 +346,7 @@ function DateEntry (dir, args) {
   this.ans = null;
 
   this.load = function () {
-    $('#answer')[0].innerHTML = '<div id="picker" />';
+    $('#answer')[0].innerHTML = '<div><div id="picker" /></div>';
     
     var self = this;
 		$("#picker").datepicker({
