@@ -184,6 +184,13 @@ class XFormSession:
               Constants.DATATYPE_TIME: 'time',
               Constants.DATATYPE_CHOICE: 'select',
               Constants.DATATYPE_CHOICE_LIST: 'multiselect',
+
+              # not supported yet
+              Constants.DATATYPE_DATE_TIME: 'datetime',
+              Constants.DATATYPE_GEOPOINT: 'geo',
+              Constants.DATATYPE_BARCODE: 'barcode',
+              Constants.DATATYPE_BINARY: 'binary',
+              Constants.DATATYPE_LONG: 'longint',              
             }[q.getDataType()]
 
             if event['datatype'] in ('select', 'multiselect'):

@@ -476,7 +476,9 @@ function renderQuestion (event, dir) {
   } else if (event.datatype == "time") {
     activeControl = new TimeOfDayEntry();
   } else {
-    alert("unrecognized datatype [" + event.datatype + "]");
+    // unrecognized datatype
+    renderQuestion({'datatype': 'info', 'caption': 'Touchforms cannot yet support "' + event["datatype"] + '" questions. This question will be skipped.'}, dir);
+    return;
   }
 
   if (event.domain_meta.unit) {
