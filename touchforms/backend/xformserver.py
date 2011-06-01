@@ -3,11 +3,14 @@ from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SocketServer import ThreadingMixIn
 import threading
 import logging
-import jsonhack as json  #todo: replace with real json library
 import xformplayer
 import os
 import java.lang
 import time
+
+from setup import init_classpath
+init_classpath()
+import com.xhaus.jyson.JysonCodec as json
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 

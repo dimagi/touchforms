@@ -17,6 +17,8 @@ import logging
 init_classpath()
 init_jr_engine()
 
+import com.xhaus.jyson.JysonCodec as json
+
 from org.javarosa.xform.parse import XFormParser
 from org.javarosa.form.api import FormEntryModel, FormEntryController
 from org.javarosa.core.model import Constants
@@ -297,8 +299,8 @@ class choice(object):
     def to_sel(self):
         return Selection(self.select_choice)
 
-    def to_json(self):
-        return self.q.getSelectChoiceText(self.select_choice)
+    def __json__(self):
+        return json.dumps(self.q.getSelectChoiceText(self.select_choice))
 
 def open_form (form_name, instance_xml=None, extensions=[], preload_data={}):
     if not os.path.exists(form_name):
