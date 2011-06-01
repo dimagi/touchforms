@@ -65,7 +65,10 @@ def download(request, xform_id):
     return response
 
 
-def play(request, xform_id, callback=None, preloader_data={}):
+def playkb(request, xform_id, callback=None, preloader_data={}):
+    return play(request, xform_id, callback, preloader_data, inputmode='type')
+
+def play(request, xform_id, callback=None, preloader_data={}, inputmode='touch'):
     """
     Play an XForm.
     
@@ -102,7 +105,11 @@ def play(request, xform_id, callback=None, preloader_data={}):
         return response
     
     preloader_data_js = json.dumps(preloader_data)
-    return render_to_response("touchforms/touchscreen.html", {
+    templ = {
+        'touch': 'touchforms/touchscreen.html',
+        'type': 'typeforms.html',
+    }[inputmode]
+    return render_to_response(templ, {
             "form": xform,
             "mode": 'xform',
             "preloader_data": preloader_data_js,
