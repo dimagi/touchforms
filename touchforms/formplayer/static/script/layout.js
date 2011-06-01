@@ -733,8 +733,10 @@ function getTextExtent (text, size, bounding_width) {
     bounding_width = $('#staging')[0].clientWidth;
   }
 
-  snippet = document.getElementById('snippet');
-  snippet.style.width = bounding_width + 'px';
+  var snippet_container = document.getElementById('snippet_container');
+  var snippet = document.getElementById('snippet');
+
+  snippet_container.style.width = bounding_width + 'px';
   snippet.textContent = text;
   snippet.style.fontSize = (100. * size) + '%';
   return [snippet.offsetWidth, snippet.offsetHeight];
