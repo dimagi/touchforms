@@ -1057,3 +1057,69 @@ function IDMaskEntry (mask, prefix, prototype) {
 function showError (msg) {
   alert(msg);
 }
+
+
+
+
+
+function renderQuestion (event, dir) {
+  activeQuestion = event;
+  activeControl = null;
+
+  if (event["datatype"] == "info") {
+    activeControl = new InfoEntry(event["caption"], dir);
+    activeControl.load();
+    return;
+  }
+
+  $('#question')[0].textContent = event["caption"];
+
+  event.domain_meta = event.domain_meta || {};
+
+  if (event.customlayout != null) {
+    activeControl = event.customlayout(event);
+  } else if (event.domain == 'phone') {
+    activeControl = new PhoneNumberEntry();
+  } else if (event.domain == 'bp') {
+    activeControl = new BloodPressureEntry();
+  } else if (event.datatype == "str") {
+    activeControl = new FreeTextEntry({domain: event.domain});
+  } else if (event.datatype == "int") {
+    activeControl = new IntEntry();
+  } else if (event.datatype == "float") {
+    activeControl = new FloatEntry();
+  } else if (event.datatype == "passwd") {
+    activeControl = new PasswordEntry({domain: event.domain});
+  } else if (event.datatype == "select") {
+    activeControl = new SingleSelectEntry({choices: event.choices, choicevals: event.choicevals});
+  } else if (event.datatype == "multiselect") {
+    activeControl = new MultiSelectEntry({choices: event.choices, choicevals: event.choicevals, meta: event.domain_meta});
+  } else if (event.datatype == "date") {
+    activeControl = new DateEntry(dir, event.domain_meta);
+  } else if (event.datatype == "time") {
+    activeControl = new TimeOfDayEntry();
+  } else {
+    // unrecognized datatype
+    renderQuestion({'datatype': 'info', 'caption': 'Touchforms cannot yet support "' + event["datatype"] + '" questions. This question will be skipped.'}, dir);
+    return;
+  }
+
+  if (event.domain_meta.unit) {
+    //should only be done for numeric fields
+    activeControl = new UnitEntry(event.domain_meta.unit, activeControl);
+  }
+  if (event.domain_meta.autocomplete) {
+    activeControl = new AutoCompleteEntry(event.domain_meta.autocomplete_key || event.domain, activeControl, autoCompleteStyle());
+  }
+  if (event.domain_meta.mask) {
+    activeControl = new IDMaskEntry(event.domain_meta.mask, event.domain_meta.prefix, activeControl);
+  }
+
+  if (activeControl != null) {
+    activeControl.setAnswer(event.answer);
+    activeControl.load();
+  } else {
+    console.log('no active control');
+  }
+}
+
