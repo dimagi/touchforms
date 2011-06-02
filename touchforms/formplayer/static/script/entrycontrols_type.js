@@ -327,7 +327,11 @@ function MultiSelectEntry (args) {
     if (this.initted) {
       for (var i = 0; i < this.choices.length; i++) {
         var button = $('#ch-' + i)[0];
-        button.checked = (answer != null && answer.indexOf(this.valAt(i)) != -1);
+        var checked = (answer != null && answer.indexOf(this.valAt(i)) != -1);
+        button.checked = checked;
+        if (checked) {
+          $('#ch-' + i).focus();
+        }
       }
     } else {
       this.default_selections = answer;
