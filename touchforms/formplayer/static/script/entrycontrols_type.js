@@ -256,6 +256,18 @@ function MultiSelectEntry (args) {
   this.buttons = null;
   this.default_selections = null;
 
+  this.init_vals = function () {
+    if (this.choicevals == null && typeof this.choices[0] == 'object') {
+      this.choicevals = [];
+      for (var i = 0; i < this.choices.length; i++) {
+        var choice = this.choices[i];
+        this.choices[i] = choice.lab;
+        this.choicevals.push(choice.val);
+      }
+    }
+  }
+  this.init_vals();
+
   this.load = function () {
 
     //var choiceLayout = this.makeChoices();
@@ -404,7 +416,7 @@ function DateEntry (dir, args) {
   this.format = 'mm/dd/yy';
 
   this.load = function () {
-    $('#answer')[0].innerHTML = '<input id="datepicker" type="text">';
+    $('#answer')[0].innerHTML = '<input id="datepicker" type="text"><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.format.replace('yy', 'yyyy') + ')</span>';
 
     var self = this;
 		$("#datepicker").datepicker({
