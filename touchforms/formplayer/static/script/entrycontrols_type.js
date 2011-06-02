@@ -72,6 +72,8 @@ function Entry () {
 function SimpleEntry () {
   inherit(this, new Entry());
 
+  this.shortcuts = [];
+
   this.next = function () {
     if (this.prevalidate()) {
       answerQuestion();
@@ -84,6 +86,17 @@ function SimpleEntry () {
 
   this.back = function () {
     prevQuestion();
+  }
+
+  this.destroy = function () {
+    for (var i = 0; i < this.shortcuts.length; i++) {
+      shortcut.remove(this.shortcuts[i]);
+    }
+  }
+
+  this.add_shortcut = function (hotkey, func, use_keycode) {
+    set_shortcut(hotkey, func, use_keycode);
+    this.shortcuts.push(hotkey);
   }
 }
 
@@ -99,7 +112,7 @@ function InfoEntry (text, dir) {
 
   this.load = function () {
     if (this.dir || showAlertsOnBack()) {
-      alert(this.text);
+      showError(this.text);
       (this.dir ? nextClicked : backClicked)();
     } else {
       backClicked();
@@ -204,6 +217,7 @@ function FloatEntry () {
   }
 }
 
+/*
 function PhoneNumberEntry () {
   inherit(this, new FreeTextEntry({length_limit: 15}));
 
@@ -215,6 +229,7 @@ function PhoneNumberEntry () {
     return (!(/^\+?[0-9]+$/.test(raw)) ? "This does not appear to be a valid phone number" : null);
   }
 }
+*/
 
 function MultiSelectEntry (args) {
   inherit(this, new SimpleEntry());
@@ -247,9 +262,17 @@ function MultiSelectEntry (args) {
 
     content = '';
     for (var i = 0; i < this.choices.length; i++) {
-      content += '<input id="ch-' + i + '" type="' + (this.isMulti ? 'checkbox' : 'radio') + '" name="opt" value="' + i + '"> ' + this.choices[i] + '<br>';
+      var hotkey = (i < 9 ? '' + (i + 1) : (i < 20 ? 'abcdefghijklmnopqrstuvwxyz'[i - 9] : null));
+      content += (i + 1) + ') <input id="ch-' + i + '" type="' + (this.isMulti ? 'checkbox' : 'radio') + '" name="opt" value="' + i + '"> ' + this.choices[i] + '<br>';
+      this.add_shortcut(hotkey, this.selectFunc(i));
+      if (i < 9) {
+        this.add_shortcut('_' + (97 + i), this.selectFunc(i), true);
+      }
     }
     $('#answer')[0].innerHTML = content;
+    if (this.isMulti) {
+      $('#ch-0').focus();
+    }
     this.initted = true;
 
     this.setAnswer(this.default_selections);
@@ -281,19 +304,14 @@ function MultiSelectEntry (args) {
     }
   }
 
-  this.selectFunc = function () {
+  this.selectFunc = function (i) {
     var self = this;
-    return function (ev, c, button) {
-      button.toggleStatus();
-
-      //certain special values can be treated like a single-select, where if it is chosen
-      //the question is answered immediately; useful for 'none of the above'-type buttons
-      var as_single = self.as_single || [];
-      if (as_single.indexOf(button.value) != -1) {
-        var ans = self.getAnswer();
-        if (ans.length == 1 && ans[0] == button.value) {
-          autoAdvanceTrigger();
-        }
+    return function () {
+      var cbox = $('#ch-' + i);
+      if (cbox.is(':checked')) {
+        cbox.removeAttr('checked');
+      } else {
+        cbox.attr('checked', true);
       }
     }
   }
@@ -317,16 +335,10 @@ function SingleSelectEntry (args) {
     }
   }
 
-  this.selectFunc = function () {
-    var togglefunc = this.super('selectFunc')();
+  this.selectFunc = function (i) {
     var self = this;
-    return function (ev, c, button) {
-      var oldstatus = button.status;
-      togglefunc(ev, c, button);
-      clearButtons(self.buttons, button);
-      if (oldstatus == 'default') {
-        autoAdvanceTrigger();
-      }
+    return function () {
+      $('#ch-' + i).attr('checked', true);
     }
   }
 }
@@ -375,6 +387,7 @@ function DateEntry (dir, args) {
 
 }
 
+/*
 function NumericSubfield (field, args, forward_trigger, backward_trigger) {
   this.args = args;
   this.threshold = Math.max(args.min, Math.floor(args.max / 10) + 1);
@@ -608,6 +621,7 @@ function BloodPressureEntry () {
     return 'Enter a ' + ['systolic', 'diastolic'][field] + ' blood pressure';
   }
 }
+*/
 
 function TimeOfDayEntry () {
   this.HOUR_MAX = 23;
@@ -651,6 +665,7 @@ function TimeOfDayEntry () {
   }
 }
 
+/*
 function UnitEntry (unit, prototype) {
   this.unit = unit;
 
@@ -676,9 +691,8 @@ function UnitEntry (unit, prototype) {
   }
 }
 
-/* field that behaves like an <input>, but has no cursor and is otherwise not manipulable like a normal <input>
- * this is accomplished by using a hidden <input>, whose contents are then copied to a <span>
- */
+// field that behaves like an <input>, but has no cursor and is otherwise not manipulable like a normal <input>
+// this is accomplished by using a hidden <input>, whose contents are then copied to a <span>
 function ShadowField (displayfield, prototype) {
   inherit(this, prototype);
   
@@ -799,7 +813,7 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
       this.MAX_SUGGESTIONS = 6;
     }
 
-    /* very similar to FreeTextEntry.load() */
+    // very similar to FreeTextEntry.load()
     questionEntry.update(this.top);
     var answerBarControls = this.getAnswerBar();
     answerBarControls.inputfield.setMaxLen(this.length_limit);
@@ -923,7 +937,8 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
       //measurement of the disparity between most and least frequent (with correction for small sample sizes)
       var pareto = alphabet.length * (max + error_margin) / (sum + alphabet.length * error_margin);
       //size of most frequent letter -- a larger disparity give a larger max size
-      var maxsize = 1.9 /*base_size*/ + Math.log(pareto)/7.;
+      var base_size = 1.9;
+      var maxsize = base_size + Math.log(pareto)/7.;
       var opacity_skew = (.7 - .06 * Math.log(pareto)) / Math.pow(7.5, .75);
 
       for (var i = 0; i < alphabet.length; i++) {
@@ -1052,6 +1067,8 @@ function IDMaskEntry (mask, prefix, prototype) {
     };
   }
 }
+*/
+
 
 //move this to typeforms-ui.js ?
 function showError (msg) {
@@ -1064,6 +1081,10 @@ function showError (msg) {
 
 function renderQuestion (event, dir) {
   activeQuestion = event;
+
+  if (window.activeControl) {
+    activeControl.destroy();
+  }
   activeControl = null;
 
   if (event["datatype"] == "info") {
@@ -1072,16 +1093,18 @@ function renderQuestion (event, dir) {
     return;
   }
 
-  $('#question')[0].textContent = event["caption"];
+  $('#question').text(event["caption"]);
 
   event.domain_meta = event.domain_meta || {};
 
   if (event.customlayout != null) {
     activeControl = event.customlayout(event);
+    /*
   } else if (event.domain == 'phone') {
     activeControl = new PhoneNumberEntry();
   } else if (event.domain == 'bp') {
     activeControl = new BloodPressureEntry();
+    */
   } else if (event.datatype == "str") {
     activeControl = new FreeTextEntry({domain: event.domain});
   } else if (event.datatype == "int") {
@@ -1104,6 +1127,7 @@ function renderQuestion (event, dir) {
     return;
   }
 
+  /*
   if (event.domain_meta.unit) {
     //should only be done for numeric fields
     activeControl = new UnitEntry(event.domain_meta.unit, activeControl);
@@ -1114,6 +1138,7 @@ function renderQuestion (event, dir) {
   if (event.domain_meta.mask) {
     activeControl = new IDMaskEntry(event.domain_meta.mask, event.domain_meta.prefix, activeControl);
   }
+  */
 
   if (activeControl != null) {
     activeControl.setAnswer(event.answer);
@@ -1123,3 +1148,9 @@ function renderQuestion (event, dir) {
   }
 }
 
+
+
+function set_shortcut(hotkey, func) {
+  var shortcut_args = {type: 'keydown', propagate: false, target: document};
+  shortcut.add(hotkey, func, shortcut_args);
+}

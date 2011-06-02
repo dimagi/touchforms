@@ -55,7 +55,10 @@ touchscreenUI = {
 //  setup({% if fullscreen %}true{% endif %});
 //  initStaticWidgets();
 //  render_clean();
-  
+
+set_shortcut('enter', nextClicked);
+set_shortcut('ctrl+left', backClicked);
+
 {% ifequal mode 'xform' %}
 
   XFORM_UID = $('#form-uid')[0].value;
@@ -90,13 +93,16 @@ touchscreenUI = {
 
     </style>
 
+<!--
     <div id="history" style="float: right; border: 2px solid black; width: 25em; margin: 0px 0px 10px 10px; min-height: 500px;">
     </div>
+-->
 
     <h3 id="question" style="background: #fff; min-height: 4em;">asdf</h3>
     <hr>
     <div id="answer" style="background: #fff;">qwer</div>
 
+    <br>
     <button id="back" onclick="backClicked();">back</button>
     <button id="help" onclick="helpClicked();">help</button>
     <button id="next" onclick="nextClicked();">next</button>

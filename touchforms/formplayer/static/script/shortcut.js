@@ -25,7 +25,10 @@ shortcut = {
 		var ele = opt.target;
 		if(typeof opt.target == 'string') ele = document.getElementById(opt.target);
 		var ths = this;
-		shortcut_combination = shortcut_combination.toLowerCase();
+		shortcut_combination = (shortcut_combination + '').toLowerCase();
+    if (shortcut_combination[0] == '_') {
+      opt.keycode = true;
+    }
 
 		//The function to be called at keypress
 		var func = function(e) {
@@ -157,12 +160,10 @@ shortcut = {
 				} else if(k == 'meta') {
 					kp++;
 					modifiers.meta.wanted = true;
+				} else if(k[0] == '_') {
+					if(+k.substring(1) == code) kp++;
 				} else if(k.length > 1) { //If it is a special key
-					if(special_keys[k] == code) kp++;
-					
-				} else if(opt['keycode']) {
-					if(opt['keycode'] == code) kp++;
-
+					if(special_keys[k] == code) kp++;					
 				} else { //The special keys did not match
 					if(character == k) kp++;
 					else {
