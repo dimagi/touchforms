@@ -400,16 +400,19 @@ function DateEntry (dir, args) {
   inherit(this, new SimpleEntry());
 
   this.dir = dir;
-  this.ans = null;
+
+  this.format = 'mm/dd/yy';
 
   this.load = function () {
-    $('#answer')[0].innerHTML = '<div><div id="picker" /></div>';
-    
+    $('#answer')[0].innerHTML = '<input id="datepicker" type="text">';
+
     var self = this;
-		$("#picker").datepicker({
-      dateFormat: 'yy-mm-dd',
-      onSelect: function(dateText, inst) { self.ans = dateText; }
-    });
+		$("#datepicker").datepicker({
+        changeMonth: true,
+        changeYear: true,
+        dateFormat: this.format
+      });
+    $('#datepicker').focus();
 
     this.initted = true;
 
@@ -418,7 +421,7 @@ function DateEntry (dir, args) {
 
   this.setAnswer = function (answer, postLoad) {
     if (this.initted) {
-      $('#picker').datepicker('setDate', answer);
+      $('#datepicker').datepicker('setDate', answer ? $.datepicker.parseDate('yy-mm-dd', answer) : null);
       this.ans = answer;
     } else {
       this.def_ans = answer;
@@ -427,7 +430,8 @@ function DateEntry (dir, args) {
   }
 
   this.getAnswer = function () {
-    return this.ans;
+    var raw = $('#datepicker').datepicker('getDate');
+    return (raw != null ? $.datepicker.formatDate('yy-mm-dd', raw) : null);
   }
 
 }
