@@ -94,8 +94,8 @@ function SimpleEntry () {
     }
   }
 
-  this.add_shortcut = function (hotkey, func, use_keycode) {
-    set_shortcut(hotkey, func, use_keycode);
+  this.add_shortcut = function (hotkey, func) {
+    set_shortcut(hotkey, func);
     this.shortcuts.push(hotkey);
   }
 }
@@ -262,11 +262,13 @@ function MultiSelectEntry (args) {
 
     content = '';
     for (var i = 0; i < this.choices.length; i++) {
-      var hotkey = (i < 9 ? '' + (i + 1) : (i < 20 ? 'abcdefghijklmnopqrstuvwxyz'[i - 9] : null));
-      content += (i + 1) + ') <input id="ch-' + i + '" type="' + (this.isMulti ? 'checkbox' : 'radio') + '" name="opt" value="' + i + '"> ' + this.choices[i] + '<br>';
-      this.add_shortcut(hotkey, this.selectFunc(i));
-      if (i < 9) {
-        this.add_shortcut('_' + (97 + i), this.selectFunc(i), true);
+      var label = (i < 10 ? '' + ((i + 1) % 10) : (i < 36 ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i - 10] : null));
+      content += label + ') <input id="ch-' + i + '" type="' + (this.isMulti ? 'checkbox' : 'radio') + '" name="opt" value="' + i + '"> ' + this.choices[i] + '<br>';
+
+      this.add_shortcut(label, this.selectFunc(i));
+      if (i < 10) {
+        //TODO: BUG numpad keys collide with lowercase alpha in shortcut library
+        this.add_shortcut('_' + (96 + (i + 1) % 10), this.selectFunc(i));
       }
     }
     $('#answer')[0].innerHTML = content;
