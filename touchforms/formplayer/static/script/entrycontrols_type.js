@@ -270,9 +270,12 @@ function MultiSelectEntry (args) {
       }
     }
     $('#answer')[0].innerHTML = content;
-    if (this.isMulti) {
-      $('#ch-0').focus();
-    }
+    $('#ch-0').focus();
+
+    var self = this;
+    this.add_shortcut('up', function() { self.scroll(false); });
+    this.add_shortcut('down', function() { self.scroll(true); });
+
     this.initted = true;
 
     this.setAnswer(this.default_selections);
@@ -313,7 +316,32 @@ function MultiSelectEntry (args) {
       } else {
         cbox.attr('checked', true);
       }
+      cbox.focus();
     }
+  }
+
+  this.scroll = function (dir) {
+    var checkboxes = [];
+    for (var i = 0; i < this.choices.length; i++) {
+      checkboxes.push($('#ch-' + i)[0]);
+    }
+    var focussed = $(':focus');
+    var activeIx = -1;
+    for (var i = 0; i < focussed.length; i++) {
+      var ix = checkboxes.indexOf(focussed[i]);
+      if (ix != -1) {
+        activeIx = ix;
+        break;
+      }
+    }
+    if (activeIx >= 0) {
+      var newIx = (activeIx + this.choices.length + (dir ? 1 : -1)) % this.choices.length;
+      this.focus(newIx);
+    }
+  }
+
+  this.focus = function(i) {
+   $('#ch-' + i).focus();
   }
 }
 
@@ -338,7 +366,9 @@ function SingleSelectEntry (args) {
   this.selectFunc = function (i) {
     var self = this;
     return function () {
-      $('#ch-' + i).attr('checked', true);
+      var cbox = $('#ch-' + i);
+      cbox.attr('checked', true);
+      cbox.focus();
     }
   }
 }
