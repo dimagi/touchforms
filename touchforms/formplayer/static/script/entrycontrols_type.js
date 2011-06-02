@@ -1215,3 +1215,7 @@ function set_shortcut(hotkey, func) {
   var shortcut_args = {type: 'keydown', propagate: false, target: document};
   shortcut.add(hotkey, func, shortcut_args);
 }
+
+function confirmDone(doneFunc) {
+  doneFunc();
+}

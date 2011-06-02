@@ -119,11 +119,7 @@ function xformAjaxAdapter (formName, preloadTags) {
       var done = function () { self._formComplete(event); };
 
       if (xformAreYouDone()) {
-        disableInput();
-        setTimeout(function () { enableInput(); }, ADVANCE_LOCKOUT);
-        showActionableAlert('The form is finished. If you made any mistakes, GO BACK and make changes. SUBMIT the form when you are done. You can\'t make any more changes after you submit the form.',
-                            ['SUBMIT', 'GO BACK and make changes'],
-                            [done, backClicked]);
+        confirmDone(done);
       } else {
         done();
       }
