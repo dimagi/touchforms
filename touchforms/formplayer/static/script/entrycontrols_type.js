@@ -137,7 +137,8 @@ function FreeTextEntry (args) {
   }
 
   this.mkWidget = function () {
-    $('#answer')[0].innerHTML = '<input id="textfield" maxlength="' + this.length_limit + '" type="text"/>';
+    $('#answer')[0].innerHTML = '<input id="textfield" maxlength="' + this.length_limit + '" type="text"/><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.domainText() + ')</span>';
+    $('#textfield').focus();
     this.inputfield = $('#textfield')[0];
   }
 
@@ -179,6 +180,10 @@ function FreeTextEntry (args) {
   this._prevalidate = function (raw) {
     return null;
   }
+
+  this.domainText = function() {
+    return 'free-text';
+  }
 }
 
 function PasswordEntry (args) {
@@ -202,6 +207,10 @@ function IntEntry (length_limit) {
   this._prevalidate = function(raw) {
     return (isNaN(+raw) || +raw != Math.floor(+raw) ? "Not a valid whole number" : null);
   }
+
+  this.domainText = function() {
+    return 'numeric';
+  }
 }
 
 function FloatEntry () {
@@ -214,6 +223,10 @@ function FloatEntry () {
 
   this._prevalidate = function (raw) {
     return (isNaN(+raw) ? "Not a valid number" : null);
+  }
+
+  this.domainText = function() {
+    return 'decimal';
   }
 }
 
