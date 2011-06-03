@@ -91,6 +91,7 @@ function xformAjaxAdapter (formName, preloadTags) {
       meta.autocomplete_key = event["style"]["autocomplete-key"];
       meta.mask = event["style"]["mask"];
       meta.prefix = event["style"]["prefix"];
+      meta.longtext = (event["style"]["raw"] == 'full');
     } else if (event.datatype == "multiselect") {
       if (event["style"]["as-select1"] != null) {
         meta.as_single = [];

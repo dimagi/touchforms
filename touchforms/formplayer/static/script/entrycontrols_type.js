@@ -126,6 +126,7 @@ function FreeTextEntry (args) {
   args = args || {};
   this.domain = args.domain || 'full';
   this.length_limit = args.length_limit || 500;
+  this.textarea = args.prose;
 
   this.inputfield = null;
   this.default_answer = null;
@@ -137,9 +138,28 @@ function FreeTextEntry (args) {
   }
 
   this.mkWidget = function () {
-    $('#answer')[0].innerHTML = '<input id="textfield" maxlength="' + this.length_limit + '" type="text"/><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.domainText() + ')</span>';
-    $('#textfield').focus();
-    this.inputfield = $('#textfield')[0];
+    if (!this.textarea) {
+      $('#answer')[0].innerHTML = '<input id="textfield" maxlength="' + this.length_limit + '" type="text" style="width: ' + this.widgetWidth() + '" /><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.domainText() + ')</span>';
+      var widget = $('#textfield');
+    } else {
+      $('#answer')[0].innerHTML = '<textarea id="textarea" style="width: 33em; height: 10em; font-family: sans-serif;"></textarea><br><span id="type" style="font-size: x-small; font-style: italic; color: grey;">(ctrl+enter or shift+enter for new line!)</span>';
+      var widget = $('#textarea');
+
+      var type_newline = function() {
+        //TODO: doesn't work in chrome
+        var evt = document.createEvent("KeyboardEvent");
+        evt.initKeyEvent("keypress", true, true, window,
+                         0, 0, 0, 0,
+                         13, 0); 
+        widget[0].dispatchEvent(evt);
+      }
+
+      this.add_shortcut('ctrl+enter', type_newline);
+      this.add_shortcut('shift+enter', type_newline);
+      this.add_shortcut('alt+enter', type_newline);
+    }
+    widget.focus();
+    this.inputfield = widget[0];
   }
 
   this.getControl = function () {
@@ -184,6 +204,10 @@ function FreeTextEntry (args) {
   this.domainText = function() {
     return 'free-text';
   }
+
+  this.widgetWidth = function() {
+    return '20em';
+  }
 }
 
 function PasswordEntry (args) {
@@ -211,6 +235,10 @@ function IntEntry (length_limit) {
   this.domainText = function() {
     return 'numeric';
   }
+
+  this.widgetWidth = function() {
+    return '8em';
+  }
 }
 
 function FloatEntry () {
@@ -227,6 +255,10 @@ function FloatEntry () {
 
   this.domainText = function() {
     return 'decimal';
+  }
+
+  this.widgetWidth = function() {
+    return '8em';
   }
 }
 
@@ -1167,7 +1199,7 @@ function renderQuestion (event, dir) {
     activeControl = new BloodPressureEntry();
     */
   } else if (event.datatype == "str") {
-    activeControl = new FreeTextEntry({domain: event.domain});
+    activeControl = new FreeTextEntry({domain: event.domain, prose: event.domain_meta.longtext});
   } else if (event.datatype == "int") {
     activeControl = new IntEntry();
   } else if (event.datatype == "float") {
