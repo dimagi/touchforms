@@ -291,10 +291,6 @@ function MultiSelectEntry (args) {
       content += label + ') <input id="ch-' + i + '" type="' + (this.isMulti ? 'checkbox' : 'radio') + '" name="opt" value="' + i + '"> ' + this.choices[i] + '<br>';
 
       this.add_shortcut(label, this.selectFunc(i));
-      if (i < 10) {
-        //TODO: BUG numpad keys collide with lowercase alpha in shortcut library
-        this.add_shortcut('_' + (96 + (i + 1) % 10), this.selectFunc(i));
-      }
     }
     $('#answer')[0].innerHTML = content;
     $('#ch-0').focus();

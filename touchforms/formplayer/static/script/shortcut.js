@@ -25,7 +25,7 @@ shortcut = {
 		var ele = opt.target;
 		if(typeof opt.target == 'string') ele = document.getElementById(opt.target);
 		var ths = this;
-		shortcut_combination = (shortcut_combination + '').toLowerCase();
+		shortcut_combination = shortcut_combination.toLowerCase();
     if (shortcut_combination[0] == '_') {
       opt.keycode = true;
     }
@@ -46,10 +46,12 @@ shortcut = {
 			//Find Which key is pressed
 			if (e.keyCode) code = e.keyCode;
 			else if (e.which) code = e.which;
-			var character = String.fromCharCode(code).toLowerCase();
+      var character = String.fromCharCode(code).toLowerCase();
 			
 			if(code == 188) character=","; //If the user presses , when the type is onkeydown
 			if(code == 190) character="."; //If the user presses , when the type is onkeydown
+      if(code >= 96 && code < 106) character='0123456789'[code - 96];
+      //TODO: many other punctuation characters need to be fixed for onkeydown
 
 			var keys = shortcut_combination.split("+");
 			//Key Pressed - counts the number of valid keypresses - if it is same as the number of keys, the shortcut function is invoked
