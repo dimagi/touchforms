@@ -43,8 +43,6 @@ def xform_list(request):
             success = False
             notice = "No uploaded file set."
             
-            
-            
     for form in XForm.objects.all():
         forms_by_namespace[form.namespace].append(form)
     return render_to_response("formplayer/xform_list.html", 
@@ -54,7 +52,6 @@ def xform_list(request):
                                
                               context_instance=RequestContext(request))
                               
-
 def download(request, xform_id):
     """
     Download an xform
@@ -65,57 +62,85 @@ def download(request, xform_id):
     return response
 
 
-def playkb(request, xform_id, callback=None, preloader_data={}):
-    return play(request, xform_id, callback, preloader_data, inputmode='type')
 
-def play(request, xform_id, callback=None, preloader_data={}, inputmode='touch'):
-    """
-    Play an XForm.
-    
-    If you specify callback, instead of returning a response this view
-    will call back to your method upon completion (POST).  This allows
-    you to call the view from your own view, but specify a callback
-    method afterwards to do custom processing and responding.
-    
-    The callback method should have the following signature:
-        response = <method>(xform, document)
-    where:
-        xform = the django model of the form 
-        document = the couch object created by the instance data
-        response = a valid http response
-    """
-    xform = get_object_or_404(XForm, id=xform_id)
-    instance = None
-    if request.method == "POST":
-        if request.POST["type"] == 'form-complete':
-            # get the instance
-            instance = request.POST["output"]
 
-            # raise signal
-            xform_received.send(sender="player", instance=instance)
-        elif request.POST["type"] == 'form-aborted':
-            return HttpResponseRedirect("/")
-        # call the callback, if there, otherwise route back to the 
-        # formplayer list
-    if callback and instance is not None:
-        return callback(xform, instance)
-    elif instance is not None:
-        response = HttpResponse(mimetype='application/xml')
-        response.write(instance)
-        return response
-    
+
+def form_entry_new(request, xform, instance_xml=None, preloader_data={}, input_mode='touch'):
+    """start a new touchforms/typeforms session"""
     preloader_data_js = json.dumps(preloader_data)
     templ = {
         'touch': 'touchforms/touchscreen.html',
         'type': 'typeforms.html',
-    }[inputmode]
+    }[input_mode]
+
     return render_to_response(templ, {
             "form": xform,
             "mode": 'xform',
+            "instance_xml": instance_xml,
             "preloader_data": preloader_data_js,
             "dim": get_player_dimensions(request),
             "fullscreen": request.GET.get('mode', '').startswith('full')
         }, context_instance=RequestContext(request))
+
+def form_entry_abort(request, xform, callback):
+    """handle an aborted form entry session"""
+    return callback(xform, None)
+
+def form_entry_complete(request, xform, instance_xml, callback):
+    """handle a completed form entry session (xform finished and submitted)"""
+    xform_received.send(sender="player", instance=instance_xml)
+    return callback(xform, instance_xml)
+
+def default_callback(xform, instance_xml, abort_url=None):
+    """default post-action for form session"""
+    if instance_xml:
+        response = HttpResponse(mimetype='application/xml')
+        response.write(inst)
+        return response
+    else:
+        return HttpResponseRedirect(abort_url if abort_url else '/')
+
+def xfposthook(onsuccess=None, abort_url=None):
+    """helper function to override the submit or abort behavior, but still use the
+    default action for the other"""
+    def callback(xform, instance_xml):
+        if instance_xml:
+            return (onsuccess if onsuccess else default_callback)(xform, instance_xml)
+        else:
+            return default_callback(xform, instance_xml, abort_url)
+    return callback
+
+@require_POST
+def play_edit(request, xform_id, instance_id, callback=default_callback, preloader_data={}, inputmode='touch'):
+    if instance_id:
+        # TODO retrieve instance from db
+        pass
+    else:
+        instance_xml = request.POST["instance"]
+    return play(request, xform_id, callback, preloader_data, inputmode, instance_xml)
+
+def play(request, xform_id, callback=default_callback, preloader_data={}, inputmode='touch', instance_xml=None):
+    """
+    Play an XForm.
+
+    xform_id - which xform to play
+    callback(xform, instance_xml) - action to perform when form is submitted or aborted (both via POST) 
+        default behavior is to display the xml, and return to the form list, respectively
+        for abort, instance_xml will be None
+    preloader_data - data to satisfy form preloaders: {preloader type => {preload param => preload value}} 
+    input_mode - 'touch' for touchforms, 'type' for typeforms
+    instance_xml - an xml instance that, if present, will be edited during the form session
+    """
+    xform = get_object_or_404(XForm, id=xform_id)
+    if request.method == "POST":
+        if request.POST["type"] == 'form-complete':
+            instance_xml = request.POST["output"]
+            return form_entry_complete(request, xform, instance_xml, callback)
+
+        elif request.POST["type"] == 'form-aborted':
+            return form_entry_aborted(request, xform, callback)
+
+    return form_entry_new(request, xform, instance_xml, preloader_data, inputmode)
 
 def play_remote(request, session_id=None):
     if not session_id:
@@ -134,6 +159,7 @@ def play_remote(request, session_id=None):
             raise e
         session = PlaySession(
             next = request.POST.get('next'),
+            abort = request.POST.get('abort'),
             data = json.loads(request.POST.get('data')),
             xform_id = new_form.id,
         )
@@ -142,14 +168,14 @@ def play_remote(request, session_id=None):
 
     session = PlaySession.get(session_id)
 
-    if request.method == "POST":
-        def callback(xform, instance):
-            next = session.next
-            xform.delete()
-            session.delete()
-            return HttpResponseRedirect(session.next)
-    else:
-        callback = None
+    def callback(xform, instance_xml):
+        if instance_xml:
+            dest = session.next
+        else:
+            dest = session.abort if session.abort else session.next
+        xform.delete()
+        session.delete()
+        return HttpResponseRedirect(session.next)
     return play(request, session.xform_id, callback, session.data)
 
 def get_player_dimensions(request):
