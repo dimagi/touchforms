@@ -8,6 +8,10 @@ from org.javarosa.core.model.data import StringData
 import logging
 
 def attach_handlers(form, preload_data, extensions):
+    # default property preloader tries to access RMS; replace with a stub so as to
+    # not break touchforms
+    form.getPreloader().addPreloadHandler(StaticPreloadHandler('property', {}))
+
     for key, data_dict in preload_data.iteritems():
         handler = StaticPreloadHandler(key, data_dict)
         logging.debug("Adding preloader for %s data: %s" % (key, data_dict))
