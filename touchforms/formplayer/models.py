@@ -82,5 +82,5 @@ class PlaySession(Document):
     xform_id = IntegerProperty()
     next = StringProperty()
     abort = StringProperty()
-    preload_data = DictProperty()
+    preloader_data = DictProperty()
     saved_instance = StringProperty()
