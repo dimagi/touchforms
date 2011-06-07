@@ -93,7 +93,6 @@ def enter_form(request, **kwargs):
 # TODO: instance loading
 def form_entry_new(request, xform, instance_xml, preloader_data, input_mode):
     """start a new touchforms/typeforms session"""
-    preloader_data_js = json.dumps(preloader_data)
     templ = {
         'touch': 'touchforms/touchscreen.html',
         'type': 'typeforms.html',
@@ -102,8 +101,8 @@ def form_entry_new(request, xform, instance_xml, preloader_data, input_mode):
     return render_to_response(templ, {
             "form": xform,
             "mode": 'xform',
-            "instance_xml": instance_xml,
-            "preloader_data": preloader_data_js,
+            "instance_xml": json.dumps(instance_xml),
+            "preloader_data": json.dumps(preloader_data),
             "dim": get_player_dimensions(request),
             "fullscreen": request.GET.get('mode', '').startswith('full')
         }, context_instance=RequestContext(request))

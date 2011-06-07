@@ -1,5 +1,5 @@
 
-function xformAjaxAdapter (formName, preloadTags) {
+function xformAjaxAdapter (formName, preloadTags, savedInstance) {
   this.formName = formName;
   this.preloadTags = preloadTags;
   this.session_id = -1;
@@ -22,8 +22,9 @@ function xformAjaxAdapter (formName, preloadTags) {
             }
         }
     }
-    this.serverRequest(XFORM_URL, {'action': 'new-form', 
+    this.serverRequest(XFORM_URL, {'action': 'new-form',
                                    'form-name': this.formName,
+                                   'instance-content': savedInstance,
                                    'preloader-data': preload_data},
       function (resp) {
         adapter.session_id = resp["session_id"];
