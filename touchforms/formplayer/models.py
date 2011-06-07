@@ -81,4 +81,6 @@ class XForm(models.Model):
 class PlaySession(Document):
     xform_id = IntegerProperty()
     next = StringProperty()
-    data = DictProperty()
+    abort = StringProperty()
+    preload_data = DictProperty()
+    saved_instance = StringProperty()

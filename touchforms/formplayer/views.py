@@ -62,10 +62,36 @@ def download(request, xform_id):
     return response
 
 
+def coalesce(*args):
+    for arg in args:
+        if arg is not None:
+            return arg
+    return None
 
+def enter_form(request, **kwargs):
+    xform_id = kwargs.get('xform_id')
+    xform = kwargs.get('xform')
+    instance_xml = kwargs.get('instance_xml')
+    preloader_data = coalesce(kwargs.get('preloader_data'), {})
+    input_mode = coalesce(kwargs.get('input_mode'), 'touch')
+    submit_callback = coalesce(kwargs.get('onsubmit'), default_submit)
+    abort_callback = coalesce(kwargs.get('onabort'), default_abort)
 
+    if not xform:
+        xform = get_object_or_404(XForm, id=xform_id)
+        
+    if request.method == "POST":
+        if request.POST["type"] == 'form-complete':
+            instance_xml = request.POST["output"]
+            return form_entry_complete(request, xform, instance_xml, submit_callback)
 
-def form_entry_new(request, xform, instance_xml=None, preloader_data={}, input_mode='touch'):
+        elif request.POST["type"] == 'form-aborted':
+            return form_entry_abort(request, xform, abort_callback)
+
+    return form_entry_new(request, xform, instance_xml, preloader_data, input_mode)
+
+# TODO: instance loading
+def form_entry_new(request, xform, instance_xml, preloader_data, input_mode):
     """start a new touchforms/typeforms session"""
     preloader_data_js = json.dumps(preloader_data)
     templ = {
@@ -84,42 +110,23 @@ def form_entry_new(request, xform, instance_xml=None, preloader_data={}, input_m
 
 def form_entry_abort(request, xform, callback):
     """handle an aborted form entry session"""
-    return callback(xform, None)
+    return callback(xform)
 
 def form_entry_complete(request, xform, instance_xml, callback):
     """handle a completed form entry session (xform finished and submitted)"""
     xform_received.send(sender="player", instance=instance_xml)
     return callback(xform, instance_xml)
 
-def default_callback(xform, instance_xml, abort_url=None):
-    """default post-action for form session"""
-    if instance_xml:
-        response = HttpResponse(mimetype='application/xml')
-        response.write(inst)
-        return response
-    else:
-        return HttpResponseRedirect(abort_url if abort_url else '/')
+def default_submit(xform, instance_xml):
+    response = HttpResponse(mimetype='application/xml')
+    response.write(instance_xml)
+    return response
 
-def xfposthook(onsuccess=None, abort_url=None):
-    """helper function to override the submit or abort behavior, but still use the
-    default action for the other"""
-    def callback(xform, instance_xml):
-        if instance_xml:
-            return (onsuccess if onsuccess else default_callback)(xform, instance_xml)
-        else:
-            return default_callback(xform, instance_xml, abort_url)
-    return callback
+def default_abort(xform, abort_url='/'):
+    return HttpResponseRedirect(abort_url)
 
-@require_POST
-def play_edit(request, xform_id, instance_id, callback=default_callback, preloader_data={}, inputmode='touch'):
-    if instance_id:
-        # TODO retrieve instance from db
-        pass
-    else:
-        instance_xml = request.POST["instance"]
-    return play(request, xform_id, callback, preloader_data, inputmode, instance_xml)
-
-def play(request, xform_id, callback=default_callback, preloader_data={}, inputmode='touch', instance_xml=None):
+# this function is here for backwards compatibility; use enter_form() instead
+def play(request, xform_id, callback=None, preloader_data=None, input_mode=None):
     """
     Play an XForm.
 
@@ -131,18 +138,15 @@ def play(request, xform_id, callback=default_callback, preloader_data={}, inputm
     input_mode - 'touch' for touchforms, 'type' for typeforms
     instance_xml - an xml instance that, if present, will be edited during the form session
     """
-    xform = get_object_or_404(XForm, id=xform_id)
-    if request.method == "POST":
-        if request.POST["type"] == 'form-complete':
-            instance_xml = request.POST["output"]
-            return form_entry_complete(request, xform, instance_xml, callback)
+    return enter_form(request,
+                      xform_id=xform_id,
+                      preloader_data=preloader_data,
+                      input_mode=input_mode,
+                      onsubmit=callback,
+                      onabort=default_abort
+                      )
 
-        elif request.POST["type"] == 'form-aborted':
-            return form_entry_aborted(request, xform, callback)
-
-    return form_entry_new(request, xform, instance_xml, preloader_data, inputmode)
-
-def play_remote(request, session_id=None):
+def play_remote(request, session_id=None, input_mode=None):
     if not session_id:
         xform = request.POST.get('xform')
         try:
@@ -158,25 +162,29 @@ def play_remote(request, session_id=None):
             notice = "Problem creating xform from %s: %s" % (file, e)
             raise e
         session = PlaySession(
-            next = request.POST.get('next'),
-            abort = request.POST.get('abort'),
-            data = json.loads(request.POST.get('data')),
-            xform_id = new_form.id,
+            next=request.POST.get('next'),
+            abort=request.POST.get('abort'),
+            preload_data=json.loads(request.POST.get('data')),
+            xform_id=new_form.id,
+            saved_instance=request.POST.get('instance')
         )
         session.save()
         return HttpResponseRedirect(reverse('xform_play_remote', args=[session._id]))
 
     session = PlaySession.get(session_id)
-
-    def callback(xform, instance_xml):
-        if instance_xml:
-            dest = session.next
-        else:
-            dest = session.abort if session.abort else session.next
+    def onsubmit(xform, instance_xml):
         xform.delete()
         session.delete()
         return HttpResponseRedirect(session.next)
-    return play(request, session.xform_id, callback, session.data)
+    def onabort(xform):
+        return HttpResponseRedirect(session.abort if session.abort else session.next)
+    return enter_form(request, 
+                      xform_id=session.xform_id,
+                      preloader_data=session.preloader_data,
+                      input_mode=input_mode,
+                      onsubmit=onsubmit,
+                      onabort=onabort,
+                      )
 
 def get_player_dimensions(request):
     def get_dim(getparam, settingname):
