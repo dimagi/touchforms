@@ -301,22 +301,6 @@ function MultiSelectEntry (args) {
   this.init_vals();
 
   this.load = function () {
-
-    //var choiceLayout = this.makeChoices();
-    //questionEntry.update(choiceLayout);
-    //this.buttons = choiceLayout.buttons;
-
-    ////HACK for as-select1
-    //var as_single = this.as_single || [];
-    //for (var i = 0; i < as_single.length; i++) {
-    //  var button = this.buttons[as_single[i] - 1];
-    //  console.log(button);
-    //  button.multi = false;
-    //  button.base_style = null;
-    //  button.default_color = 'gr #085 #042';
-    //  button.setStatus(button.status);
-    // }
-
     content = '';
     for (var i = 0; i < this.choices.length; i++) {
       var label = (i < 10 ? '' + ((i + 1) % 10) : (i < 36 ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i - 10] : null));
@@ -1162,16 +1146,6 @@ function IDMaskEntry (mask, prefix, prototype) {
 }
 */
 
-
-//move this to typeforms-ui.js ?
-function showError (msg) {
-  alert(msg);
-}
-
-
-
-
-
 function renderQuestion (event, dir) {
   activeQuestion = event;
 
@@ -1239,39 +1213,4 @@ function renderQuestion (event, dir) {
   } else {
     console.log('no active control');
   }
-}
-
-
-
-function set_shortcut(hotkey, func) {
-  var shortcut_args = {type: 'keydown', propagate: false, target: document};
-  shortcut.add(hotkey, func, shortcut_args);
-}
-
-function confirmDone(doneFunc) {
-  $('#question').text('\u2014 End of Form \u2014');
-
-  $('#answer').html('<span class="help"><b>Your form is complete:</b><br><br>If you have corrections, go <b>back</b> (<b>ctrl+left</b>) and make them<br><br>When finished, <b>submit</b> <span id="submit_instr">(<b>ctrl+right</b>)</span></span>');
-
-  $('#next').text('submit');
-  $('#next').unbind('click');
-  $('#next').click(doneFunc);
-  shortcut.remove('enter');
-  set_shortcut('enter', function() {
-      $('#submit_instr').effect('highlight', {color: '#ffcc88'}, 'fast');
-    });
-
-  $('#back').unbind('click')
-  $('#back').click(function() {
-      $('#next').text('next');
-      $('#next').unbind('click');
-      $('#next').click(nextClicked);
-      shortcut.remove('enter');
-      set_shortcut('enter', function() { $('#next').trigger('click'); });
-
-      $('#back').unbind('click');
-      $('#back').click(backClicked);
-
-      backClicked();
-    });
 }

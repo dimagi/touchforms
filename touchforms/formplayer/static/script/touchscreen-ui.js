@@ -402,6 +402,17 @@ function confirmDone (doneFunc) {
                       [doneFunc, backClicked]);
 }
 
+function ajaxActivate() {
+  disableInput();
+  var waitingTimer = setTimeout(function () { touchscreenUI.showWaiting(true); }, 300);
+  
+  return function() {
+    enableInput();
+    clearTimeout(waitingTimer);
+    touchscreenUI.showWaiting(false);
+  };
+}
+
 function make_button (label, args) {
   args.color = args.color || KEYBUTTON_COLOR;
   args.style = args.style || KEYBUTTON_CLASS;

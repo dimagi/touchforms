@@ -213,19 +213,13 @@ function serverRequest (makeRequest, callback) {
     //console.log('request is already in progress; aborting');
     return;
   }
-  
   requestInProgress = true;
-  disableInput();
-  var waitingTimer = setTimeout(function () { touchscreenUI.showWaiting(true); }, 300);
   
+  ajaxDeactivate = ajaxActivate();
   makeRequest(function (resp) {
-    requestInProgress = false;
-
-    callback(resp);
-
-    enableInput();
-    clearTimeout(waitingTimer);
-    touchscreenUI.showWaiting(false);
+      requestInProgress = false;
+      callback(resp);
+      ajaxDeactivate();
     });
 }
 
