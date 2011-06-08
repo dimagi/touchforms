@@ -1251,18 +1251,22 @@ function set_shortcut(hotkey, func) {
 function confirmDone(doneFunc) {
   $('#question').text('\u2014 End of Form \u2014');
 
-  $('#answer').html('<span class="help"><b>Your form is complete:</b><br><br>If you have corrections, go <b>back</b> (<b>ctrl+left</b>) and make them<br><br>When finished, <b>submit</b> (<b>ctrl+right</b>)</span>');
+  $('#answer').html('<span class="help"><b>Your form is complete:</b><br><br>If you have corrections, go <b>back</b> (<b>ctrl+left</b>) and make them<br><br>When finished, <b>submit</b> <span id="submit_instr">(<b>ctrl+right</b>)</span></span>');
 
   $('#next').text('submit');
   $('#next').unbind('click');
   $('#next').click(doneFunc);
   shortcut.remove('enter');
+  set_shortcut('enter', function() {
+      $('#submit_instr').effect('highlight', {color: '#ffcc88'}, 'fast');
+    });
 
   $('#back').unbind('click')
   $('#back').click(function() {
       $('#next').text('next');
       $('#next').unbind('click');
       $('#next').click(nextClicked);
+      shortcut.remove('enter');
       set_shortcut('enter', function() { $('#next').trigger('click'); });
 
       $('#back').unbind('click');
