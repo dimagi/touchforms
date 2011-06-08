@@ -56,9 +56,13 @@ touchscreenUI = {
 //  initStaticWidgets();
 //  render_clean();
 
-set_shortcut('enter', nextClicked);
-set_shortcut('ctrl+left', backClicked);
-set_shortcut('ctrl+right', nextClicked);
+$('#next').click(nextClicked);
+$('#back').click(backClicked);
+$('#help').click(helpClicked);
+
+set_shortcut('enter', function() { $('#next').trigger('click'); });
+set_shortcut('ctrl+left', function() { $('#back').trigger('click'); });
+set_shortcut('ctrl+right', function() { $('#next').trigger('click'); });
 
 {% ifequal mode 'xform' %}
 
@@ -92,6 +96,12 @@ set_shortcut('ctrl+right', nextClicked);
         text-align: right;
       }
 
+      .help {
+        font-style: italic;
+        font-size: small;
+        color: grey;
+      }
+
     </style>
 
 <!--
@@ -102,9 +112,9 @@ set_shortcut('ctrl+right', nextClicked);
     <h3 id="question" style="background: #fff; min-height: 2em;">asdf</h3>
     <hr>
 
-      <div style="float: right; text-align: right; font-style: italic; font-size: small; color: grey;">
+      <div class="help" style="float: right; text-align: right;">
         <b>enter</b> or <b>ctrl+right</b> to advance<br />
-        <b>ctrl-left</b> to go back<br />
+        <b>ctrl+left</b> to go back<br />
         <br />
         type <b>number</b> or <b>letter</b> to select a choice<br />
         <b>up</b> and <b>down</b> to cycle through choices<br />
@@ -115,9 +125,9 @@ set_shortcut('ctrl+right', nextClicked);
     <div id="answer" style="background: #fff;">qwer</div>
 
     <br>
-    <button id="back" onclick="backClicked();">back</button>
-    <button id="help" onclick="helpClicked();">help</button>
-    <button id="next" onclick="nextClicked();">next</button>
+    <button id="back">back</button>
+    <button id="help">help</button>
+    <button id="next">next</button>
 
     <!-- stick form uid here to aid with backslash escaping -->
     <input id="form-uid" type="hidden" value="{% ifequal mode 'xform' %}{{form.file.path}}{% endifequal %}">
