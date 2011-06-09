@@ -215,7 +215,7 @@ function serverRequest (makeRequest, callback) {
   }
   requestInProgress = true;
   
-  ajaxDeactivate = ajaxActivate();
+  var ajaxDeactivate = ajaxActivate();
   makeRequest(function (resp) {
       requestInProgress = false;
       callback(resp);
