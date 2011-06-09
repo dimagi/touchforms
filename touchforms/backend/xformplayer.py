@@ -285,9 +285,8 @@ class XFormSession:
         self.fec.deleteRepeat(ix - 1)
         return self._parse_current_event()
 
-    #obsolete
     def new_repetition (self):
-      #current in the form api this always succeeds, but theoretically there could
+      #currently in the form api this always succeeds, but theoretically there could
       #be unsatisfied constraints that make it fail. how to handle them here?
       self.fec.newRepeat(self.fem.getFormIndex())
 
