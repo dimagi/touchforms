@@ -126,21 +126,9 @@ class XFormSession:
         form_ix = FormIndex.createBeginningOfFormIndex()
         tree = []
         self._walk(form_ix, tree)
-
-        print tree
-
         return tree
 
-#          if form_ix.isEndOfFormIndex():
-#            break
-#
-#          print form_ix
-#          if self.fem.getEvent(form_ix) == self.fec.EVENT_REPEAT_JUNCTURE:
-#            print 'repeat!!', self.fem.getForm().getNumRepetitions(form_ix)
-
     def _walk(self, parent_ix, siblings):
-      print 'in _walk', parent_ix
-
       def ix_in_scope(form_ix):
         if form_ix.isEndOfFormIndex():
           return False
@@ -159,17 +147,25 @@ class XFormSession:
             evt['children'] = []
           form_ix = self._walk(form_ix, evt['children'] if presentation_group else siblings)
         elif evt['type'] == 'repeat-juncture':
-          pass
+          siblings.append(evt)
+          evt['children'] = []
+          for i in range(0, self.fem.getForm().getNumRepetitions(form_ix)):
+            subevt = {
+              'type': 'sub-group',
+              'ix': self.fem.getForm().descendIntoRepeat(form_ix, i),
+              'caption': evt['repetitions'][i],
+              'repeatable': True,
+              'children': [],
+            }
+            evt['children'].append(subevt)
+            self._walk(subevt['ix'], subevt['children'])
+          del evt['repetitions']
+          form_ix = self.fem.incrementIndex(form_ix, True)
         else:
           siblings.append(evt)
           form_ix = self.fem.incrementIndex(form_ix, True)
 
       return form_ix
-
-#        process form_ix
-#        if question, mk event, add to siblings
-#        if group/repeat, mk event, recurse with fresh list, add to siblings
-
 
     def _parse_current_event(self):
         self.cur_event = self.__parse_event(self.fem.getFormIndex())
@@ -403,7 +399,7 @@ def go_back (session_id):
 
 def next_event (xfsess):
     print '=== walking ==='
-    xfsess.walk()
+    print xfsess.walk()
     print '==============='
 
 

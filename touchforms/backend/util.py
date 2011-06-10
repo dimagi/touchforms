@@ -12,7 +12,9 @@ date.__json__ = lambda self: json.dumps(self.strftime('%Y-%m-%d'))
 time.__json__ = lambda self: json.dumps(self.strftime('%H:%M'))
 
 from org.javarosa.core.model import FormIndex
-FormIndex.__json__ = lambda self: json.dumps(self.toString())
+FormIndex.__json__ = lambda self: json.dumps(str(self))
+FormIndex.__str__ = lambda self: str_form_index(self)
+FormIndex.__repr__ = FormIndex.__json__
 
 def to_jdate(pdate):
     return Date(pdate.year - 1900, pdate.month - 1, pdate.day)
@@ -31,3 +33,25 @@ def to_vect(it):
     for e in it:
         v.addElement(e)
     return v
+
+def str_form_index(form_ix):
+    if form_ix.isBeginningOfFormIndex():
+        return '<'
+    elif form_ix.isEndOfFormIndex():
+        return '>'
+    else:
+        def expand(form_ix):
+            if form_ix != None:
+                yield form_ix
+                for step in expand(form_ix.getNextLevel()):
+                    yield step
+        steps = list(expand(form_ix))
+        def str_step(step):
+            i = step.getLocalIndex()
+            mult = step.getInstanceIndex()
+            try:
+                suffix = {-1: '', -10: 'J'}[mult]
+            except KeyError:
+                suffix = ':%d' % mult
+            return str(i) + suffix
+        return ','.join(str_step(step) for step in steps)
