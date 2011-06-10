@@ -11,6 +11,9 @@ datetime.__json__ = lambda self: json.dumps(self.strftime('%Y-%m-%d'))
 date.__json__ = lambda self: json.dumps(self.strftime('%Y-%m-%d'))
 time.__json__ = lambda self: json.dumps(self.strftime('%H:%M'))
 
+from org.javarosa.core.model import FormIndex
+FormIndex.__json__ = lambda self: json.dumps(self.toString())
+
 def to_jdate(pdate):
     return Date(pdate.year - 1900, pdate.month - 1, pdate.day)
 

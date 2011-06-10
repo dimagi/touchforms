@@ -21,7 +21,7 @@ import com.xhaus.jyson.JysonCodec as json
 
 from org.javarosa.xform.parse import XFormParser
 from org.javarosa.form.api import FormEntryModel, FormEntryController
-from org.javarosa.core.model import Constants
+from org.javarosa.core.model import Constants, FormIndex
 from org.javarosa.core.model.data import *
 from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
@@ -121,11 +121,64 @@ class XFormSession:
 
         instance_bytes = FormSerializer().serializeInstance(self.form.getInstance())
         return unicode(''.join(chr(b) for b in instance_bytes.tolist()), 'utf-8')
+    
+    def walk(self):
+        form_ix = FormIndex.createBeginningOfFormIndex()
+        tree = []
+        self._walk(form_ix, tree)
 
-    def _parse_current_event (self):
-        event = {}
+        print tree
 
-        status = self.fem.getEvent()
+        return tree
+
+#          if form_ix.isEndOfFormIndex():
+#            break
+#
+#          print form_ix
+#          if self.fem.getEvent(form_ix) == self.fec.EVENT_REPEAT_JUNCTURE:
+#            print 'repeat!!', self.fem.getForm().getNumRepetitions(form_ix)
+
+    def _walk(self, parent_ix, siblings):
+      print 'in _walk', parent_ix
+
+      def ix_in_scope(form_ix):
+        if form_ix.isEndOfFormIndex():
+          return False
+        elif parent_ix.isBeginningOfFormIndex():
+          return True
+        else:
+          return FormIndex.isSubElement(parent_ix, form_ix)
+
+      form_ix = self.fem.incrementIndex(parent_ix, True)
+      while ix_in_scope(form_ix):
+        evt = self.__parse_event(form_ix)
+        if evt['type'] == 'sub-group':
+          presentation_group = (evt['caption'] != None)
+          if presentation_group:
+            siblings.append(evt)
+            evt['children'] = []
+          form_ix = self._walk(form_ix, evt['children'] if presentation_group else siblings)
+        elif evt['type'] == 'repeat-juncture':
+          pass
+        else:
+          siblings.append(evt)
+          form_ix = self.fem.incrementIndex(form_ix, True)
+
+      return form_ix
+
+#        process form_ix
+#        if question, mk event, add to siblings
+#        if group/repeat, mk event, recurse with fresh list, add to siblings
+
+
+    def _parse_current_event(self):
+        self.cur_event = self.__parse_event(self.fem.getFormIndex())
+        return self.cur_event
+    
+    def __parse_event (self, form_ix):
+        event = {'ix': form_ix}
+      
+        status = self.fem.getEvent(form_ix)
         if status == self.fec.EVENT_BEGINNING_OF_FORM:
             event['type'] = 'form-start'
         elif status == self.fec.EVENT_END_OF_FORM:
@@ -139,7 +192,7 @@ class XFormSession:
             self._parse_repeat_juncture(event)
         else:
             event['type'] = 'sub-group'
-            event['caption'] = self.fem.getCaptionPrompt().getLongText()
+            event['caption'] = self.fem.getCaptionPrompt(form_ix).getLongText()
             if status == self.fec.EVENT_GROUP:
                 event['repeatable'] = False
             elif status == self.fec.EVENT_REPEAT:
@@ -149,7 +202,6 @@ class XFormSession:
                 event['repeatable'] = True
                 event['exists'] = False
 
-        self.cur_event = event
         return event
 
     def _get_question_choices(self, q):
@@ -168,7 +220,7 @@ class XFormSession:
         return info
 
     def _parse_question (self, event):
-        q = self.fem.getQuestionPrompt()
+        q = self.fem.getQuestionPrompt(event['ix'])
 
         event['caption'] = q.getLongText()
         event['help'] = q.getHelpText()
@@ -219,7 +271,7 @@ class XFormSession:
                 event['answer'] = [sel.index + 1 for sel in value.getValue()]
 
     def _parse_repeat_juncture(self, event):
-        r = self.fem.getCaptionPrompt()
+        r = self.fem.getCaptionPrompt(event['ix'])
         ro = r.getRepeatOptions()
 
         event['main-header'] = ro.header
@@ -350,6 +402,11 @@ def go_back (session_id):
         return {'event': event, 'at-start': at_start}
 
 def next_event (xfsess):
+    print '=== walking ==='
+    xfsess.walk()
+    print '==============='
+
+
     ev = xfsess.next_event()
     if ev['type'] != 'form-complete':
         return ev
