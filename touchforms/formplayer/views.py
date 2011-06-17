@@ -145,9 +145,10 @@ def play(request, xform_id, callback=None, preloader_data=None, input_mode=None)
                       onabort=default_abort
                       )
 
-def play_remote(request, session_id=None, input_mode=None):
+def play_remote(request, session_id=None, input_mode=None, playsettings=None):
     if not session_id:
-        xform = request.POST.get('xform')
+        playsettings = playsettings if playsettings is not None else request.POST
+        xform = playsettings.get('xform')
         try:
             tmp_file_handle, tmp_file_path = tempfile.mkstemp()
             tmp_file = os.fdopen(tmp_file_handle, 'w')
@@ -161,26 +162,30 @@ def play_remote(request, session_id=None, input_mode=None):
             notice = "Problem creating xform from %s: %s" % (file, e)
             raise e
         session = PlaySession(
-            next=request.POST.get('next'),
-            abort=request.POST.get('abort'),
-            preloader_data=json.loads(request.POST.get('data')),
+            next=playsettings.get('next'),
+            abort=playsettings.get('abort'),
+            input_mode=input_mode,
+            preloader_data=json.loads(playsettings.get('data')),
             xform_id=new_form.id,
-            saved_instance=request.POST.get('instance')
+            saved_instance=playsettings.get('instance')
         )
         session.save()
+        
         return HttpResponseRedirect(reverse('xform_play_remote', args=[session._id]))
-
+    
     session = PlaySession.get(session_id)
     def onsubmit(xform, instance_xml):
         xform.delete()
         session.delete()
         return HttpResponseRedirect(session.next)
     def onabort(xform):
+        xform.delete()
+        session.delete()
         return HttpResponseRedirect(session.abort if session.abort else session.next)
     return enter_form(request, 
                       xform_id=session.xform_id,
                       preloader_data=session.preloader_data,
-                      input_mode=input_mode,
+                      input_mode=session.input_mode,
                       onsubmit=onsubmit,
                       onabort=onabort,
                       )
