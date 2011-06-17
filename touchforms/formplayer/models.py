@@ -10,6 +10,7 @@ import logging
 import hashlib
 from couchdbkit.schema.properties import StringProperty, IntegerProperty, DictProperty
 from couchdbkit.ext.django.schema import Document
+from couchdbkit.resource import ResourceNotFound
 
 VERSION_KEY = "version"
 UIVERSION_KEY = "uiVersion" 
@@ -84,3 +85,9 @@ class PlaySession(Document):
     abort = StringProperty()
     preloader_data = DictProperty()
     saved_instance = StringProperty()
+    input_mode = StringProperty()
+    
+    def get_instance(self):
+        return self.fetch_attachment("form.xml")
+        
+    

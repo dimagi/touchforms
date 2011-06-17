@@ -176,8 +176,10 @@ def play_remote(request, session_id=None, input_mode=None, playsettings=None):
     session = PlaySession.get(session_id)
     def onsubmit(xform, instance_xml):
         xform.delete()
-        session.delete()
-        return HttpResponseRedirect(session.next)
+        # keep the session/attachment around for later access.
+        # TODO: possibly consider auto-deleting these at some point
+        session.put_attachment(instance_xml, "form.xml", "text/xml", len(instance_xml))
+        return HttpResponseRedirect("%s?session_id=%s" % (session.next, session_id))
     def onabort(xform):
         xform.delete()
         session.delete()
@@ -187,8 +189,13 @@ def play_remote(request, session_id=None, input_mode=None, playsettings=None):
                       preloader_data=session.preloader_data,
                       input_mode=session.input_mode,
                       onsubmit=onsubmit,
-                      onabort=onabort,
-                      )
+                      onabort=onabort)
+
+def get_remote_instance(request, session_id):
+    session = PlaySession.get(session_id)
+    response = HttpResponse(mimetype='application/xml')
+    response.write(session.get_instance())
+    return response
 
 def get_player_dimensions(request):
     def get_dim(getparam, settingname):
