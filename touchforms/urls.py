@@ -4,7 +4,7 @@ from django.conf import settings
 # from django.contrib import admin
 # admin.autodiscover()
 
-media_prefix = settings.MEDIA_URL.strip("/")
+media_prefix = settings.STATIC_URL.strip("/")
 
 urlpatterns = patterns('',
     # Example:

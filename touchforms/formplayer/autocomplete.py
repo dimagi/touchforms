@@ -9,6 +9,7 @@ import os.path
 import threading
 from django.core.cache import cache
 from django.conf import settings
+from touchforms.formplayer.util import get_autocomplete_dir
 
 DEFAULT_NUM_SUGGESTIONS = 12
 
@@ -16,7 +17,7 @@ CACHE_TIMEOUT = 28800  #8 hrs -- essentially meant to be a static cache for one 
 CACHE_PREFIX_LEN = 3
 DEFAULT_RES = .5
 
-DATA_DIR = settings.TOUCHFORMS_AUTOCOMPL_DATA_DIR
+DATA_DIR = get_autocomplete_dir()
 
 def func(funcname):
     path = funcname.split('.')
