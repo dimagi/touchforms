@@ -179,6 +179,10 @@ def play_remote(request, session_id=None, input_mode=None, playsettings=None):
         # keep the session/attachment around for later access.
         # TODO: possibly consider auto-deleting these at some point
         session.put_attachment(instance_xml, "form.xml", "text/xml", len(instance_xml))
+        # use & if the url already has a ?
+        url = "%s?session_id=%s" % (session.next, session_id) \
+              if "?" not in session.next \
+              else "%s&session_id=%s" % (session.next, session_id) 
         return HttpResponseRedirect("%s?session_id=%s" % (session.next, session_id))
     def onabort(xform):
         xform.delete()
