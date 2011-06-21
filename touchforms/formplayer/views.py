@@ -145,7 +145,7 @@ def play(request, xform_id, callback=None, preloader_data=None, input_mode=None)
                       onabort=default_abort
                       )
 
-def play_remote(request, session_id=None, input_mode=None, playsettings=None):
+def play_remote(request, session_id=None, playsettings=None):
     if not session_id:
         playsettings = playsettings if playsettings is not None else request.POST
         xform = playsettings.get('xform')
@@ -164,7 +164,7 @@ def play_remote(request, session_id=None, input_mode=None, playsettings=None):
         session = PlaySession(
             next=playsettings.get('next'),
             abort=playsettings.get('abort'),
-            input_mode=input_mode,
+            input_mode=playsettings.get('input_mode'),
             preloader_data=json.loads(playsettings.get('data')),
             xform_id=new_form.id,
             saved_instance=playsettings.get('instance')
