@@ -133,7 +133,7 @@ def default_abort(xform, abort_url='/'):
 
 # this function is here for backwards compatibility; use enter_form() instead
 def play(request, xform_id, callback=None, preloader_data=None, input_mode=None,
-         force_template=None):
+         abort_callback=default_abort, force_template=None):
     """
     Play an XForm.
 
@@ -150,7 +150,7 @@ def play(request, xform_id, callback=None, preloader_data=None, input_mode=None,
                       preloader_data=preloader_data,
                       input_mode=input_mode,
                       onsubmit=callback,
-                      onabort=default_abort,
+                      onabort=abort_callback,
                       force_template=force_template
                       )
 
