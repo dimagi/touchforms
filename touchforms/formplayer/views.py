@@ -76,27 +76,34 @@ def enter_form(request, **kwargs):
     input_mode = coalesce(kwargs.get('input_mode'), 'touch')
     submit_callback = coalesce(kwargs.get('onsubmit'), default_submit)
     abort_callback = coalesce(kwargs.get('onabort'), default_abort)
-
+    force_template = coalesce(kwargs.get('force_template'), None)
+    
     if not xform:
         xform = get_object_or_404(XForm, id=xform_id)
         
     if request.method == "POST":
         if request.POST["type"] == 'form-complete':
             instance_xml = request.POST["output"]
-            return form_entry_complete(request, xform, instance_xml, submit_callback)
+            return form_entry_complete(request, xform, instance_xml, 
+                                       submit_callback)
 
         elif request.POST["type"] == 'form-aborted':
             return form_entry_abort(request, xform, abort_callback)
 
-    return form_entry_new(request, xform, instance_xml, preloader_data, input_mode)
+    return form_entry_new(request, xform, instance_xml, preloader_data, 
+                          input_mode, force_template)
 
 # TODO: instance loading
-def form_entry_new(request, xform, instance_xml, preloader_data, input_mode):
+def form_entry_new(request, xform, instance_xml, preloader_data, input_mode, 
+                   force_template=None):
     """start a new touchforms/typeforms session"""
-    templ = {
-        'touch': 'touchforms/touchscreen.html',
-        'type': 'typeforms.html',
-    }[input_mode]
+    if force_template is not None:
+        templ = force_template
+    else:
+        templ = {
+            'touch': 'touchforms/touchscreen.html',
+            'type': 'typeforms.html',
+        }[input_mode]
 
     return render_to_response(templ, {
             "form": xform,
@@ -125,7 +132,8 @@ def default_abort(xform, abort_url='/'):
     return HttpResponseRedirect(abort_url)
 
 # this function is here for backwards compatibility; use enter_form() instead
-def play(request, xform_id, callback=None, preloader_data=None, input_mode=None):
+def play(request, xform_id, callback=None, preloader_data=None, input_mode=None,
+         force_template=None):
     """
     Play an XForm.
 
@@ -142,7 +150,8 @@ def play(request, xform_id, callback=None, preloader_data=None, input_mode=None)
                       preloader_data=preloader_data,
                       input_mode=input_mode,
                       onsubmit=callback,
-                      onabort=default_abort
+                      onabort=default_abort,
+                      force_template=force_template
                       )
 
 def play_remote(request, session_id=None, playsettings=None):
