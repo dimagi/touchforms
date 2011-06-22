@@ -11,5 +11,5 @@ def static_workaround(request):
         # if you don't have django-staticfiles installed add this to your 
         # context processors:
         # "touchforms.context_processors.static_workaround",
-        "STATIC_URL": "%s%s" % (settings.MEDIA_URL, "touchforms/")
+        "STATIC_URL": "%s%s" % (settings.MEDIA_URL, "formplayer/")
     }
