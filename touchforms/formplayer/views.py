@@ -183,7 +183,7 @@ def play_remote(request, session_id=None, playsettings=None):
         url = "%s?session_id=%s" % (session.next, session_id) \
               if "?" not in session.next \
               else "%s&session_id=%s" % (session.next, session_id) 
-        return HttpResponseRedirect("%s?session_id=%s" % (session.next, session_id))
+        return HttpResponseRedirect(url)
     def onabort(xform):
         xform.delete()
         session.delete()
