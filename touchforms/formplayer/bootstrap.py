@@ -24,10 +24,12 @@ def bootstrap():
                     xform = XForm.from_file(full_name)
                     logging.debug("created: %s from %s" % (xform, filename))
             except IOError, e:
-                logging.error("Problem loading file: %s. %s" % (filename, e))
+                logging.exception("Problem loading file: %s" % filename)
             except Exception, e:
-                logging.error("Unknown problem bootstrapping file: %s. %s" % (filename, e))
-                
+                logging.exception("Unknown problem bootstrapping file: %s" % filename)
+            finally:
+                file.close()
+
     except Exception, e:
         transaction.rollback_unless_managed()
         logging.error(("Problem bootstrapping formplayer: %s.  Ignoring.  If the " \
