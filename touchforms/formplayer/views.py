@@ -18,6 +18,7 @@ from StringIO import StringIO
 from touchforms.formplayer.signals import xform_received
 from django.template.context import RequestContext
 from django.shortcuts import render_to_response
+from django.views.decorators.csrf import csrf_exempt
 import tempfile
 import os
 
@@ -225,6 +226,7 @@ def get_player_dimensions(request):
         'height': get_dim('h', 'TOUCHSCREEN_HEIGHT')
     }
 
+@csrf_exempt
 def player_proxy(request):
     """Proxy to an xform player, to avoid cross-site scripting issues"""
     data = request.raw_post_data if request.method == "POST" else None
