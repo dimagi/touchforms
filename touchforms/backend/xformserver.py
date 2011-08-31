@@ -133,6 +133,12 @@ def handle_request (content, **kwargs):
 
             return xformplayer.delete_repeat(content['session-id'], content['ix'])
 
+        elif action == 'purge-stale':
+            if 'window' not in content:
+                return {'error': 'staleness window required'}
+
+            return xformplayer.purge(content['window'])
+
         else:
             return {'error': 'unrecognized action'}
     

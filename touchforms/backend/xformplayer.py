@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 import threading
 import codecs
+import time
 
 from java.util import Date
 from java.util import Vector
@@ -68,6 +69,23 @@ class global_state_mgr:
 
   #todo: add ways to get xml, delete xml, and option not to save xml at all
 
+  def purge(self, older_than):
+    num_sess_purged = 0
+    num_sess_active = 0
+
+    with self.lock:
+      now = time.time()
+      for sess_id, sess in self.session_cache.items():
+        if now - sess.last_activity > older_than:
+          del self.session_cache[sess_id]
+          num_sess_purged += 1
+        else:
+          num_sess_active += 1
+      #what about saved instances? we don't track when they were saved
+      #for now will just assume instances are not saved
+
+    return {'purged': num_sess_purged, 'active': num_sess_active}
+
 global_state = global_state_mgr()
   
 
@@ -106,14 +124,20 @@ class XFormSession:
         self.fec = FormEntryController(self.fem)
         self._parse_current_event()
 
+        self.update_last_activity()
+
     def __enter__(self):
         if not self.lock.acquire(False):
             raise SequencingException()
+        self.update_last_activity()
         return self
 
     def __exit__(self, *_):
         self.lock.release()
  
+    def update_last_activity(self):
+        self.last_activity = time.time()
+
     def output(self):
         if self.cur_event['type'] != 'form-complete':
             #warn that not at end of form
@@ -365,7 +389,15 @@ def prev_event (xfsess):
         at_start, ev = True, xfsess.next_event()
     return at_start, ev
 
-def save_form (xfsess):
+def save_form (xfsess, persist=False):
     xml = xfsess.output()
-    instance_id = global_state.save_instance(xml)
+    if persist:
+        instance_id = global_state.save_instance(xml)
+    else:
+        instance_id = None
     return (instance_id, xml)
+
+def purge(window):
+    resp = global_state.purge(window)
+    resp.update({'status': 'ok'})
+    return resp
