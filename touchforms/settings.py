@@ -38,7 +38,7 @@ MEDIA_ROOT = 'data'
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = '/static/'
+MEDIA_URL = '/media/'
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -58,6 +58,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.media",
     "django.core.context_processors.request",
     "touchforms.context_processors.meta",
+    'staticfiles.context_processors.static',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -84,6 +85,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
+    'staticfiles',
     'formplayer'
 )
 
@@ -94,6 +96,8 @@ RELEASE_VERSION = None
 import os
 ROOT_DIR = os.path.normpath(os.path.dirname(__file__))
 STATIC_DOC_ROOT = os.path.join(ROOT_DIR, "formplayer", "static")
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(ROOT_DIR, 'staticroot')
 XFORMS_BOOTSTRAP_PATH = "static/demo_forms"
 XFORMS_PATH = "data/xforms"
 XFORMS_PLAYER_URL = "http://localhost:4444/"

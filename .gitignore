@@ -8,3 +8,4 @@ local*settings.py
 .idea
 data/
 *.log
+staticroot/
