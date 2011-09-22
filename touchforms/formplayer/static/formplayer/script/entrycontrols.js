@@ -279,7 +279,7 @@ function MultiSelectEntry (args) {
     var as_single = this.as_single || [];
     for (var i = 0; i < as_single.length; i++) {
       var button = this.buttons[as_single[i] - 1];
-      console.log(button);
+      //console.log(button);
       button.multi = false;
       button.base_style = null;
       button.default_color = 'gr #085 #042';
@@ -885,7 +885,7 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
     var self = this;
     jQuery.get(AUTOCOMPLETE_URL, params, function (data) {
         if (self.getSearchKey() != params.key) {
-          console.log('results no longer valid');
+          //console.log('results no longer valid');
         } else {
           self.updateChoices(data);
         }
@@ -923,7 +923,7 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
 
     var names = [];
     for (var i = 0; i < suggestions.length; i++) {
-      console.log(suggestions[i]);
+      //console.log(suggestions[i]);
       names.push(suggestions[i].name);
     }
     this.setChoices(names, current);
@@ -951,7 +951,7 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
       for (var i = 0; i < alphabet.length; i++) {
         var c = alphabet[i];
         var k = (max == 0 ? 0. : Math.min(-Math.log(Math.max(frequency[c] || 0., error_margin) / max), 9.));
-        console.log(c, k, frequency[c], max, sum, error_margin);
+        //console.log(c, k, frequency[c], max, sum, error_margin);
 
         var opacity = 1. - opacity_skew * Math.pow(k, .75);
         var shade = 1. - .035 * k;
@@ -1136,7 +1136,7 @@ function renderQuestion (event, dir) {
     activeControl.setAnswer(event.answer);
     activeControl.load();
   } else {
-    console.log('no active control');
+    //console.log('no active control');
   }
 }
 
