@@ -279,7 +279,6 @@ function MultiSelectEntry (args) {
     var as_single = this.as_single || [];
     for (var i = 0; i < as_single.length; i++) {
       var button = this.buttons[as_single[i] - 1];
-      //console.log(button);
       button.multi = false;
       button.base_style = null;
       button.default_color = 'gr #085 #042';
@@ -923,7 +922,6 @@ function AutoCompleteEntry (lookup_key, prototype, style) {
 
     var names = [];
     for (var i = 0; i < suggestions.length; i++) {
-      //console.log(suggestions[i]);
       names.push(suggestions[i].name);
     }
     this.setChoices(names, current);
