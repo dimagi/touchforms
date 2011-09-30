@@ -180,8 +180,9 @@ def play_remote(request, session_id=None, playsettings=None):
             saved_instance=playsettings.get('instance')
         )
         session.save()
-        
-        return HttpResponseRedirect(reverse('xform_play_remote', args=[session._id]))
+        params = '&'.join(['%s=%s' % (x[0],x[1]) for x in request.GET.items()])
+        return HttpResponseRedirect("%s?%s" % (reverse('xform_play_remote', args=[session._id]), params))
+
     
     session = PlaySession.get(session_id)
     def onsubmit(xform, instance_xml):
