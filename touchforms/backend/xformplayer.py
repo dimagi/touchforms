@@ -159,7 +159,8 @@ class XFormSession:
             }
             evt['children'].append(subevt)
             self._walk(subevt['ix'], subevt['children'])
-          del evt['repetitions']
+          for key in ['repetitions', 'del-choice', 'del-header', 'done-choice']:
+            del evt[key]
           form_ix = self.fem.incrementIndex(form_ix, True)
         else:
           siblings.append(evt)
@@ -356,7 +357,7 @@ def open_form (form_name, instance_xml=None, extensions=[], preload_data={}):
     xfsess = XFormSession(xform_path=form_name, instance_raw=instance_xml, preload_data=preload_data, extensions=extensions)
     sess_id = global_state.new_session(xfsess)
     first_event = xfsess.next_event()
-    return {'session_id': sess_id, 'event': first_event}
+    return {'session_id': sess_id, 'tree': xfsess.walk()}
 
 def answer_question (session_id, answer):
     with global_state.get_session(session_id) as xfsess:

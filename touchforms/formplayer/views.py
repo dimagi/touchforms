@@ -96,6 +96,7 @@ def form_entry_new(request, xform, instance_xml, preloader_data, input_mode):
     templ = {
         'touch': 'touchforms/touchscreen.html',
         'type': 'typeforms.html',
+        'full': 'fullform.html',
     }[input_mode]
 
     return render_to_response(templ, {

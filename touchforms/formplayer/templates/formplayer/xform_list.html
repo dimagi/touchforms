@@ -22,7 +22,7 @@
         <th>Version</th>
         <th>UI Version</th>
         <th>File</th>
-        <th colspan="2">Play</th>
+        <th colspan="3">Play</th>
     </thead>
     {% endif %}
     {% for xform in xforms %}
@@ -40,6 +40,7 @@
             <td><a href="{% url xform_download xform.id %}">download</a></td>
             <td><a href="{% url xform_play xform.id %}">touch</a></td>
             <td><a href="{% url xform_play_kb xform.id %}">type</a></td>
+            <td><a href="{% url xform_play_all xform.id %}">full</a></td>            
         </tr>
     {% endfor %}
 {% empty %}

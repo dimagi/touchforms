@@ -28,7 +28,7 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
                                    'preloader-data': preload_data},
       function (resp) {
         adapter.session_id = resp["session_id"];
-        adapter._renderEvent(resp["event"], true);
+        adapter._renderTree(resp["tree"], true);
       });
   }
 
@@ -109,7 +109,11 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
     return meta;
   }
 
-  this._renderEvent = function (event, dirForward) {
+  this._renderTree = function (tree, dirForward) {
+    renderrr(tree);
+    return;
+
+
     if (event["type"] == "question") {
       if (event["style"]["domain"])
         event["domain"] = event["style"]["domain"];
