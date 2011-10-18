@@ -334,6 +334,7 @@ class XFormSession:
         self.fec.deleteRepeat(ix - 1)
         return self._parse_current_event()
 
+    #sequential (old-style) repeats only
     def new_repetition (self):
       #currently in the form api this always succeeds, but theoretically there could
       #be unsatisfied constraints that make it fail. how to handle them here?
@@ -353,20 +354,34 @@ class choice(object):
     def __json__(self):
         return json.dumps(repr(self))
 
-def open_form (form_name, instance_xml=None, extensions=[], preload_data={}):
+def nav(resp, xfsess, nav_mode, ev_next=None):
+    if nav_mode == 'prompt':
+        if ev_next is None:
+            ev_next = next_event(xfsess)
+        navinfo = {'event': ev_next}
+    elif nav_mode == 'fao':
+        #debug
+        print '=== walking ==='
+        print_tree(xfsess.walk())
+        print '==============='
+
+        navinfo = {'tree': xfsess.walk()}
+    resp.update(navinfo)
+    return resp
+
+def open_form(form_name, instance_xml=None, extensions=[], preload_data={}, nav_mode='prompt'):
     if not os.path.exists(form_name):
         return {'error': 'no form found at %s' % form_name}
 
     xfsess = XFormSession(xform_path=form_name, instance_raw=instance_xml, preload_data=preload_data, extensions=extensions)
     sess_id = global_state.new_session(xfsess)
-    first_event = xfsess.next_event()
-    return {'session_id': sess_id, 'tree': xfsess.walk()}
+    return nav({'session_id': sess_id}, xfsess, nav_mode)
 
-def answer_question (session_id, answer):
+def answer_question (session_id, answer, nav_mode='prompt'):
     with global_state.get_session(session_id) as xfsess:
         result = xfsess.answer_question(answer)
         if result['status'] == 'success':
-            return {'status': 'accepted', 'event': next_event(xfsess)}
+            return nav({'status': 'accepted'}, xfsess, nav_mode)
         else:
             result['status'] = 'validation-error'
             return result
@@ -376,16 +391,17 @@ def edit_repeat (session_id, ix):
         ev = xfsess.descend_repeat(ix)
         return {'event': ev}
 
-def new_repeat (session_id):
+def new_repeat (session_id, nav_mode='prompt'):
     with global_state.get_session(session_id) as xfsess:
         ev = xfsess.descend_repeat()
-        return {'event': ev}
+        return nav({}, xfsess, nav_mode, ev)
 
-def delete_repeat (session_id, ix):
+def delete_repeat (session_id, ix, nav_mode='prompt'):
     with global_state.get_session(session_id) as xfsess:
         ev = xfsess.delete_repeat(ix)
-        return {'event': ev}
+        return nav({}, xfsess, nav_mode, ev)
 
+#sequential (old-style) repeats only
 def new_repetition (session_id):
     with global_state.get_session(session_id) as xfsess:
         #new repeat creation currently cannot fail, so just blindly proceed to the next event
@@ -401,13 +417,16 @@ def go_back (session_id):
         (at_start, event) = prev_event(xfsess)
         return {'event': event, 'at-start': at_start}
 
+# fao mode only
+# INCOMPLETE
+def complete_form(session_id, validate_all=True):
+    if validate_all:
+        pass
+        # do final validation here?
+    
+    #copy 'form complete' branch of next_event() ?
+
 def next_event (xfsess):
-    #debugging
-    print '=== walking ==='
-    print_tree(xfsess.walk())
-    print '==============='
-
-
     ev = xfsess.next_event()
     if ev['type'] != 'form-complete':
         return ev

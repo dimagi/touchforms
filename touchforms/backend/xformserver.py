@@ -75,12 +75,13 @@ def handle_request (content, **kwargs):
         return {'error': 'action required'}
 
     action = content['action']
+    nav_mode = content.get('nav', 'prompt')
     try:
         if action == 'new-form':
             if 'form-name' not in content:
                 return {'error': 'form identifier required'}
             preload_data = content["preloader-data"] if "preloader-data" in content else {}
-            return xformplayer.open_form(content['form-name'], content.get('instance-content'), kwargs.get('extensions', []), preload_data)
+            return xformplayer.open_form(content['form-name'], content.get('instance-content'), kwargs.get('extensions', []), preload_data, nav_mode)
 
         elif action == 'edit-form':
             return {'error': 'unsupported'}
@@ -91,8 +92,9 @@ def handle_request (content, **kwargs):
             if 'answer' not in content:
                 return {'error': 'answer required'}
 
-            return xformplayer.answer_question(content['session-id'], content['answer'])
+            return xformplayer.answer_question(content['session-id'], content['answer'], nav_mode)
 
+        #sequential (old-style) repeats only
         elif action == 'add-repeat':
             if 'session-id' not in content:
                 return {'error': 'session id required'}
@@ -123,7 +125,7 @@ def handle_request (content, **kwargs):
             if 'session-id' not in content:
                 return {'error': 'session id required'}
 
-            return xformplayer.new_repeat(content['session-id'])
+            return xformplayer.new_repeat(content['session-id'], nav_mode)
     
         elif action == 'delete-repeat':
             if 'session-id' not in content:
@@ -131,7 +133,7 @@ def handle_request (content, **kwargs):
             if 'ix' not in content:
                 return {'error': 'repeat index required'}
 
-            return xformplayer.delete_repeat(content['session-id'], content['ix'])
+            return xformplayer.delete_repeat(content['session-id'], content['ix'], nav_mode)
 
         else:
             return {'error': 'unrecognized action'}
