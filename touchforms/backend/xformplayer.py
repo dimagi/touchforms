@@ -347,8 +347,11 @@ class choice(object):
     def to_sel(self):
         return Selection(self.select_choice)
 
+    def __repr__(self):
+        return self.q.getSelectChoiceText(self.select_choice)
+
     def __json__(self):
-        return json.dumps(self.q.getSelectChoiceText(self.select_choice))
+        return json.dumps(repr(self))
 
 def open_form (form_name, instance_xml=None, extensions=[], preload_data={}):
     if not os.path.exists(form_name):
@@ -399,8 +402,9 @@ def go_back (session_id):
         return {'event': event, 'at-start': at_start}
 
 def next_event (xfsess):
+    #debugging
     print '=== walking ==='
-    print xfsess.walk()
+    print_tree(xfsess.walk())
     print '==============='
 
 
@@ -423,3 +427,15 @@ def save_form (xfsess):
     xml = xfsess.output()
     instance_id = global_state.save_instance(xml)
     return (instance_id, xml)
+
+
+
+
+
+
+# debugging
+
+import pprint
+pp = pprint.PrettyPrinter(indent=2)
+def print_tree(tree):
+    pp.pprint(tree)
