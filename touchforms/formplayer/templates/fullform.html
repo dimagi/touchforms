@@ -8,7 +8,7 @@
     <!-- TODO factor out shared code, think we need touchscreen-ui and typeforms-ui -->
     <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}formplayer/script/touchscreen-ui.js?version={{app_version}}"></script>   
 
-    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}formplayer/script/formnav.js?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}formplayer/script/formnav-all.js?version={{app_version}}"></script>
     <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}formplayer/script/entrycontrols_type.js?version={{app_version}}"></script>
     <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}formplayer/script/fullform-ui.js?version={{app_version}}"></script>
     <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}formplayer/script/workflow.js?version={{app_version}}"></script>
@@ -19,7 +19,6 @@
 	  <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}formplayer/script/jquery-ui.min.js"></script>
 
 	  <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/themes/ui-lightness/jquery-ui.css">
-
 
 {% for script in dynamic_scripts %}
     <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}{{script}}?version={{app_version}}"></script>   
@@ -47,15 +46,11 @@ PREFIXES = {};
 
 function init () {
 
-touchscreenUI = {
-  showWaiting: function (active) {
-
+  //what's this for??
+  touchscreenUI = {
+    showWaiting: function (active) {
+    }
   }
-}
-
-//  setup({% if fullscreen %}true{% endif %});
-//  initStaticWidgets();
-//  render_clean();
 
 {% ifequal mode 'xform' %}
 
@@ -64,7 +59,7 @@ touchscreenUI = {
   
 {% else %}
 
-  gFormAdapter = new workflowAdapter(new {{ form.wfobj }}({{ form.wfargs|default:""|safe }}));
+  alert('form-at-once mode cannot work with protocols')
 
 {% endifequal %}
 
@@ -77,43 +72,7 @@ touchscreenUI = {
 
   <body id="body" onLoad="init();" style="font-family: sans-serif; ">
 
-    <style>
-      .histq {
-        background: #fca;
-        padding: 5px;
-      }
-
-      .histans {
-        background: #fcc;
-        padding: 5px;
-        text-align: right;
-      }
-
-      .help {
-        font-style: italic;
-        font-size: small;
-        color: grey;
-      }
-
-    </style>
-
-<!--
-    <div id="history" style="float: right; border: 2px solid black; width: 25em; margin: 0px 0px 10px 10px; min-height: 500px;">
-    </div>
--->
-
-    <table id="form"><tr><td>stub row</td></tr></table>
-
-
-      <div class="help" style="float: right; text-align: right;">
-        <b>enter</b> or <b>ctrl+right</b> to advance<br />
-        <b>ctrl+left</b> to go back<br />
-        <br />
-        type <b>number</b> or <b>letter</b> to select a choice<br />
-        <b>up</b> and <b>down</b> to cycle through choices<br />
-        <b>space</b> to select current choice<br />
-      </div>
-
+    <div id="form">form content goes here</div>
 
     <!-- stick form uid here to aid with backslash escaping -->
     <input id="form-uid" type="hidden" value="{% ifequal mode 'xform' %}{{form.file.path}}{% endifequal %}">
