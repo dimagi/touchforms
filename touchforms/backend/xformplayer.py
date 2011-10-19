@@ -468,4 +468,8 @@ def save_form (xfsess):
 import pprint
 pp = pprint.PrettyPrinter(indent=2)
 def print_tree(tree):
-    pp.pprint(tree)
+    try:
+#        pass
+        pp.pprint(tree)
+    except UnicodeEncodeError:
+        print 'sorry, can\'t pretty-print unicode'

@@ -28,11 +28,20 @@ function Question(json) {
   
 }
 
-function Group(json) {
+function Group(json, is_repeat) {
   this._ = json;
+  this.is_repeat = is_repeat;
 
-  this.$container = $('<tr><td colspan="2"><span id="caption"></span><table id="children" border="1"></table></td></tr>');
+  this.$container = $('<tr><td colspan="2"><span id="caption"></span> <a id="del" href="#">delete</a><table id="children" border="1"></table></td></tr>');
   this.$container.find('#caption').text(this._.caption + ' [' + this._.ix + ']');
+  this.$del = this.$container.find('#del');
+  if (!this.is_repeat) { //todo: check constraints
+    this.$del.hide();
+  }
+  var this2 = this;
+  this.$del.click(function() {
+      console.log('delete repetition ' + this2._.ix);
+    });
 
   this.render_children = function() {
     render_elements(this._.children, this.$container.find('#children'));
@@ -42,21 +51,26 @@ function Group(json) {
 function Repeat(json) {
   this._ = json;
 
-  this.$container = $('<tr><td colspan="2"><span id="caption"></span><table id="children" border="1"></table></td></tr>');
+  this.$container = $('<tr><td colspan="2"><span id="caption"></span> <a id="add" href="#">add new</a><table id="children" border="1"></table></td></tr>');
   this.$container.find('#caption').text(this._['main-header'] + ' [' + this._.ix + ']');
+  this.$add = this.$container.find('#add');
+  var this2 = this;
+  this.$add.click(function() {
+      console.log('add repetition ' + this2._.ix);
+    });
 
   this.render_children = function() {
-    render_elements(this._.children, this.$container.find('#children'));
+    render_elements(this._.children, this.$container.find('#children'), true);
   }
 }
 
-function render_elements(elems, $container) {
+function render_elements(elems, $container, rep) {
   for (var i = 0; i < elems.length; i++) {
     var e = elems[i];
     if (e.type == 'question') {
       var o = new Question(e);
     } else if (e.type == 'sub-group') {
-      var o = new Group(e);
+      var o = new Group(e, rep);
       o.render_children();
     } else if (e.type == 'repeat-juncture') {
       var o = new Repeat(e);
