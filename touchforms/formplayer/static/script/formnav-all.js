@@ -33,8 +33,11 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
       });
   }
 
-  this.answerQuestion = function (ix, answer) {
-    adapter = this;
+  this.answerQuestion = function (q) {
+    var ix = q._.ix;
+    var answer = q.getAnswer();
+
+    var adapter = this;
     this.serverRequest(XFORM_URL, {'action': 'answer',
                                    'session-id': this.session_id,
                                    'ix': ix,
