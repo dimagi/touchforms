@@ -25,54 +25,32 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
     this.serverRequest(XFORM_URL, {'action': 'new-form',
                                    'form-name': this.formName,
                                    'instance-content': savedInstance,
-                                   'preloader-data': preload_data},
+                                   'preloader-data': preload_data,
+                                   'nav': 'fao'},
       function (resp) {
         adapter.session_id = resp["session_id"];
         adapter._renderTree(resp["tree"], true);
       });
   }
 
-  this.answerQuestion = function (answer) {
+  this.answerQuestion = function (ix, answer) {
     adapter = this;
-    if (activeQuestion["type"] == "repeat-juncture") {
-      if (answer == null) {
-        showError("An answer is required");
-      } else if (answer.substring(0, 3) == 'rep') {
-        var repIx = +answer.substring(3);
-        this.serverRequest(XFORM_URL, {'action': (activeQuestion["repeat-delete"] ? 'delete-repeat' :'edit-repeat'), 
-                'session-id': this.session_id, 'ix': repIx},
-          function (resp) {
-            adapter._renderEvent(resp["event"], true);
-          });
-      } else if (answer == 'add') {
-        this.serverRequest(XFORM_URL, {'action': 'new-repeat', 'session-id': this.session_id},
-          function (resp) {
-            adapter._renderEvent(resp["event"], true);
-          });
-      } else if (answer == 'del') {
-        activeQuestion["repeat-delete"] = true;
-        this._renderEvent(activeQuestion, true);
-      } else if (answer == 'done') {
-        this._step(true);
-      } else {
-        alert('oops');
-      }
-    } else {
-      this.serverRequest(XFORM_URL, {'action': 'answer',
-                                     'session-id': this.session_id,
-                                     'answer': answer},
-        function (resp) {
-          if (resp["status"] == "validation-error") {
-            if (resp["type"] == "required") {
-              showError("An answer is required");
-            } else if (resp["type"] == "constraint") {
-              showError(resp["reason"] || 'This answer is outside the allowed range.');      
-            }
-          } else {
-            adapter._renderEvent(resp["event"], true);
+    this.serverRequest(XFORM_URL, {'action': 'answer',
+                                   'session-id': this.session_id,
+                                   'ix': ix,
+                                   'answer': answer},
+      function (resp) {
+        if (resp["status"] == "validation-error") {
+          if (resp["type"] == "required") {
+            showError("An answer is required");
+          } else if (resp["type"] == "constraint") {
+            showError(resp["reason"] || 'This answer is outside the allowed range.');      
           }
-        });
-    }
+        } else {
+          console.log('should now update tree');
+          // adapter._renderEvent(resp["event"], true);
+        }
+      });
   }
 
   this.prevQuestion = function () {
@@ -227,213 +205,15 @@ function serverRequest (makeRequest, callback) {
     });
 }
 
-function Workflow (flow, onFinish) {
-  this.flow = flow;
-  this.onFinish = onFinish;
-  this.data = null;
 
-  this.start = function () {
-    this.data = {}
-    return this.flow(this.data);
-  }
 
-  this._finish = function () {
-    this.onFinish(this.data);
-  }
 
-  this.finish = function () {
-    var wf = this;
-    interactionComplete(function () { wf._finish(); });
-  }
 
-  this.abort = function () {
-    this.start();
-    this.finish();
-  }
-}
 
-function wfQuestion (args) {
-  this.caption = args.caption;
-  this.type = args.type;
-  this.value = args.answer;
-  this.choices = args.choices;
-  this.required = args.required || false;
-  this.validation = args.validation || function (ans) { return null; };
-  this.domain = args.domain;
-  this.domain_meta = args.meta;
-  this.helptext = args.helptext;
-  this.custom_layout = args.custom_layout;
 
-  this.to_q = function () {
-    return {'caption': this.caption,
-            'datatype': this.type,
-            'answer': this.value,
-            'choices': this.choices,
-            'required': this.required,
-            'help': this.helptext,
-            'domain': this.domain,
-            'domain_meta': this.domain_meta,
-            'customlayout': this.custom_layout};
-  }
 
-  this.validate = function () {
-    if (this.required && this.value == null) {
-      return "An answer is required";
-    } else if (this.value != null) {
-      return this.validation(this.value);
-    }
-  }
-}
 
-function wfQuery (query) {
-  this.query = query;
-  this.value = null;
-  this.eval = function () {
-    this.value = this.query();
-  }
-}
 
-function wfAsyncQuery (query) {
-  this.query = query;
-  this.value = null;
-
-  this.eval = function (callback) {
-    queryObj = this;
-    serverRequest(
-      function (cb) {
-        queryObj.query(function (val) {
-            queryObj.value = val;
-            cb();
-          });
-      },
-      callback
-    );
-  }
-}
-
-function wfAlert (message) {
-  this.message = message;
-
-  this.to_q = function () {
-    return {'caption': this.message,
-            'datatype': 'info'};
-  }
-}
-
-function workflowAdapter (workflow) {
-  this.wf = workflow;
-
-  this.wf_inst = null;
-  this.history = null;
-  this.active_question = null;
-
-  this.loadForm = function () {
-    this.wf_inst = this.wf.start();
-    this.history = [];
-    this.active_question = null;
-
-    this._jumpNext();
-  }
-
-  this.answerQuestion = function (answer) {
-    this.active_question.value = answer;
-
-    var val_error = null;
-    if (this.active_question instanceof wfQuestion) {
-      val_error = this.active_question.validate();
-    }
-
-    if (val_error == null) {
-      this._push_hist(answer, this.active_question);
-    } else {
-      showError(val_error);
-    }
-  }
-
-  this.prevQuestion = function () {
-    hist_length = this.history.length;
-    while (hist_length > 0 && !this.history[hist_length - 1][0]) {
-      hist_length--;
-    }
-
-    if (hist_length == 0) {
-      this.wf.abort();
-      return;
-    }
-
-    this.wf_inst = this.wf.start();
-    for (var i = 0; i < hist_length; i++) {
-      ev = this._getNext();
-      ev.value = this.history[i][1];
-      if (i == hist_length - 1) {
-        this._activateQuestion(ev, false);
-      }
-    }
-
-    while (this.history.length > hist_length - 1)
-      this.history.pop();
-  }
-
-  this._getNext = function () {
-    try {
-      return this.wf_inst.next();
-    } catch (e) {
-      if (e instanceof StopIteration) {
-        return null;
-      } else {
-        throw e;
-      }
-    }
-  }
-
-  this._jumpNext = function () {
-    ev = this._getNext();
-    if (ev == null) {
-      this._formComplete();
-    } else if (ev instanceof wfQuestion) {
-      this._activateQuestion(ev, true);
-    } else if (ev instanceof wfQuery) {
-      ev.eval();
-      this._push_hist(ev.value, ev);
-    } else if (ev instanceof wfAsyncQuery) {
-      var self = this;
-      ev.eval(function () { self._push_hist(ev.value, ev); });
-    } else if (ev instanceof wfAlert) {
-      this._activateQuestion(ev, true);
-    }
-  }
-
-  this._activateQuestion = function (ev, dir) {
-    this.active_question = ev;
-    renderQuestion(ev.to_q(), dir);
-  }
-
-  this._push_hist = function (answer, ev) {
-    this.history.push([ev instanceof wfQuestion, answer]);
-    this._jumpNext();
-  }
-
-  this._formComplete = function () {
-    this.wf.finish();
-  }
-
-  this.abort = function () {
-    this.wf.abort();
-  }
-
-  this.quitWarning = function () {
-    if (this.wf.quitWarning) {
-      return this.wf.quitWarning();
-    } else {
-      return {
-        'main': 'You aren\'t finished yet. If you go HOME, you will throw out the answers you have entered so far.',
-        'quit': 'Go HOME',
-        'cancel': 'Stay and finish'
-      }
-    }
-  }
-
-}
 
 function getQuestionAnswer () {
   return activeControl.getAnswer();

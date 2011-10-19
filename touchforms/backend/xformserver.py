@@ -92,7 +92,7 @@ def handle_request (content, **kwargs):
             if 'answer' not in content:
                 return {'error': 'answer required'}
 
-            return xformplayer.answer_question(content['session-id'], content['answer'], nav_mode)
+            return xformplayer.answer_question(content['session-id'], content['answer'], content.get('ix'))
 
         #sequential (old-style) repeats only
         elif action == 'add-repeat':

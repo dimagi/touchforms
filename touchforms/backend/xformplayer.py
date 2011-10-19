@@ -10,7 +10,7 @@ from java.util import Vector
 from java.io import StringReader
 
 import customhandlers
-from util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect
+from util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect, index_from_str
     
 from setup import init_classpath, init_jr_engine
 import logging
@@ -287,11 +287,14 @@ class XFormSession:
         self.fec.stepToPreviousEvent()
         return self._parse_current_event()
 
-    def answer_question (self, answer):
-        if self.cur_event['type'] != 'question':
+    def answer_question (self, answer, _ix=None):
+        ix = self.parse_ix(_ix)
+        event = self.cur_event if ix is None else self.__parse_event(ix)
+
+        if event['type'] != 'question':
             raise ValueError('not currently on a question')
 
-        datatype = self.cur_event['datatype']
+        datatype = event['datatype']
         if answer == None or str(answer).strip() == '' or answer == [] or datatype == 'info':
             ans = None
         elif datatype == 'int':
@@ -305,15 +308,15 @@ class XFormSession:
         elif datatype == 'time':
             ans = TimeData(to_jtime(datetime.strptime(str(answer), '%H:%M').time()))
         elif datatype == 'select':
-            ans = SelectOneData(self.cur_event['choices'][int(answer) - 1].to_sel())
+            ans = SelectOneData(event['choices'][int(answer) - 1].to_sel())
         elif datatype == 'multiselect':
             if hasattr(answer, '__iter__'):
                 ans_list = answer
             else:
                 ans_list = str(answer).split()
-            ans = SelectMultiData(to_vect(self.cur_event['choices'][int(k) - 1].to_sel() for k in ans_list))
+            ans = SelectMultiData(to_vect(event['choices'][int(k) - 1].to_sel() for k in ans_list))
 
-        result = self.fec.answerQuestion(ans)
+        result = self.fec.answerQuestion(*([ans] if ix is None else [ix, ans]))
         if result == self.fec.ANSWER_REQUIRED_BUT_EMPTY:
             return {'status': 'error', 'type': 'required'}
         elif result == self.fec.ANSWER_CONSTRAINT_VIOLATED:
@@ -336,9 +339,12 @@ class XFormSession:
 
     #sequential (old-style) repeats only
     def new_repetition (self):
-      #currently in the form api this always succeeds, but theoretically there could
-      #be unsatisfied constraints that make it fail. how to handle them here?
-      self.fec.newRepeat(self.fem.getFormIndex())
+        #currently in the form api this always succeeds, but theoretically there could
+        #be unsatisfied constraints that make it fail. how to handle them here?
+        self.fec.newRepeat(self.fem.getFormIndex())
+
+    def parse_ix(self, s_ix):
+        return index_from_str(s_ix, self.form)
 
 class choice(object):
     def __init__(self, q, select_choice):
@@ -369,6 +375,9 @@ def nav(resp, xfsess, nav_mode, ev_next=None):
     resp.update(navinfo)
     return resp
 
+def navmode(ix):
+    return 'prompt' if ix is None else 'fao'
+
 def open_form(form_name, instance_xml=None, extensions=[], preload_data={}, nav_mode='prompt'):
     if not os.path.exists(form_name):
         return {'error': 'no form found at %s' % form_name}
@@ -377,11 +386,11 @@ def open_form(form_name, instance_xml=None, extensions=[], preload_data={}, nav_
     sess_id = global_state.new_session(xfsess)
     return nav({'session_id': sess_id}, xfsess, nav_mode)
 
-def answer_question (session_id, answer, nav_mode='prompt'):
+def answer_question (session_id, answer, ix):
     with global_state.get_session(session_id) as xfsess:
-        result = xfsess.answer_question(answer)
+        result = xfsess.answer_question(answer, ix)
         if result['status'] == 'success':
-            return nav({'status': 'accepted'}, xfsess, nav_mode)
+            return nav({'status': 'accepted'}, xfsess, navmode(ix))
         else:
             result['status'] = 'validation-error'
             return result
@@ -391,11 +400,13 @@ def edit_repeat (session_id, ix):
         ev = xfsess.descend_repeat(ix)
         return {'event': ev}
 
+# need ix for fao mode
 def new_repeat (session_id, nav_mode='prompt'):
     with global_state.get_session(session_id) as xfsess:
         ev = xfsess.descend_repeat()
         return nav({}, xfsess, nav_mode, ev)
 
+# need ix for fao mode
 def delete_repeat (session_id, ix, nav_mode='prompt'):
     with global_state.get_session(session_id) as xfsess:
         ev = xfsess.delete_repeat(ix)
