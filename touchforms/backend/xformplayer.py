@@ -139,6 +139,10 @@ class XFormSession:
 
       form_ix = self.fem.incrementIndex(parent_ix, True)
       while ix_in_scope(form_ix):
+        if not self.fem.isIndexRelevant(form_ix):
+          form_ix = self.fem.incrementIndex(form_ix, False)
+          continue
+
         evt = self.__parse_event(form_ix)
         if evt['type'] == 'sub-group':
           presentation_group = (evt['caption'] != None)
@@ -161,10 +165,10 @@ class XFormSession:
             self._walk(subevt['ix'], subevt['children'])
           for key in ['repetitions', 'del-choice', 'del-header', 'done-choice']:
             del evt[key]
-          form_ix = self.fem.incrementIndex(form_ix, True)
+          form_ix = self.fem.incrementIndex(form_ix, True) # why True?
         else:
           siblings.append(evt)
-          form_ix = self.fem.incrementIndex(form_ix, True)
+          form_ix = self.fem.incrementIndex(form_ix, True) # why True?
 
       return form_ix
 

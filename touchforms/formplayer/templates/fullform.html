@@ -72,7 +72,7 @@ function init () {
 
   <body id="body" onLoad="init();" style="font-family: sans-serif; ">
 
-    <div id="form">form content goes here</div>
+    <div id="content"></div>
 
     <!-- stick form uid here to aid with backslash escaping -->
     <input id="form-uid" type="hidden" value="{% ifequal mode 'xform' %}{{form.file.path}}{% endifequal %}">

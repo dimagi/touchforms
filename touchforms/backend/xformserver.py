@@ -16,6 +16,8 @@ logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 DEFAULT_PORT = 4444
 
+SIMULATED_DELAY = 0 #ms
+
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     pass
 
@@ -33,6 +35,7 @@ class XFormHTTPGateway(threading.Thread):
 
 class XFormRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
+        delay()
 
         if 'content-length' in self.headers.dict:
             length = int(self.headers.dict['content-length'])
@@ -64,11 +67,13 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
 
         reply = json.dumps(data_out)
 
+        logging.debug('returned: [%s]' % reply)
+        delay()
+
         self.send_response(200)
         self.send_header('Content-Type', 'text/json; charset=utf-8')
         self.end_headers()
         self.wfile.write(reply.encode('utf-8'))
-        logging.debug('returned: [%s]' % reply)
 
 def handle_request (content, **kwargs):
     if 'action' not in content:
@@ -143,6 +148,8 @@ def handle_request (content, **kwargs):
     except xformplayer.SequencingException:
         return {'error': 'session is locked by another request'}
 
+def delay():
+    time.sleep(.5 * SIMULATED_DELAY / 1000)
 
 if __name__ == "__main__":
 

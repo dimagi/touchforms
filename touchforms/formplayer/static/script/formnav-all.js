@@ -34,7 +34,7 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
   }
 
   this.answerQuestion = function (q) {
-    var ix = q._.ix;
+    var ix = q.ix;
     var answer = q.getAnswer();
 
     var adapter = this;
@@ -50,8 +50,7 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
             showError(resp["reason"] || 'This answer is outside the allowed range.');      
           }
         } else {
-          console.log('should now update tree');
-          // adapter._renderEvent(resp["event"], true);
+          getForm(q).reconcile(resp["tree"]);
         }
       });
   }
@@ -90,8 +89,8 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
     return meta;
   }
 
-  this._renderTree = function (tree, dirForward) {
-    renderrr(tree);
+  this._renderTree = function(tree) {
+    tmprender(tree);
     return;
 
 

@@ -1,93 +1,152 @@
 
-function renderrr(tree) {
-  console.log(tree);
-
-  $('#form').replaceWith(render(tree));
+function getForm(o) {
+  var form = o.parent;
+  while (form.parent) {
+    form = form.parent;
+  }
+  return form;
 }
 
-function Question(json) {
-  this._ = json;
+function loadFromJSON(o, json) {
+  $.each(json, function(key, val) {
+      if (key == 'children') {
+        return;
+      }
 
-  this.$container = $('<tr><td id="caption"></td><td id="widget"></td></tr>');
-  this.$widget = $('<input />');
+      o[key] = val;
+    });
+}
 
-  this.$container.find('#caption').text(this._.caption + ' [' + this._.ix + ']');
-  this.$container.find('#widget').append(this.$widget);
+function Form(json) {
+  this.children = [];
+
+  this.init_render = function() {
+    this.$container = $('<table id="form" border="1"></table>');
+    render_elements(this, json);
+  }
+
+  this.reconcile = function(new_json) {
+    reconcile_elements(this, new_json);
+  }
+
+  this.child_container = function() {
+    return this.$container;
+  }
+}
+
+function Group(json, parent) {
+  loadFromJSON(this, json);
+  this.parent = parent;
+  this.is_repetition = parent.is_repeat;
+  this.children = [];
+
+  this.init_render = function() {
+    this.$container = $('<tr><td colspan="2"><span id="caption"></span> <a id="del" href="#">delete</a><table id="children" border="1"></table></td></tr>');
+    this.$children = this.$container.find('#children');
+    this.$container.find('#caption').text(this.caption + ' [' + this.ix + ']');
+
+    render_elements(this, json.children);
+
+    this.$del = this.$container.find('#del');
+    if (!this.is_repetition) { //todo: check constraints
+      this.$del.hide();
+    }
+
+    var g = this;
+    this.$del.click(function() {
+        console.log('delete repetition ' + g.ix);
+      });
+  }
+
+  this.child_container = function() {
+    return this.$children;
+  }
+}
+
+function Repeat(json, parent) {
+  loadFromJSON(this, json);
+  this.parent = parent;
+  this.children = [];
+  this.is_repeat = true;
+
+  this.init_render = function() {
+    this.$container = $('<tr><td colspan="2"><span id="caption"></span> <a id="add" href="#">add new</a><table id="children" border="1"></table></td></tr>');
+    this.$children = this.$container.find('#children');
+    this.$container.find('#caption').text(this['main-header'] + ' [' + this.ix + ']');
+
+    render_elements(this, json.children);
+
+    this.$add = this.$container.find('#add');
+    var rep = this;
+    this.$add.click(function() {
+        console.log('add repetition ' + rep.ix);
+      });
+  }
+
+  this.child_container = function() {
+    return this.$children;
+  }
+}
+
+function Question(json, parent) {
+  loadFromJSON(this, json);
+  this.parent = parent;
+  this.children = [];
+
+  this.init_render = function() {
+    this.$container = $('<tr><td id="caption"></td><td id="widget"></td></tr>');
+    this.$widget = $('<input />');
+    this.$container.find('#widget').append(this.$widget);
+
+    var q = this;
+    this.$widget.change(function() { q.onchange(); });
+
+    this.update();
+  }
+
+  this.reconcile = function(new_json) {
+    //update caption only?
+    //compare everything, i guess
+    //note that select choices may change due to itemsets
+  }
+
+  this.update = function() {
+    this.$container.find('#caption').text(this.caption + ' [' + this.ix + ']');
+  }
 
   this.getAnswer = function() {
     return this.$widget.val();
   }
 
   this.onchange = function() {
-    console.log(this._.ix + ' changed');
     gFormAdapter.answerQuestion(this);
   }
-  var this2 = this;
-  this.$widget.change(function() { this2.onchange(); });
-
-  
 }
 
-function Group(json, is_repeat) {
-  this._ = json;
-  this.is_repeat = is_repeat;
-
-  this.$container = $('<tr><td colspan="2"><span id="caption"></span> <a id="del" href="#">delete</a><table id="children" border="1"></table></td></tr>');
-  this.$container.find('#caption').text(this._.caption + ' [' + this._.ix + ']');
-  this.$del = this.$container.find('#del');
-  if (!this.is_repeat) { //todo: check constraints
-    this.$del.hide();
-  }
-  var this2 = this;
-  this.$del.click(function() {
-      console.log('delete repetition ' + this2._.ix);
-    });
-
-  this.render_children = function() {
-    render_elements(this._.children, this.$container.find('#children'));
-  }
-}
-
-function Repeat(json) {
-  this._ = json;
-
-  this.$container = $('<tr><td colspan="2"><span id="caption"></span> <a id="add" href="#">add new</a><table id="children" border="1"></table></td></tr>');
-  this.$container.find('#caption').text(this._['main-header'] + ' [' + this._.ix + ']');
-  this.$add = this.$container.find('#add');
-  var this2 = this;
-  this.$add.click(function() {
-      console.log('add repetition ' + this2._.ix);
-    });
-
-  this.render_children = function() {
-    render_elements(this._.children, this.$container.find('#children'), true);
-  }
-}
-
-function render_elements(elems, $container, rep) {
+function render_elements(parent, elems) {
   for (var i = 0; i < elems.length; i++) {
     var e = elems[i];
     if (e.type == 'question') {
-      var o = new Question(e);
+      var o = new Question(e, parent);
     } else if (e.type == 'sub-group') {
-      var o = new Group(e, rep);
-      o.render_children();
+      var o = new Group(e, parent);
     } else if (e.type == 'repeat-juncture') {
-      var o = new Repeat(e);
-      o.render_children();
+      var o = new Repeat(e, parent);
     }
-    $container.append(o.$container);
+    o.init_render();
+    parent.children.push(o);
+    parent.child_container().append(o.$container);
   }
 }
 
-function render(elems) {
-  console.log(elems);
+function reconcile_elements(parent, new_elems) {
 
-  var $tabl = $('<table id="form" border="1"></table>');
-  render_elements(elems, $tabl);
-  return $tabl;
 }
 
-function update(elems, $form) {
+function tmprender(elems) {
+  console.log(elems);
 
+  var f = new Form(elems);
+  f.init_render();
+  $('#content').append(f.$container);
 }
