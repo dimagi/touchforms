@@ -171,20 +171,28 @@ function reconcile_elements(parent, new_elems) {
       mapping.push([-1, i]);
     }
   }
-  // sort by k_new so that inserts are processed in the right order
+  // sort by k_new so that deletions are processed first,
+  // and inserts are processed in the right order
   mapping.sort(function(a, b) {
       return a[1] - b[1];
     });
 
+
+
+  var k_offset = 0;
   $.each(mapping, function(i, val) {
       var k_old = val[0];
       var k_new = val[1];
+      if (k_old != -1) {
+        k_old -= k_offset; //ick
+      }
 
       if (k_old == -1) {
-        var o = make_element(new_elems[k_new]);
+        var o = make_element(new_elems[k_new], parent);
         addChild(parent, k_new, o);
       } else if (k_new == -1) {
         deleteChild(parent, k_old);
+        k_offset++;
       } else {
         parent.children[k_old].reconcile(new_elems[k_new]);
       }
@@ -202,7 +210,7 @@ function addChild(parent, i, child) {
   if (i < parent.children.length) {
     parent.children[i].$container.before(child.$container);
   } else {
-    parent.$container.append(child.$container);
+    parent.child_container().append(child.$container);
   }
   arrayInsertAt(parent.children, i, child);
 }
