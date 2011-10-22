@@ -177,22 +177,20 @@ function reconcile_elements(parent, new_elems) {
       return a[1] - b[1];
     });
 
-
-
-  var k_offset = 0;
+  // since we're destructively modifying parent.children, we need to
+  // keep track of which original array indexes map to the current
+  // indexes. yes, really
+  var ix_old = $.map(parent.children, function(val, i) { return i; });
   $.each(mapping, function(i, val) {
-      var k_old = val[0];
+      var k_old = ix_old.indexOf(val[0]);
       var k_new = val[1];
-      if (k_old != -1) {
-        k_old -= k_offset; //ick
-      }
 
       if (k_old == -1) {
         var o = make_element(new_elems[k_new], parent);
         addChild(parent, k_new, o);
       } else if (k_new == -1) {
         deleteChild(parent, k_old);
-        k_offset++;
+        arrayDel(ix_old, k_old);
       } else {
         parent.children[k_old].reconcile(new_elems[k_new]);
       }
