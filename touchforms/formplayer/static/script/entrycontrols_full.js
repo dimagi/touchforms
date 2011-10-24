@@ -311,6 +311,10 @@ function MultiSelectEntry (args) {
     this.initted = true;
 
     this.setAnswer(this.default_selections);
+
+    //todo: maybe make this smarter by trapping blur() instead, and seeing if focus
+    //has left the question as a whole
+    $container.find('input').click(function() { q.onchange(); });
   }
 
   this.getAnswer = function () {
@@ -424,32 +428,35 @@ function clearButtons (buttons, except_for) {
 }
 */
 
-function DateEntry (dir, args) {
+function DateEntry (args) {
   inherit(this, new SimpleEntry());
-
-  this.dir = dir;
 
   this.format = 'mm/dd/yy';
 
-  this.load = function () {
-    $('#answer')[0].innerHTML = '<input id="datepicker" type="text"><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.format.replace('yy', 'yyyy') + ')</span>';
+  this.$picker = null;
+
+  this.load = function (q, $container) {
+    $container.html('<input id="datepicker" type="text"><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.format.replace('yy', 'yyyy') + ')</span>');
+    this.$picker = $container.find('#datepicker');
 
     var self = this;
-		$("#datepicker").datepicker({
+		this.$picker.datepicker({
         changeMonth: true,
         changeYear: true,
         dateFormat: this.format
       });
-    $('#datepicker').focus();
+    //    $('#datepicker').focus();
 
     this.initted = true;
 
     this.setAnswer(this.def_ans);
+
+    this.$picker.change(function() { q.onchange(); });
   }
 
   this.setAnswer = function (answer, postLoad) {
     if (this.initted) {
-      $('#datepicker').datepicker('setDate', answer ? $.datepicker.parseDate('yy-mm-dd', answer) : null);
+      this.$picker.datepicker('setDate', answer ? $.datepicker.parseDate('yy-mm-dd', answer) : null);
       this.ans = answer;
     } else {
       this.def_ans = answer;
@@ -458,7 +465,7 @@ function DateEntry (dir, args) {
   }
 
   this.getAnswer = function () {
-    var raw = $('#datepicker').datepicker('getDate');
+    var raw = this.$picker.datepicker('getDate');
     return (raw != null ? $.datepicker.formatDate('yy-mm-dd', raw) : null);
   }
 
@@ -534,7 +541,7 @@ function renderQuestion (q, $container) {
   } else if (q.datatype == "multiselect") {
     control = new MultiSelectEntry({choices: q.choices, choicevals: q.choicevals, meta: q.domain_meta});
   } else if (q.datatype == "date") {
-    control = new DateEntry(dir, q.domain_meta);
+    control = new DateEntry(q.domain_meta);
   //} else if (q.datatype == "time") {
   //control = new TimeOfDayEntry();
   } else {
