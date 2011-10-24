@@ -63,6 +63,10 @@ function Group(json, parent) {
     reconcile_elements(this, new_json.children);    
   }
 
+  this.destroy = function() {
+
+  }
+
   this.child_container = function() {
     return this.$children;
   }
@@ -93,6 +97,10 @@ function Repeat(json, parent) {
     reconcile_elements(this, new_json.children);    
   }
 
+  this.destroy = function() {
+
+  }
+
   this.child_container = function() {
     return this.$children;
   }
@@ -105,11 +113,7 @@ function Question(json, parent) {
 
   this.init_render = function() {
     this.$container = $('<tr><td id="caption"></td><td id="widget"></td></tr>');
-    this.$widget = $('<input />');
-    this.$container.find('#widget').append(this.$widget);
-
-    var q = this;
-    this.$widget.change(function() { q.onchange(); });
+    this.$control = renderQuestion(this, this.$container.find('#widget'));
 
     this.update();
   }
@@ -126,11 +130,15 @@ function Question(json, parent) {
   }
 
   this.getAnswer = function() {
-    return this.$widget.val();
+    return this.$control.getAnswer();
   }
 
   this.onchange = function() {
     gFormAdapter.answerQuestion(this);
+  }
+
+  this.destroy = function() {
+    this.$control.destroy();
   }
 }
 
@@ -200,6 +208,7 @@ function reconcile_elements(parent, new_elems) {
 function deleteChild(parent, i) {
   var child = arrayDel(parent.children, i);
   child.$container.remove();
+  child.destroy();
   //todo: fix focus
   //todo: probably better to enqueue DOM elems to be deleted, and process in bulk
 }
