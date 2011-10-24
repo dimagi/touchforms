@@ -45,11 +45,12 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
       function (resp) {
         if (resp["status"] == "validation-error") {
           if (resp["type"] == "required") {
-            showError("An answer is required");
+            q.showError("An answer is required");
           } else if (resp["type"] == "constraint") {
-            showError(resp["reason"] || 'This answer is outside the allowed range.');      
+            q.showError(resp["reason"] || 'This answer is outside the allowed range.');      
           }
         } else {
+          q.showError('');
           getForm(q).reconcile(resp["tree"]);
         }
       });

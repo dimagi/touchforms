@@ -112,8 +112,9 @@ function Question(json, parent) {
   this.children = [];
 
   this.init_render = function() {
-    this.$container = $('<tr><td id="caption"></td><td id="widget"></td></tr>');
-    this.$control = renderQuestion(this, this.$container.find('#widget'));
+    this.$container = $('<tr><td id="caption"></td><td><div id="widget"></div><div id="error" style="color: red;"></div></td></tr>');
+    this.control = renderQuestion(this, this.$container.find('#widget'));
+    this.$error = this.$container.find('#error');
 
     this.update();
   }
@@ -130,15 +131,21 @@ function Question(json, parent) {
   }
 
   this.getAnswer = function() {
-    return this.$control.getAnswer();
+    return this.control.getAnswer();
   }
 
   this.onchange = function() {
-    gFormAdapter.answerQuestion(this);
+     if (this.control.prevalidate(this)) {
+       gFormAdapter.answerQuestion(this);
+     }
+  }
+
+  this.showError = function(content) {
+    this.$error.text(content);
   }
 
   this.destroy = function() {
-    this.$control.destroy();
+    this.control.destroy();
   }
 }
 

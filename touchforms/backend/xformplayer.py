@@ -324,7 +324,7 @@ class XFormSession:
         if result == self.fec.ANSWER_REQUIRED_BUT_EMPTY:
             return {'status': 'error', 'type': 'required'}
         elif result == self.fec.ANSWER_CONSTRAINT_VIOLATED:
-            q = self.fem.getQuestionPrompt()
+            q = self.fem.getQuestionPrompt(*([] if ix is None else [ix]))
             return {'status': 'error', 'type': 'constraint', 'reason': q.getConstraintText()}
         elif result == self.fec.ANSWER_OK:
             return {'status': 'success'}

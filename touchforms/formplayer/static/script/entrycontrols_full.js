@@ -74,13 +74,15 @@ function SimpleEntry () {
 
   this.shortcuts = [];
 
+  /*
   this.next = function () {
     if (this.prevalidate()) {
       answerQuestion();
     }
   }
+  */
 
-  this.prevalidate = function () {
+  this.prevalidate = function (q) {
     return true;
   }
 
@@ -188,12 +190,12 @@ function FreeTextEntry (args) {
     }
   }
 
-  this.prevalidate = function () {
+  this.prevalidate = function (q) {
     var raw = this.getRaw();
     if (raw) {
       var errmsg = this._prevalidate(raw);
       if (errmsg) {
-        alert(errmsg);
+        q.showError(errmsg);
         return false;
       }
     }
