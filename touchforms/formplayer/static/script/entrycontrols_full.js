@@ -314,9 +314,18 @@ function MultiSelectEntry (args) {
 
     this.setAnswer(this.default_selections);
 
-    //todo: maybe make this smarter by trapping blur() instead, and seeing if focus
-    //has left the question as a whole
-    $container.find('input').click(function() { q.onchange(); });
+    //this mode is foolproof, but submits a new answer every time you change the selection
+    //$container.find('input').click(function() { q.onchange(); });
+
+    //this mode only submits once you 'leave' the question, but may have holes
+    $container.find('input').blur(function() {
+        setTimeout(function() {
+            var left = ($container.has($(':focus')).length == 0);
+            if (left) {
+              q.onchange();
+            }
+          }, 50); //SKETCH! the new element with focus is not available directly in the blur() event
+      });
   }
 
   this.getAnswer = function () {

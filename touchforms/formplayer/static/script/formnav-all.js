@@ -56,6 +56,29 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
       });
   }
 
+  this.newRepeat = function(repeat) {
+    this.serverRequest(XFORM_URL, {'action': 'new-repeat',
+                                   'session-id': this.session_id,
+                                   'ix': repeat.ix},
+      function (resp) {
+        getForm(repeat).reconcile(resp["tree"]);
+      });
+  }
+
+  this.deleteRepeat = function(repeat) {
+    
+    //ix -> form_ix!!
+
+    /*
+      } else if (answer.substring(0, 3) == 'rep') {
+        var repIx = +answer.substring(3);
+        this.serverRequest(XFORM_URL, {'action': (activeQuestion["repeat-delete"] ? 'delete-repeat' :'edit-repeat'), 
+                'session-id': this.session_id, 'ix': repIx},
+          function (resp) {
+            adapter._renderEvent(resp["event"], true);
+            });*/
+  }
+
   this.prevQuestion = function () {
     this._step(false);
   }
@@ -91,79 +114,7 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
   }
 
   this._renderTree = function(tree) {
-    tmprender(tree);
-    return;
-
-
-    if (event["type"] == "question") {
-      if (event["style"]["domain"])
-        event["domain"] = event["style"]["domain"];
-      event.domain_meta = this.domain_meta(event);
-
-      renderQuestion(event, dirForward);
-    } else if (event["type"] == "form-complete") {
-      var self = this;
-      var done = function () { self._formComplete(event); };
-
-      if (xformAreYouDone()) {
-        confirmDone(done);
-      } else {
-        done();
-      }
-    } else if (event["type"] == "sub-group") {
-      this._step(dirForward);
-    } else if (event["type"] == "repeat-juncture") {
-      event["datatype"] = "select";
-
-      var options = [];
-      for (var i = 0; i < event["repetitions"].length; i++) {
-        options.push({lab: event["repetitions"][i], val: 'rep' + (i + 1)});
-      }
-
-      if (!event["repeat-delete"]) {
-        event["caption"] = event["main-header"];
-        
-        if (event["add-choice"] != null) {
-          options.push({lab: event["add-choice"], val: 'add'});
-        }
-        if (event["del-choice"] != null) {
-          options.push({lab: event["del-choice"], val: 'del'});
-        }
-        options.push({lab: event["done-choice"], val: 'done'});
-      } else {
-        event["caption"] = event["del-header"];
-      }
-
-      event["choices"] = options;
-      event["answer"] = null;
-      event["required"] = true;
-
-      renderQuestion(event, dirForward);
-    } else {
-      alert("unrecognized event [" + event["type"] + "]");
-    }
-  }
-
-  this._step = function (dirForward) {
-    BACK_AT_START_ABORTS = true;
-
-    //handle 'which repeat to delete?' interstitial
-    if (!dirForward && activeQuestion["repeat-delete"]) {
-      activeQuestion["repeat-delete"] = false;
-      this._renderEvent(activeQuestion, false);
-      return;
-    }
-
-    adapter = this;
-    this.serverRequest(XFORM_URL, {'action': (dirForward ? 'next' : 'back'),
-                                   'session-id': this.session_id},
-      function (resp) {
-        if (!dirForward && resp["at-start"] && BACK_AT_START_ABORTS) {
-          adapter.abort();
-        } else {
-          adapter._renderEvent(resp["event"], dirForward || resp["at-start"]);
-        }
-      });
+    init_render(tree);
   }
 
   this._formComplete = function (params) {
@@ -182,38 +133,49 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
     }
   }
 
-  this.serverRequest = function (url, params, callback) {
+  this.serverRequest = function (url, params, callback, blocking) {
     serverRequest(
       function (cb) {
         jQuery.post(url, JSON.stringify(params), cb, "json");
       },
-      callback
+      callback,
+      blocking
     );
   }
 }
 
-var requestInProgress = false;
-function serverRequest (makeRequest, callback) {
-  if (requestInProgress) {
-    //console.log('request is already in progress; aborting');
+var BLOCKING_REQUEST_IN_PROGRESS = false;
+var REQUEST_ID = 0;
+// makeRequest - function that takes in a callback function and executes an
+//     asynchronous request (GET, POST, etc.) with the given callback
+// callback - callback function for request
+// blocking - if true, no further simultaneous requests are allowed until
+//     this request completes
+function serverRequest (makeRequest, callback, blocking) {
+  if (BLOCKING_REQUEST_IN_PROGRESS) {
     return;
   }
-  requestInProgress = true;
-  
-  var ajaxDeactivate = ajaxActivate();
-  makeRequest(function (resp) {
-      requestInProgress = false;
+
+  REQUEST_ID++;
+  if (blocking) {
+    inputActivate(false); // sets BLOCKING_REQUEST_IN_PROGRESS
+  }
+  //closure to save the current REQUEST_ID for this request
+  var make_managed_callback = function(req_id) {
+    return function (resp) {
+      // ignore responses for all but the most recently-made request
+      if (req_id != REQUEST_ID) {
+        return;
+      }
+
       callback(resp);
-      ajaxDeactivate();
-    });
+      if (blocking) {
+        inputActivate(true); // clears BLOCKING_REQUEST_IN_PROGRESS
+      }
+    }
+  }
+  makeRequest(make_managed_callback(REQUEST_ID));
 }
-
-
-
-
-
-
-
 
 
 

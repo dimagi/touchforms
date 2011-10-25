@@ -329,16 +329,24 @@ class XFormSession:
         elif result == self.fec.ANSWER_OK:
             return {'status': 'success'}
 
-    def descend_repeat (self, ix=None):
-        if ix:
-            self.fec.descendIntoRepeat(ix - 1)
+    def descend_repeat (self, rep_ix=None, _junc_ix=None):
+        junc_ix = self.parse_ix(_junc_ix)
+        if (junc_ix):
+            self.fec.jumpToIndex(junc_ix)
+
+        if rep_ix:
+            self.fec.descendIntoRepeat(rep_ix - 1)
         else:
             self.fec.descendIntoNewRepeat()
 
         return self._parse_current_event()
 
-    def delete_repeat (self, ix):
-        self.fec.deleteRepeat(ix - 1)
+    def delete_repeat (self, rep_ix, _junc_ix=None):
+        junc_ix = self.parse_ix(_junc_ix)
+        if (junc_ix):
+            self.fec.jumpToIndex(junc_ix)
+
+        self.fec.deleteRepeat(rep_ix - 1)
         return self._parse_current_event()
 
     #sequential (old-style) repeats only
@@ -404,17 +412,15 @@ def edit_repeat (session_id, ix):
         ev = xfsess.descend_repeat(ix)
         return {'event': ev}
 
-# need ix for fao mode
-def new_repeat (session_id, nav_mode='prompt'):
+def new_repeat (session_id, form_ix):
     with global_state.get_session(session_id) as xfsess:
-        ev = xfsess.descend_repeat()
-        return nav({}, xfsess, nav_mode, ev)
+        ev = xfsess.descend_repeat(_junc_ix=form_ix)
+        return nav({}, xfsess, navmode(form_ix), ev)
 
-# need ix for fao mode
-def delete_repeat (session_id, ix, nav_mode='prompt'):
+def delete_repeat (session_id, rep_ix, form_ix):
     with global_state.get_session(session_id) as xfsess:
-        ev = xfsess.delete_repeat(ix)
-        return nav({}, xfsess, nav_mode, ev)
+        ev = xfsess.delete_repeat(rep_ix, form_ix)
+        return nav({}, xfsess, navmode(form_ix), ev)
 
 #sequential (old-style) repeats only
 def new_repetition (session_id):

@@ -130,7 +130,7 @@ def handle_request (content, **kwargs):
             if 'session-id' not in content:
                 return {'error': 'session id required'}
 
-            return xformplayer.new_repeat(content['session-id'], nav_mode)
+            return xformplayer.new_repeat(content['session-id'], content.get('ix'))
     
         elif action == 'delete-repeat':
             if 'session-id' not in content:
@@ -138,7 +138,7 @@ def handle_request (content, **kwargs):
             if 'ix' not in content:
                 return {'error': 'repeat index required'}
 
-            return xformplayer.delete_repeat(content['session-id'], content['ix'], nav_mode)
+            return xformplayer.delete_repeat(content['session-id'], content['ix'], content.get('form_ix'))
 
         else:
             return {'error': 'unrecognized action'}

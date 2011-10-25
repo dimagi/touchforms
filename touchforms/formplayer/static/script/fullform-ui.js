@@ -88,7 +88,7 @@ function Repeat(json, parent) {
     this.$add = this.$container.find('#add');
     var rep = this;
     this.$add.click(function() {
-        console.log('add repetition ' + rep.ix);
+        gFormAdapter.newRepeat(rep);
       });
   }
 
@@ -237,9 +237,13 @@ function arrayInsertAt(arr, i, o) {
   arr.splice(i, 0, o);
 }
 
-function tmprender(elems) {
-  console.log(elems);
+function inputActivate(enable) {
+  BLOCKING_REQUEST_IN_PROGRESS = !enable;
+  $('input').attr('disabled', enable ? null : 'true');
+  $('a').css('color', enable ? 'blue' : 'grey');
+}
 
+function init_render(elems) {
   var f = new Form(elems);
   f.init_render();
   $('#content').append(f.$container);
