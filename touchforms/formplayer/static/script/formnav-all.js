@@ -34,7 +34,7 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
   }
 
   this.answerQuestion = function (q) {
-    var ix = q.ix;
+    var ix = getIx(q);
     var answer = q.getAnswer();
 
     var adapter = this;
@@ -59,7 +59,7 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
   this.newRepeat = function(repeat) {
     this.serverRequest(XFORM_URL, {'action': 'new-repeat',
                                    'session-id': this.session_id,
-                                   'ix': repeat.ix},
+                                   'ix': getIx(repeat)},
       function (resp) {
         getForm(repeat).reconcile(resp["tree"]);
       },
@@ -67,8 +67,8 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
   }
 
   this.deleteRepeat = function(repetition) {
-    var juncture = repetition.parent.ix;
-    var rep_ix = +(repetition.ix.split(":").slice(-1)[0]) + 1;
+    var juncture = getIx(repetition.parent);
+    var rep_ix = +(repetition.rel_ix.split(":").slice(-1)[0]) + 1;
     this.serverRequest(XFORM_URL, {'action': 'delete-repeat', 
                                    'session-id': this.session_id,
                                    'ix': rep_ix,

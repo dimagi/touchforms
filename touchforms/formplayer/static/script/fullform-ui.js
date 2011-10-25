@@ -7,10 +7,53 @@ function getForm(o) {
   return form;
 }
 
+//if index is part of a repeat, return only the part beyond the deepest repeat
+function relativeIndex(ix) {
+  var steps = ix.split(',');
+  var deepest_repeat = -1;
+  for (var i = steps.length - 2; i >= 0; i--) {
+    if (steps[i].indexOf(':') != -1) {
+      deepest_repeat = i;
+      break;
+    }
+  }
+  if (deepest_repeat == -1) {
+    return ix;
+  } else {
+    var rel_ix = '-';
+    for (var i = deepest_repeat + 1; i < steps.length; i++) {
+      rel_ix += steps[i] + (i < steps.length - 1 ? ',' : '');
+    }
+    return rel_ix;
+  }
+}
+
+function getIx(o) {
+  var ix = o.rel_ix;
+  while (ix[0] == '-') {
+    o = o.parent;
+    if (!o) {
+      break;
+    }
+    if (o.rel_ix.split(',').slice(-1)[0].indexOf(':') != -1) {
+      ix = o.rel_ix + ',' + ix.substring(1);
+    }
+  }
+  return ix;
+}
+
+function ixInfo(o) {
+  var full_ix = getIx(o);
+  return o.rel_ix + (o.is_repetition ? '(' + o.uuid + ')' : '') + (o.rel_ix != full_ix ? ' :: ' + full_ix : '');
+}
+
 function loadFromJSON(o, json) {
   $.each(json, function(key, val) {
       if (key == 'children') {
         return;
+      } else if (key == 'ix') {
+        key = 'rel_ix';
+        val = relativeIndex(val);
       }
 
       o[key] = val;
@@ -41,9 +84,10 @@ function Group(json, parent) {
   this.children = [];
 
   this.init_render = function() {
-    this.$container = $('<tr><td colspan="2"><span id="caption"></span> <a id="del" href="#">delete</a><table id="children" border="1"></table></td></tr>');
+    this.$container = $('<tr><td colspan="2"><span id="caption"></span> <span id="ix"></span> <a id="del" href="#">delete</a><table id="children" border="1"></table></td></tr>');
     this.$children = this.$container.find('#children');
-    this.$container.find('#caption').text(this.caption + ' [' + this.ix + ']');
+    this.$container.find('#caption').text(this.caption);
+    this.$container.find('#ix').text('[' + ixInfo(this) + ']');
 
     render_elements(this, json.children);
 
@@ -80,9 +124,10 @@ function Repeat(json, parent) {
   this.is_repeat = true;
 
   this.init_render = function() {
-    this.$container = $('<tr><td colspan="2"><span id="caption"></span> <a id="add" href="#">add new</a><table id="children" border="1"></table></td></tr>');
+    this.$container = $('<tr><td colspan="2"><span id="caption"></span> <span id="ix"></span> <a id="add" href="#">add new</a><table id="children" border="1"></table></td></tr>');
     this.$children = this.$container.find('#children');
-    this.$container.find('#caption').text(this['main-header'] + ' [' + this.ix + ']');
+    this.$container.find('#caption').text(this['main-header']);
+    this.$container.find('#ix').text('[' + ixInfo(this) + ']');
 
     render_elements(this, json.children);
 
@@ -114,7 +159,7 @@ function Question(json, parent) {
   this.children = [];
 
   this.init_render = function() {
-    this.$container = $('<tr><td id="caption"></td><td><div id="widget"></div><div id="error" style="color: red;"></div></td></tr>');
+    this.$container = $('<tr><td><span id="caption"></span> <span id="ix"></span></td><td><div id="widget"></div><div id="error" style="color: red;"></div></td></tr>');
     this.control = renderQuestion(this, this.$container.find('#widget'));
     this.$error = this.$container.find('#error');
 
@@ -122,14 +167,14 @@ function Question(json, parent) {
   }
 
   this.reconcile = function(new_json) {
-    console.log('imma reconcilin\' ' + this.ix);
     //update caption only?
     //compare everything, i guess
     //note that select choices may change due to itemsets
   }
 
   this.update = function() {
-    this.$container.find('#caption').text(this.caption + ' [' + this.ix + ']');
+    this.$container.find('#caption').text(this.caption);
+    this.$container.find('#ix').text('[' + ixInfo(this) + ']');
   }
 
   this.getAnswer = function() {
@@ -174,9 +219,16 @@ function render_elements(parent, elems) {
 function reconcile_elements(parent, new_elems) {
   var mapping = []; // (k_old, k_new)
 
+  var cmpkey = function (e) {
+    if (e.uuid) {
+      return 'uuid-' + e.uuid;
+    } else {
+      return 'ix-' + (e.ix ? e.ix : getIx(e));
+    }
+  }
+
   var inElementSet = function(e, set) {
-    return $.map(set, function(val) { return val.ix; }).indexOf(e.ix);
-    //compare repeat uuids here?
+    return $.map(set, function(val) { return cmpkey(val); }).indexOf(cmpkey(e));
   }
 
   for (var i = 0; i < parent.children.length; i++) {
