@@ -62,21 +62,21 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
                                    'ix': repeat.ix},
       function (resp) {
         getForm(repeat).reconcile(resp["tree"]);
-      });
+      },
+      true);
   }
 
-  this.deleteRepeat = function(repeat) {
-    
-    //ix -> form_ix!!
-
-    /*
-      } else if (answer.substring(0, 3) == 'rep') {
-        var repIx = +answer.substring(3);
-        this.serverRequest(XFORM_URL, {'action': (activeQuestion["repeat-delete"] ? 'delete-repeat' :'edit-repeat'), 
-                'session-id': this.session_id, 'ix': repIx},
-          function (resp) {
-            adapter._renderEvent(resp["event"], true);
-            });*/
+  this.deleteRepeat = function(repetition) {
+    var juncture = repetition.parent.ix;
+    var rep_ix = +(repetition.ix.split(":").slice(-1)[0]) + 1;
+    this.serverRequest(XFORM_URL, {'action': 'delete-repeat', 
+                                   'session-id': this.session_id,
+                                   'ix': rep_ix,
+                                   'form_ix': juncture},
+      function (resp) {
+        getForm(repetition).reconcile(resp["tree"]);
+      },
+      true);
   }
 
   this.prevQuestion = function () {

@@ -161,6 +161,8 @@ class XFormSession:
               'repeatable': True,
               'children': [],
             }
+            # ghettoooo; if this pays off, this should be better incorporated into the form entry API
+            subevt['uuid'] = self.form.getInstance().resolveReference(subevt['ix'].getReference()).uuid
             evt['children'].append(subevt)
             self._walk(subevt['ix'], subevt['children'])
           for key in ['repetitions', 'del-choice', 'del-header', 'done-choice']:

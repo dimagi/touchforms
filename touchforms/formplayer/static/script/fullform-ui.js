@@ -54,7 +54,8 @@ function Group(json, parent) {
 
     var g = this;
     this.$del.click(function() {
-        console.log('delete repetition ' + g.ix);
+        gFormAdapter.deleteRepeat(g);
+        return false;
       });
   }
 
@@ -89,6 +90,7 @@ function Repeat(json, parent) {
     var rep = this;
     this.$add.click(function() {
         gFormAdapter.newRepeat(rep);
+        return false;
       });
   }
 
@@ -135,9 +137,9 @@ function Question(json, parent) {
   }
 
   this.onchange = function() {
-     if (this.control.prevalidate(this)) {
-       gFormAdapter.answerQuestion(this);
-     }
+    if (this.control.prevalidate(this)) {
+      gFormAdapter.answerQuestion(this);
+    }
   }
 
   this.showError = function(content) {
@@ -150,15 +152,15 @@ function Question(json, parent) {
 }
 
 function make_element(e, parent) {
-    if (e.type == 'question') {
-      var o = new Question(e, parent);
-    } else if (e.type == 'sub-group') {
-      var o = new Group(e, parent);
-    } else if (e.type == 'repeat-juncture') {
-      var o = new Repeat(e, parent);
-    }
-    o.init_render();
-    return o;
+  if (e.type == 'question') {
+    var o = new Question(e, parent);
+  } else if (e.type == 'sub-group') {
+    var o = new Group(e, parent);
+  } else if (e.type == 'repeat-juncture') {
+    var o = new Repeat(e, parent);
+  }
+  o.init_render();
+  return o;
 }
 
 function render_elements(parent, elems) {
