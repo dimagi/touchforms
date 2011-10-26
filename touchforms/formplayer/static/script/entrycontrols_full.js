@@ -524,7 +524,7 @@ function TimeOfDayEntry () {
   }
 }
 
-function renderQuestion (q, $container) {
+function renderQuestion (q, $container, init_answer) {
   var control = null;
 
   /*
@@ -568,7 +568,7 @@ function renderQuestion (q, $container) {
     return null;
   }
 
-  control.setAnswer(q.answer);
+  control.setAnswer(init_answer);
   control.load(q, $container);
   return control;
 }

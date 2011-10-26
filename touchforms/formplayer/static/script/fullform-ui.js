@@ -54,6 +54,8 @@ function loadFromJSON(o, json) {
       } else if (key == 'ix') {
         key = 'rel_ix';
         val = relativeIndex(val);
+      } else if (key == 'answer') {
+        key = 'last_answer';
       }
 
       o[key] = val;
@@ -177,7 +179,7 @@ function Question(json, parent) {
 
   this.init_render = function() {
     this.$container = $('<tr><td><span id="caption"></span> <span id="ix"></span></td><td><div id="widget"></div><div id="error" style="color: red;"></div></td></tr>');
-    this.control = renderQuestion(this, this.$container.find('#widget'));
+    this.control = renderQuestion(this, this.$container.find('#widget'), this.last_answer);
     this.$error = this.$container.find('#error');
 
     this.update();
@@ -201,6 +203,16 @@ function Question(json, parent) {
 
   this.onchange = function() {
     if (this.control.prevalidate(this)) {
+      //check if answer has actually changed
+      if (['select', 'multiselect', 'date'].indexOf(this.datatype) != -1) {
+        //free-entry datatypes are suitably handled by the 'onchange' event
+        var new_answer = this.getAnswer();
+        if (answer_eq(this.last_answer, new_answer)) {
+          return;
+        }
+      }
+
+      this.last_answer = this.getAnswer();
       gFormAdapter.answerQuestion(this);
     }
   }
@@ -320,3 +332,20 @@ function init_render(elems) {
   f.init_render();
   $('#content').append(f.$container);
 }
+
+var answer_eq = function(ans1, ans2) {
+  if (ans1 === ans2) {
+    return true;
+  } else if (ans1 instanceof Array && ans2 instanceof Array) {
+    if (ans1.length == ans2.length) {
+      for (var i = 0; i < ans1.length; i++) {
+        if (ans1[i] != ans2[i]) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
