@@ -367,17 +367,20 @@ class XFormSession:
         return index_from_str(s_ix, self.form)
 
     def response(self, resp, ev_next=None, no_next=False):
-        if self.nav_mode == 'prompt':
-            if ev_next is None and not no_next:
+        if no_next:
+            navinfo = {}
+        elif self.nav_mode == 'prompt':
+            if ev_next is None:
                 ev_next = next_event(self)
             navinfo = {'event': ev_next}
         elif self.nav_mode == 'fao':
-            #debug
-            print '=== walking ==='
-            print_tree(self.walk())
-            print '==============='
-
             navinfo = {'tree': self.walk()}
+
+        #debug
+        print '=== walking ==='
+        print_tree(self.walk())
+        print '==============='
+
         resp.update(navinfo)
         resp.update({'seq_id': self.seq_id})
         return resp
@@ -448,13 +451,18 @@ def go_back (session_id):
         return {'event': event, 'at-start': at_start}
 
 # fao mode only
-# INCOMPLETE
-def complete_form(session_id, validate_all=True):
-    if validate_all:
-        pass
-        # do final validation here?
-    
-    #copy 'form complete' branch of next_event() ?
+def submit_form(session_id, answers, prevalidated):
+    with global_state.get_session(session_id) as xfsess:
+        errors = dict(filter(lambda resp: resp[1]['status'] != 'success',
+                             ((_ix, xfsess.answer_question(answer, _ix)) for _ix, answer in answers.iteritems())))
+
+        if errors or not prevalidated:
+            resp = {'status': 'error', 'errors': errors}
+        else:
+            #copy 'form complete' branch of next_event() ?
+            resp = {'status': 'success'}
+
+        return xfsess.response(resp, no_next=True)
 
 def next_event (xfsess):
     ev = xfsess.next_event()

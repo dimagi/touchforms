@@ -44,11 +44,7 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
                                    'answer': answer},
       function (resp) {
         if (resp["status"] == "validation-error") {
-          if (resp["type"] == "required") {
-            q.showError("An answer is required");
-          } else if (resp["type"] == "constraint") {
-            q.showError(resp["reason"] || 'This answer is outside the allowed range.');      
-          }
+          adapter.showError(q, resp);
         } else {
           q.showError('');
           getForm(q).reconcile(resp["tree"]);
@@ -77,6 +73,50 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
         getForm(repetition).reconcile(resp["tree"]);
       },
       true);
+  }
+
+  this.submitForm = function(form) {
+    var answers = {};
+    var prevalidated = true;
+    var accumulate_answers = function(o) {
+      if (o.type != 'question') {
+        $.each(o.children, function(i, val) {
+            accumulate_answers(val);
+          });
+      } else {
+        if (o.prevalidate()) {
+          answers[getIx(o)] = o.getAnswer();
+        } else {
+          prevalidated = false;
+        }
+      }
+    }
+    accumulate_answers(form);
+
+    var adapter = this;
+    this.serverRequest(XFORM_URL, {'action': 'submit-all',
+                                   'session-id': this.session_id,
+                                   'answers': answers,
+                                   'prevalidated': prevalidated},
+      function (resp) {
+        if (resp.status == 'success') {
+          console.log('do POST!!');
+        } else {
+          $.each(resp.errors, function(ix, error) {
+              adapter.showError(getForIx(form, ix), error);
+            });
+          alert('There are errors in this form; they must be corrected before the form can be submitted.');
+        }
+      },
+      true);
+  }
+
+  this.showError = function(q, resp) {
+    if (resp["type"] == "required") {
+      q.showError("An answer is required");
+    } else if (resp["type"] == "constraint") {
+      q.showError(resp["reason"] || 'This answer is outside the allowed range.');      
+    }
   }
 
   this.prevQuestion = function () {
@@ -181,9 +221,6 @@ function serverRequest (makeRequest, callback, blocking) {
       }
     });
 }
-
-
-
 
 function getQuestionAnswer () {
   return activeControl.getAnswer();

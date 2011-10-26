@@ -140,6 +140,12 @@ def handle_request (content, **kwargs):
 
             return xformplayer.delete_repeat(content['session-id'], content['ix'], content.get('form_ix'))
 
+        elif action == 'submit-all':
+            if 'session-id' not in content:
+                return {'error': 'session id required'}
+            
+            return xformplayer.submit_form(content['session-id'], content.get('answers', []), content.get('prevalidated', False))
+
         else:
             return {'error': 'unrecognized action'}
     

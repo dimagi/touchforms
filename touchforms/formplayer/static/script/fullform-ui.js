@@ -42,6 +42,19 @@ function getIx(o) {
   return ix;
 }
 
+function getForIx(o, ix) {
+  if (o.type == 'question') {
+    return (getIx(o) == ix ? o : null);
+  } else {
+    for (var i = 0; i < o.children.length; i++) {
+      var result = getForIx(o.children[i], ix);
+      if (result) {
+        return result;
+      }
+    }
+  }
+}
+
 function ixInfo(o) {
   var full_ix = getIx(o);
   return o.rel_ix + (o.is_repetition ? '(' + o.uuid + ')' : '') + (o.rel_ix != full_ix ? ' :: ' + full_ix : '');
@@ -66,8 +79,19 @@ function Form(json) {
   this.children = [];
 
   this.init_render = function() {
-    this.$container = $('<table id="form" border="1"></table>');
+    this.$container = $('<div><table id="form" border="1"></table><input id="submit" type="submit" value="Submit" /></div>');
+    this.$children = this.$container.find('#form');
     render_elements(this, json);
+
+    var form = this;
+    this.$container.find('#submit').click(function() {
+        var areYouSure = confirm('Submit this form finally, for all time and evermore?');
+        if (!areYouSure) {
+          return;
+        }
+
+        gFormAdapter.submitForm(form);
+      });
   }
 
   this.reconcile = function(new_json) {
@@ -75,7 +99,7 @@ function Form(json) {
   }
 
   this.child_container = function() {
-    return this.$container;
+    return this.$children;
   }
 }
 
@@ -178,7 +202,7 @@ function Question(json, parent) {
   this.children = [];
 
   this.init_render = function() {
-    this.$container = $('<tr><td><span id="caption"></span> <span id="ix"></span></td><td><div id="widget"></div><div id="error" style="color: red;"></div></td></tr>');
+    this.$container = $('<tr><td><span id="caption"></span><span id="req" style="color: red;"></span> <span id="ix"></span></td><td><div id="widget"></div><div id="error" style="color: red;"></div></td></tr>');
     this.control = renderQuestion(this, this.$container.find('#widget'), this.last_answer);
     this.$error = this.$container.find('#error');
 
@@ -187,13 +211,14 @@ function Question(json, parent) {
 
   this.reconcile = function(new_json) {
     this.caption = new_json.caption;
-    //update 'required'
-    //update select choices?
+    this.required = new_json.required;
+    //update select choices? (change due to localization / itemsets)
     this.update();
   }
 
   this.update = function() {
     this.$container.find('#caption').text(this.caption);
+    this.$container.find('#req').text(this.required ? '*' : '');
     this.$container.find('#ix').text('[' + ixInfo(this) + ']');
   }
 
@@ -201,8 +226,12 @@ function Question(json, parent) {
     return this.control.getAnswer();
   }
 
+  this.prevalidate = function() {
+    return this.control.prevalidate(this);
+  }
+
   this.onchange = function() {
-    if (this.control.prevalidate(this)) {
+    if (this.prevalidate()) {
       //check if answer has actually changed
       if (['select', 'multiselect', 'date'].indexOf(this.datatype) != -1) {
         //free-entry datatypes are suitably handled by the 'onchange' event
