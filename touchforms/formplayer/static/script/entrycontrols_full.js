@@ -295,11 +295,12 @@ function MultiSelectEntry (args) {
 
   this.load = function (q, $container) {
     this.$container = $container;
+    this.group = 'sel1-' + nonce();
 
     content = '';
     for (var i = 0; i < this.choices.length; i++) {
       var label = (i < 10 ? '' + ((i + 1) % 10) : (i < 36 ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i - 10] : null));
-      content += label + ') <input id="ch-' + i + '" type="' + (this.isMulti ? 'checkbox' : 'radio') + '" name="opt" value="' + i + '"> ' + this.choices[i] + '<br>';
+      content += label + ') <input id="ch-' + i + '" type="' + (this.isMulti ? 'checkbox' : 'radio') + '" name="' + this.group + '" value="' + i + '"> ' + this.choices[i] + '<br>';
 
       //this.add_shortcut(label, this.selectFunc(i));
     }
@@ -361,7 +362,7 @@ function MultiSelectEntry (args) {
   this.selectFunc = function (i) {
     var self = this;
     return function () {
-      var cbox = this.choiceWidget(i);
+      var cbox = this.choiceWidget(i); //is 'this' a bug? (used for keyboard shortcuts?)
       if (cbox.is(':checked')) {
         cbox.removeAttr('checked');
       } else {
@@ -422,7 +423,7 @@ function SingleSelectEntry (args) {
   this.selectFunc = function (i) {
     var self = this;
     return function () {
-      var cbox = this.choiceWidget(i);
+      var cbox = this.choiceWidget(i); //is 'this' a bug? (used for keyboard shortcuts?)
       cbox.attr('checked', true);
       //      cbox.focus();
     }
@@ -447,16 +448,15 @@ function DateEntry (args) {
   this.$picker = null;
 
   this.load = function (q, $container) {
-    $container.html('<input id="datepicker" type="text"><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.format.replace('yy', 'yyyy') + ')</span>');
-    this.$picker = $container.find('#datepicker');
+    this.widget_id = 'datepicker-' + nonce();
+    $container.html('<input id="' + this.widget_id + '" type="text"><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.format.replace('yy', 'yyyy') + ')</span>');
+    this.$picker = $container.find('#' + this.widget_id);
 
-    var self = this;
 		this.$picker.datepicker({
         changeMonth: true,
         changeYear: true,
         dateFormat: this.format
       });
-    //    $('#datepicker').focus();
 
     this.initted = true;
 
@@ -571,4 +571,8 @@ function renderQuestion (q, $container) {
   control.setAnswer(q.answer);
   control.load(q, $container);
   return control;
+}
+
+function nonce() {
+  return Math.floor(Math.random()*1e9);
 }
