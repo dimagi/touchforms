@@ -77,7 +77,9 @@ function init () {
     <input type="submit" value="Submit it! (not really)" />
 
     <!-- stick form uid here to aid with backslash escaping -->
-    <input id="form-uid" type="hidden" value="{% ifequal mode 'xform' %}{{form.file.path}}{% endifequal %}">
+    <input id="form-uid" type="hidden" value="{% ifequal mode 'xform' %}{{form.file.path}}{% endifequal %}" />
+
+    <div id="loading" style="position: fixed; top: 15px; right: 15px; display: none;"><img src="{{MEDIA_URL}}formplayer/img/loading_small.gif" /></div>
 
   </body>
 </html>

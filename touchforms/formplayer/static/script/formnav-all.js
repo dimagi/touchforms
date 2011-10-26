@@ -146,6 +146,7 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
 
 var BLOCKING_REQUEST_IN_PROGRESS = false;
 var LAST_REQUEST_HANDLED = -1;
+var NUM_PENDING_REQUESTS = 0;
 // makeRequest - function that takes in a callback function and executes an
 //     asynchronous request (GET, POST, etc.) with the given callback
 // callback - callback function for request
@@ -155,6 +156,9 @@ function serverRequest (makeRequest, callback, blocking) {
   if (BLOCKING_REQUEST_IN_PROGRESS) {
     return;
   }
+
+  NUM_PENDING_REQUESTS++;
+  $('#loading').show();
 
   if (blocking) {
     inputActivate(false); // sets BLOCKING_REQUEST_IN_PROGRESS
@@ -169,6 +173,11 @@ function serverRequest (makeRequest, callback, blocking) {
       callback(resp);
       if (blocking) {
         inputActivate(true); // clears BLOCKING_REQUEST_IN_PROGRESS
+      }
+
+      NUM_PENDING_REQUESTS--;
+      if (NUM_PENDING_REQUESTS == 0) {
+        $('#loading').hide();
       }
     });
 }
