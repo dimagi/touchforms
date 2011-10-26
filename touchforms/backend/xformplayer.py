@@ -86,8 +86,10 @@ class SequencingException(Exception):
 
 class XFormSession:
     def __init__(self, xform_raw=None, xform_path=None, instance_raw=None, instance_path=None,
-                 preload_data={}, extensions=[]):
+                 preload_data={}, extensions=[], nav_mode='prompt'):
         self.lock = threading.Lock()
+        self.nav_mode = nav_mode
+        self.seq_id = 0
 
         def content_or_path(content, path):
             if content != None:
@@ -107,8 +109,12 @@ class XFormSession:
         self._parse_current_event()
 
     def __enter__(self):
-        if not self.lock.acquire(False):
-            raise SequencingException()
+        if self.nav_mode == 'fao':
+            self.lock.acquire()
+        else:
+            if not self.lock.acquire(False):
+                raise SequencingException()
+        self.seq_id += 1
         return self
 
     def __exit__(self, *_):
@@ -360,6 +366,22 @@ class XFormSession:
     def parse_ix(self, s_ix):
         return index_from_str(s_ix, self.form)
 
+    def response(self, resp, ev_next=None, no_next=False):
+        if self.nav_mode == 'prompt':
+            if ev_next is None and not no_next:
+                ev_next = next_event(self)
+            navinfo = {'event': ev_next}
+        elif self.nav_mode == 'fao':
+            #debug
+            print '=== walking ==='
+            print_tree(self.walk())
+            print '==============='
+
+            navinfo = {'tree': self.walk()}
+        resp.update(navinfo)
+        resp.update({'seq_id': self.seq_id})
+        return resp
+
 class choice(object):
     def __init__(self, q, select_choice):
         self.q = q
@@ -374,21 +396,6 @@ class choice(object):
     def __json__(self):
         return json.dumps(repr(self))
 
-def nav(resp, xfsess, nav_mode, ev_next=None):
-    if nav_mode == 'prompt':
-        if ev_next is None:
-            ev_next = next_event(xfsess)
-        navinfo = {'event': ev_next}
-    elif nav_mode == 'fao':
-        #debug
-        print '=== walking ==='
-        print_tree(xfsess.walk())
-        print '==============='
-
-        navinfo = {'tree': xfsess.walk()}
-    resp.update(navinfo)
-    return resp
-
 def navmode(ix):
     return 'prompt' if ix is None else 'fao'
 
@@ -396,18 +403,18 @@ def open_form(form_name, instance_xml=None, extensions=[], preload_data={}, nav_
     if not os.path.exists(form_name):
         return {'error': 'no form found at %s' % form_name}
 
-    xfsess = XFormSession(xform_path=form_name, instance_raw=instance_xml, preload_data=preload_data, extensions=extensions)
+    xfsess = XFormSession(xform_path=form_name, instance_raw=instance_xml, preload_data=preload_data, extensions=extensions, nav_mode=nav_mode)
     sess_id = global_state.new_session(xfsess)
-    return nav({'session_id': sess_id}, xfsess, nav_mode)
+    return xfsess.response({'session_id': sess_id})
 
 def answer_question (session_id, answer, ix):
     with global_state.get_session(session_id) as xfsess:
         result = xfsess.answer_question(answer, ix)
         if result['status'] == 'success':
-            return nav({'status': 'accepted'}, xfsess, navmode(ix))
+            return xfsess.response({'status': 'accepted'})
         else:
             result['status'] = 'validation-error'
-            return result
+            return xfsess.response(result, no_next=True)
 
 def edit_repeat (session_id, ix):
     with global_state.get_session(session_id) as xfsess:
@@ -417,12 +424,12 @@ def edit_repeat (session_id, ix):
 def new_repeat (session_id, form_ix):
     with global_state.get_session(session_id) as xfsess:
         ev = xfsess.descend_repeat(_junc_ix=form_ix)
-        return nav({}, xfsess, navmode(form_ix), ev)
+        return xfsess.response({}, ev)
 
 def delete_repeat (session_id, rep_ix, form_ix):
     with global_state.get_session(session_id) as xfsess:
         ev = xfsess.delete_repeat(rep_ix, form_ix)
-        return nav({}, xfsess, navmode(form_ix), ev)
+        return xfsess.response({}, ev)
 
 #sequential (old-style) repeats only
 def new_repetition (session_id):

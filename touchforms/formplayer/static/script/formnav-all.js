@@ -145,8 +145,7 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
 }
 
 var BLOCKING_REQUEST_IN_PROGRESS = false;
-var REQUEST_ID = 0;
-var LAST_REQUEST_HANDLED = REQUEST_ID;
+var LAST_REQUEST_HANDLED = -1;
 // makeRequest - function that takes in a callback function and executes an
 //     asynchronous request (GET, POST, etc.) with the given callback
 // callback - callback function for request
@@ -157,26 +156,21 @@ function serverRequest (makeRequest, callback, blocking) {
     return;
   }
 
-  REQUEST_ID++;
   if (blocking) {
     inputActivate(false); // sets BLOCKING_REQUEST_IN_PROGRESS
   }
-  //closure to save the current REQUEST_ID for this request
-  var make_managed_callback = function(req_id) {
-    return function (resp) {
-      // ignore responses for all but the most recently-made request
-      if (req_id < LAST_REQUEST_HANDLED) {
+  makeRequest(function (resp) {
+      // ignore responses older than the most-recently handled
+      if (resp.seq_id && resp.seq_id < LAST_REQUEST_HANDLED) {
         return;
       }
-      LAST_REQUEST_HANDLED = req_id;
+      LAST_REQUEST_HANDLED = resp.seq_id;
 
       callback(resp);
       if (blocking) {
         inputActivate(true); // clears BLOCKING_REQUEST_IN_PROGRESS
       }
-    }
-  }
-  makeRequest(make_managed_callback(REQUEST_ID));
+    });
 }
 
 
