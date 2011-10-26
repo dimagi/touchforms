@@ -459,8 +459,8 @@ def submit_form(session_id, answers, prevalidated):
         if errors or not prevalidated:
             resp = {'status': 'error', 'errors': errors}
         else:
-            #copy 'form complete' branch of next_event() ?
-            resp = {'status': 'success'}
+            resp = form_completion(xfsess)
+            resp['status'] = 'success'
 
         return xfsess.response(resp, no_next=True)
 
@@ -469,9 +469,7 @@ def next_event (xfsess):
     if ev['type'] != 'form-complete':
         return ev
     else:
-        (instance_id, xml) = save_form(xfsess)
-        ev['save-id'] = instance_id
-        ev['output'] = xml
+        ev.update(form_completion(xfsess))
         return ev
 
 def prev_event (xfsess):
@@ -485,8 +483,8 @@ def save_form (xfsess):
     instance_id = global_state.save_instance(xml)
     return (instance_id, xml)
 
-
-
+def form_completion(xfsess):
+    return dict(zip(('save-id', 'output'), save_form(xfsess)))
 
 
 

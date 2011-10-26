@@ -100,7 +100,7 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
                                    'prevalidated': prevalidated},
       function (resp) {
         if (resp.status == 'success') {
-          console.log('do POST!!');
+          adapter._formComplete(resp);
         } else {
           $.each(resp.errors, function(ix, error) {
               adapter.showError(getForIx(form, ix), error);
@@ -158,7 +158,8 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
   }
 
   this._formComplete = function (params) {
-    interactionComplete(function () { submit_redirect(params); });
+    params.type = 'form-complete';
+    submit_redirect(params);
   }
 
   this.abort = function () {
