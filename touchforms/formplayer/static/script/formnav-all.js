@@ -146,6 +146,7 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
 
 var BLOCKING_REQUEST_IN_PROGRESS = false;
 var REQUEST_ID = 0;
+var LAST_REQUEST_HANDLED = REQUEST_ID;
 // makeRequest - function that takes in a callback function and executes an
 //     asynchronous request (GET, POST, etc.) with the given callback
 // callback - callback function for request
@@ -164,9 +165,10 @@ function serverRequest (makeRequest, callback, blocking) {
   var make_managed_callback = function(req_id) {
     return function (resp) {
       // ignore responses for all but the most recently-made request
-      if (req_id != REQUEST_ID) {
+      if (req_id < LAST_REQUEST_HANDLED) {
         return;
       }
+      LAST_REQUEST_HANDLED = req_id;
 
       callback(resp);
       if (blocking) {

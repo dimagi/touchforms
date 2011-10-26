@@ -86,9 +86,10 @@ function Group(json, parent) {
   this.init_render = function() {
     this.$container = $('<tr><td colspan="2"><span id="caption"></span> <span id="ix"></span> <a id="del" href="#">delete</a><table id="children" border="1"></table></td></tr>');
     this.$children = this.$container.find('#children');
-    this.$container.find('#caption').text(this.caption);
-    this.$container.find('#ix').text('[' + ixInfo(this) + ']');
+    this.$caption = this.$container.find('#caption');
+    this.$ix = this.$container.find('#ix');
 
+    this.update();
     render_elements(this, json.children);
 
     this.$del = this.$container.find('#del');
@@ -104,8 +105,17 @@ function Group(json, parent) {
   }
 
   this.reconcile = function(new_json) {
-    //reconcile local fields
+    this.caption = new_json.caption;
+    if (this.is_repetition) {
+      this.rel_ix = relativeIndex(new_json.ix);
+    }
     reconcile_elements(this, new_json.children);    
+    this.update();
+  }
+
+  this.update = function() {
+    this.$caption.text(this.caption);
+    this.$ix.text('[' + ixInfo(this) + ']');
   }
 
   this.destroy = function() {
@@ -126,9 +136,10 @@ function Repeat(json, parent) {
   this.init_render = function() {
     this.$container = $('<tr><td colspan="2"><span id="caption"></span> <span id="ix"></span> <a id="add" href="#">add new</a><table id="children" border="1"></table></td></tr>');
     this.$children = this.$container.find('#children');
-    this.$container.find('#caption').text(this['main-header']);
-    this.$container.find('#ix').text('[' + ixInfo(this) + ']');
+    this.$header = this.$container.find('#caption');
+    this.$ix = this.$container.find('#ix');
 
+    this.update();
     render_elements(this, json.children);
 
     this.$add = this.$container.find('#add');
@@ -140,8 +151,14 @@ function Repeat(json, parent) {
   }
 
   this.reconcile = function(new_json) {
-    //reconcile local fields
-    reconcile_elements(this, new_json.children);    
+    this['main-header'] = new_json['main-header'];
+    reconcile_elements(this, new_json.children);
+    this.update();
+  }
+
+  this.update = function() {
+    this.$header.text(this['main-header']);
+    this.$ix.text('[' + ixInfo(this) + ']');
   }
 
   this.destroy = function() {
@@ -167,9 +184,10 @@ function Question(json, parent) {
   }
 
   this.reconcile = function(new_json) {
-    //update caption only?
-    //compare everything, i guess
-    //note that select choices may change due to itemsets
+    this.caption = new_json.caption;
+    //update 'required'
+    //update select choices?
+    this.update();
   }
 
   this.update = function() {
