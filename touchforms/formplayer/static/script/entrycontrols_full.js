@@ -322,7 +322,7 @@ function MultiSelectEntry (args) {
     //this mode only submits once you 'leave' the question, but may have holes
     $container.find('input').blur(function() {
         setTimeout(function() {
-            var left = ($container.has(':focus').length == 0);
+            var left = ($container.has('input:focus').length == 0);
             if (left) {
               q.onchange();
             }
