@@ -295,7 +295,7 @@ function MultiSelectEntry (args) {
 
   this.load = function (q, $container) {
     this.$container = $container;
-    this.group = 'sel1-' + nonce();
+    this.group = 'sel-' + nonce();
 
     content = '';
     for (var i = 0; i < this.choices.length; i++) {
@@ -305,6 +305,7 @@ function MultiSelectEntry (args) {
       //this.add_shortcut(label, this.selectFunc(i));
     }
     $container.html(content);
+    $container.append('<a id="clear" href="#">clear</a>');
     //$('#ch-0').focus();
 
     //var self = this;
@@ -326,6 +327,12 @@ function MultiSelectEntry (args) {
               q.onchange();
             }
           }, 50); //SKETCH! the new element with focus is not available directly in the blur() event
+      });
+
+    $container.find('#clear').click(function () {
+        $container.find('input').removeAttr('checked');
+        q.onchange();
+        return false;
       });
   }
 
