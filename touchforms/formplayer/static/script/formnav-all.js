@@ -29,7 +29,7 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
                                    'nav': 'fao'},
       function (resp) {
         adapter.session_id = resp["session_id"];
-        adapter._renderTree(resp["tree"], true);
+        adapter._renderForm(resp);
       });
   }
 
@@ -153,8 +153,8 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
     return meta;
   }
 
-  this._renderTree = function(tree) {
-    init_render(tree);
+  this._renderForm = function(form) {
+    init_render(form);
   }
 
   this._formComplete = function (params) {

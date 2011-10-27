@@ -366,6 +366,9 @@ class XFormSession:
     def parse_ix(self, s_ix):
         return index_from_str(s_ix, self.form)
 
+    def form_title(self):
+        return self.form.getTitle()
+
     def response(self, resp, ev_next=None, no_next=False):
         if no_next:
             navinfo = {}
@@ -408,7 +411,7 @@ def open_form(form_name, instance_xml=None, extensions=[], preload_data={}, nav_
 
     xfsess = XFormSession(xform_path=form_name, instance_raw=instance_xml, preload_data=preload_data, extensions=extensions, nav_mode=nav_mode)
     sess_id = global_state.new_session(xfsess)
-    return xfsess.response({'session_id': sess_id})
+    return xfsess.response({'session_id': sess_id, 'title': xfsess.form_title()})
 
 def answer_question (session_id, answer, ix):
     with global_state.get_session(session_id) as xfsess:

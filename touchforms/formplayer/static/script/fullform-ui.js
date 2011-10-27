@@ -89,9 +89,12 @@ function Form(json) {
   this.children = [];
 
   this.init_render = function() {
-    this.$container = $('<div><div id="form"></div><input id="submit" type="submit" value="Submit" /></div>');
+    this.$container = $('<div><h1 id="title"></h1><div id="form"></div><input id="submit" type="submit" value="Submit" /></div>');
+    this.$title = this.$container.find('#title');
     this.$children = this.$container.find('#form');
-    render_elements(this, json);
+
+    this.$title.text(json.title);
+    render_elements(this, json.tree);
 
     var form = this;
     this.$container.find('#submit').click(function() {
@@ -383,8 +386,8 @@ function inputActivate(enable) {
   $('a').css('color', enable ? 'blue' : 'grey');
 }
 
-function init_render(elems) {
-  var f = new Form(elems);
+function init_render(form) {
+  var f = new Form(form);
   f.init_render();
   $('#content').append(f.$container);
 }
