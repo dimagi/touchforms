@@ -60,6 +60,16 @@ function ixInfo(o) {
   return o.rel_ix + (o.is_repetition ? '(' + o.uuid + ')' : '') + (o.rel_ix != full_ix ? ' :: ' + full_ix : '');
 }
 
+function empty_check(o) {
+  if (o.type == 'repeat-juncture' || o.type == 'sub-group') {
+    if (o.children.length == 0) {
+      o.$empty.show();
+    } else {
+      o.$empty.hide();
+    }
+  }
+}
+
 function loadFromJSON(o, json) {
   $.each(json, function(key, val) {
       if (key == 'children') {
@@ -110,13 +120,14 @@ function Group(json, parent) {
   this.children = [];
 
   this.init_render = function() {
-    this.$container = $('<div class="gr"><div class="gr-header"><span id="caption"></span> <span id="ix"></span> <a id="del" href="#">delete</a></div><div id="children"></div></div>');
+    this.$container = $('<div class="gr"><div class="gr-header"><span id="caption"></span> <span id="ix"></span> <a id="del" href="#">delete</a></div><div id="children"></div><div id="empty">This group is empty</div></div>');
     this.$children = this.$container.find('#children');
     this.$caption = this.$container.find('#caption');
     this.$ix = this.$container.find('#ix');
+    this.$empty = this.$container.find('#empty');
 
-    this.update();
     render_elements(this, json.children);
+    this.update();
 
     this.$del = this.$container.find('#del');
     if (!this.is_repetition) { //todo: check constraints
@@ -160,13 +171,14 @@ function Repeat(json, parent) {
   this.is_repeat = true;
 
   this.init_render = function() {
-    this.$container = $('<div class="rep"><div class="rep-header"><span id="caption"></span> <span id="ix"></span> <a id="add" href="#">add new</a></div><div id="children"></div></div>');
+    this.$container = $('<div class="rep"><div class="rep-header"><span id="caption"></span> <span id="ix"></span> <a id="add" href="#">add new</a></div><div id="children"></div><div id="empty">This repeatable group is empty</div></div>');
     this.$children = this.$container.find('#children');
     this.$header = this.$container.find('#caption');
     this.$ix = this.$container.find('#ix');
+    this.$empty = this.$container.find('#empty');
 
-    this.update();
     render_elements(this, json.children);
+    this.update();
 
     this.$add = this.$container.find('#add');
     var rep = this;
@@ -279,6 +291,7 @@ function render_elements(parent, elems) {
     parent.children.push(o);
     parent.child_container().append(o.$container);
   }
+  empty_check(parent);
 }
 
 function reconcile_elements(parent, new_elems) {
@@ -337,6 +350,7 @@ function deleteChild(parent, i) {
       child.$container.remove();
       child.destroy();
     });
+  empty_check(parent);
 }
 
 function addChild(parent, i, child) {
@@ -352,6 +366,7 @@ function addChild(parent, i, child) {
     domInsert(function(e) { parent.child_container().append(e); });
   }
   arrayInsertAt(parent.children, i, child);
+  empty_check(parent);
 }
 
 function arrayDel(arr, i) {
