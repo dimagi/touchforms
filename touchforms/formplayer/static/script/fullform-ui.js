@@ -202,7 +202,7 @@ function Question(json, parent) {
   this.children = [];
 
   this.init_render = function() {
-    this.$container = $('<div class="q"><div id="widget"></div><span id="caption"></span><span id="req" style="color: red;"></span> <span id="ix"></span> <div id="error"></div><div class="eoq" /></div>');
+    this.$container = $('<div class="q"><div id="widget"></div><span id="req"></span><span id="caption"></span> <span id="ix"></span> <div id="error"></div><div class="eoq" /></div>');
     this.control = renderQuestion(this, this.$container.find('#widget'), this.last_answer);
     this.$error = this.$container.find('#error');
 
@@ -247,8 +247,14 @@ function Question(json, parent) {
   }
 
   this.showError = function(content) {
-    this.$error.text(content);
+    this.$error.text(content ? content : '');
+    this.$container[content ? 'addClass' : 'removeClass']('qerr');
   }
+
+  this.clearError = function() {
+    this.showError(null);
+  }
+
 
   this.destroy = function() {
     this.control.destroy();

@@ -46,7 +46,7 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
         if (resp["status"] == "validation-error") {
           adapter.showError(q, resp);
         } else {
-          q.showError('');
+          q.clearError();
           getForm(q).reconcile(resp["tree"]);
         }
       });
