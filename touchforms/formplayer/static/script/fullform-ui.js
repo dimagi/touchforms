@@ -333,17 +333,23 @@ function reconcile_elements(parent, new_elems) {
 
 function deleteChild(parent, i) {
   var child = arrayDel(parent.children, i);
-  child.$container.remove();
-  child.destroy();
-  //todo: fix focus
-  //todo: probably better to enqueue DOM elems to be deleted, and process in bulk
+  child.$container.slideUp('slow', function() {
+      child.$container.remove();
+      child.destroy();
+    });
 }
 
 function addChild(parent, i, child) {
+  var domInsert = function(insert) {
+    child.$container.hide();
+    insert(child.$container);
+    child.$container.slideDown();
+  }
+
   if (i < parent.children.length) {
-    parent.children[i].$container.before(child.$container);
+    domInsert(function(e) { parent.children[i].$container.before(e); });
   } else {
-    parent.child_container().append(child.$container);
+    domInsert(function(e) { parent.child_container().append(e); });
   }
   arrayInsertAt(parent.children, i, child);
 }
