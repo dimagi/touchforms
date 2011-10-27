@@ -305,7 +305,7 @@ function MultiSelectEntry (args) {
       //this.add_shortcut(label, this.selectFunc(i));
     }
     $container.html(content);
-    $container.append('<a id="clear" href="#">clear</a>');
+    $container.append('<div id="clear_"><a id="clear" href="#">clear</a></div>');
     //$('#ch-0').focus();
 
     //var self = this;

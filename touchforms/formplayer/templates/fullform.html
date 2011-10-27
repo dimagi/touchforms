@@ -72,6 +72,65 @@ function init () {
 
   <body id="body" onLoad="init();" style="font-family: sans-serif; ">
 
+    <style>
+
+body {
+  max-width: 800px;
+  font-family: sans-serif;
+}
+
+#ix {
+  display: none;
+}
+
+input {
+  /* text-align: right; */
+}
+
+#submit {
+  margin-top: 30px;
+  font-weight: bold;
+}
+
+#error {
+  color: red;
+}
+
+#widget {
+  float: right;
+  width: 400px;
+  text-align: left;
+  padding-bottom: 3px;
+}
+
+#children {
+  margin-left: 30px;
+}
+
+.q,.gr,.rep,.eoq {
+  clear: both;
+}
+
+.q,.gr-header,.rep-header {
+  border-bottom: 1px #aaf dotted;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+#add,#del {
+  margin-left: 10px;
+}
+
+#clear_ {
+  margin-top: 4px;
+}
+
+#add,#del,#clear {
+  font-size: 60%;
+}
+
+    </style>
+
     <div id="content"></div>
 
     <!-- stick form uid here to aid with backslash escaping -->

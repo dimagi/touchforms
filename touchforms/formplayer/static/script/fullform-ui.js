@@ -79,7 +79,7 @@ function Form(json) {
   this.children = [];
 
   this.init_render = function() {
-    this.$container = $('<div><table id="form" border="1"></table><input id="submit" type="submit" value="Submit" /></div>');
+    this.$container = $('<div><div id="form"></div><input id="submit" type="submit" value="Submit" /></div>');
     this.$children = this.$container.find('#form');
     render_elements(this, json);
 
@@ -110,7 +110,7 @@ function Group(json, parent) {
   this.children = [];
 
   this.init_render = function() {
-    this.$container = $('<tr><td colspan="2"><span id="caption"></span> <span id="ix"></span> <a id="del" href="#">delete</a><table id="children" border="1"></table></td></tr>');
+    this.$container = $('<div class="gr"><div class="gr-header"><span id="caption"></span> <span id="ix"></span> <a id="del" href="#">delete</a></div><div id="children"></div></div>');
     this.$children = this.$container.find('#children');
     this.$caption = this.$container.find('#caption');
     this.$ix = this.$container.find('#ix');
@@ -160,7 +160,7 @@ function Repeat(json, parent) {
   this.is_repeat = true;
 
   this.init_render = function() {
-    this.$container = $('<tr><td colspan="2"><span id="caption"></span> <span id="ix"></span> <a id="add" href="#">add new</a><table id="children" border="1"></table></td></tr>');
+    this.$container = $('<div class="rep"><div class="rep-header"><span id="caption"></span> <span id="ix"></span> <a id="add" href="#">add new</a></div><div id="children"></div></div>');
     this.$children = this.$container.find('#children');
     this.$header = this.$container.find('#caption');
     this.$ix = this.$container.find('#ix');
@@ -202,7 +202,7 @@ function Question(json, parent) {
   this.children = [];
 
   this.init_render = function() {
-    this.$container = $('<tr><td><span id="caption"></span><span id="req" style="color: red;"></span> <span id="ix"></span></td><td><div id="widget"></div><div id="error" style="color: red;"></div></td></tr>');
+    this.$container = $('<div class="q"><div id="widget"></div><span id="caption"></span><span id="req" style="color: red;"></span> <span id="ix"></span> <div id="error"></div><div class="eoq" /></div>');
     this.control = renderQuestion(this, this.$container.find('#widget'), this.last_answer);
     this.$error = this.$container.find('#error');
 
