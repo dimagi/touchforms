@@ -120,10 +120,6 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
     }
   }
 
-  this.prevQuestion = function () {
-    this._step(false);
-  }
-
   this.domain_meta = function (event) {
     var meta = {};
 
@@ -161,18 +157,6 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
   this._formComplete = function (params) {
     params.type = 'form-complete';
     submit_redirect(params);
-  }
-
-  this.abort = function () {
-    interactionComplete(function () { submit_redirect({type: 'form-aborted'}); });
-  }
-
-  this.quitWarning = function () {
-    return {
-      'main': 'This form isn\'t finished! If you go HOME, you will throw out this form.',
-      'quit': 'Go HOME; discard form',
-      'cancel': 'Stay and finish form'
-    }
   }
 
   this.serverRequest = function (url, params, callback, blocking) {
@@ -234,20 +218,6 @@ function answerQuestion () {
 
 function prevQuestion () {
   gFormAdapter.prevQuestion();
-}
-
-var interactionDone = false;
-function interactionComplete (submit) {
-  if (interactionDone) {
-    //console.log('interaction already done; ignoring');
-    return;
-  }
-  
-  interactionDone = true;
-  disableInput();
-  var waitingTimer = setTimeout(function () { touchscreenUI.showWaiting(true); }, 300);
-  
-  submit();
 }
 
 function submit_redirect(params, path, method) {

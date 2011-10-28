@@ -380,9 +380,9 @@ class XFormSession:
             navinfo = {'tree': self.walk()}
 
         #debug
-        print '=== walking ==='
-        print_tree(self.walk())
-        print '==============='
+        #print '=== walking ==='
+        #print_tree(self.walk())
+        #print '==============='
 
         resp.update(navinfo)
         resp.update({'seq_id': self.seq_id})
@@ -401,9 +401,6 @@ class choice(object):
 
     def __json__(self):
         return json.dumps(repr(self))
-
-def navmode(ix):
-    return 'prompt' if ix is None else 'fao'
 
 def open_form(form_name, instance_xml=None, extensions=[], preload_data={}, nav_mode='prompt'):
     if not os.path.exists(form_name):
@@ -497,7 +494,6 @@ import pprint
 pp = pprint.PrettyPrinter(indent=2)
 def print_tree(tree):
     try:
-#        pass
         pp.pprint(tree)
     except UnicodeEncodeError:
         print 'sorry, can\'t pretty-print unicode'
