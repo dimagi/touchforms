@@ -297,14 +297,29 @@ function MultiSelectEntry (args) {
     this.$container = $container;
     this.group = 'sel-' + nonce();
 
-    content = '';
     for (var i = 0; i < this.choices.length; i++) {
       var label = (i < 10 ? '' + ((i + 1) % 10) : (i < 36 ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i - 10] : null));
-      content += /*label + ') */'<input id="ch-' + i + '" type="' + (this.isMulti ? 'checkbox' : 'radio') + '" name="' + this.group + '" value="' + i + '"> ' + this.choices[i] + '<br>';
+
+      var $choice = $('<div><span id="num"></span> <input id="ch-' + i + '" type="' + (this.isMulti ? 'checkbox' : 'radio') + '" /> <span id="label"></span></div>');
+      $choice.find('#num').text(label + ')');
+      $choice.find('#num').hide();
+      $choice.find('#label').text(this.choices[i]);
+      var $inp = $choice.find('input');
+      $inp.attr('name', this.group);
+      $inp.attr('value', i);
+      $choice.addClass('sel');
+
+      $choice.click((function($inp) {
+          return function(ev) {
+            if (ev.target != $inp[0]) {
+              $inp.click();
+            }
+          }
+        })($inp));
 
       //this.add_shortcut(label, this.selectFunc(i));
+      $container.append($choice);
     }
-    $container.html(content);
     $container.append('<div id="clear_"><a id="clear" href="#">clear</a></div>');
     //$('#ch-0').focus();
 
