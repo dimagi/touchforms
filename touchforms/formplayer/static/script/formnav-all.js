@@ -100,6 +100,7 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
                                    'prevalidated': prevalidated},
       function (resp) {
         if (resp.status == 'success') {
+          form.submitting();
           adapter._formComplete(resp);
         } else {
           $.each(resp.errors, function(ix, error) {

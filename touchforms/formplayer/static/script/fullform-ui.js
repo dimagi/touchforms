@@ -115,6 +115,12 @@ function Form(json) {
   this.child_container = function() {
     return this.$children;
   }
+
+  this.submitting = function() {
+    $('#submit').val('Submitting...');
+    inputActivate(false);
+    inputActivate = function(){}; //hack to keep input fields disabled during final POST
+  }
 }
 
 function Group(json, parent) {
