@@ -218,9 +218,15 @@ function Question(json, parent) {
   this.children = [];
 
   this.init_render = function() {
-    this.$container = $('<div class="q"><div id="widget"></div><span id="req"></span><span id="caption"></span> <span id="ix"></span> <div id="error"></div><div class="eoq" /></div>');
-    this.control = renderQuestion(this, this.$container.find('#widget'), this.last_answer);
-    this.$error = this.$container.find('#error');
+    if (this.datatype != 'info') {
+      this.$container = $('<div class="q"><div id="widget"></div><span id="req"></span><span id="caption"></span> <span id="ix"></span> <div id="error"></div><div class="eoq" /></div>');
+      this.control = renderQuestion(this, this.$container.find('#widget'), this.last_answer);
+      this.$error = this.$container.find('#error');
+    } else {
+      this.$container = $('<div><span id="ix"></span><span id="caption"></span></div>');
+      this.$container.addClass('info');
+      this.control = new InfoEntry();
+    }
 
     this.update();
   }

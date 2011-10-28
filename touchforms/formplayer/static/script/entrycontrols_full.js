@@ -102,23 +102,15 @@ function SimpleEntry () {
   }
 }
 
-function InfoEntry (text, dir) {
+function InfoEntry () {
   inherit(this, new SimpleEntry());
-
-  this.text = text;
-  this.dir = dir;
 
   this.getAnswer = function () {
     return null;
   }
 
-  this.load = function () {
-    if (this.dir || showAlertsOnBack()) {
-      showError(this.text);
-      (this.dir ? nextClicked : backClicked)();
-    } else {
-      backClicked();
-    }
+  this.load = function (q, $container) {
+    //not needed
   }
 }
 
@@ -549,14 +541,6 @@ function TimeOfDayEntry () {
 
 function renderQuestion (q, $container, init_answer) {
   var control = null;
-
-  /*
-  if (q.datatype == 'info') {
-    control = new InfoEntry(event["caption"], dir);
-    control.load();
-    return control;
-  }
-  */
 
   q.domain_meta = q.domain_meta || {};
 
