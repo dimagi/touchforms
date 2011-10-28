@@ -300,7 +300,7 @@ function MultiSelectEntry (args) {
     content = '';
     for (var i = 0; i < this.choices.length; i++) {
       var label = (i < 10 ? '' + ((i + 1) % 10) : (i < 36 ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i - 10] : null));
-      content += label + ') <input id="ch-' + i + '" type="' + (this.isMulti ? 'checkbox' : 'radio') + '" name="' + this.group + '" value="' + i + '"> ' + this.choices[i] + '<br>';
+      content += /*label + ') */'<input id="ch-' + i + '" type="' + (this.isMulti ? 'checkbox' : 'radio') + '" name="' + this.group + '" value="' + i + '"> ' + this.choices[i] + '<br>';
 
       //this.add_shortcut(label, this.selectFunc(i));
     }
