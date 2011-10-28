@@ -313,6 +313,7 @@ function MultiSelectEntry (args) {
           return function(ev) {
             if (ev.target != $inp[0]) {
               $inp.click();
+              $inp.change(); //appears the simulated click() doesn't trigger this?
             }
           }
         })($inp));
@@ -331,24 +332,24 @@ function MultiSelectEntry (args) {
 
     this.setAnswer(this.default_selections);
 
-    //this mode is foolproof, but submits a new answer every time you change the selection
-    //$container.find('input').click(function() { q.onchange(); });
-
-    //this mode only submits once you 'leave' the question, but may have holes
-    $container.find('input').blur(function() {
-        setTimeout(function() {
-            var left = ($container.has('input:focus').length == 0);
-            if (left) {
-              q.onchange();
-            }
-          }, 50); //SKETCH! the new element with focus is not available directly in the blur() event
+    var ctrl = this;
+    $container.find('input').change(function() {
+        ctrl.pendchange(q, !ctrl.isMulti);
       });
 
     $container.find('#clear').click(function () {
         $container.find('input').removeAttr('checked');
-        q.onchange();
+        ctrl.pendchange(q, true);
         return false;
       });
+  }
+
+  this.COMMIT_DELAY = 300; //ms
+  this.pendchange = function(q, immed) {
+    if (this.timer) {
+      clearTimeout(this.timer);
+    }
+    this.timer = setTimeout(function() { q.onchange(); }, immed ? 0 : this.COMMIT_DELAY);
   }
 
   this.getAnswer = function () {
