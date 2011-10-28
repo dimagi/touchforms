@@ -60,12 +60,13 @@ function ixInfo(o) {
   return o.rel_ix + (o.is_repetition ? '(' + o.uuid + ')' : '') + (o.rel_ix != full_ix ? ' :: ' + full_ix : '');
 }
 
-function empty_check(o) {
+function empty_check(o, anim_speed) {
   if (o.type == 'repeat-juncture' || o.type == 'sub-group') {
-    if (o.children.length == 0) {
-      o.$empty.show();
+    var empty = (o.children.length == 0);
+    if (anim_speed) {
+      o.$empty[empty ? 'slideDown' : 'slideUp'](anim_speed);
     } else {
-      o.$empty.hide();
+      o.$empty[empty ? 'show' : 'hide']();
     }
   }
 }
@@ -298,87 +299,103 @@ function render_elements(parent, elems) {
 }
 
 function reconcile_elements(parent, new_elems) {
-  var mapping = []; // (k_old, k_new)
-
-  var cmpkey = function (e) {
-    if (e.uuid) {
-      return 'uuid-' + e.uuid;
-    } else {
-      return 'ix-' + (e.ix ? e.ix : getIx(e));
-    }
-  }
-
-  var inElementSet = function(e, set) {
-    return $.map(set, function(val) { return cmpkey(val); }).indexOf(cmpkey(e));
-  }
-
+  var mapping = [];
   for (var i = 0; i < parent.children.length; i++) {
     var child = parent.children[i];
-    mapping.push([i, inElementSet(child, new_elems)]);
+    mapping.push([child, inElementSet(child, new_elems)]);
   }
   for (var i = 0; i < new_elems.length; i++) {
-    if (inElementSet(new_elems[i], parent.children) == -1) {
-      mapping.push([-1, i]);
+    var new_elem = new_elems[i];
+    if (inElementSet(new_elem, parent.children) == null) {
+      mapping.push([null, new_elem]);
     }
   }
-  // sort by k_new so that deletions are processed first,
-  // and inserts are processed in the right order
-  mapping.sort(function(a, b) {
-      return a[1] - b[1];
-    });
 
-  // since we're destructively modifying parent.children, we need to
-  // keep track of which original array indexes map to the current
-  // indexes. yes, really
-  var ix_old = $.map(parent.children, function(val, i) { return i; });
   $.each(mapping, function(i, val) {
-      var k_old = ix_old.indexOf(val[0]);
-      var k_new = val[1];
+      var e_old = val[0];
+      var e_new = val[1];
 
-      if (k_old == -1) {
-        var o = make_element(new_elems[k_new], parent);
-        addChild(parent, k_new, o);
-      } else if (k_new == -1) {
-        deleteChild(parent, k_old);
-        arrayDel(ix_old, k_old);
+      if (e_old == null) {
+        var o = make_element(e_new, parent);
+        addChild(parent, o, new_elems);
+      } else if (e_new == null) {
+        deleteChild(parent, e_old);
       } else {
-        parent.children[k_old].reconcile(new_elems[k_new]);
+        e_old.reconcile(e_new);
       }
     });
 }
 
-function deleteChild(parent, i) {
-  var child = arrayDel(parent.children, i);
+function deleteChild(parent, child) {
   child.$container.slideUp('slow', function() {
       child.$container.remove();
       child.destroy();
+      arrayDelItem(parent.children, child);
+      empty_check(parent, 'fast');
     });
-  empty_check(parent);
 }
 
-function addChild(parent, i, child) {
+function addChild(parent, child, final_ordering) {
+  var newIx = ixElementSet(child, final_ordering);
+  var insertionIx = 0;
+  for (var k = newIx - 1; k >= 0; k--) {
+    var precedingIx = ixElementSet(final_ordering[k], parent.children);
+    if (precedingIx != -1) {
+      insertionIx = precedingIx + 1;
+      break;
+    }
+  }
+
   var domInsert = function(insert) {
     child.$container.hide();
     insert(child.$container);
     child.$container.slideDown();
   }
 
-  if (i < parent.children.length) {
-    domInsert(function(e) { parent.children[i].$container.before(e); });
+  if (insertionIx < parent.children.length) {
+    domInsert(function(e) { parent.children[insertionIx].$container.before(e); });
   } else {
     domInsert(function(e) { parent.child_container().append(e); });
   }
-  arrayInsertAt(parent.children, i, child);
-  empty_check(parent);
+  arrayInsertAt(parent.children, insertionIx, child);
+  empty_check(parent, 'slow');
 }
 
 function arrayDel(arr, i) {
   return arr.splice(i, 1)[0];
 }
 
+function arrayDelItem(arr, o) {
+  var ix = arr.indexOf(o);
+  if (ix != -1) {
+    arrayDel(arr, ix);
+  }
+}
+
 function arrayInsertAt(arr, i, o) {
   arr.splice(i, 0, o);
 }
+
+var cmpkey = function (e) {
+  if (e.uuid) {
+    return 'uuid-' + e.uuid;
+  } else {
+    return 'ix-' + (e.ix ? e.ix : getIx(e));
+  }
+}
+
+var ixElementSet = function(e, set) {
+  //return the index of the matching element of 'e' within 'set'; -1 if no match
+  return $.map(set, function(val) { return cmpkey(val); }).indexOf(cmpkey(e));
+}
+
+var inElementSet = function(e, set) {
+  //return the matching object of 'e' within 'set'; null if no match
+  ix = ixElementSet(e, set);
+  return (ix != -1 ? set[ix] : null);
+}
+
+
 
 function inputActivate(enable) {
   BLOCKING_REQUEST_IN_PROGRESS = !enable;
