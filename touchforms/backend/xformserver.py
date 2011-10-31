@@ -16,6 +16,8 @@ logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 DEFAULT_PORT = 4444
 
+SIMULATED_DELAY = 0 #ms
+
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     pass
 
@@ -33,6 +35,7 @@ class XFormHTTPGateway(threading.Thread):
 
 class XFormRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
+        delay()
 
         if 'content-length' in self.headers.dict:
             length = int(self.headers.dict['content-length'])
@@ -64,23 +67,26 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
 
         reply = json.dumps(data_out)
 
+        logging.debug('returned: [%s]' % reply)
+        delay()
+
         self.send_response(200)
         self.send_header('Content-Type', 'text/json; charset=utf-8')
         self.end_headers()
         self.wfile.write(reply.encode('utf-8'))
-        logging.debug('returned: [%s]' % reply)
 
 def handle_request (content, **kwargs):
     if 'action' not in content:
         return {'error': 'action required'}
 
     action = content['action']
+    nav_mode = content.get('nav', 'prompt')
     try:
         if action == 'new-form':
             if 'form-name' not in content:
                 return {'error': 'form identifier required'}
             preload_data = content["preloader-data"] if "preloader-data" in content else {}
-            return xformplayer.open_form(content['form-name'], content.get('instance-content'), kwargs.get('extensions', []), preload_data)
+            return xformplayer.open_form(content['form-name'], content.get('instance-content'), kwargs.get('extensions', []), preload_data, nav_mode)
 
         elif action == 'edit-form':
             return {'error': 'unsupported'}
@@ -91,8 +97,9 @@ def handle_request (content, **kwargs):
             if 'answer' not in content:
                 return {'error': 'answer required'}
 
-            return xformplayer.answer_question(content['session-id'], content['answer'])
+            return xformplayer.answer_question(content['session-id'], content['answer'], content.get('ix'))
 
+        #sequential (old-style) repeats only
         elif action == 'add-repeat':
             if 'session-id' not in content:
                 return {'error': 'session id required'}
@@ -123,7 +130,7 @@ def handle_request (content, **kwargs):
             if 'session-id' not in content:
                 return {'error': 'session id required'}
 
-            return xformplayer.new_repeat(content['session-id'])
+            return xformplayer.new_repeat(content['session-id'], content.get('ix'))
     
         elif action == 'delete-repeat':
             if 'session-id' not in content:
@@ -131,7 +138,13 @@ def handle_request (content, **kwargs):
             if 'ix' not in content:
                 return {'error': 'repeat index required'}
 
-            return xformplayer.delete_repeat(content['session-id'], content['ix'])
+            return xformplayer.delete_repeat(content['session-id'], content['ix'], content.get('form_ix'))
+
+        elif action == 'submit-all':
+            if 'session-id' not in content:
+                return {'error': 'session id required'}
+            
+            return xformplayer.submit_form(content['session-id'], content.get('answers', []), content.get('prevalidated', False))
 
         elif action == 'purge-stale':
             if 'window' not in content:
@@ -147,6 +160,8 @@ def handle_request (content, **kwargs):
     except xformplayer.SequencingException:
         return {'error': 'session is locked by another request'}
 
+def delay():
+    time.sleep(.5 * SIMULATED_DELAY / 1000)
 
 if __name__ == "__main__":
 

@@ -1,0 +1,180 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}formplayer/script/layout.js?version={{app_version}}"></script>
+
+    <!-- TODO factor out shared code, think we need touchscreen-ui and typeforms-ui -->
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}formplayer/script/touchscreen-ui.js?version={{app_version}}"></script>   
+
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}formplayer/script/formnav-all.js?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}formplayer/script/entrycontrols_full.js?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}formplayer/script/fullform-ui.js?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}formplayer/script/workflow.js?version={{app_version}}"></script>
+   
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}formplayer/script/jquery-1.4.2.min.js"></script>
+    <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}formplayer/script/shortcut.js"></script>
+
+	  <script language="javascript" type="text/javascript" src="{{MEDIA_URL}}formplayer/script/jquery-ui.min.js"></script>
+
+	  <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/themes/ui-lightness/jquery-ui.css">
+
+{% for script in dynamic_scripts %}
+    <script language="javascript" type="text/javascript;version=1.7" src="{{MEDIA_URL}}{{script}}?version={{app_version}}"></script>   
+{% endfor %}
+
+    <script language="javascript">
+
+if (!window.console) {
+  window.console = {
+    log: function () { }
+  };
+}
+
+XFORM_URL = "{% url xform_player_proxy %}";
+PRELOADER_URL = "{% url xform_preloader %}";
+AUTOCOMPLETE_URL = "{% url touchforms_autocomplete %}";
+FORCE_ABORT_URL = "{% url touchforms_force_abort %}";
+
+XFORM_NAME = "{{form.name}}";
+XFORM_UID = null;
+
+PREFIXES = {};
+
+{% block custom_init %}{% endblock %}
+
+function init () {
+
+{% ifequal mode 'xform' %}
+
+  XFORM_UID = $('#form-uid')[0].value;
+  gFormAdapter = new xformAjaxAdapter(XFORM_UID, {{ preloader_data|safe }}, {{ instance_xml|safe }});
+  
+{% else %}
+
+  alert('form-at-once mode cannot work with protocols')
+
+{% endifequal %}
+
+  gFormAdapter.loadForm();
+}
+
+    </script>
+    
+  </head>
+
+  <body id="body" onLoad="init();" style="font-family: sans-serif; ">
+
+    <style>
+
+body {
+  max-width: 800px;
+  font-family: sans-serif;
+}
+
+#ix {
+  display: none;
+}
+
+input {
+  /* text-align: right; */
+}
+
+#submit {
+  margin-top: 30px;
+  font-weight: bold;
+}
+
+#error {
+  color: red;
+  font-weight: bold;
+  font-size: 80%;
+}
+
+.qerr {
+  background-color: #fcc;
+}
+
+#widget {
+  float: right;
+  width: 400px;
+  text-align: left;
+  padding-bottom: 3px;
+}
+
+#children {
+  margin-left: 30px;
+}
+
+#empty {
+  color: grey;
+  margin-left: 30px;
+  font-size: 70%;
+}
+
+.q,.gr,.rep,.eoq {
+  clear: both;
+}
+
+.q,.gr-header,.rep-header,#empty {
+  border-bottom: 1px #aaf dotted;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+#form {
+  padding-bottom: 8px;
+  border-top: 1px #aaf solid;
+  border-bottom: 1px #aaf solid;
+}
+
+.gr-header #caption,
+.rep-header #caption {
+  font-weight: bold;
+  font-size: 80%;
+}
+
+#add,#del {
+  margin-left: 10px;
+}
+
+#clear_ {
+  margin-top: 4px;
+}
+
+#add,#del,#clear {
+  font-size: 60%;
+}
+
+#req {
+  color: red;
+  float: right;
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.sel:hover {
+  background-color: #ddf;
+}
+
+.info {
+  background-color: #ffa;
+  margin: 7px;
+  padding: 10px;
+  font-size: 90%;
+  border: 1px #fa6 dotted;
+}
+
+    </style>
+
+    <div id="content"></div>
+
+    <!-- stick form uid here to aid with backslash escaping -->
+    <input id="form-uid" type="hidden" value="{% ifequal mode 'xform' %}{{form.file.path}}{% endifequal %}" />
+
+    <div id="loading" style="position: fixed; top: 15px; right: 15px; display: none;"><img src="{{MEDIA_URL}}formplayer/img/loading_small.gif" /></div>
+
+  </body>
+</html>
+

@@ -11,7 +11,7 @@ from java.util import Vector
 from java.io import StringReader
 
 import customhandlers
-from util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect
+from util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect, index_from_str
     
 from setup import init_classpath, init_jr_engine
 import logging
@@ -22,7 +22,7 @@ import com.xhaus.jyson.JysonCodec as json
 
 from org.javarosa.xform.parse import XFormParser
 from org.javarosa.form.api import FormEntryModel, FormEntryController
-from org.javarosa.core.model import Constants
+from org.javarosa.core.model import Constants, FormIndex
 from org.javarosa.core.model.data import *
 from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
@@ -104,8 +104,10 @@ class SequencingException(Exception):
 
 class XFormSession:
     def __init__(self, xform_raw=None, xform_path=None, instance_raw=None, instance_path=None,
-                 preload_data={}, extensions=[]):
+                 preload_data={}, extensions=[], nav_mode='prompt'):
         self.lock = threading.Lock()
+        self.nav_mode = nav_mode
+        self.seq_id = 0
 
         def content_or_path(content, path):
             if content != None:
@@ -127,8 +129,12 @@ class XFormSession:
         self.update_last_activity()
 
     def __enter__(self):
-        if not self.lock.acquire(False):
-            raise SequencingException()
+        if self.nav_mode == 'fao':
+            self.lock.acquire()
+        else:
+            if not self.lock.acquire(False):
+                raise SequencingException()
+        self.seq_id += 1
         self.update_last_activity()
         return self
 
@@ -145,11 +151,67 @@ class XFormSession:
 
         instance_bytes = FormSerializer().serializeInstance(self.form.getInstance())
         return unicode(''.join(chr(b) for b in instance_bytes.tolist()), 'utf-8')
+    
+    def walk(self):
+        form_ix = FormIndex.createBeginningOfFormIndex()
+        tree = []
+        self._walk(form_ix, tree)
+        return tree
 
-    def _parse_current_event (self):
-        event = {}
+    def _walk(self, parent_ix, siblings):
+      def ix_in_scope(form_ix):
+        if form_ix.isEndOfFormIndex():
+          return False
+        elif parent_ix.isBeginningOfFormIndex():
+          return True
+        else:
+          return FormIndex.isSubElement(parent_ix, form_ix)
 
-        status = self.fem.getEvent()
+      form_ix = self.fem.incrementIndex(parent_ix, True)
+      while ix_in_scope(form_ix):
+        if not self.fem.isIndexRelevant(form_ix):
+          form_ix = self.fem.incrementIndex(form_ix, False)
+          continue
+
+        evt = self.__parse_event(form_ix)
+        if evt['type'] == 'sub-group':
+          presentation_group = (evt['caption'] != None)
+          if presentation_group:
+            siblings.append(evt)
+            evt['children'] = []
+          form_ix = self._walk(form_ix, evt['children'] if presentation_group else siblings)
+        elif evt['type'] == 'repeat-juncture':
+          siblings.append(evt)
+          evt['children'] = []
+          for i in range(0, self.fem.getForm().getNumRepetitions(form_ix)):
+            subevt = {
+              'type': 'sub-group',
+              'ix': self.fem.getForm().descendIntoRepeat(form_ix, i),
+              'caption': evt['repetitions'][i],
+              'repeatable': True,
+              'children': [],
+            }
+            # ghettoooo; if this pays off, this should be better incorporated into the form entry API
+            subevt['uuid'] = self.form.getInstance().resolveReference(subevt['ix'].getReference()).uuid
+            evt['children'].append(subevt)
+            self._walk(subevt['ix'], subevt['children'])
+          for key in ['repetitions', 'del-choice', 'del-header', 'done-choice']:
+            del evt[key]
+          form_ix = self.fem.incrementIndex(form_ix, True) # why True?
+        else:
+          siblings.append(evt)
+          form_ix = self.fem.incrementIndex(form_ix, True) # why True?
+
+      return form_ix
+
+    def _parse_current_event(self):
+        self.cur_event = self.__parse_event(self.fem.getFormIndex())
+        return self.cur_event
+    
+    def __parse_event (self, form_ix):
+        event = {'ix': form_ix}
+      
+        status = self.fem.getEvent(form_ix)
         if status == self.fec.EVENT_BEGINNING_OF_FORM:
             event['type'] = 'form-start'
         elif status == self.fec.EVENT_END_OF_FORM:
@@ -163,7 +225,7 @@ class XFormSession:
             self._parse_repeat_juncture(event)
         else:
             event['type'] = 'sub-group'
-            event['caption'] = self.fem.getCaptionPrompt().getLongText()
+            event['caption'] = self.fem.getCaptionPrompt(form_ix).getLongText()
             if status == self.fec.EVENT_GROUP:
                 event['repeatable'] = False
             elif status == self.fec.EVENT_REPEAT:
@@ -173,7 +235,6 @@ class XFormSession:
                 event['repeatable'] = True
                 event['exists'] = False
 
-        self.cur_event = event
         return event
 
     def _get_question_choices(self, q):
@@ -192,7 +253,7 @@ class XFormSession:
         return info
 
     def _parse_question (self, event):
-        q = self.fem.getQuestionPrompt()
+        q = self.fem.getQuestionPrompt(event['ix'])
 
         event['caption'] = q.getLongText()
         event['help'] = q.getHelpText()
@@ -243,7 +304,7 @@ class XFormSession:
                 event['answer'] = [sel.index + 1 for sel in value.getValue()]
 
     def _parse_repeat_juncture(self, event):
-        r = self.fem.getCaptionPrompt()
+        r = self.fem.getCaptionPrompt(event['ix'])
         ro = r.getRepeatOptions()
 
         event['main-header'] = ro.header
@@ -262,11 +323,14 @@ class XFormSession:
         self.fec.stepToPreviousEvent()
         return self._parse_current_event()
 
-    def answer_question (self, answer):
-        if self.cur_event['type'] != 'question':
+    def answer_question (self, answer, _ix=None):
+        ix = self.parse_ix(_ix)
+        event = self.cur_event if ix is None else self.__parse_event(ix)
+
+        if event['type'] != 'question':
             raise ValueError('not currently on a question')
 
-        datatype = self.cur_event['datatype']
+        datatype = event['datatype']
         if answer == None or str(answer).strip() == '' or answer == [] or datatype == 'info':
             ans = None
         elif datatype == 'int':
@@ -280,39 +344,73 @@ class XFormSession:
         elif datatype == 'time':
             ans = TimeData(to_jtime(datetime.strptime(str(answer), '%H:%M').time()))
         elif datatype == 'select':
-            ans = SelectOneData(self.cur_event['choices'][int(answer) - 1].to_sel())
+            ans = SelectOneData(event['choices'][int(answer) - 1].to_sel())
         elif datatype == 'multiselect':
             if hasattr(answer, '__iter__'):
                 ans_list = answer
             else:
                 ans_list = str(answer).split()
-            ans = SelectMultiData(to_vect(self.cur_event['choices'][int(k) - 1].to_sel() for k in ans_list))
+            ans = SelectMultiData(to_vect(event['choices'][int(k) - 1].to_sel() for k in ans_list))
 
-        result = self.fec.answerQuestion(ans)
+        result = self.fec.answerQuestion(*([ans] if ix is None else [ix, ans]))
         if result == self.fec.ANSWER_REQUIRED_BUT_EMPTY:
             return {'status': 'error', 'type': 'required'}
         elif result == self.fec.ANSWER_CONSTRAINT_VIOLATED:
-            q = self.fem.getQuestionPrompt()
+            q = self.fem.getQuestionPrompt(*([] if ix is None else [ix]))
             return {'status': 'error', 'type': 'constraint', 'reason': q.getConstraintText()}
         elif result == self.fec.ANSWER_OK:
             return {'status': 'success'}
 
-    def descend_repeat (self, ix=None):
-        if ix:
-            self.fec.descendIntoRepeat(ix - 1)
+    def descend_repeat (self, rep_ix=None, _junc_ix=None):
+        junc_ix = self.parse_ix(_junc_ix)
+        if (junc_ix):
+            self.fec.jumpToIndex(junc_ix)
+
+        if rep_ix:
+            self.fec.descendIntoRepeat(rep_ix - 1)
         else:
             self.fec.descendIntoNewRepeat()
 
         return self._parse_current_event()
 
-    def delete_repeat (self, ix):
-        self.fec.deleteRepeat(ix - 1)
+    def delete_repeat (self, rep_ix, _junc_ix=None):
+        junc_ix = self.parse_ix(_junc_ix)
+        if (junc_ix):
+            self.fec.jumpToIndex(junc_ix)
+
+        self.fec.deleteRepeat(rep_ix - 1)
         return self._parse_current_event()
 
+    #sequential (old-style) repeats only
     def new_repetition (self):
-      #currently in the form api this always succeeds, but theoretically there could
-      #be unsatisfied constraints that make it fail. how to handle them here?
-      self.fec.newRepeat(self.fem.getFormIndex())
+        #currently in the form api this always succeeds, but theoretically there could
+        #be unsatisfied constraints that make it fail. how to handle them here?
+        self.fec.newRepeat(self.fem.getFormIndex())
+
+    def parse_ix(self, s_ix):
+        return index_from_str(s_ix, self.form)
+
+    def form_title(self):
+        return self.form.getTitle()
+
+    def response(self, resp, ev_next=None, no_next=False):
+        if no_next:
+            navinfo = {}
+        elif self.nav_mode == 'prompt':
+            if ev_next is None:
+                ev_next = next_event(self)
+            navinfo = {'event': ev_next}
+        elif self.nav_mode == 'fao':
+            navinfo = {'tree': self.walk()}
+
+        #debug
+        #print '=== walking ==='
+        #print_tree(self.walk())
+        #print '==============='
+
+        resp.update(navinfo)
+        resp.update({'seq_id': self.seq_id})
+        return resp
 
 class choice(object):
     def __init__(self, q, select_choice):
@@ -322,42 +420,45 @@ class choice(object):
     def to_sel(self):
         return Selection(self.select_choice)
 
-    def __json__(self):
-        return json.dumps(self.q.getSelectChoiceText(self.select_choice))
+    def __repr__(self):
+        return self.q.getSelectChoiceText(self.select_choice)
 
-def open_form (form_name, instance_xml=None, extensions=[], preload_data={}):
+    def __json__(self):
+        return json.dumps(repr(self))
+
+def open_form(form_name, instance_xml=None, extensions=[], preload_data={}, nav_mode='prompt'):
     if not os.path.exists(form_name):
         return {'error': 'no form found at %s' % form_name}
 
-    xfsess = XFormSession(xform_path=form_name, instance_raw=instance_xml, preload_data=preload_data, extensions=extensions)
+    xfsess = XFormSession(xform_path=form_name, instance_raw=instance_xml, preload_data=preload_data, extensions=extensions, nav_mode=nav_mode)
     sess_id = global_state.new_session(xfsess)
-    first_event = xfsess.next_event()
-    return {'session_id': sess_id, 'event': first_event}
+    return xfsess.response({'session_id': sess_id, 'title': xfsess.form_title()})
 
-def answer_question (session_id, answer):
+def answer_question (session_id, answer, ix):
     with global_state.get_session(session_id) as xfsess:
-        result = xfsess.answer_question(answer)
+        result = xfsess.answer_question(answer, ix)
         if result['status'] == 'success':
-            return {'status': 'accepted', 'event': next_event(xfsess)}
+            return xfsess.response({'status': 'accepted'})
         else:
             result['status'] = 'validation-error'
-            return result
+            return xfsess.response(result, no_next=True)
 
 def edit_repeat (session_id, ix):
     with global_state.get_session(session_id) as xfsess:
         ev = xfsess.descend_repeat(ix)
         return {'event': ev}
 
-def new_repeat (session_id):
+def new_repeat (session_id, form_ix):
     with global_state.get_session(session_id) as xfsess:
-        ev = xfsess.descend_repeat()
-        return {'event': ev}
+        ev = xfsess.descend_repeat(_junc_ix=form_ix)
+        return xfsess.response({}, ev)
 
-def delete_repeat (session_id, ix):
+def delete_repeat (session_id, rep_ix, form_ix):
     with global_state.get_session(session_id) as xfsess:
-        ev = xfsess.delete_repeat(ix)
-        return {'event': ev}
+        ev = xfsess.delete_repeat(rep_ix, form_ix)
+        return xfsess.response({}, ev)
 
+#sequential (old-style) repeats only
 def new_repetition (session_id):
     with global_state.get_session(session_id) as xfsess:
         #new repeat creation currently cannot fail, so just blindly proceed to the next event
@@ -373,14 +474,26 @@ def go_back (session_id):
         (at_start, event) = prev_event(xfsess)
         return {'event': event, 'at-start': at_start}
 
+# fao mode only
+def submit_form(session_id, answers, prevalidated):
+    with global_state.get_session(session_id) as xfsess:
+        errors = dict(filter(lambda resp: resp[1]['status'] != 'success',
+                             ((_ix, xfsess.answer_question(answer, _ix)) for _ix, answer in answers.iteritems())))
+
+        if errors or not prevalidated:
+            resp = {'status': 'error', 'errors': errors}
+        else:
+            resp = form_completion(xfsess)
+            resp['status'] = 'success'
+
+        return xfsess.response(resp, no_next=True)
+
 def next_event (xfsess):
     ev = xfsess.next_event()
     if ev['type'] != 'form-complete':
         return ev
     else:
-        (instance_id, xml) = save_form(xfsess)
-        ev['save-id'] = instance_id
-        ev['output'] = xml
+        ev.update(form_completion(xfsess))
         return ev
 
 def prev_event (xfsess):
@@ -397,7 +510,23 @@ def save_form (xfsess, persist=False):
         instance_id = None
     return (instance_id, xml)
 
+def form_completion(xfsess):
+    return dict(zip(('save-id', 'output'), save_form(xfsess)))
+
+
+
 def purge(window):
     resp = global_state.purge(window)
     resp.update({'status': 'ok'})
     return resp
+
+
+# debugging
+
+import pprint
+pp = pprint.PrettyPrinter(indent=2)
+def print_tree(tree):
+    try:
+        pp.pprint(tree)
+    except UnicodeEncodeError:
+        print 'sorry, can\'t pretty-print unicode'
