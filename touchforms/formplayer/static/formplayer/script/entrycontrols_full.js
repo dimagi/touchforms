@@ -114,6 +114,25 @@ function InfoEntry () {
   }
 }
 
+function UnsupportedEntry (datatype) {
+  inherit(this, new SimpleEntry());
+
+  this.answer = null;
+
+  this.getAnswer = function () {
+    return this.answer;
+  }
+
+  //just spit back the answer that was originally set
+  this.setAnswer = function (ans) {
+    this.answer = ans;
+  }
+
+  this.load = function (q, $container) {
+    $container.html('<div class="unsupported">Sorry, web entry cannot support this type of question <nobr>(' + (datatype == 'unrecognized' ? 'unknown type' : datatype) + ')</nobr></div>');
+  }
+}
+
 function FreeTextEntry (args) {
   inherit(this, new SimpleEntry());
 
@@ -563,11 +582,7 @@ function renderQuestion (q, $container, init_answer) {
   //} else if (q.datatype == "time") {
   //control = new TimeOfDayEntry();
   } else {
-    // unrecognized datatype
-    console.log('unrecognized datatype');
-
-    //renderQuestion({'datatype': 'info', 'caption': 'Touchforms cannot yet support "' + event["datatype"] + '" questions. This question will be skipped.'}, dir);
-    return;
+    control = new UnsupportedEntry(q.datatype);
   }
 
   if (control == null) {

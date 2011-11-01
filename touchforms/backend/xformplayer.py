@@ -27,6 +27,8 @@ from org.javarosa.core.model.data import *
 from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
 
+DEBUG = False
+
 class NoSuchSession(Exception):
   pass
 
@@ -169,11 +171,14 @@ class XFormSession:
 
       form_ix = self.fem.incrementIndex(parent_ix, True)
       while ix_in_scope(form_ix):
-        if not self.fem.isIndexRelevant(form_ix):
+        relevant = self.fem.isIndexRelevant(form_ix)
+
+        if not relevant:
           form_ix = self.fem.incrementIndex(form_ix, False)
           continue
 
         evt = self.__parse_event(form_ix)
+        evt['relevant'] = relevant
         if evt['type'] == 'sub-group':
           presentation_group = (evt['caption'] != None)
           if presentation_group:
@@ -262,23 +267,26 @@ class XFormSession:
         if q.getControlType() == Constants.CONTROL_TRIGGER:
             event['datatype'] = 'info'
         else:
-            event['datatype'] = {
-              Constants.DATATYPE_NULL: 'str',
-              Constants.DATATYPE_TEXT: 'str',
-              Constants.DATATYPE_INTEGER: 'int',
-              Constants.DATATYPE_DECIMAL: 'float',
-              Constants.DATATYPE_DATE: 'date',
-              Constants.DATATYPE_TIME: 'time',
-              Constants.DATATYPE_CHOICE: 'select',
-              Constants.DATATYPE_CHOICE_LIST: 'multiselect',
+            try:
+                event['datatype'] = {
+                    Constants.DATATYPE_NULL: 'str',
+                    Constants.DATATYPE_TEXT: 'str',
+                    Constants.DATATYPE_INTEGER: 'int',
+                    Constants.DATATYPE_DECIMAL: 'float',
+                    Constants.DATATYPE_DATE: 'date',
+                    Constants.DATATYPE_TIME: 'time',
+                    Constants.DATATYPE_CHOICE: 'select',
+                    Constants.DATATYPE_CHOICE_LIST: 'multiselect',
 
-              # not supported yet
-              Constants.DATATYPE_DATE_TIME: 'datetime',
-              Constants.DATATYPE_GEOPOINT: 'geo',
-              Constants.DATATYPE_BARCODE: 'barcode',
-              Constants.DATATYPE_BINARY: 'binary',
-              Constants.DATATYPE_LONG: 'longint',              
-            }[q.getDataType()]
+                    # not supported yet
+                    Constants.DATATYPE_DATE_TIME: 'datetime',
+                    Constants.DATATYPE_GEOPOINT: 'geo',
+                    Constants.DATATYPE_BARCODE: 'barcode',
+                    Constants.DATATYPE_BINARY: 'binary',
+                    Constants.DATATYPE_LONG: 'longint',              
+                }[q.getDataType()]
+            except KeyError:
+                event['datatype'] = 'unrecognized'
 
             if event['datatype'] in ('select', 'multiselect'):
                 event['choices'] = self._get_question_choices(q)
@@ -297,7 +305,7 @@ class XFormSession:
             elif event['datatype'] == 'date':
                 event['answer'] = to_pdate(value.getValue())
             elif event['datatype'] == 'time':
-                event['answer'] = to_ptime(value.getValue())              
+                event['answer'] = to_ptime(value.getValue())
             elif event['datatype'] == 'select':
                 event['answer'] = value.getValue().index + 1
             elif event['datatype'] == 'multiselect':
@@ -331,6 +339,13 @@ class XFormSession:
             raise ValueError('not currently on a question')
 
         datatype = event['datatype']
+        if datatype == 'unrecognized':
+            # don't commit answers to unrecognized questions, since we
+            # couldn't parse what was originally there. whereas for
+            # _unsupported_ questions, we're parsing and re-committing the
+            # answer verbatim
+            return {'status': 'success'}
+
         if answer == None or str(answer).strip() == '' or answer == [] or datatype == 'info':
             ans = None
         elif datatype == 'int':
@@ -403,10 +418,10 @@ class XFormSession:
         elif self.nav_mode == 'fao':
             navinfo = {'tree': self.walk()}
 
-        #debug
-        #print '=== walking ==='
-        #print_tree(self.walk())
-        #print '==============='
+        if DEBUG:
+            print '=== walking ==='
+            print_tree(self.walk())
+            print '==============='
 
         resp.update(navinfo)
         resp.update({'seq_id': self.seq_id})
