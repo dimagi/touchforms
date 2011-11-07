@@ -69,6 +69,7 @@ def coalesce(*args):
             return arg
     return None
 
+@csrf_exempt
 def enter_form(request, **kwargs):
     xform_id = kwargs.get('xform_id')
     xform = kwargs.get('xform')
@@ -78,7 +79,7 @@ def enter_form(request, **kwargs):
     submit_callback = coalesce(kwargs.get('onsubmit'), default_submit)
     abort_callback = coalesce(kwargs.get('onabort'), default_abort)
     force_template = coalesce(kwargs.get('force_template'), None)
-    
+
     if not xform:
         xform = get_object_or_404(XForm, id=xform_id)
         
@@ -153,9 +154,10 @@ def play(request, xform_id, callback=None, preloader_data=None, input_mode=None,
                       input_mode=input_mode,
                       onsubmit=callback,
                       onabort=abort_callback,
-                      force_template=force_template
+                      force_template=force_template,
                       )
 
+@csrf_exempt
 def play_remote(request, session_id=None, playsettings=None):
     if not session_id:
         playsettings = playsettings if playsettings is not None else request.POST
@@ -205,7 +207,8 @@ def play_remote(request, session_id=None, playsettings=None):
                       preloader_data=session.preloader_data,
                       input_mode=session.input_mode,
                       onsubmit=onsubmit,
-                      onabort=onabort)
+                      onabort=onabort,
+                      instance_xml=session.saved_instance)
 
 def get_remote_instance(request, session_id):
     session = PlaySession.get(session_id)
