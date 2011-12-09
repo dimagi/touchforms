@@ -107,7 +107,6 @@ def form_entry_new(request, xform, instance_xml, preloader_data, input_mode,
             'type': 'typeforms.html',
             'full': 'fullform.html',
         }[input_mode]
-
     return render_to_response(templ, {
             "form": xform,
             "mode": 'xform',
@@ -204,7 +203,7 @@ def play_remote(request, session_id=None, playsettings=None):
         return HttpResponseRedirect(session.abort if session.abort else session.next)
     return enter_form(request, 
                       xform_id=session.xform_id,
-                      preloader_data=session.preloader_data,
+                      preloader_data=session.to_json()['preloader_data'],
                       input_mode=session.input_mode,
                       onsubmit=onsubmit,
                       onabort=onabort,
