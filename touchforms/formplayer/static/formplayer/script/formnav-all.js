@@ -120,36 +120,6 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
     }
   }
 
-  this.domain_meta = function (event) {
-    var meta = {};
-
-    if (event.datatype == "date") {
-      meta.mindiff = event["style"]["before"] != null ? +event["style"]["before"] : null;
-      meta.maxdiff = event["style"]["after"] != null ? +event["style"]["after"] : null;
-    } else if (event.datatype == "int" || event.datatype == "float") {
-      meta.unit = event["style"]["unit"];
-    } else if (event.datatype == 'str') {
-      meta.autocomplete = (event["style"]["mode"] == 'autocomplete');
-      meta.autocomplete_key = event["style"]["autocomplete-key"];
-      meta.mask = event["style"]["mask"];
-      meta.prefix = event["style"]["prefix"];
-      meta.longtext = (event["style"]["raw"] == 'full');
-    } else if (event.datatype == "multiselect") {
-      if (event["style"]["as-select1"] != null) {
-        meta.as_single = [];
-        var vs = event["style"]["as-select1"].split(',');
-        for (var i = 0; i < vs.length; i++) {
-          var k = +vs[i];
-          if (k != 0) {
-            meta.as_single.push(k);
-          }
-        }
-      }
-    }
-
-    return meta;
-  }
-
   this._renderForm = function(form) {
     init_render(form);
   }

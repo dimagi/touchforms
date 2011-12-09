@@ -80,10 +80,43 @@ function loadFromJSON(o, json) {
         val = relativeIndex(val);
       } else if (key == 'answer') {
         key = 'last_answer';
+      } else if (key == 'style') {
+        key = 'domain_meta';
+        val = parse_meta(json.datatype, val);
       }
 
       o[key] = val;
     });
+}
+
+function parse_meta(type, style) {
+  var meta = {};
+  
+  if (type == "date") {
+    meta.mindiff = style.before != null ? +style.before : null;
+    meta.maxdiff = style.after != null ? +style.after : null;
+  } else if (type == "int" || type == "float") {
+    meta.unit = style.unit;
+  } else if (type == 'str') {
+    meta.autocomplete = (style.mode == 'autocomplete');
+    meta.autocomplete_key = style["autocomplete-key"];
+    meta.mask = style.mask;
+    meta.prefix = style.prefix;
+    meta.longtext = (style.raw == 'full');
+  } else if (type == "multiselect") {
+    if (style["as-select1"] != null) {
+      meta.as_single = [];
+      var vs = style["as-select1"].split(',');
+      for (var i = 0; i < vs.length; i++) {
+        var k = +vs[i];
+        if (k != 0) {
+          meta.as_single.push(k);
+        }
+      }
+    }
+  }
+  
+  return meta;
 }
 
 function Form(json) {
