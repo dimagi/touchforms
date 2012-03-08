@@ -26,6 +26,7 @@ from org.javarosa.core.model import Constants, FormIndex
 from org.javarosa.core.model.data import *
 from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
+from org.javarosa.core.model.instance import InstanceInitializationFactory as IIF
 
 DEBUG = False
 
@@ -98,7 +99,7 @@ def load_form(xform, instance=None, extensions=[], preload_data={}):
 
     customhandlers.attach_handlers(form, preload_data, extensions)
 
-    form.initialize(instance == None)
+    form.initialize(instance == None, IIF())
     return form
 
 class SequencingException(Exception):
