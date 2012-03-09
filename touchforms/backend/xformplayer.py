@@ -26,7 +26,103 @@ from org.javarosa.core.model import Constants, FormIndex
 from org.javarosa.core.model.data import *
 from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
-from org.javarosa.core.model.instance import InstanceInitializationFactory as IIF
+
+
+
+from org.javarosa.core.model.instance import InstanceInitializationFactory
+from org.javarosa.core.services.storage import IStorageUtilityIndexed
+from org.javarosa.core.services.storage import IStorageIterator
+from org.commcare.cases.instance import CaseInstanceTreeElement
+from org.commcare.cases.model import Case
+
+CASES = [Case(), Case(), Case()]
+for i, c in enumerate(CASES):
+  c.setID(50 + i)
+  c.setCaseId('TEST%d' % i)
+  c.setTypeId('TEST')
+  c.setName('Test %d' % i)
+  c.setProperty('mother_alive', 'yes')
+
+class CaseDatabase(IStorageUtilityIndexed):
+  def setReadOnly(self):
+    pass
+
+  def read(self, record_id):
+    try:
+      return dict((c.getID(), c) for c in CASES)[record_id]
+    except KeyError:
+      return None
+
+  def getNumRecords(self):
+    return len(CASES)
+
+  def getIDsForValue(self, field_name, value):
+    get_val = {
+      'case-id': lambda c: c.getCaseId(),
+      'case-type': lambda c: c.getTypeId(),
+      'case-status': lambda c: 'closed' if c.isClosed() else 'open',
+    }[field_name]
+
+    return to_vect(c.getID() for c in CASES if get_val(c) == value)
+
+  def iterate(self):
+    return CaseIterator(CASES)
+
+
+class CaseIterator(IStorageIterator):
+  def __init__(self, cases):
+    self.case_ids = [c.getID() for c in cases]
+    self.i = 0
+
+  def hasMore(self):
+    return self.i < len(self.case_ids)
+
+  def nextID(self):
+    case_id = self.case_ids[self.i]
+    self.i += 1
+    return case_id
+
+
+class CCInstances(InstanceInitializationFactory):
+
+  def generateRoot(self, instance):
+    ref = instance.getReference()
+    
+    def from_xml(xml):
+      inst = parse_xml(xml)
+      root = inst.getRoot()
+      root.setParent(instance.getBase())
+      return root
+
+    if 'casedb' in ref:
+      return CaseInstanceTreeElement(instance.getBase(), CaseDatabase(), False);
+    elif 'fixture' in ref:
+      pass
+    elif 'session' in ref:
+      pass
+
+
+"""
+			String userId = "";
+			User u = CommCareContext._().getUser();
+			if(u != null) {
+				userId = u.getUniqueId();
+			}
+			FormInstance fixture = CommCareUtil.loadFixtureForUser(ref.substring(ref.lastIndexOf('/') + 1, ref.length()), userId);
+			if(fixture == null) {
+				throw new RuntimeException("Could not find an appropriate fixture for src: " + ref);
+			}
+			
+			TreeElement root = fixture.getRoot();
+			root.setParent(instance.getBase());
+			return root;
+
+
+			TreeElement root = session.getSessionInstance().getRoot();
+			root.setParent(instance.getBase());
+			return root;
+"""
+
 
 DEBUG = False
 
@@ -99,7 +195,7 @@ def load_form(xform, instance=None, extensions=[], preload_data={}):
 
     customhandlers.attach_handlers(form, preload_data, extensions)
 
-    form.initialize(instance == None, IIF())
+    form.initialize(instance == None, CCInstances())
     return form
 
 class SequencingException(Exception):
