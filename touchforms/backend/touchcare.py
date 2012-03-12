@@ -3,6 +3,7 @@ from org.javarosa.core.services.storage import IStorageUtilityIndexed
 from org.javarosa.core.services.storage import IStorageIterator
 from org.commcare.cases.instance import CaseInstanceTreeElement
 from org.commcare.cases.model import Case
+from org.commcare.util import CommCareSession
 
 from util import to_vect
 
@@ -13,6 +14,7 @@ for i, c in enumerate(CASES):
   c.setTypeId('TEST')
   c.setName('Test %d' % i)
   c.setProperty('mother_alive', 'yes')
+CASE_ID = 'TEST0'
 
 class CaseDatabase(IStorageUtilityIndexed):
   def setReadOnly(self):
@@ -56,21 +58,27 @@ class CaseIterator(IStorageIterator):
 
 class CCInstances(InstanceInitializationFactory):
 
-  def generateRoot(self, instance):
-    ref = instance.getReference()
+    def generateRoot(self, instance):
+        ref = instance.getReference()
     
-    def from_xml(xml):
-      inst = parse_xml(xml)
-      root = inst.getRoot()
-      root.setParent(instance.getBase())
-      return root
+        def from_xml(xml):
+            inst = parse_xml(xml)
+            root = inst.getRoot()
+            root.setParent(instance.getBase())
+            return root
 
-    if 'casedb' in ref:
-      return CaseInstanceTreeElement(instance.getBase(), CaseDatabase(), False);
-    elif 'fixture' in ref:
-      pass  # save till end... just get raw xml payload from HQ, i presume? -- look up based solely on user id
-    elif 'session' in ref:
-      pass
+        if 'casedb' in ref:
+            return CaseInstanceTreeElement(instance.getBase(), CaseDatabase(), False);
+        elif 'fixture' in ref:
+            pass  # save till end... just get raw xml payload from HQ, i presume? -- look up based solely on user id
+        elif 'session' in ref:
+            sess = CommCareSession(None)
+            sess.setDatum('case_id', CASE_ID)
+
+            inst = sess.getSessionInstance('deviceid', 'v5.6.7', 'droos', 'wefjowj8902u39aw')
+            root = inst.getRoot()
+            root.setParent(instance.getBase())
+            return root
 
 
 """
@@ -89,8 +97,6 @@ class CCInstances(InstanceInitializationFactory):
 			return root;
 
 
-			TreeElement root = session.getSessionInstance().getRoot();
-			root.setParent(instance.getBase());
-			return root;
+
 """
 
