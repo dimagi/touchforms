@@ -100,7 +100,13 @@ def load_form(xform, instance=None, extensions=[], preload_data={}):
 
     customhandlers.attach_handlers(form, preload_data, extensions)
 
-    form.initialize(instance == None, CCInstances())
+    form.initialize(instance == None, CCInstances({
+        'device_id': 'MYDEVICEID',
+        'app_version': 'v800',
+        'username': 'drew',
+        'user_id': '409jf2saif2',
+        'case_id': 'TEST2',
+    }))
     return form
 
 class SequencingException(Exception):

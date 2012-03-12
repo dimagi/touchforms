@@ -58,6 +58,9 @@ class CaseIterator(IStorageIterator):
 
 class CCInstances(InstanceInitializationFactory):
 
+    def __init__(self, sessionvars):
+        self.vars = sessionvars
+
     def generateRoot(self, instance):
         ref = instance.getReference()
     
@@ -72,10 +75,14 @@ class CCInstances(InstanceInitializationFactory):
         elif 'fixture' in ref:
             pass  # save till end... just get raw xml payload from HQ, i presume? -- look up based solely on user id
         elif 'session' in ref:
-            sess = CommCareSession(None)
-            sess.setDatum('case_id', CASE_ID)
+            meta_keys = ['device_id', 'app_version', 'username', 'user_id']
 
-            inst = sess.getSessionInstance('deviceid', 'v5.6.7', 'droos', 'wefjowj8902u39aw')
+            sess = CommCareSession(None)
+            for k, v in self.vars.iteritems():
+                if k not in meta_keys:
+                    sess.setDatum(k, v)
+
+            inst = sess.getSessionInstance(*[self.vars.get(k, '') for k in meta_keys])
             root = inst.getRoot()
             root.setParent(instance.getBase())
             return root
