@@ -177,7 +177,7 @@ def play_remote(request, session_id=None, playsettings=None):
             next=playsettings.get('next'),
             abort=playsettings.get('abort'),
             input_mode=playsettings.get('input_mode'),
-            preloader_data=json.loads(playsettings.get('data')),
+            preloader_data=json.loads(playsettings.get('data', '{}')),
             xform_id=new_form.id,
             saved_instance=playsettings.get('instance')
         )
