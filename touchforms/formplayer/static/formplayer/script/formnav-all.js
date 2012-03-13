@@ -4,15 +4,6 @@ function xformAjaxAdapter (formName, sessionData, savedInstance) {
   this.sessionData = sessionData;
   this.session_id = -1;
 
-  //debug
-  this.sessionData = {
-    'device_id': 'MYDEVICEID',
-    'app_version': 'v800',
-    'username': 'drew',
-    'user_id': '409jf2saif2',
-    'case_id': 'TEST2',
-  };
-
   this.loadForm = function () {
     adapter = this;
     /*
