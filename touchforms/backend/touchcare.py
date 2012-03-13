@@ -36,7 +36,6 @@ def query_case(case_id, domain=DOMAIN, user_id=USER_ID):
   try:
     return cases[0]
   except IndexError:
-    # raise error?
     return None
 
 def case_from_json(data):
@@ -72,12 +71,17 @@ class CaseDatabase(IStorageUtilityIndexed):
   def read(self, record_id):
     try:
       case_id = self.case_ids[record_id]
-      logging.debug('read case %s' % case_id)
-      if case_id not in self.cases:
-        self.put_case(query_case(case_id))
-      return self.cases[case_id]
     except KeyError:
       return None
+
+    logging.debug('read case %s' % case_id)
+    if case_id not in self.cases:
+      self.put_case(query_case(case_id))
+
+    try:
+      return self.cases[case_id]
+    except KeyError:
+      raise Exception('could not find a case for case id [%s]' % case_id)
 
   def getIDsForValue(self, field_name, value):
     logging.debug('case index lookup %s %s' % (field_name, value))
