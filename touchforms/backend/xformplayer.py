@@ -222,7 +222,6 @@ class XFormSession:
             event['type'] = 'form-start'
         elif status == self.fec.EVENT_END_OF_FORM:
             event['type'] = 'form-complete'
-            self.fem.getForm().postProcessInstance() 
         elif status == self.fec.EVENT_QUESTION:
             event['type'] = 'question'
             self._parse_question(event)
@@ -403,6 +402,9 @@ class XFormSession:
         #be unsatisfied constraints that make it fail. how to handle them here?
         self.fec.newRepeat(self.fem.getFormIndex())
 
+    def finalize(self):
+        self.fem.getForm().postProcessInstance() 
+
     def parse_ix(self, s_ix):
         return index_from_str(s_ix, self.form)
 
@@ -519,6 +521,7 @@ def prev_event (xfsess):
     return at_start, ev
 
 def save_form (xfsess, persist=False):
+    xfsess.finalize()
     xml = xfsess.output()
     if persist:
         instance_id = global_state.save_instance(xml)
