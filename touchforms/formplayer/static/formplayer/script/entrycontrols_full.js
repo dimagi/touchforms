@@ -569,6 +569,8 @@ function renderQuestion (q, $container, init_answer) {
     control = new FreeTextEntry({domain: q.domain, prose: q.domain_meta.longtext});
   } else if (q.datatype == "int") {
     control = new IntEntry();
+  } else if (q.datatype == "longint") {
+    control = new IntEntry(null, 15);
   } else if (q.datatype == "float") {
     control = new FloatEntry();
   //  } else if (q.datatype == "passwd") {
