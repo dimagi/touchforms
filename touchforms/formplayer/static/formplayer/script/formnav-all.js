@@ -1,11 +1,21 @@
 
-function xformAjaxAdapter (formName, preloadTags, savedInstance) {
+function xformAjaxAdapter (formName, sessionData, savedInstance) {
   this.formName = formName;
-  this.preloadTags = preloadTags;
+  this.sessionData = sessionData;
   this.session_id = -1;
+
+  //debug
+  this.sessionData = {
+    'device_id': 'MYDEVICEID',
+    'app_version': 'v800',
+    'username': 'drew',
+    'user_id': '409jf2saif2',
+    'case_id': 'TEST2',
+  };
 
   this.loadForm = function () {
     adapter = this;
+    /*
     preload_data = {};
     for (var type in this.preloadTags) {
         var dict = this.preloadTags[type];
@@ -22,10 +32,11 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
             }
         }
     }
+    */
     this.serverRequest(XFORM_URL, {'action': 'new-form',
                                    'form-name': this.formName,
                                    'instance-content': savedInstance,
-                                   'preloader-data': preload_data,
+                                   'session-data': this.sessionData,
                                    'nav': 'fao'},
       function (resp) {
         adapter.session_id = resp["session_id"];

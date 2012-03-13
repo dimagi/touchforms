@@ -74,7 +74,7 @@ def enter_form(request, **kwargs):
     xform_id = kwargs.get('xform_id')
     xform = kwargs.get('xform')
     instance_xml = kwargs.get('instance_xml')
-    preloader_data = coalesce(kwargs.get('preloader_data'), {})
+    session_data = coalesce(kwargs.get('session_data'), {})
     input_mode = coalesce(kwargs.get('input_mode'), 'touch')
     submit_callback = coalesce(kwargs.get('onsubmit'), default_submit)
     abort_callback = coalesce(kwargs.get('onabort'), default_abort)
@@ -92,11 +92,11 @@ def enter_form(request, **kwargs):
         elif request.POST["type"] == 'form-aborted':
             return form_entry_abort(request, xform, abort_callback)
 
-    return form_entry_new(request, xform, instance_xml, preloader_data, 
+    return form_entry_new(request, xform, instance_xml, session_data, 
                           input_mode, force_template)
 
 # TODO: instance loading
-def form_entry_new(request, xform, instance_xml, preloader_data, input_mode, 
+def form_entry_new(request, xform, instance_xml, session_data, input_mode, 
                    force_template=None):
     """start a new touchforms/typeforms session"""
     if force_template is not None:
@@ -112,7 +112,7 @@ def form_entry_new(request, xform, instance_xml, preloader_data, input_mode,
             "form": xform,
             "mode": 'xform',
             "instance_xml": json.dumps(instance_xml),
-            "preloader_data": json.dumps(preloader_data),
+            "session_data": json.dumps(session_data),
             "dim": get_player_dimensions(request),
             "fullscreen": request.GET.get('mode', '').startswith('full')
         }, context_instance=RequestContext(request))
@@ -148,9 +148,13 @@ def play(request, xform_id, callback=None, preloader_data=None, input_mode=None,
     input_mode - 'touch' for touchforms, 'type' for typeforms
     instance_xml - an xml instance that, if present, will be edited during the form session
     """
+
+    # not sure if we'll still support preloaders
+    assert preloader_data is None
+
     return enter_form(request,
                       xform_id=xform_id,
-                      preloader_data=preloader_data,
+                      #preloader_data=preloader_data,
                       input_mode=input_mode,
                       onsubmit=callback,
                       onabort=abort_callback,
@@ -178,7 +182,7 @@ def play_remote(request, session_id=None, playsettings=None):
             next=playsettings.get('next'),
             abort=playsettings.get('abort'),
             input_mode=playsettings.get('input_mode'),
-            preloader_data=json.loads(playsettings.get('data')),
+            session_data=json.loads(playsettings.get('data')),
             xform_id=new_form.id,
             saved_instance=playsettings.get('instance')
         )
@@ -204,7 +208,7 @@ def play_remote(request, session_id=None, playsettings=None):
         return HttpResponseRedirect(session.abort if session.abort else session.next)
     return enter_form(request, 
                       xform_id=session.xform_id,
-                      preloader_data=session.preloader_data,
+                      session_data=session.session_data,
                       input_mode=session.input_mode,
                       onsubmit=onsubmit,
                       onabort=onabort,

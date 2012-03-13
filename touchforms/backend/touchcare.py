@@ -64,8 +64,7 @@ class CCInstances(InstanceInitializationFactory):
     def generateRoot(self, instance):
         ref = instance.getReference()
     
-        def from_xml(xml):
-            inst = parse_xml(xml)
+        def from_bundle(inst):
             root = inst.getRoot()
             root.setParent(instance.getBase())
             return root
@@ -73,37 +72,19 @@ class CCInstances(InstanceInitializationFactory):
         if 'casedb' in ref:
             return CaseInstanceTreeElement(instance.getBase(), CaseDatabase(), False);
         elif 'fixture' in ref:
+            fixture_id = ref.split('/')[-1]
+            user_id = self.vars['user_id']
+
+            #	return from_bundle( CommCareUtil.loadFixtureForUser(fixture_id, userId)  )
             pass  # save till end... just get raw xml payload from HQ, i presume? -- look up based solely on user id
         elif 'session' in ref:
             meta_keys = ['device_id', 'app_version', 'username', 'user_id']
 
-            sess = CommCareSession(None)
+            sess = CommCareSession(None) # will not passing a CCPlatform cause problems later?
             for k, v in self.vars.iteritems():
                 if k not in meta_keys:
                     sess.setDatum(k, v)
 
-            inst = sess.getSessionInstance(*[self.vars.get(k, '') for k in meta_keys])
-            root = inst.getRoot()
-            root.setParent(instance.getBase())
-            return root
+            return from_bundle(sess.getSessionInstance(*[self.vars.get(k, '') for k in meta_keys]))
 
-
-"""
-			String userId = "";
-			User u = CommCareContext._().getUser();
-			if(u != null) {
-				userId = u.getUniqueId();
-			}
-			FormInstance fixture = CommCareUtil.loadFixtureForUser(ref.substring(ref.lastIndexOf('/') + 1, ref.length()), userId);
-			if(fixture == null) {
-				throw new RuntimeException("Could not find an appropriate fixture for src: " + ref);
-			}
-			
-			TreeElement root = fixture.getRoot();
-			root.setParent(instance.getBase());
-			return root;
-
-
-
-"""
 
