@@ -12,9 +12,12 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
         preload_data[type] = {};
         for (var key in dict) {
             var val = dict[key];
+            if (!val) {
+                console.log("no val for", key, "in", dict);
+            }
             // this special character indicates a server preloader, which 
             // we make a synchronous request for
-            if (val.indexOf("<") === 0) {
+            if (val && val.indexOf("<") === 0) {
                 valback = jQuery.ajax({url: PRELOADER_URL, type: 'GET', data:{"param": val}, async: false}).responseText;
                 preload_data[type][key] = valback;
             } else {
