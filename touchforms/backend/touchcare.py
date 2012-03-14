@@ -38,10 +38,11 @@ def query_factory(domain, user, auth):
         opener = urllib2.build_opener()
         opener.addheaders.append(('Cookie', 'sessionid=%s' % auth['key']))
         return opener.open(url)
-    elif auth['type'] == 'http':
-      raise Exception('not supported')
     elif auth['type'] == 'oauth':
-      raise Exception('not supported')
+      # auth['key'] will be the oauth access token
+      raise Exception('not supported yet')
+    elif auth['type'] == 'http':
+      raise Exception('password-based API auth not supported in touchforms')
 
     url = domain.join(_url.split('{{DOMAIN}}'))
     logging.debug('querying %s' % url)
