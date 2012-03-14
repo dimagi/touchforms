@@ -93,14 +93,14 @@ class global_state_mgr:
 global_state = global_state_mgr()
   
 
-def load_form(xform, instance=None, extensions=[], session_data={}):
+def load_form(xform, instance=None, extensions=[], session_data={}, api_auth=None):
     form = XFormParser(StringReader(xform)).parse()
     if instance != None:
         XFormParser.loadXmlInstance(form, StringReader(instance))
 
     customhandlers.attach_handlers(form, extensions)
 
-    form.initialize(instance == None, CCInstances(session_data))
+    form.initialize(instance == None, CCInstances(session_data, api_auth))
     return form
 
 class SequencingException(Exception):
@@ -108,7 +108,7 @@ class SequencingException(Exception):
 
 class XFormSession:
     def __init__(self, xform_raw=None, xform_path=None, instance_raw=None, instance_path=None,
-                 session_data={}, extensions=[], nav_mode='prompt'):
+                 session_data={}, extensions=[], nav_mode='prompt', api_auth=None):
         self.lock = threading.Lock()
         self.nav_mode = nav_mode
         self.seq_id = 0
@@ -125,7 +125,7 @@ class XFormSession:
         xform = content_or_path(xform_raw, xform_path)
         instance = content_or_path(instance_raw, instance_path)
 
-        self.form = load_form(xform, instance, extensions, session_data)
+        self.form = load_form(xform, instance, extensions, session_data, api_auth)
         self.fem = FormEntryModel(self.form, FormEntryModel.REPEAT_STRUCTURE_NON_LINEAR)
         self.fec = FormEntryController(self.fem)
         self._parse_current_event()
@@ -445,11 +445,11 @@ class choice(object):
     def __json__(self):
         return json.dumps(repr(self))
 
-def open_form(form_name, instance_xml=None, extensions=[], session_data={}, nav_mode='prompt'):
+def open_form(form_name, instance_xml=None, extensions=[], session_data={}, nav_mode='prompt', api_auth=None):
     if not os.path.exists(form_name):
         return {'error': 'no form found at %s' % form_name}
 
-    xfsess = XFormSession(xform_path=form_name, instance_raw=instance_xml, session_data=session_data, extensions=extensions, nav_mode=nav_mode)
+    xfsess = XFormSession(xform_path=form_name, instance_raw=instance_xml, session_data=session_data, extensions=extensions, nav_mode=nav_mode, api_auth=api_auth)
     sess_id = global_state.new_session(xfsess)
     return xfsess.response({'session_id': sess_id, 'title': xfsess.form_title()})
 

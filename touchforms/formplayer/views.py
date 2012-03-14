@@ -46,12 +46,11 @@ def xform_list(request):
             
     for form in XForm.objects.all():
         forms_by_namespace[form.namespace].append(form)
-    return render_to_response("formplayer/xform_list.html", 
-                              {'forms_by_namespace': dict(forms_by_namespace),
-                               "success": success,
-                               "notice": notice},
-                               
-                              context_instance=RequestContext(request))
+    return render_to_response("formplayer/xform_list.html", {
+            'forms_by_namespace': dict(forms_by_namespace),
+            "success": success,
+            "notice": notice
+        }, context_instance=RequestContext(request))
                               
 def download(request, xform_id):
     """
@@ -239,10 +238,16 @@ def get_player_dimensions(request):
 def player_proxy(request):
     """Proxy to an xform player, to avoid cross-site scripting issues"""
     data = request.raw_post_data if request.method == "POST" else None
-    response = _post_data(data, settings.XFORMS_PLAYER_URL, content_type="text/json")
+    auth_cookie = request.COOKIES.get('sessionid')
+    response = _post_data(data, settings.XFORMS_PLAYER_URL, auth_cookie, content_type="text/json")
     return HttpResponse(response)
 
-def _post_data(data, url, content_type):
+def _post_data(data, url, auth, content_type):
+    if auth:
+        d = json.loads(data)
+        d['hq_auth'] = {'type': 'django-session', 'key': auth}
+        data = json.dumps(d)
+
     up = urlparse(url)
     headers = {}
     headers["content-type"] = content_type

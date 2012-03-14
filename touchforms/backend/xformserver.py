@@ -86,7 +86,7 @@ def handle_request (content, **kwargs):
             if 'form-name' not in content:
                 return {'error': 'form identifier required'}
             session_data = content["session-data"] if "session-data" in content else {}
-            return xformplayer.open_form(content['form-name'], content.get('instance-content'), kwargs.get('extensions', []), session_data, nav_mode)
+            return xformplayer.open_form(content['form-name'], content.get('instance-content'), kwargs.get('extensions', []), session_data, nav_mode, content.get('hq_auth', None))
 
         elif action == 'edit-form':
             return {'error': 'unsupported'}

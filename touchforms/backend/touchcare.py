@@ -13,30 +13,44 @@ from org.commcare.util import CommCareSession
 
 from util import to_vect, to_jdate
 
-CASE_API_URL = 'http://192.168.7.139:8000/a/%s/cloudcare/api/cases'
+CASE_API_URL = 'http://192.168.7.139:8000/a/{{DOMAIN}}/cloudcare/api/cases'
 
 DOMAIN = 'cloudcaredemo'
-USER_ID = 'cory@cloudcaredemo.czue.org'
 
-def api_query(url):
-  logging.debug('querying %s' % url)
-  f = urllib2.urlopen(url)
-  return json.loads(f.read())
+def query_case_ids(q):
+  return [c['case_id'] for c in q(CASE_API_URL)]
 
-def query_case_ids(domain=DOMAIN, user_id=USER_ID):
-  query_url = CASE_API_URL % domain
-  return [c['case_id'] for c in api_query(query_url)]
+def query_cases(q, criteria):
+  query_url = '%s?%s' % (CASE_API_URL, urllib.urlencode(criteria))
+  return [case_from_json(cj) for cj in q(query_url)]
 
-def query_cases(field, value, domain=DOMAIN, user_id=USER_ID):
-  query_url = '%s?%s' % (CASE_API_URL % domain, urllib.urlencode({field: value}))
-  return [case_from_json(cj) for cj in api_query(query_url)]
-
-def query_case(case_id, domain=DOMAIN, user_id=USER_ID):
-  cases = query_cases('case_id', case_id, domain, user_id)
+def query_case(q, case_id):
+  cases = query_cases(q, {'case_id': case_id})
   try:
     return cases[0]
   except IndexError:
     return None
+
+def query_factory(domain, user, auth):
+  def api_query(_url):
+    if not auth:
+      req = lambda url: urllib2.urlopen(url)
+    elif auth['type'] == 'django-session':
+      def req(url):
+        opener = urllib2.build_opener()
+        opener.addheaders.append(('Cookie', 'sessionid=%s' % auth['key']))
+        return opener.open(url)
+    elif auth['type'] == 'http':
+      raise Exception('not supported')
+    elif auth['type'] == 'oauth':
+      raise Exception('not supported')
+
+    url = domain.join(_url.split('{{DOMAIN}}'))
+    logging.debug('querying %s' % url)
+    f = req(url)
+    return json.loads(f.read())
+
+  return api_query
 
 def case_from_json(data):
   c = Case()
@@ -57,8 +71,10 @@ def case_from_json(data):
   return c
 
 class CaseDatabase(IStorageUtilityIndexed):
-  def __init__(self, user_id):
-    self.case_ids = dict(enumerate(query_case_ids()))
+  def __init__(self, domain, user, auth):
+    self.query_func = query_factory(domain, user, auth)
+
+    self.case_ids = dict(enumerate(query_case_ids(self.query_func)))
     self.cases = {}
     self.cached_lookups = {}
 
@@ -76,7 +92,7 @@ class CaseDatabase(IStorageUtilityIndexed):
 
     logging.debug('read case %s' % case_id)
     if case_id not in self.cases:
-      self.put_case(query_case(case_id))
+      self.put_case(query_case(self.query_func, case_id))
 
     try:
       return self.cases[case_id]
@@ -107,7 +123,7 @@ class CaseDatabase(IStorageUtilityIndexed):
           'closed': 'true',
         }[value]
 
-      cases = query_cases(key, value)
+      cases = query_cases(self.query_func, {key: value})
       for c in cases:
         self.put_case(c)
       self.cached_lookups[(field_name, value)] = cases
@@ -139,8 +155,9 @@ class CaseIterator(IStorageIterator):
 
 class CCInstances(InstanceInitializationFactory):
 
-    def __init__(self, sessionvars):
+    def __init__(self, sessionvars, api_auth):
         self.vars = sessionvars
+        self.auth = api_auth
 
     def generateRoot(self, instance):
         ref = instance.getReference()
@@ -151,7 +168,7 @@ class CCInstances(InstanceInitializationFactory):
             return root
 
         if 'casedb' in ref:
-            return CaseInstanceTreeElement(instance.getBase(), CaseDatabase(self.vars['user_id']), False);
+            return CaseInstanceTreeElement(instance.getBase(), CaseDatabase(DOMAIN, self.vars['username'], self.auth), False);
         elif 'fixture' in ref:
             fixture_id = ref.split('/')[-1]
             user_id = self.vars['user_id']
