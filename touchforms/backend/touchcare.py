@@ -15,8 +15,6 @@ from util import to_vect, to_jdate
 
 CASE_API_URL = 'http://192.168.7.139:8000/a/{{DOMAIN}}/cloudcare/api/cases'
 
-DOMAIN = 'cloudcaredemo'
-
 def query_case_ids(q):
   return [c['case_id'] for c in q(CASE_API_URL)]
 
@@ -168,7 +166,7 @@ class CCInstances(InstanceInitializationFactory):
             return root
 
         if 'casedb' in ref:
-            return CaseInstanceTreeElement(instance.getBase(), CaseDatabase(DOMAIN, self.vars['username'], self.auth), False);
+            return CaseInstanceTreeElement(instance.getBase(), CaseDatabase(self.vars['domain'], self.vars['username'], self.auth), False);
         elif 'fixture' in ref:
             fixture_id = ref.split('/')[-1]
             user_id = self.vars['user_id']
