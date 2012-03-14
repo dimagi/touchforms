@@ -4,6 +4,8 @@ import com.xhaus.jyson.JysonCodec as json
 import logging
 from datetime import datetime
 
+import settings
+
 from org.javarosa.core.model.instance import InstanceInitializationFactory
 from org.javarosa.core.services.storage import IStorageUtilityIndexed
 from org.javarosa.core.services.storage import IStorageIterator
@@ -13,13 +15,11 @@ from org.commcare.util import CommCareSession
 
 from util import to_vect, to_jdate
 
-CASE_API_URL = 'http://192.168.7.139:8000/a/{{DOMAIN}}/cloudcare/api/cases'
-
 def query_case_ids(q):
-  return [c['case_id'] for c in q(CASE_API_URL)]
+  return [c['case_id'] for c in q(settings.CASE_API_URL)]
 
 def query_cases(q, criteria):
-  query_url = '%s?%s' % (CASE_API_URL, urllib.urlencode(criteria))
+  query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria))
   return [case_from_json(cj) for cj in q(query_url)]
 
 def query_case(q, case_id):
