@@ -516,45 +516,43 @@ function DateEntry (args) {
 
 }
 
-function TimeOfDayEntry () {
-  this.HOUR_MAX = 23;
-  this.MINUTE_MAX = 59;
+function TimeOfDayEntry (parent) {
+  inherit(this, new FreeTextEntry({parent: parent, length_limit: 5}));
 
-  inherit(this, new CompoundNumericEntry());
-
-  this.get_field_info = function () {
-    return [
-      {args: {min: 0, max: this.HOUR_MAX, paddisplay: true}, label: 'h'},
-      {args: {min: 0, max: this.MINUTE_MAX, fixedwidth: true}, label: 'm'}
-    ];
-  }
-
-  this.make_answerbar = function () {
-    var timeSpacer = new TextCaption({color: TEXT_COLOR, caption: ':', size: 1.7});
-    var content = [this.fields[0], timeSpacer, this.fields[1]];
-    var widths = ['1.3@', '.3@', '1.3@'];
-    return make_answerbar(content, widths, 'time-bar');
-  }
-
-  this.parseAnswer = function (answer) {
-    var match = /^([0-9]+) *\: *([0-9]+)$/.exec(answer);
-    if (!match) {
-      return null;
+  this.getAnswer = function () {
+    var val = this.super('getAnswer')();
+    var t = this.parseAnswer(val);
+    if (t != null) {
+      return intpad(t.h, 2) + ':' + intpad(t.m, 2);
     } else {
-      return [+match[1], +match[2]];
+      return null;
     }
   }
 
-  this.formatAnswer = function (answer) {
-    return answer[0] + ':' + answer[1];
+  this._prevalidate = function (raw) {
+    var t = this.parseAnswer($.trim(raw));
+    if (t == null || t.h < 0 || t.h >= 24 || t.m < 0 || t.m >= 60) {
+      return "Not a valid time (00:00\u201423:59)";
+    } else {
+      return null;
+    }
   }
 
-  this.outOfRangeMsg = function () {
-    return 'Time of day must be between 00:00 and 23:59';
+  this.parseAnswer = function (answer) {
+    var match = /^([0-9]{1,2})\:([0-9]{2})$/.exec(answer);
+    if (!match) {
+      return null;
+    } else {
+      return {h: +match[1], m: +match[2]};
+    }
   }
 
-  this.completeCurrentFieldMsg = function (field) {
-    return 'Enter ' + ['an hour', 'a minute'][field];
+  this.domainText = function() {
+    return 'hh:mm, 24-hour clock';
+  }
+
+  this.widgetWidth = function() {
+    return '5em';
   }
 }
 
@@ -581,8 +579,8 @@ function renderQuestion (q, $container, init_answer) {
     control = new MultiSelectEntry({choices: q.choices, choicevals: q.choicevals, meta: q.domain_meta});
   } else if (q.datatype == "date") {
     control = new DateEntry(q.domain_meta);
-  //} else if (q.datatype == "time") {
-  //control = new TimeOfDayEntry();
+  } else if (q.datatype == "time") {
+    control = new TimeOfDayEntry();
   } else {
     control = new UnsupportedEntry(q.datatype);
   }
@@ -599,4 +597,12 @@ function renderQuestion (q, $container, init_answer) {
 
 function nonce() {
   return Math.floor(Math.random()*1e9);
+}
+
+function intpad (x, n) {
+  var s = x + '';
+  while (s.length < n) {
+    s = '0' + s;
+  }
+  return s;
 }
