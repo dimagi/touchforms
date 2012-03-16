@@ -156,8 +156,6 @@ function Form(json, adapter) {
 
   this.submitting = function() {
     $('#submit').val('Submitting...');
-    inputActivate(false);
-    inputActivate = function(){}; //hack to keep input fields disabled during final POST
   }
 }
 
@@ -455,14 +453,6 @@ var inElementSet = function(e, set) {
   //return the matching object of 'e' within 'set'; null if no match
   ix = ixElementSet(e, set);
   return (ix != -1 ? set[ix] : null);
-}
-
-
-
-function inputActivate(enable) {
-  BLOCKING_REQUEST_IN_PROGRESS = !enable;
-  $('input').attr('disabled', enable ? null : 'true');
-  $('a').css('color', enable ? 'blue' : 'grey');
 }
 
 function init_render(form, adapter, $div) {

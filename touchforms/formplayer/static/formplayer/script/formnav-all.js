@@ -1,9 +1,10 @@
 
-function xformAjaxAdapter (formName, sessionData, savedInstance, ajaxfunc) {
+function xformAjaxAdapter (formName, sessionData, savedInstance, ajaxfunc, submitfunc) {
   this.formName = formName;
   this.sessionData = sessionData;
   this.session_id = -1;
   this.ajaxfunc = ajaxfunc;
+  this.submitfunc = submitfunc;
 
   this.loadForm = function ($div) {
     adapter = this;
@@ -86,7 +87,7 @@ function xformAjaxAdapter (formName, sessionData, savedInstance, ajaxfunc) {
       function (resp) {
         if (resp.status == 'success') {
           form.submitting();
-          adapter._formComplete(resp);
+          adapter.submitfunc(resp);
         } else {
           $.each(resp.errors, function(ix, error) {
               adapter.showError(getForIx(form, ix), error);
@@ -104,49 +105,6 @@ function xformAjaxAdapter (formName, sessionData, savedInstance, ajaxfunc) {
       q.showError(resp["reason"] || 'This answer is outside the allowed range.');      
     }
   }
-
-  this._formComplete = function (params) {
-    params.type = 'form-complete';
-    submit_redirect(params);
-  }
-}
-
-var BLOCKING_REQUEST_IN_PROGRESS = false;
-var LAST_REQUEST_HANDLED = -1;
-var NUM_PENDING_REQUESTS = 0;
-// makeRequest - function that takes in a callback function and executes an
-//     asynchronous request (GET, POST, etc.) with the given callback
-// callback - callback function for request
-// blocking - if true, no further simultaneous requests are allowed until
-//     this request completes
-function serverRequest (makeRequest, callback, blocking) {
-  if (BLOCKING_REQUEST_IN_PROGRESS) {
-    return;
-  }
-
-  NUM_PENDING_REQUESTS++;
-  $('#loading').show();
-
-  if (blocking) {
-    inputActivate(false); // sets BLOCKING_REQUEST_IN_PROGRESS
-  }
-  makeRequest(function (resp) {
-      // ignore responses older than the most-recently handled
-      if (resp.seq_id && resp.seq_id < LAST_REQUEST_HANDLED) {
-        return;
-      }
-      LAST_REQUEST_HANDLED = resp.seq_id;
-
-      callback(resp);
-      if (blocking) {
-        inputActivate(true); // clears BLOCKING_REQUEST_IN_PROGRESS
-      }
-
-      NUM_PENDING_REQUESTS--;
-      if (NUM_PENDING_REQUESTS == 0) {
-        $('#loading').hide();
-      }
-    });
 }
 
 function submit_redirect(params, path, method) {
