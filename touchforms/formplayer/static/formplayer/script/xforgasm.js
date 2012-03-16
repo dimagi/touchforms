@@ -10,8 +10,9 @@ function WebFormSession(params) {
     autocomplete: params.autocomplete_url,
   };
 
-  this.load = function($div) {
+  this.load = function($div, $loading) {
     this.$div = $div;
+    this.$loading = $loading || $div.find('#loading');
 
     var sess = this;
     var adapter = new xformAjaxAdapter(this.form_uid, this.session_data, null,
@@ -54,7 +55,7 @@ function WebFormSession(params) {
     }
 
     this.NUM_PENDING_REQUESTS++;
-    $('#loading').show();
+    this.$loading.show();
 
     if (blocking) {
       this.inputActivate(false); // sets BLOCKING_REQUEST_IN_PROGRESS
@@ -74,7 +75,7 @@ function WebFormSession(params) {
 
         sess.NUM_PENDING_REQUESTS--;
         if (sess.NUM_PENDING_REQUESTS == 0) {
-          $('#loading').hide();
+          sess.$loading.hide();
         }
       });
   }
