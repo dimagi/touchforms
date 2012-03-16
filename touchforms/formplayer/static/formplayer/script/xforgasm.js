@@ -4,6 +4,7 @@ function WebFormSession(params) {
   this.form_uid = params.form_uid;
   this.session_data = params.session_data;
   //todo: support instance_xml ?
+  this.onsubmit = params.onsubmit;
 
   this.urls = {
     xform: params.xform_url,
@@ -26,8 +27,7 @@ function WebFormSession(params) {
     this.inputActivate(false);
     this.inputActivate = function(){}; //hack to keep input fields disabled during final POST
 
-    params.type = 'form-complete';
-    submit_redirect(params);
+    this.onsubmit(params.output);
   }
 
   this.serverRequest = function(params, callback, blocking) {
@@ -86,4 +86,8 @@ function WebFormSession(params) {
     this.$div.find('a').css('color', enable ? 'blue' : 'grey');
   }
 
+}
+
+function submit_form_post(xml) {
+  submit_redirect({type: 'form-complete', output: xml});
 }

@@ -49,6 +49,7 @@ $(document).ready(function() {
     form_uid: '{{ form.file.path|escapejs }}',
     session_data: {{ session_data|safe }},
     xform_url: "{% url xform_player_proxy %}",
+    onsubmit: submit_form_post,
   });
   sess.load($('#content'), $('#loading'));
   
