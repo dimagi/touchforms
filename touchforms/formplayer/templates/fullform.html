@@ -3,30 +3,24 @@
   <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 
+    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/jquery-1.4.2.min.js"></script>
+	  <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/jquery-ui.min.js"></script>
+	  <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/themes/ui-lightness/jquery-ui.css">
+    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/shortcut.js"></script>
+
     <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/xforgasm.js?version={{app_version}}"></script>
-
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/layout.js?version={{app_version}}"></script>
-
-    <!-- TODO factor out shared code, think we need touchscreen-ui and typeforms-ui -->
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/touchscreen-ui.js?version={{app_version}}"></script>   
-
     <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/formnav-all.js?version={{app_version}}"></script>
     <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/entrycontrols_full.js?version={{app_version}}"></script>
     <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/fullform-ui.js?version={{app_version}}"></script>
-   
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/jquery-1.4.2.min.js"></script>
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/shortcut.js"></script>
-
-	  <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/jquery-ui.min.js"></script>
-
-	  <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/themes/ui-lightness/jquery-ui.css">
-	  <link rel="stylesheet" href="{{STATIC_URL}}formplayer/style/webforms.css">
-
-{% for script in dynamic_scripts %}
-    <script language="javascript" type="text/javascript;version=1.7" src="{{STATIC_URL}}{{script}}?version={{app_version}}"></script>   
-{% endfor %}
+ 	  <link rel="stylesheet" href="{{STATIC_URL}}formplayer/style/webforms.css">
 
     <script language="javascript">
+
+{% ifnotequal mode 'xform' %}
+  alert('form-at-once mode cannot work with protocols')
+{% endifnotequal %}
+
+{% block custom_init %}{% endblock %}
 
 if (!window.console) {
   window.console = {
@@ -34,11 +28,7 @@ if (!window.console) {
   };
 }
 
-{% ifnotequal mode 'xform' %}
-  alert('form-at-once mode cannot work with protocols')
-{% endifnotequal %}
 
-{% block custom_init %}{% endblock %}
 
 
 
@@ -59,7 +49,7 @@ $(document).ready(function() {
     
   </head>
 
-  <body id="body">
+  <body>
 
     <div id="content" style="position: relative; width: 100%"></div>
     <div id="loading" style="position: fixed; top: 15px; right: 15px; display: none;"><img src="{{STATIC_URL}}formplayer/img/loading_small.gif" /></div>
