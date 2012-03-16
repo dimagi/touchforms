@@ -1,37 +1,20 @@
 
-function xformAjaxAdapter (formName, sessionData, savedInstance) {
+function xformAjaxAdapter (formName, sessionData, savedInstance, ajaxfunc) {
   this.formName = formName;
   this.sessionData = sessionData;
   this.session_id = -1;
+  this.ajaxfunc = ajaxfunc;
 
-  this.loadForm = function () {
+  this.loadForm = function ($div) {
     adapter = this;
-    /*
-    preload_data = {};
-    for (var type in this.preloadTags) {
-        var dict = this.preloadTags[type];
-        preload_data[type] = {};
-        for (var key in dict) {
-            var val = dict[key];
-            // this special character indicates a server preloader, which 
-            // we make a synchronous request for
-            if (val.indexOf("<") === 0) {
-                valback = jQuery.ajax({url: PRELOADER_URL, type: 'GET', data:{"param": val}, async: false}).responseText;
-                preload_data[type][key] = valback;
-            } else {
-                preload_data[type][key] = val
-            }
-        }
-    }
-    */
-    this.serverRequest(XFORM_URL, {'action': 'new-form',
-                                   'form-name': this.formName,
-                                   'instance-content': savedInstance,
-                                   'session-data': this.sessionData,
-                                   'nav': 'fao'},
+    this.ajaxfunc({'action': 'new-form',
+                   'form-name': this.formName,
+                   'instance-content': savedInstance,
+                   'session-data': this.sessionData,
+                   'nav': 'fao'},
       function (resp) {
         adapter.session_id = resp["session_id"];
-        adapter._renderForm(resp);
+        init_render(resp, adapter, $div);
       });
   }
 
@@ -40,10 +23,10 @@ function xformAjaxAdapter (formName, sessionData, savedInstance) {
     var answer = q.getAnswer();
 
     var adapter = this;
-    this.serverRequest(XFORM_URL, {'action': 'answer',
-                                   'session-id': this.session_id,
-                                   'ix': ix,
-                                   'answer': answer},
+    this.ajaxfunc({'action': 'answer',
+                   'session-id': this.session_id,
+                   'ix': ix,
+                   'answer': answer},
       function (resp) {
         if (resp["status"] == "validation-error") {
           adapter.showError(q, resp);
@@ -55,9 +38,9 @@ function xformAjaxAdapter (formName, sessionData, savedInstance) {
   }
 
   this.newRepeat = function(repeat) {
-    this.serverRequest(XFORM_URL, {'action': 'new-repeat',
-                                   'session-id': this.session_id,
-                                   'ix': getIx(repeat)},
+    this.ajaxfunc({'action': 'new-repeat',
+                   'session-id': this.session_id,
+                   'ix': getIx(repeat)},
       function (resp) {
         getForm(repeat).reconcile(resp["tree"]);
       },
@@ -67,10 +50,10 @@ function xformAjaxAdapter (formName, sessionData, savedInstance) {
   this.deleteRepeat = function(repetition) {
     var juncture = getIx(repetition.parent);
     var rep_ix = +(repetition.rel_ix.split(":").slice(-1)[0]) + 1;
-    this.serverRequest(XFORM_URL, {'action': 'delete-repeat', 
-                                   'session-id': this.session_id,
-                                   'ix': rep_ix,
-                                   'form_ix': juncture},
+    this.ajaxfunc({'action': 'delete-repeat', 
+                   'session-id': this.session_id,
+                   'ix': rep_ix,
+                   'form_ix': juncture},
       function (resp) {
         getForm(repetition).reconcile(resp["tree"]);
       },
@@ -96,10 +79,10 @@ function xformAjaxAdapter (formName, sessionData, savedInstance) {
     accumulate_answers(form);
 
     var adapter = this;
-    this.serverRequest(XFORM_URL, {'action': 'submit-all',
-                                   'session-id': this.session_id,
-                                   'answers': answers,
-                                   'prevalidated': prevalidated},
+    this.ajaxfunc({'action': 'submit-all',
+                   'session-id': this.session_id,
+                   'answers': answers,
+                   'prevalidated': prevalidated},
       function (resp) {
         if (resp.status == 'success') {
           form.submitting();
@@ -122,23 +105,9 @@ function xformAjaxAdapter (formName, sessionData, savedInstance) {
     }
   }
 
-  this._renderForm = function(form) {
-    init_render(form);
-  }
-
   this._formComplete = function (params) {
     params.type = 'form-complete';
     submit_redirect(params);
-  }
-
-  this.serverRequest = function (url, params, callback, blocking) {
-    serverRequest(
-      function (cb) {
-        jQuery.post(url, JSON.stringify(params), cb, "json");
-      },
-      callback,
-      blocking
-    );
   }
 }
 
@@ -178,18 +147,6 @@ function serverRequest (makeRequest, callback, blocking) {
         $('#loading').hide();
       }
     });
-}
-
-function getQuestionAnswer () {
-  return activeControl.getAnswer();
-}
-
-function answerQuestion () {
-  gFormAdapter.answerQuestion(getQuestionAnswer());
-}
-
-function prevQuestion () {
-  gFormAdapter.prevQuestion();
 }
 
 function submit_redirect(params, path, method) {

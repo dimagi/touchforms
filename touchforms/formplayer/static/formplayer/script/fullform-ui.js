@@ -119,7 +119,8 @@ function parse_meta(type, style) {
   return meta;
 }
 
-function Form(json) {
+function Form(json, adapter) {
+  this.adapter = adapter;
   this.children = [];
 
   this.init_render = function() {
@@ -137,8 +138,12 @@ function Form(json) {
           return;
         }
 
-        gFormAdapter.submitForm(form);
+        form.submit();
       });
+
+    this.submit = function() {
+      this.adapter.submitForm(this);
+    }
   }
 
   this.reconcile = function(new_json) {
@@ -179,9 +184,13 @@ function Group(json, parent) {
 
     var g = this;
     this.$del.click(function() {
-        gFormAdapter.deleteRepeat(g);
+        g.deleteRepeat();
         return false;
       });
+  }
+
+  this.deleteRepeat = function() {
+    getForm(this).adapter.deleteRepeat(this);
   }
 
   this.reconcile = function(new_json) {
@@ -226,9 +235,13 @@ function Repeat(json, parent) {
     this.$add = this.$container.find('#add');
     var rep = this;
     this.$add.click(function() {
-        gFormAdapter.newRepeat(rep);
+        rep.newRepeat();
         return false;
       });
+  }
+
+  this.newRepeat = function() {
+    getForm(this).adapter.newRepeat(this);
   }
 
   this.reconcile = function(new_json) {
@@ -303,8 +316,12 @@ function Question(json, parent) {
       }
 
       this.last_answer = this.getAnswer();
-      gFormAdapter.answerQuestion(this);
+      this.commitAnswer();
     }
+  }
+
+  this.commitAnswer = function() {
+    getForm(this).adapter.answerQuestion(this);
   }
 
   this.showError = function(content) {
@@ -448,10 +465,10 @@ function inputActivate(enable) {
   $('a').css('color', enable ? 'blue' : 'grey');
 }
 
-function init_render(form) {
-  var f = new Form(form);
+function init_render(form, adapter, $div) {
+  var f = new Form(form, adapter);
   f.init_render();
-  $('#content').append(f.$container);
+  $div.append(f.$container);
 }
 
 var answer_eq = function(ans1, ans2) {

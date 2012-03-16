@@ -74,20 +74,8 @@ function SimpleEntry () {
 
   this.shortcuts = [];
 
-  /*
-  this.next = function () {
-    if (this.prevalidate()) {
-      answerQuestion();
-    }
-  }
-  */
-
   this.prevalidate = function (q) {
     return true;
-  }
-
-  this.back = function () {
-    prevQuestion();
   }
 
   this.destroy = function () {

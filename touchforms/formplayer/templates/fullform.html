@@ -3,6 +3,8 @@
   <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 
+    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/xforgasm.js?version={{app_version}}"></script>
+
     <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/layout.js?version={{app_version}}"></script>
 
     <!-- TODO factor out shared code, think we need touchscreen-ui and typeforms-ui -->
@@ -11,7 +13,6 @@
     <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/formnav-all.js?version={{app_version}}"></script>
     <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/entrycontrols_full.js?version={{app_version}}"></script>
     <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/fullform-ui.js?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript;version=1.7" src="{{STATIC_URL}}formplayer/script/workflow.js?version={{app_version}}"></script>
    
     <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/jquery-1.4.2.min.js"></script>
     <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/shortcut.js"></script>
@@ -32,38 +33,31 @@ if (!window.console) {
   };
 }
 
-XFORM_URL = "{% url xform_player_proxy %}";
-AUTOCOMPLETE_URL = "{% url touchforms_autocomplete %}";
-FORCE_ABORT_URL = "{% url touchforms_force_abort %}";
-
-XFORM_NAME = "{{form.name}}";
-XFORM_UID = null;
-
-PREFIXES = {};
+{% ifnotequal mode 'xform' %}
+  alert('form-at-once mode cannot work with protocols')
+{% endifnotequal %}
 
 {% block custom_init %}{% endblock %}
 
-function init () {
 
-{% ifequal mode 'xform' %}
 
-  XFORM_UID = $('#form-uid')[0].value;
-  gFormAdapter = new xformAjaxAdapter(XFORM_UID, {{ session_data|safe }}, {{ instance_xml|safe }});
+
+$(document).ready(function() {
+
+  var sess = new WebFormSession({
+    form_uid: '{{ form.file.path|escapejs }}',
+    session_data: {{ session_data|safe }},
+    xform_url: "{% url xform_player_proxy %}",
+  });
+  sess.load($('#content'));
   
-{% else %}
-
-  alert('form-at-once mode cannot work with protocols')
-
-{% endifequal %}
-
-  gFormAdapter.loadForm();
-}
+});
 
     </script>
     
   </head>
 
-  <body id="body" onLoad="init();" style="font-family: sans-serif; ">
+  <body id="body">
 
     <style>
 
@@ -177,9 +171,6 @@ input {
     </style>
 
     <div id="content"></div>
-
-    <!-- stick form uid here to aid with backslash escaping -->
-    <input id="form-uid" type="hidden" value="{% ifequal mode 'xform' %}{{form.file.path}}{% endifequal %}" />
 
     <div id="loading" style="position: fixed; top: 15px; right: 15px; display: none;"><img src="{{STATIC_URL}}formplayer/img/loading_small.gif" /></div>
 
