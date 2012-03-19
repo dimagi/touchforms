@@ -15,6 +15,11 @@ Getting started
 Get the prerequisites.
 Get the code.
 
+Update your settings.py::
+
+    Add "touchforms.formplayer" to your INSTALLED_APPS
+    Add XFORMS_PLAYER_URL = "http://127.0.0.1:4444"
+
 Syncdb::
     python manage.py syncdb
     
