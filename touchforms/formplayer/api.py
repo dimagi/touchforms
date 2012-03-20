@@ -2,6 +2,7 @@ import json
 from django.conf import settings
 from urlparse import urlparse
 import httplib
+from rapidsms.log.mixin import LoggerMixin
 
 
 '''
@@ -14,7 +15,7 @@ This API is currently highly beta and could use some hardening.
 class XformsEvent(object):
     """
     A wrapper for the json event object that comes back from touchforms, which 
-    looks approximately like this:n
+    looks approximately like this:
     
     { "datatype":"select",
       "style":{},
@@ -39,15 +40,15 @@ class XformsEvent(object):
         """
         A text-only prompt for this. Used in pure text (or sms) mode.
         """
-        if self.datatype == "select":
+        if self.datatype == "select" or self.datatype == "multiselect":
             return "%s %s" % \
                 (self.caption,
-                 ", ".join(["%s:%s" % (i, val) for i, val in \
-                            enumerate(self._dict["choices"])]))
+                 ", ".join(["%s:%s" % (i+1, val) for i, val in \
+                            enumerate(self._dict["choices"])])) #i shifted by 1 since it gets unshifted on server side.
         else:
             return self.caption
         
-class XformsResponse(object):
+class XformsResponse(object, LoggerMixin):
     """
     A wrapper for the json that comes back from touchforms, which 
     looks approximately like this:
@@ -63,8 +64,10 @@ class XformsResponse(object):
     """
     
     def __init__(self, datadict):
+        self.debug ('Trying to create XFormResponse with dict: %s' % datadict)
         self._dict = datadict
-        self.event = XformsEvent(datadict["event"])
+        if datadict.__contains__("event"):
+            self.event = XformsEvent(datadict["event"])
         self.status = datadict.get("status", "")
         self.seq_id = datadict["seq_id"]
         self.session_id = datadict.get("session_id", "")
