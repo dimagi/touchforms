@@ -32,6 +32,14 @@ if (!window.console) {
 
 
 
+function onlanginfo(switchfunc, langs) {
+  $.each(langs, function(i, lang) {
+      $b = $('<button />');
+      $b.text(lang);
+      $b.click(function() { switchfunc(lang) });
+      $('#content').before($b);
+    });
+}
 
 $(document).ready(function() {
 
@@ -40,8 +48,11 @@ $(document).ready(function() {
     session_data: {{ session_data|safe }},
     xform_url: "{% url xform_player_proxy %}",
     onsubmit: submit_form_post,
+    onlanginfo: onlanginfo,
   });
-  sess.load($('#content'), $('#loading'));
+
+  var init_lang = {% if lang %}'{{ lang|escapejs }}'{% else %}null{% endif %};
+  sess.load($('#content'), $('#loading'), init_lang);
   
 });
 

@@ -6,16 +6,21 @@ function xformAjaxAdapter (formName, sessionData, savedInstance, ajaxfunc, submi
   this.ajaxfunc = ajaxfunc;
   this.submitfunc = submitfunc;
 
-  this.loadForm = function ($div) {
-    adapter = this;
+  this.loadForm = function ($div, init_lang, onlanginfo) {
+    var adapter = this;
     this.ajaxfunc({'action': 'new-form',
                    'form-name': this.formName,
                    'instance-content': savedInstance,
+                   'lang': init_lang,
                    'session-data': this.sessionData,
                    'nav': 'fao'},
       function (resp) {
         adapter.session_id = resp["session_id"];
-        init_render(resp, adapter, $div);
+        adapter.form = init_render(resp, adapter, $div);
+
+        if (resp['langs'].length) {
+          onlanginfo(function(lang) { adapter.switchLanguage(lang); }, resp['langs']);
+        }
       });
   }
 
@@ -96,6 +101,16 @@ function xformAjaxAdapter (formName, sessionData, savedInstance, ajaxfunc, submi
         }
       },
       true);
+  }
+
+  this.switchLanguage = function(lang) {
+    var adapter = this;
+    this.ajaxfunc({'action': 'set-lang',
+                   'session-id': this.session_id,
+                   'lang': lang},
+      function (resp) {
+        adapter.form.reconcile(resp["tree"]);
+      });
   }
 
   this.showError = function(q, resp) {

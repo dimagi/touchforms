@@ -459,6 +459,7 @@ function init_render(form, adapter, $div) {
   var f = new Form(form, adapter);
   f.init_render();
   $div.append(f.$container);
+  return f;
 }
 
 var answer_eq = function(ans1, ans2) {

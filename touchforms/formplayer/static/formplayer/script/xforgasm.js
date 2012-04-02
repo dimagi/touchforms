@@ -5,13 +5,14 @@ function WebFormSession(params) {
   this.session_data = params.session_data;
   //todo: support instance_xml ?
   this.onsubmit = params.onsubmit;
+  this.onlanginfo = params.onlanginfo;
 
   this.urls = {
     xform: params.xform_url,
     autocomplete: params.autocomplete_url,
   };
 
-  this.load = function($div, $loading) {
+  this.load = function($div, $loading, init_lang) {
     this.$div = $div;
     this.$loading = $loading || $div.find('#loading');
 
@@ -20,7 +21,7 @@ function WebFormSession(params) {
                                        function(p, cb, bl) { sess.serverRequest(p, cb, bl); },
                                        function(p) { sess.submit(p); }
                                        );
-    adapter.loadForm($div);
+    adapter.loadForm($div, init_lang, this.onlanginfo);
   }
 
   this.submit = function(params) {
