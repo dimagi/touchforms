@@ -4,7 +4,7 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
   this.preloadTags = preloadTags;
   this.session_id = -1;
 
-  this.loadForm = function () {
+  this.loadForm = function (lang) {
     adapter = this;
     preload_data = {};
     for (var type in this.preloadTags) {
@@ -24,6 +24,7 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
     }
     this.serverRequest(XFORM_URL, {'action': 'new-form',
                                    'form-name': this.formName,
+                                   'lang': lang,
                                    'instance-content': savedInstance,
                                    'preloader-data': preload_data},
       function (resp) {

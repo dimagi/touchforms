@@ -113,7 +113,8 @@ def form_entry_new(request, xform, instance_xml, preloader_data, input_mode,
             "instance_xml": json.dumps(instance_xml),
             "preloader_data": json.dumps(preloader_data),
             "dim": get_player_dimensions(request),
-            "fullscreen": request.GET.get('mode', '').startswith('full')
+            "fullscreen": request.GET.get('mode', '').startswith('full'),
+            "lang": request.GET.get('lang'),
         }, context_instance=RequestContext(request))
 
 def form_entry_abort(request, xform, callback):
