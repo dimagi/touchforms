@@ -149,6 +149,14 @@ def handle_request (content, **kwargs):
             
             return xformplayer.submit_form(content['session-id'], content.get('answers', []), content.get('prevalidated', False))
 
+        elif action == 'set-lang':
+            if 'session-id' not in content:
+                return {'error': 'session id required'}
+            if 'lang' not in content:
+                return {'error': 'language required'}
+            
+            return xformplayer.set_locale(content['session-id'], content['lang'])            
+
         elif action == 'purge-stale':
             if 'window' not in content:
                 return {'error': 'staleness window required'}

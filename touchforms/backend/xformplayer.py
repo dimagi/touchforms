@@ -406,6 +406,10 @@ class XFormSession:
         #be unsatisfied constraints that make it fail. how to handle them here?
         self.fec.newRepeat(self.fem.getFormIndex())
 
+    def set_locale(self, lang):
+        self.fec.setLanguage(lang)
+        return self._parse_current_event()
+
     def get_locales(self):
         return self.fem.getLanguages() or []
 
@@ -512,6 +516,11 @@ def submit_form(session_id, answers, prevalidated):
             resp['status'] = 'success'
 
         return xfsess.response(resp, no_next=True)
+
+def set_locale(session_id, lang):
+    with global_state.get_session(session_id) as xfsess:
+        ev = xfsess.set_locale(lang)
+        return xfsess.response({}, ev)
 
 def next_event (xfsess):
     ev = xfsess.next_event()
