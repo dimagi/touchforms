@@ -108,7 +108,7 @@ class SequencingException(Exception):
 
 class XFormSession:
     def __init__(self, xform_raw=None, xform_path=None, instance_raw=None, instance_path=None,
-                 session_data={}, extensions=[], nav_mode='prompt', api_auth=None):
+                 init_lang=None, session_data={}, extensions=[], nav_mode='prompt', api_auth=None):
         self.lock = threading.Lock()
         self.nav_mode = nav_mode
         self.seq_id = 0
@@ -128,6 +128,10 @@ class XFormSession:
         self.form = load_form(xform, instance, extensions, session_data, api_auth)
         self.fem = FormEntryModel(self.form, FormEntryModel.REPEAT_STRUCTURE_NON_LINEAR)
         self.fec = FormEntryController(self.fem)
+
+        if init_lang is not None:
+            self.fec.setLanguage(init_lang)
+
         self._parse_current_event()
 
         self.update_last_activity()
@@ -403,6 +407,13 @@ class XFormSession:
         #be unsatisfied constraints that make it fail. how to handle them here?
         self.fec.newRepeat(self.fem.getFormIndex())
 
+    def set_locale(self, lang):
+        self.fec.setLanguage(lang)
+        return self._parse_current_event()
+
+    def get_locales(self):
+        return self.fem.getLanguages() or []
+
     def finalize(self):
         self.fem.getForm().postProcessInstance() 
 
@@ -445,13 +456,13 @@ class choice(object):
     def __json__(self):
         return json.dumps(repr(self))
 
-def open_form(form_name, instance_xml=None, extensions=[], session_data={}, nav_mode='prompt', api_auth=None):
+def open_form(form_name, instance_xml=None, lang=None, extensions=[], session_data={}, nav_mode='prompt', api_auth=None):
     if not os.path.exists(form_name):
         return {'error': 'no form found at %s' % form_name}
 
-    xfsess = XFormSession(xform_path=form_name, instance_raw=instance_xml, session_data=session_data, extensions=extensions, nav_mode=nav_mode, api_auth=api_auth)
+    xfsess = XFormSession(xform_path=form_name, instance_raw=instance_xml, init_lang=lang, session_data=session_data, extensions=extensions, nav_mode=nav_mode, api_auth=api_auth)
     sess_id = global_state.new_session(xfsess)
-    return xfsess.response({'session_id': sess_id, 'title': xfsess.form_title()})
+    return xfsess.response({'session_id': sess_id, 'title': xfsess.form_title(), 'langs': xfsess.get_locales()})
 
 def answer_question (session_id, answer, ix):
     with global_state.get_session(session_id) as xfsess:
@@ -506,6 +517,11 @@ def submit_form(session_id, answers, prevalidated):
             resp['status'] = 'success'
 
         return xfsess.response(resp, no_next=True)
+
+def set_locale(session_id, lang):
+    with global_state.get_session(session_id) as xfsess:
+        ev = xfsess.set_locale(lang)
+        return xfsess.response({}, ev)
 
 def next_event (xfsess):
     ev = xfsess.next_event()

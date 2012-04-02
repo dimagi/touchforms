@@ -63,7 +63,7 @@ function init () {
 
 {% endifequal %}
 
-  gFormAdapter.loadForm();
+  gFormAdapter.loadForm({% if lang %}'{{ lang }}'{% endif %});
 }
 
     </script>

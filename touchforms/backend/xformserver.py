@@ -7,6 +7,8 @@ import xformplayer
 import os
 import java.lang
 import time
+from optparse import OptionParser
+from datetime import datetime, timedelta
 
 from setup import init_classpath
 init_classpath()
@@ -15,6 +17,7 @@ import com.xhaus.jyson.JysonCodec as json
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 DEFAULT_PORT = 4444
+DEFAULT_STALE_WINDOW = 180 #minutes
 
 SIMULATED_DELAY = 0 #ms
 
@@ -85,8 +88,9 @@ def handle_request (content, **kwargs):
         if action == 'new-form':
             if 'form-name' not in content:
                 return {'error': 'form identifier required'}
-            session_data = content["session-data"] if "session-data" in content else {}
-            return xformplayer.open_form(content['form-name'], content.get('instance-content'), kwargs.get('extensions', []), session_data, nav_mode, content.get('hq_auth', None))
+
+            session_data = content.get("session-data", {})
+            return xformplayer.open_form(content['form-name'], content.get('instance-content'), content.get('lang'), kwargs.get('extensions', []), session_data, nav_mode, content.get('hq_auth', None))
 
         elif action == 'edit-form':
             return {'error': 'unsupported'}
@@ -146,6 +150,14 @@ def handle_request (content, **kwargs):
             
             return xformplayer.submit_form(content['session-id'], content.get('answers', []), content.get('prevalidated', False))
 
+        elif action == 'set-lang':
+            if 'session-id' not in content:
+                return {'error': 'session id required'}
+            if 'lang' not in content:
+                return {'error': 'language required'}
+            
+            return xformplayer.set_locale(content['session-id'], content['lang'])            
+
         elif action == 'purge-stale':
             if 'window' not in content:
                 return {'error': 'staleness window required'}
@@ -163,23 +175,65 @@ def handle_request (content, **kwargs):
 def delay():
     time.sleep(.5 * SIMULATED_DELAY / 1000)
 
+class Purger(threading.Thread):
+    def __init__(self, stale_window, purge_freq=5.):
+        threading.Thread.__init__(self)
+        self.stale_window = 60. * stale_window
+        self.purge_freq = timedelta(minutes=purge_freq)
+
+        self.last_purge = None
+        self.up = True
+
+    def run(self):
+        self.update()
+        while self.up:
+            if self.purge_due():
+                self.update()
+                result = xformplayer.purge(self.stale_window)
+                logging.info('purging sessions: ' + str(result))
+
+            time.sleep(0.1)
+
+    def purge_due(self):
+        if self.last_purge == None:
+            return True
+        elif datetime.utcnow() - self.last_purge > self.purge_freq:
+            return True
+        elif datetime.utcnow() < self.last_purge:
+            return True
+        return False
+
+    def update(self):
+        self.last_purge = datetime.utcnow()
+
+    def terminate(self):
+        self.up = False
+
+
 if __name__ == "__main__":
+    parser = OptionParser()
+    parser.add_option('-p', '--port', dest='port', type='int', default=DEFAULT_PORT)
+    parser.add_option('--stale', dest='stale_window', type='int', default=DEFAULT_STALE_WINDOW,
+                      help='length of inactivity before a form session is discarded (minutes)')
 
-    try:
-        port = int(sys.argv[1])
-    except IndexError:
-        port = DEFAULT_PORT
+    (options, args) = parser.parse_args()
 
-    extension_modules = sys.argv[2:]
+    extension_modules = args
 
-    gw = XFormHTTPGateway(port, extension_modules)
+    gw = XFormHTTPGateway(options.port, extension_modules)
     gw.start()
-    logging.info('started server on port %d' % port)
+    logging.info('started server on port %d' % options.port)
+
+    purger = Purger(options.stale_window)
+    purger.start()
+    logging.info('purging sessions inactive for more than %d minutes' % options.stale_window)
 
     try:
         while True:
             time.sleep(.01) #yield thread
     except KeyboardInterrupt:
+        purger.terminate()
+
         #note: the keyboardinterrupt event doesn't seem to be triggered in
         #jython, nor does jython2.5 support the httpserver 'shutdown' method
         logging.info('interrupted; shutting down...')
