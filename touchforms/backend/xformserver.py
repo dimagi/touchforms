@@ -90,7 +90,7 @@ def handle_request (content, **kwargs):
                 return {'error': 'form identifier required'}
 
             session_data = content.get("session-data", {})
-            return xformplayer.open_form(content['form-name'], content.get('instance-content'), content.get('lang'), kwargs.get('extensions', []), session_data, nav_mode, content.get('hq_auth', None))
+            return xformplayer.open_form(content['form-name'], content.get('instance-content'), content.get('lang'), kwargs.get('extensions', []), session_data, nav_mode, content.get('hq_auth'))
 
         elif action == 'edit-form':
             return {'error': 'unsupported'}
