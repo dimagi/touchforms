@@ -21,6 +21,7 @@ from django.shortcuts import render_to_response
 from django.views.decorators.csrf import csrf_exempt
 import tempfile
 import os
+from . import api
 
 def xform_list(request):
     forms_by_namespace = defaultdict(list)
@@ -235,19 +236,9 @@ def get_player_dimensions(request):
 def player_proxy(request):
     """Proxy to an xform player, to avoid cross-site scripting issues"""
     data = request.raw_post_data if request.method == "POST" else None
-    response = _post_data(data, settings.XFORMS_PLAYER_URL, content_type="text/json")
+    response = api.post_data(data, settings.XFORMS_PLAYER_URL, content_type="text/json")
     return HttpResponse(response)
 
-def _post_data(data, url, content_type):
-    up = urlparse(url)
-    headers = {}
-    headers["content-type"] = content_type
-    headers["content-length"] = len(data)
-    conn = httplib.HTTPConnection(up.netloc)
-    conn.request('POST', up.path, data, headers)
-    resp = conn.getresponse()
-    results = resp.read()
-    return results
     
 def api_preload_provider(request):
     param = request.GET.get('param', "")
