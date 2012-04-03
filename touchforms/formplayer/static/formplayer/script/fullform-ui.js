@@ -133,8 +133,8 @@ function Form(json, adapter) {
 
     var form = this;
     this.$container.find('#submit').click(function() {
-        var areYouSure = confirm('Submit this form finally, for all time and evermore?');
-        if (!areYouSure) {
+        var proceed = adapter.presubmitfunc();
+        if (!proceed) {
           return;
         }
 

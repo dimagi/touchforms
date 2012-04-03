@@ -41,12 +41,17 @@ function onlanginfo(switchfunc, langs) {
     });
 }
 
+function onpresubmit() {
+  return confirm('Submit this form finally, for all time and evermore?');
+}
+
 $(document).ready(function() {
 
   var sess = new WebFormSession({
     form_uid: '{{ form.file.path|escapejs }}',
     session_data: {{ session_data|safe }},
     xform_url: "{% url xform_player_proxy %}",
+    onpresubmit: onpresubmit,
     onsubmit: submit_form_post,
     onlanginfo: onlanginfo,
   });

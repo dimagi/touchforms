@@ -1,10 +1,11 @@
 
-function xformAjaxAdapter (formName, sessionData, savedInstance, ajaxfunc, submitfunc) {
+function xformAjaxAdapter (formName, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc) {
   this.formName = formName;
   this.sessionData = sessionData;
   this.session_id = -1;
   this.ajaxfunc = ajaxfunc;
   this.submitfunc = submitfunc;
+  this.presubmitfunc = presubmitfunc;
 
   this.loadForm = function ($div, init_lang, onlanginfo) {
     var adapter = this;

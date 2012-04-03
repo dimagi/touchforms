@@ -5,6 +5,7 @@ function WebFormSession(params) {
   this.session_data = params.session_data;
   //todo: support instance_xml ?
   this.onsubmit = params.onsubmit;
+  this.onpresubmit = params.onpresubmit || function(){ return true; };
   this.onlanginfo = params.onlanginfo || function(f, langs){};
 
   this.urls = {
@@ -19,7 +20,8 @@ function WebFormSession(params) {
     var sess = this;
     var adapter = new xformAjaxAdapter(this.form_uid, this.session_data, null,
                                        function(p, cb, bl) { sess.serverRequest(p, cb, bl); },
-                                       function(p) { sess.submit(p); }
+                                       function(p) { sess.submit(p); },
+                                       this.onpresubmit
                                        );
     adapter.loadForm($div, init_lang, this.onlanginfo);
   }
