@@ -1,9 +1,17 @@
 
 
 function WebFormSession(params) {
-  this.form_uid = params.form_uid;
-  this.session_data = params.session_data;
+  if (params.form_uid) {
+    this.form_spec = {type: 'uid', val: params.form_uid};
+  } else if (params.form_content) {
+    this.form_spec = {type: 'raw', val: params.form_content};
+  } else if (params.form_url) {
+    this.form_spec = {type: 'url', val: params.form_url};
+  } 
+
   //todo: support instance_xml ?
+  this.session_data = params.session_data;
+
   this.onsubmit = params.onsubmit;
   this.onpresubmit = params.onpresubmit || function(){ return true; };
   this.onlanginfo = params.onlanginfo || function(f, langs){};
@@ -18,7 +26,7 @@ function WebFormSession(params) {
     this.$loading = $loading || $div.find('#loading');
 
     var sess = this;
-    var adapter = new xformAjaxAdapter(this.form_uid, this.session_data, null,
+    var adapter = new xformAjaxAdapter(this.form_spec, this.session_data, null,
                                        function(p, cb, bl) { sess.serverRequest(p, cb, bl); },
                                        function(p) { sess.submit(p); },
                                        this.onpresubmit

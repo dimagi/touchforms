@@ -1,6 +1,6 @@
 
-function xformAjaxAdapter (formName, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc) {
-  this.formName = formName;
+function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc) {
+  this.formSpec = formSpec;
   this.sessionData = sessionData;
   this.session_id = -1;
   this.ajaxfunc = ajaxfunc;
@@ -8,14 +8,18 @@ function xformAjaxAdapter (formName, sessionData, savedInstance, ajaxfunc, submi
   this.presubmitfunc = presubmitfunc;
 
   this.loadForm = function ($div, init_lang, onlanginfo) {
+    var args = {
+      'action': 'new-form',
+      'instance-content': savedInstance,
+      'lang': init_lang,
+      'session-data': this.sessionData,
+      'nav': 'fao'
+    };
+    var form_param = {uid: 'form-name', raw: 'form-content', url: 'form-url'}[this.formSpec.type];
+    args[form_param] = this.formSpec.val;
+
     var adapter = this;
-    this.ajaxfunc({'action': 'new-form',
-                   'form-name': this.formName,
-                   'instance-content': savedInstance,
-                   'lang': init_lang,
-                   'session-data': this.sessionData,
-                   'nav': 'fao'},
-      function (resp) {
+    this.ajaxfunc(args, function (resp) {
         adapter.session_id = resp["session_id"];
         adapter.form = init_render(resp, adapter, $div);
 
