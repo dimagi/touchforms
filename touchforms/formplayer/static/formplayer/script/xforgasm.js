@@ -5,7 +5,7 @@ function WebFormSession(params) {
   this.session_data = params.session_data;
   //todo: support instance_xml ?
   this.onsubmit = params.onsubmit;
-  this.onlanginfo = params.onlanginfo;
+  this.onlanginfo = params.onlanginfo || function(f, langs){};
 
   this.urls = {
     xform: params.xform_url,
