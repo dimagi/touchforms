@@ -32,7 +32,7 @@ class XformsEvent(object):
         self.type = datadict["type"]
         self.caption = datadict.get("caption")
         self.datatype = datadict.get("datatype")
-        
+        self.output = datadict.get("output")
             
     @property
     def text_prompt(self):
