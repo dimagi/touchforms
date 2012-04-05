@@ -264,6 +264,7 @@ class XFormSession:
                     Constants.DATATYPE_NULL: 'str',
                     Constants.DATATYPE_TEXT: 'str',
                     Constants.DATATYPE_INTEGER: 'int',
+                    Constants.DATATYPE_LONG: 'longint',              
                     Constants.DATATYPE_DECIMAL: 'float',
                     Constants.DATATYPE_DATE: 'date',
                     Constants.DATATYPE_TIME: 'time',
@@ -275,7 +276,6 @@ class XFormSession:
                     Constants.DATATYPE_GEOPOINT: 'geo',
                     Constants.DATATYPE_BARCODE: 'barcode',
                     Constants.DATATYPE_BINARY: 'binary',
-                    Constants.DATATYPE_LONG: 'longint',              
                 }[q.getDataType()]
             except KeyError:
                 event['datatype'] = 'unrecognized'
@@ -288,11 +288,7 @@ class XFormSession:
             value = q.getAnswerValue()
             if value == None:
                 event['answer'] = None
-            elif event['datatype'] == 'int':
-                event['answer'] = value.getValue()
-            elif event['datatype'] == 'float':
-                event['answer'] = value.getValue()
-            elif event['datatype'] == 'str':
+            elif event['datatype'] in ('int', 'float', 'str', 'longint'):
                 event['answer'] = value.getValue()
             elif event['datatype'] == 'date':
                 event['answer'] = to_pdate(value.getValue())
@@ -342,6 +338,8 @@ class XFormSession:
             ans = None
         elif datatype == 'int':
             ans = IntegerData(int(answer))
+        elif datatype == 'longint':
+            ans = LongData(int(answer))
         elif datatype == 'float':
             ans = DecimalData(float(answer))
         elif datatype == 'str':

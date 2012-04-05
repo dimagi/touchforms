@@ -8,6 +8,7 @@
 {% endif %}
 <div class="notice">
 <form enctype="multipart/form-data" method="POST" action="">
+{% csrf_token %}
 <b>Upload a new form:</b> &nbsp;&nbsp;&nbsp;<input type="file" name="file" id="id_file" />
 <input type="submit" value="Upload!" style="float:right;"/>
 </form> 
