@@ -556,6 +556,86 @@ function TimeOfDayEntry (parent) {
   }
 }
 
+function GeoPointEntry () {
+  inherit(this, new SimpleEntry());
+
+  this.timers = {};
+
+  this.load = function (q, $container) {
+    this.mkWidget(q, $container);
+    this.setAnswer(this.default_answer);
+
+    this.commit = function() {
+      q.onchange();
+    }
+  }
+
+  this.mkWidget = function (q, $container) {
+    $container.html('<div id="coords"><span id="lat"></span>&nbsp;<span id="lon"></span></div><div id="map"></div>');
+    var $map = $container.find('#map');
+    // TODO: dynamic sizing
+    $map.css('width', '400px');
+    $map.css('height', '250px');
+
+    $container.find('#coords').css('font-weight', 'bold');
+
+    this.$lat = $container.find('#lat');
+    this.$lon = $container.find('#lon');
+
+    console.log('a');
+    this.map = new google.maps.Map($map[0], {
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      center: new google.maps.LatLng(0., 0.),
+      zoom: 4
+    });
+
+    var widget = this;
+    google.maps.event.addListener(this.map, "center_changed", function() { widget.update_center(); });
+    this.update_center();
+  }
+
+  this.getAnswer = function () {
+    return [+this.$lat.text(), +this.$lon.text()];
+  }
+
+  this.setAnswer = function (answer, postLoad) {
+    if (this.map) {
+      if (!answer) {
+        return;
+      }
+
+      this.map.setCenter(new google.maps.LatLng(answer[0], answer[1]));
+    } else {
+      this.default_answer = answer;
+    }
+  }
+
+  this.update_center = function() {
+    var center = this.map.getCenter();
+    var lat = center.lat();
+    var lon = center.lng();
+
+    this.setLatLon(lat, lon);
+    var widget = this;
+    this.delay_action('move', function() { widget.commit(); }, 1.);
+  }
+
+  this.setLatLon = function(lat, lon) {
+    this.$lat.text(lat.toFixed(5));
+    this.$lon.text(lon.toFixed(5));
+  }
+
+  this.delay_action = function(tag, dofunc, delay) {
+    var timer = this.timers[tag];
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+    this.timers[tag] = setTimeout(dofunc, 1000 * delay);
+  }
+
+}
+
 function renderQuestion (q, $container, init_answer) {
   var control = null;
 
@@ -581,6 +661,8 @@ function renderQuestion (q, $container, init_answer) {
     control = new DateEntry(q.domain_meta);
   } else if (q.datatype == "time") {
     control = new TimeOfDayEntry();
+  } else if (q.datatype == "geo") {
+    control = new GeoPointEntry();
   } else {
     control = new UnsupportedEntry(q.datatype);
   }
