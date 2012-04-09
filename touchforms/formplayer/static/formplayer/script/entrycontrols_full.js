@@ -560,6 +560,7 @@ function GeoPointEntry () {
   inherit(this, new SimpleEntry());
 
   this.timers = {};
+  this.DEFAULT = {lat: 30., lon: 0., zoom: 1, anszoom: 6};
 
   this.load = function (q, $container) {
     this.mkWidget(q, $container);
@@ -571,40 +572,76 @@ function GeoPointEntry () {
   }
 
   this.mkWidget = function (q, $container) {
-    $container.html('<div id="coords"><span id="lat"></span>&nbsp;<span id="lon"></span></div><div id="map"></div>');
+    var crosshairs = 'iVBORw0KGgoAAAANSUhEUgAAABMAAAATCAQAAADYWf5HAAAACXZwQWcAAAATAAAAEwDxf4yuAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAAAySURBVCjPY2hgIAZiCPwHAyKUMQxbZf9RAHKwIMSg+hEQqhtJBK6MKNNGTvCSld6wQwBd8RoA55WDIgAAAABJRU5ErkJggg==';
+    var crosshair_size = 19;
+    $container.html('<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td id="lat"></td><td id="lon"></td><td align="right" valign="bottom"><a id="clear" href="#">clear</a></td></tr></table><div id="map"></div><div><form><input id="query"><input type="submit" id="search" value="Search"></form></div>');
     var $map = $container.find('#map');
     // TODO: dynamic sizing
-    $map.css('width', '400px');
-    $map.css('height', '250px');
+    var W = 400; 
+    var H = 250;
+    $map.css('width', W+'px');
+    $map.css('height', H+'px');
 
-    $container.find('#coords').css('font-weight', 'bold');
-
+    this.lat = null;
+    this.lon = null;
     this.$lat = $container.find('#lat');
     this.$lon = $container.find('#lon');
+    $.each([this.$lat, this.$lon], function(i, $e) {
+        $e.css('font-weight', 'bold');
+        $e.css('width', '8em');
+      });
 
-    console.log('a');
+    var widget = this;
+    $container.find('#clear').click(function () {
+	widget.set_latlon(null, null);
+	widget.commit();
+        return false;
+      });
+
+    this.$query = $container.find('#query');
+    this.$query.css('width', '83%');
+    this.$search = $container.find('#search');
+    this.$search.css('width', '15%');
+    this.$search.click(function() {
+        q = widget.$query.val().trim();
+	if (q) {
+          widget.search(q);
+        }
+	return false;
+      });
+
     this.map = new google.maps.Map($map[0], {
       mapTypeId: google.maps.MapTypeId.ROADMAP,
-      center: new google.maps.LatLng(0., 0.),
-      zoom: 4
+      center: new google.maps.LatLng(this.DEFAULT.lat, this.DEFAULT.lon),
+      zoom: this.DEFAULT.zoom
     });
+
+    this.geocoder = new google.maps.Geocoder();
 
     var widget = this;
     google.maps.event.addListener(this.map, "center_changed", function() { widget.update_center(); });
-    this.update_center();
+
+    $ch = $('<img src="data:image/png;base64,' + crosshairs + '">');
+    $ch.css('position', 'relative')
+    $ch.css('top', ((H/*$map.height()*/ - crosshair_size) / 2) + 'px');
+    $ch.css('left', ((W/*$map.width()*/ - crosshair_size) / 2) + 'px');
+    $ch.css('z-index', '500');
+    $map.append($ch);
   }
 
   this.getAnswer = function () {
-    return [+this.$lat.text(), +this.$lon.text()];
+    return (this.lat != null ? [this.lat, this.lon] : null);
   }
 
   this.setAnswer = function (answer, postLoad) {
     if (this.map) {
-      if (!answer) {
-        return;
+      if (answer) {
+        this.set_latlon(answer[0], answer[1]);
+        this.map.setCenter(new google.maps.LatLng(answer[0], answer[1]));
+	this.map.setZoom(this.DEFAULT.anszoom);
+      } else {
+        this.set_latlon(null, null);
       }
-
-      this.map.setCenter(new google.maps.LatLng(answer[0], answer[1]));
     } else {
       this.default_answer = answer;
     }
@@ -615,14 +652,33 @@ function GeoPointEntry () {
     var lat = center.lat();
     var lon = center.lng();
 
-    this.setLatLon(lat, lon);
-    var widget = this;
-    this.delay_action('move', function() { widget.commit(); }, 1.);
+    if (this.set_latlon(lat, lon)) {
+      var widget = this;
+      this.delay_action('move', function() { widget.commit(); }, 1.);
+    }
   }
 
-  this.setLatLon = function(lat, lon) {
-    this.$lat.text(lat.toFixed(5));
-    this.$lon.text(lon.toFixed(5));
+  this.set_latlon = function(lat, lon) {
+    lon = lon % 360.;
+    if (lon < 0) {
+      lon += 360.
+    }
+    lon = lon % 360.;
+    if (lon >= 180.) {
+      lon -= 360.;
+    }
+
+    if (lat == this.lat && lon == this.lon) {
+      return false;
+    }
+
+    this.lat = lat;
+    this.lon = lon;
+
+    this.$lat.text(lat != null ? (lat >= 0. ? 'N' : 'S') + intpad(Math.abs(lat).toFixed(5), 8) : '??.?????');
+    this.$lon.text(lat != null ? (lon >= 0. ? 'E' : 'W') + intpad(Math.abs(lon).toFixed(5), 9) : '???.?????');
+
+    return true;
   }
 
   this.delay_action = function(tag, dofunc, delay) {
@@ -634,6 +690,15 @@ function GeoPointEntry () {
     this.timers[tag] = setTimeout(dofunc, 1000 * delay);
   }
 
+  this.search = function(query) {
+    var map = this.map;
+    this.geocoder.geocode({'address': query}, function(results, status) {
+      if (status == google.maps.GeocoderStatus.OK) {
+        map.fitBounds(results[0].geometry.viewport);
+        map.setCenter(results[0].geometry.location);
+      }
+    });
+  }
 }
 
 function renderQuestion (q, $container, init_answer) {
