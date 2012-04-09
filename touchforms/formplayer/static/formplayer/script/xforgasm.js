@@ -25,6 +25,8 @@ function WebFormSession(params) {
     this.$div = $div;
     this.$loading = $loading || $div.find('#loading');
 
+    this.$div.addClass('webforms');
+
     var sess = this;
     var adapter = new xformAjaxAdapter(this.form_spec, this.session_data, null,
                                        function(p, cb, bl) { sess.serverRequest(p, cb, bl); },
