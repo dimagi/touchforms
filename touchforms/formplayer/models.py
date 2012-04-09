@@ -30,12 +30,23 @@ class XForm(models.Model):
     checksum = models.CharField(help_text='Attachment SHA-1 Checksum',
                                 max_length=40, blank=True)
     file = models.FileField(upload_to="xforms", max_length=255)
+    uuid = models.CharField(max_length=32, default=u'')
     
     def __unicode__(self):
         return "%s (%s)" % (self.name, self.namespace)
     
     class Meta:
         app_label = 'formplayer'
+
+    @classmethod
+    def from_file_with_uuid(cls, filename, uuid):
+        try:
+            xform = XForm.objects.get(uuid=uuid)
+        except XForm.DoesNotExist:
+            xform = XForm.from_file(filename)
+            xform.uuid = uuid
+            xform.save()
+        return xform
 
     @classmethod
     def from_file(cls, filename, name=None):
@@ -74,10 +85,9 @@ class XForm(models.Model):
         
             if not namespace:
                 raise Exception("No namespace found in xform: %s" % name)
-        
             instance = XForm.objects.create(name=name, namespace=namespace, 
                                             version=version, uiversion=uiversion,
-                                            checksum=checksum, file=f)           
+                                            checksum=checksum, file=f)
             return instance
         finally:
             f.close()

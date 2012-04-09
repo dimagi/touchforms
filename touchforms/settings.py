@@ -86,8 +86,10 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     # Uncomment the next line to enable the admin:
     'django.contrib.admin',
+    'staticfiles',
+    'formplayer',
+    'south',
     'django.contrib.staticfiles' if django.VERSION >= (1, 3) else 'staticfiles',
-    'formplayer'
 )
 
 #e.g., 1.0, 1.1a, 1.2b, 1.3rc2
@@ -99,7 +101,7 @@ ROOT_DIR = os.path.normpath(os.path.dirname(__file__))
 STATIC_DOC_ROOT = os.path.join(ROOT_DIR, "formplayer", "static")
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(ROOT_DIR, 'staticroot')
-XFORMS_BOOTSTRAP_PATH = "static/demo_forms"
+#XFORMS_BOOTSTRAP_PATH = "static/demo_forms"
 XFORMS_PATH = "data/xforms"
 XFORMS_PLAYER_URL = "http://localhost:4444/"
 TOUCHFORMS_AUTOCOMPL_DATA_DIR = os.path.join(ROOT_DIR, 'static', 'census')
@@ -126,3 +128,5 @@ COUCHDB_DATABASE = 'http://%s%s/%s' % (
 COUCHDB_DATABASES = [('formplayer', COUCHDB_DATABASE)]
 
 REVISION = util.get_revision('git', ROOT_DIR, 'flag')
+
+STATICFILES_STORAGE = 'staticfiles.storage.StaticFilesStorage'
