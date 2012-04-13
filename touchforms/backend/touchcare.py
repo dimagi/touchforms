@@ -126,7 +126,7 @@ class CaseDatabase(IStorageUtilityIndexed):
         'case-status': lambda c: 'closed' if c.isClosed() else 'open',
       }[field_name]
       
-      cases = [c for c in self.cases if get_val(c) == value]
+      cases = [c for c in self.cases.values() if get_val(c) == value]
       self.cached_lookups[(field_name, value)] = cases
 
     cases = self.cached_lookups[(field_name, value)]
@@ -171,8 +171,8 @@ class CCInstances(InstanceInitializationFactory):
         if 'casedb' in ref:
             return CaseInstanceTreeElement(instance.getBase(), 
                         CaseDatabase(self.vars['domain'], self.vars['username'], 
-                                     self.auth, self.vars["additional_filters"]),
-                        False);
+                                     self.auth, self.vars.get("additional_filters", {})),
+                        False)
         elif 'fixture' in ref:
             fixture_id = ref.split('/')[-1]
             user_id = self.vars['user_id']
@@ -196,10 +196,15 @@ SUPPORTED_ACTIONS = ["touchcare-filter-cases"]
 def handle_request (content, **kwargs):
     action = content['action']
     if action == "touchcare-filter-cases":
+        return filter_cases(content)
+    else:
+        return {'error': 'unrecognized action'}
+
+def filter_cases(content):
+    try: 
         modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
-            {"filters": content["filter_expr"]}
-        
-        # TODO
+                {"filters": content["filter_expr"]}
+            
         api_auth = content.get('hq_auth')
         session_data = content.get("session_data", {})
         ccInstances = CCInstances(session_data, api_auth)
@@ -209,5 +214,5 @@ def handle_request (content, **kwargs):
         case_list = XPathFuncExpr.toString(XPathParseTool.parseXPath(modified_xpath)\
             .eval(EvaluationContext(None, instances)))
         return {'cases': case_list.split(",")}
-    else:
-        return {'error': 'unrecognized action'}
+    except Exception, e:
+        return {'error': str(e)}
