@@ -587,7 +587,7 @@ function GeoPointEntry () {
       });
 
     this.$query = $container.find('#query');
-    this.$query.css('width', '83%');
+    this.$query.css('width', '80%');
     this.$search = $container.find('#search');
     this.$search.css('width', '15%');
     this.$search.click(function() {
