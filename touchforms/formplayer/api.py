@@ -87,8 +87,8 @@ def post_data(data, url, content_type, auth=None):
     results = resp.read()
     return results
 
-def get_response(data, url):
-    response = post_data(data, url, content_type="text/json")
+def get_response(data, url, auth=None):
+    response = post_data(data, url, content_type="text/json", auth=auth)
     return XformsResponse(json.loads(response))
 
 def start_form_session(form_path, content=None, preloader_data={}):
