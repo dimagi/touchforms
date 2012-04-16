@@ -113,7 +113,7 @@ def get_response(data, url):
     response = post_data(data, url, content_type="text/json")
     return XformsResponse(json.loads(response))
 
-def start_form_session(form_path, content=None, preloader_data={}):
+def start_form_session(form_path, content=None, language="", preloader_data={}):
     """
     Start a new form session
     """
@@ -121,6 +121,8 @@ def start_form_session(form_path, content=None, preloader_data={}):
             "form-name": form_path,
             "instance-content": content,
             "preloader-data":{}}
+    if language:
+        data['lang'] = language
     
     return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL)
 
