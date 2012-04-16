@@ -1,14 +1,16 @@
 
-function xformAjaxAdapter (formName, preloadTags, savedInstance) {
+function xformAjaxAdapter (formName, sessionData, savedInstance) {
   this.formName = formName;
-  this.preloadTags = preloadTags;
+  this.sessionData = sessionData;
   this.session_id = -1;
 
   this.loadForm = function (lang) {
     adapter = this;
-    preload_data = {};
-    for (var type in this.preloadTags) {
-        var dict = this.preloadTags[type];
+
+    var preloadTags = (this.sessionData || {}).preloaders || {};
+    var preload_data = {};
+    for (var type in preloadTags) {
+        var dict = preloadTags[type];
         preload_data[type] = {};
         for (var key in dict) {
             var val = dict[key];

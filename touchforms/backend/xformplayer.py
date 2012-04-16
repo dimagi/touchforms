@@ -98,7 +98,8 @@ def load_form(xform, instance=None, extensions=[], session_data={}, api_auth=Non
     if instance != None:
         XFormParser.loadXmlInstance(form, StringReader(instance))
 
-    customhandlers.attach_handlers(form, extensions)
+    # retrieve preloaders out of session_data (for backwards compatibility)
+    customhandlers.attach_handlers(form, extensions, session_data.get('preloaders', {}))
 
     form.initialize(instance == None, CCInstances(session_data, api_auth))
     return form

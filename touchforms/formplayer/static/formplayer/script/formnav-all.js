@@ -18,6 +18,14 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
     var form_param = {uid: 'form-name', raw: 'form-content', url: 'form-url'}[this.formSpec.type];
     args[form_param] = this.formSpec.val;
 
+    // handle preloaders (deprecated) for backwards compatibilty
+    if (args.session_data && args.session_data.preloaders) {
+	if (args.session_data == null) {
+	    args.session_data = {};
+	}
+	args.session_data.preloaders = init_preloaders(args.session_data.preloaders);
+    }
+
     var adapter = this;
     this.ajaxfunc(args, function (resp) {
         adapter.session_id = resp["session_id"];
@@ -148,4 +156,32 @@ function submit_redirect(params, path, method) {
   // required for FF 3+ compatibility
   document.body.appendChild(form);
   form.submit();
+}
+
+
+// preloaders are deprecated -- for backwards compatibility
+function init_preloaders(preloaders) {
+    if (preloaders == null) {
+	return null;
+    }
+
+    var preload_data = {};
+    for (var type in preloaders) {
+        var dict = preloaders[type];
+
+        preload_data[type] = {};
+        for (var key in dict) {
+            var val = dict[key];
+
+            // this special character indicates a server preloader, which 
+            // we make a synchronous request for
+            if (val && val.indexOf("<") === 0) {
+                valback = jQuery.ajax({url: PRELOADER_URL, type: 'GET', data:{"param": val}, async: false}).responseText;
+                preload_data[type][key] = valback;
+            } else {
+                preload_data[type][key] = val
+            }
+        }
+    }
+    return preload_data;
 }
