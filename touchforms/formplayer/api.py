@@ -93,8 +93,12 @@ class XformsResponse(object):
             
         
         
+def post_data(data, url, content_type, auth=None):
+    if auth:
+        d = json.loads(data)
+        d['hq_auth'] = {'type': 'django-session', 'key': auth}
+        data = json.dumps(d)
 
-def post_data(data, url, content_type):
     up = urlparse(url)
     headers = {}
     headers["content-type"] = content_type

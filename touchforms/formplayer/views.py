@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.conf import settings
-from touchforms.formplayer.models import XForm, PlaySession
+from touchforms.formplayer.models import XForm
 from touchforms.formplayer.const import *
 from touchforms.formplayer.autocomplete import autocompletion, DEFAULT_NUM_SUGGESTIONS
 from django.http import HttpResponseRedirect, HttpResponse,\
@@ -47,12 +47,11 @@ def xform_list(request):
             
     for form in XForm.objects.all():
         forms_by_namespace[form.namespace].append(form)
-    return render_to_response("formplayer/xform_list.html", 
-                              {'forms_by_namespace': dict(forms_by_namespace),
-                               "success": success,
-                               "notice": notice},
-                               
-                              context_instance=RequestContext(request))
+    return render_to_response("formplayer/xform_list.html", {
+            'forms_by_namespace': dict(forms_by_namespace),
+            "success": success,
+            "notice": notice
+        }, context_instance=RequestContext(request))
                               
 def download(request, xform_id):
     """
@@ -75,11 +74,16 @@ def enter_form(request, **kwargs):
     xform_id = kwargs.get('xform_id')
     xform = kwargs.get('xform')
     instance_xml = kwargs.get('instance_xml')
-    preloader_data = coalesce(kwargs.get('preloader_data'), {})
+    session_data = coalesce(kwargs.get('session_data'), {})
     input_mode = coalesce(kwargs.get('input_mode'), 'touch')
     submit_callback = coalesce(kwargs.get('onsubmit'), default_submit)
     abort_callback = coalesce(kwargs.get('onabort'), default_abort)
     force_template = coalesce(kwargs.get('force_template'), None)
+
+    # support for backwards compatibility; preloaders are DEPRECATED
+    preload_data = kwargs.get('preloader_data')
+    if preload_data:
+        session_data['preloaders'] = preload_data
 
     if not xform:
         xform = get_object_or_404(XForm, id=xform_id)
@@ -93,11 +97,11 @@ def enter_form(request, **kwargs):
         elif request.POST["type"] == 'form-aborted':
             return form_entry_abort(request, xform, abort_callback)
 
-    return form_entry_new(request, xform, instance_xml, preloader_data, 
+    return form_entry_new(request, xform, instance_xml, session_data, 
                           input_mode, force_template)
 
 # TODO: instance loading
-def form_entry_new(request, xform, instance_xml, preloader_data, input_mode, 
+def form_entry_new(request, xform, instance_xml, session_data, input_mode, 
                    force_template=None):
     """start a new touchforms/typeforms session"""
     if force_template is not None:
@@ -112,7 +116,7 @@ def form_entry_new(request, xform, instance_xml, preloader_data, input_mode,
             "form": xform,
             "mode": 'xform',
             "instance_xml": json.dumps(instance_xml),
-            "preloader_data": json.dumps(preloader_data),
+            "session_data": json.dumps(session_data),
             "dim": get_player_dimensions(request),
             "fullscreen": request.GET.get('mode', '').startswith('full'),
             "lang": request.GET.get('lang'),
@@ -136,7 +140,7 @@ def default_submit(xform, instance_xml):
 def default_abort(xform, abort_url='/'):
     return HttpResponseRedirect(abort_url)
 
-# this function is here for backwards compatibility; use enter_form() instead
+# this function is here for backwards compatibility (just BHOMA?); use enter_form() instead
 def play(request, xform_id, callback=None, preloader_data=None, input_mode=None,
          abort_callback=default_abort, force_template=None):
     """
@@ -150,6 +154,7 @@ def play(request, xform_id, callback=None, preloader_data=None, input_mode=None,
     input_mode - 'touch' for touchforms, 'type' for typeforms
     instance_xml - an xml instance that, if present, will be edited during the form session
     """
+
     return enter_form(request,
                       xform_id=xform_id,
                       preloader_data=preloader_data,
@@ -158,65 +163,6 @@ def play(request, xform_id, callback=None, preloader_data=None, input_mode=None,
                       onabort=abort_callback,
                       force_template=force_template,
                       )
-
-@csrf_exempt
-def play_remote(request, session_id=None, playsettings=None):
-    if not session_id:
-        playsettings = playsettings if playsettings is not None else request.POST
-        xform = playsettings.get('xform')
-        try:
-            tmp_file_handle, tmp_file_path = tempfile.mkstemp()
-            tmp_file = os.fdopen(tmp_file_handle, 'w')
-            tmp_file.write(xform.encode('utf-8'))
-            tmp_file.close()
-            new_form = XForm.from_file(tmp_file_path, str(file))
-            notice = "Created form: %s " % file
-        except Exception, e:
-            logging.error("Problem creating xform from %s: %s" % (file, e))
-            success = False
-            notice = "Problem creating xform from %s: %s" % (file, e)
-            raise e
-        session = PlaySession(
-            next=playsettings.get('next'),
-            abort=playsettings.get('abort'),
-            input_mode=playsettings.get('input_mode'),
-            preloader_data=json.loads(playsettings.get('data', '{}')),
-            xform_id=new_form.id,
-            saved_instance=playsettings.get('instance')
-        )
-        session.save()
-        params = '&'.join(['%s=%s' % (x[0],x[1]) for x in request.GET.items()])
-        return HttpResponseRedirect("%s?%s" % (reverse('xform_play_remote', args=[session._id]), params))
-
-    
-    session = PlaySession.get(session_id)
-    def onsubmit(xform, instance_xml):
-        xform.delete()
-        # keep the session/attachment around for later access.
-        # TODO: possibly consider auto-deleting these at some point
-        session.put_attachment(instance_xml, "form.xml", "text/xml", len(instance_xml))
-        # use & if the url already has a ?
-        url = "%s?session_id=%s" % (session.next, session_id) \
-              if "?" not in session.next \
-              else "%s&session_id=%s" % (session.next, session_id) 
-        return HttpResponseRedirect(url)
-    def onabort(xform):
-        xform.delete()
-        session.delete()
-        return HttpResponseRedirect(session.abort if session.abort else session.next)
-    return enter_form(request, 
-                      xform_id=session.xform_id,
-                      preloader_data=session.to_json()['preloader_data'],
-                      input_mode=session.input_mode,
-                      onsubmit=onsubmit,
-                      onabort=onabort,
-                      instance_xml=session.saved_instance)
-
-def get_remote_instance(request, session_id):
-    session = PlaySession.get(session_id)
-    response = HttpResponse(mimetype='application/xml')
-    response.write(session.get_instance())
-    return response
 
 def get_player_dimensions(request):
     def get_dim(getparam, settingname):
@@ -237,10 +183,13 @@ def get_player_dimensions(request):
 def player_proxy(request):
     """Proxy to an xform player, to avoid cross-site scripting issues"""
     data = request.raw_post_data if request.method == "POST" else None
-    response = api.post_data(data, settings.XFORMS_PLAYER_URL, content_type="text/json")
+    auth_cookie = request.COOKIES.get('sessionid')
+    response = api.post_data(data, settings.XFORMS_PLAYER_URL, 
+                             content_type="text/json", auth=auth_cookie)
     return HttpResponse(response)
 
-    
+
+# DEPRECATED    
 def api_preload_provider(request):
     param = request.GET.get('param', "")
     param = param.strip().lower()

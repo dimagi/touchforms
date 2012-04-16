@@ -54,7 +54,7 @@ class XForm(models.Model):
             for child in head:
                 if "model" in child.tag:
                     for subchild in child:
-                        if "instance" in subchild.tag:
+                        if "instance" in subchild.tag and 'src' not in subchild.attrib:
                             instance_root = subchild[0]
                             r = re.search('{[a-zA-Z0-9_\-\.\/\:]*}', instance_root.tag)
                             if r is None:
@@ -82,15 +82,6 @@ class XForm(models.Model):
         finally:
             f.close()
                         
-class PlaySession(Document):
-    xform_id = IntegerProperty()
-    next = StringProperty()
-    abort = StringProperty()
-    preloader_data = DictProperty()
-    saved_instance = StringProperty()
-    input_mode = StringProperty()
-    
-    def get_instance(self):
-        return self.fetch_attachment("form.xml")
+
         
     

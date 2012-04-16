@@ -74,20 +74,8 @@ function SimpleEntry () {
 
   this.shortcuts = [];
 
-  /*
-  this.next = function () {
-    if (this.prevalidate()) {
-      answerQuestion();
-    }
-  }
-  */
-
   this.prevalidate = function (q) {
     return true;
-  }
-
-  this.back = function () {
-    prevQuestion();
   }
 
   this.destroy = function () {
@@ -599,7 +587,7 @@ function GeoPointEntry () {
       });
 
     this.$query = $container.find('#query');
-    this.$query.css('width', '83%');
+    this.$query.css('width', '80%');
     this.$search = $container.find('#search');
     this.$search.css('width', '15%');
     this.$search.click(function() {

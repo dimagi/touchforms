@@ -119,7 +119,8 @@ function parse_meta(type, style) {
   return meta;
 }
 
-function Form(json) {
+function Form(json, adapter) {
+  this.adapter = adapter;
   this.children = [];
 
   this.init_render = function() {
@@ -132,13 +133,17 @@ function Form(json) {
 
     var form = this;
     this.$container.find('#submit').click(function() {
-        var areYouSure = confirm('Submit this form finally, for all time and evermore?');
-        if (!areYouSure) {
+        var proceed = adapter.presubmitfunc();
+        if (!proceed) {
           return;
         }
 
-        gFormAdapter.submitForm(form);
+        form.submit();
       });
+
+    this.submit = function() {
+      this.adapter.submitForm(this);
+    }
   }
 
   this.reconcile = function(new_json) {
@@ -151,8 +156,6 @@ function Form(json) {
 
   this.submitting = function() {
     $('#submit').val('Submitting...');
-    inputActivate(false);
-    inputActivate = function(){}; //hack to keep input fields disabled during final POST
   }
 }
 
@@ -179,9 +182,13 @@ function Group(json, parent) {
 
     var g = this;
     this.$del.click(function() {
-        gFormAdapter.deleteRepeat(g);
+        g.deleteRepeat();
         return false;
       });
+  }
+
+  this.deleteRepeat = function() {
+    getForm(this).adapter.deleteRepeat(this);
   }
 
   this.reconcile = function(new_json) {
@@ -226,9 +233,13 @@ function Repeat(json, parent) {
     this.$add = this.$container.find('#add');
     var rep = this;
     this.$add.click(function() {
-        gFormAdapter.newRepeat(rep);
+        rep.newRepeat();
         return false;
       });
+  }
+
+  this.newRepeat = function() {
+    getForm(this).adapter.newRepeat(this);
   }
 
   this.reconcile = function(new_json) {
@@ -256,31 +267,74 @@ function Question(json, parent) {
   this.parent = parent;
   this.children = [];
 
+  this.is_select = (this.datatype == 'select' || this.datatype == 'multiselect');
+
   this.init_render = function() {
     if (this.datatype != 'info') {
       this.$container = $('<div class="q"><div id="widget"></div><span id="req"></span><span id="caption"></span> <span id="ix"></span> <div id="error"></div><div class="eoq" /></div>');
-      this.control = renderQuestion(this, this.$container.find('#widget'), this.last_answer);
       this.$error = this.$container.find('#error');
+
+      this.update(true);
     } else {
       this.$container = $('<div><span id="ix"></span><span id="caption"></span></div>');
       this.$container.addClass('info');
       this.control = new InfoEntry();
-    }
 
-    this.update();
+      this.update(false);
+    }
   }
 
   this.reconcile = function(new_json) {
     this.caption = new_json.caption;
     this.required = new_json.required;
-    //update select choices? (change due to localization / itemsets)
-    this.update();
+
+    var refresh_widget = false;
+    if (this.is_select) {
+      var different = false;
+      if (this.choices.length != new_json.choices.length) {
+        different = true;
+      } else {
+        $.each(this.choices, function(i, e) {
+            if (e != new_json.choices[i]) {
+              different = true;
+              return false;
+            }
+          });
+      }
+
+      if (different) {
+        this.choices = new_json.choices;
+        this.last_answer = new_json.answer;
+        refresh_widget = true;
+      }
+    }
+
+    this.update(refresh_widget);
   }
 
-  this.update = function() {
+  // this is kind of hacked up how we update select questions. generally input widgets
+  // themselves aren't altered as the rest of the form changes, but select choices can
+  // change due to locale switches or itemsets. ideally we should create the widget once
+  // and call a reconcile() function on it, but: the select widget is currently pretty
+  // complicated due to vestigial code, and the ajax api doesn't provide the select
+  // values, so we can't accurately map which old choices correspond to which new
+  // choices. so instead we destroy and recreate the control here, and it's messy.
+  // it also screws up the focus, which we'd have to take extra steps to preserve, but
+  // don't currently.
+
+  this.update = function(refresh_widget) {
     this.$container.find('#caption').text(this.caption);
     this.$container.find('#req').text(this.required ? '*' : '');
     this.$container.find('#ix').text('[' + ixInfo(this) + ']');
+
+    if (refresh_widget) {
+      //var uistate = this.control.get_ui_state();
+
+      this.$container.find('#widget').empty();
+      this.control = renderQuestion(this, this.$container.find('#widget'), this.last_answer);
+
+      //this.control.restore_ui_state(uistate);
+    }
   }
 
   this.getAnswer = function() {
@@ -303,8 +357,12 @@ function Question(json, parent) {
       }
 
       this.last_answer = this.getAnswer();
-      gFormAdapter.answerQuestion(this);
+      this.commitAnswer();
     }
+  }
+
+  this.commitAnswer = function() {
+    getForm(this).adapter.answerQuestion(this);
   }
 
   this.showError = function(content) {
@@ -440,18 +498,11 @@ var inElementSet = function(e, set) {
   return (ix != -1 ? set[ix] : null);
 }
 
-
-
-function inputActivate(enable) {
-  BLOCKING_REQUEST_IN_PROGRESS = !enable;
-  $('input').attr('disabled', enable ? null : 'true');
-  $('a').css('color', enable ? 'blue' : 'grey');
-}
-
-function init_render(form) {
-  var f = new Form(form);
+function init_render(form, adapter, $div) {
+  var f = new Form(form, adapter);
   f.init_render();
-  $('#content').append(f.$container);
+  $div.append(f.$container);
+  return f;
 }
 
 var answer_eq = function(ans1, ans2) {

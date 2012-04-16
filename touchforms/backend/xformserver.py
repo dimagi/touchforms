@@ -86,10 +86,29 @@ def handle_request (content, **kwargs):
     nav_mode = content.get('nav', 'prompt')
     try:
         if action == 'new-form':
-            if 'form-name' not in content:
-                return {'error': 'form identifier required'}
-            preload_data = content.get("preloader-data", {})
-            return xformplayer.open_form(content['form-name'], content.get('instance-content'), content.get('lang'), kwargs.get('extensions', []), preload_data, nav_mode)
+            form_fields = {'form-name': 'uid', 'form-content': 'raw', 'form-url': 'url'}
+            form_spec = None
+            for k, v in form_fields.iteritems():
+                try:
+                    form_spec = (v, content[k])
+                    break
+                except KeyError:
+                    pass
+            if not form_spec:
+                return {'error': 'form specification required (form-name, form-content, or form-url)'}
+
+            inst_fields = {'instance-content': 'raw'}
+            inst_spec = None
+            for k, v in inst_fields.iteritems():
+                try:
+                    inst_spec = (v, content[k])
+                    break
+                except KeyError:
+                    pass
+
+            session_data = content.get("session-data", {})
+            return xformplayer.open_form(form_spec, inst_spec,
+                                         content.get('lang'), kwargs.get('extensions', []), session_data, nav_mode, content.get('hq_auth'))
 
         elif action == 'edit-form':
             return {'error': 'unsupported'}

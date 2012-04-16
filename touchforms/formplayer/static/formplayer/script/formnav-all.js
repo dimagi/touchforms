@@ -1,38 +1,39 @@
 
-function xformAjaxAdapter (formName, preloadTags, savedInstance) {
-  this.formName = formName;
-  this.preloadTags = preloadTags;
+function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc) {
+  this.formSpec = formSpec;
+  this.sessionData = sessionData;
   this.session_id = -1;
+  this.ajaxfunc = ajaxfunc;
+  this.submitfunc = submitfunc;
+  this.presubmitfunc = presubmitfunc;
 
-  this.loadForm = function () {
-    adapter = this;
-    preload_data = {};
-    for (var type in this.preloadTags) {
-        var dict = this.preloadTags[type];
-        preload_data[type] = {};
-        for (var key in dict) {
-            var val = dict[key];
-            if (!val) {
-                console.log("no val for", key, "in", dict);
-            }
-            // this special character indicates a server preloader, which 
-            // we make a synchronous request for
-            if (val && val.indexOf("<") === 0) {
-                valback = jQuery.ajax({url: PRELOADER_URL, type: 'GET', data:{"param": val}, async: false}).responseText;
-                preload_data[type][key] = valback;
-            } else {
-                preload_data[type][key] = val
-            }
-        }
+  this.loadForm = function ($div, init_lang, onlanginfo) {
+    var args = {
+      'action': 'new-form',
+      'instance-content': savedInstance,
+      'lang': init_lang,
+      'session-data': this.sessionData,
+      'nav': 'fao'
+    };
+    var form_param = {uid: 'form-name', raw: 'form-content', url: 'form-url'}[this.formSpec.type];
+    args[form_param] = this.formSpec.val;
+
+    // handle preloaders (deprecated) for backwards compatibilty
+    if (args['session-data'] && args['session-data'].preloaders) {
+	if (args['session-data'] == null) {
+	    args['session-data'] = {};
+	}
+	args['session-data'].preloaders = init_preloaders(args['session-data'].preloaders);
     }
-    this.serverRequest(XFORM_URL, {'action': 'new-form',
-                                   'form-name': this.formName,
-                                   'instance-content': savedInstance,
-                                   'preloader-data': preload_data,
-                                   'nav': 'fao'},
-      function (resp) {
+
+    var adapter = this;
+    this.ajaxfunc(args, function (resp) {
         adapter.session_id = resp["session_id"];
-        adapter._renderForm(resp);
+        adapter.form = init_render(resp, adapter, $div);
+
+        if (resp['langs'].length) {
+          onlanginfo(function(lang) { adapter.switchLanguage(lang); }, resp['langs']);
+        }
       });
   }
 
@@ -41,10 +42,10 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
     var answer = q.getAnswer();
 
     var adapter = this;
-    this.serverRequest(XFORM_URL, {'action': 'answer',
-                                   'session-id': this.session_id,
-                                   'ix': ix,
-                                   'answer': answer},
+    this.ajaxfunc({'action': 'answer',
+                   'session-id': this.session_id,
+                   'ix': ix,
+                   'answer': answer},
       function (resp) {
         if (resp["status"] == "validation-error") {
           adapter.showError(q, resp);
@@ -56,9 +57,9 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
   }
 
   this.newRepeat = function(repeat) {
-    this.serverRequest(XFORM_URL, {'action': 'new-repeat',
-                                   'session-id': this.session_id,
-                                   'ix': getIx(repeat)},
+    this.ajaxfunc({'action': 'new-repeat',
+                   'session-id': this.session_id,
+                   'ix': getIx(repeat)},
       function (resp) {
         getForm(repeat).reconcile(resp["tree"]);
       },
@@ -68,10 +69,10 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
   this.deleteRepeat = function(repetition) {
     var juncture = getIx(repetition.parent);
     var rep_ix = +(repetition.rel_ix.split(":").slice(-1)[0]) + 1;
-    this.serverRequest(XFORM_URL, {'action': 'delete-repeat', 
-                                   'session-id': this.session_id,
-                                   'ix': rep_ix,
-                                   'form_ix': juncture},
+    this.ajaxfunc({'action': 'delete-repeat', 
+                   'session-id': this.session_id,
+                   'ix': rep_ix,
+                   'form_ix': juncture},
       function (resp) {
         getForm(repetition).reconcile(resp["tree"]);
       },
@@ -97,14 +98,14 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
     accumulate_answers(form);
 
     var adapter = this;
-    this.serverRequest(XFORM_URL, {'action': 'submit-all',
-                                   'session-id': this.session_id,
-                                   'answers': answers,
-                                   'prevalidated': prevalidated},
+    this.ajaxfunc({'action': 'submit-all',
+                   'session-id': this.session_id,
+                   'answers': answers,
+                   'prevalidated': prevalidated},
       function (resp) {
         if (resp.status == 'success') {
           form.submitting();
-          adapter._formComplete(resp);
+          adapter.submitfunc(resp);
         } else {
           $.each(resp.errors, function(ix, error) {
               adapter.showError(getForIx(form, ix), error);
@@ -115,6 +116,16 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
       true);
   }
 
+  this.switchLanguage = function(lang) {
+    var adapter = this;
+    this.ajaxfunc({'action': 'set-lang',
+                   'session-id': this.session_id,
+                   'lang': lang},
+      function (resp) {
+        adapter.form.reconcile(resp["tree"]);
+      });
+  }
+
   this.showError = function(q, resp) {
     if (resp["type"] == "required") {
       q.showError("An answer is required");
@@ -122,75 +133,6 @@ function xformAjaxAdapter (formName, preloadTags, savedInstance) {
       q.showError(resp["reason"] || 'This answer is outside the allowed range.');      
     }
   }
-
-  this._renderForm = function(form) {
-    init_render(form);
-  }
-
-  this._formComplete = function (params) {
-    params.type = 'form-complete';
-    submit_redirect(params);
-  }
-
-  this.serverRequest = function (url, params, callback, blocking) {
-    serverRequest(
-      function (cb) {
-        jQuery.post(url, JSON.stringify(params), cb, "json");
-      },
-      callback,
-      blocking
-    );
-  }
-}
-
-var BLOCKING_REQUEST_IN_PROGRESS = false;
-var LAST_REQUEST_HANDLED = -1;
-var NUM_PENDING_REQUESTS = 0;
-// makeRequest - function that takes in a callback function and executes an
-//     asynchronous request (GET, POST, etc.) with the given callback
-// callback - callback function for request
-// blocking - if true, no further simultaneous requests are allowed until
-//     this request completes
-function serverRequest (makeRequest, callback, blocking) {
-  if (BLOCKING_REQUEST_IN_PROGRESS) {
-    return;
-  }
-
-  NUM_PENDING_REQUESTS++;
-  $('#loading').show();
-
-  if (blocking) {
-    inputActivate(false); // sets BLOCKING_REQUEST_IN_PROGRESS
-  }
-  makeRequest(function (resp) {
-      // ignore responses older than the most-recently handled
-      if (resp.seq_id && resp.seq_id < LAST_REQUEST_HANDLED) {
-        return;
-      }
-      LAST_REQUEST_HANDLED = resp.seq_id;
-
-      callback(resp);
-      if (blocking) {
-        inputActivate(true); // clears BLOCKING_REQUEST_IN_PROGRESS
-      }
-
-      NUM_PENDING_REQUESTS--;
-      if (NUM_PENDING_REQUESTS == 0) {
-        $('#loading').hide();
-      }
-    });
-}
-
-function getQuestionAnswer () {
-  return activeControl.getAnswer();
-}
-
-function answerQuestion () {
-  gFormAdapter.answerQuestion(getQuestionAnswer());
-}
-
-function prevQuestion () {
-  gFormAdapter.prevQuestion();
 }
 
 function submit_redirect(params, path, method) {
@@ -214,4 +156,32 @@ function submit_redirect(params, path, method) {
   // required for FF 3+ compatibility
   document.body.appendChild(form);
   form.submit();
+}
+
+
+// preloaders are deprecated -- for backwards compatibility
+function init_preloaders(preloaders) {
+    if (preloaders == null) {
+	return null;
+    }
+
+    var preload_data = {};
+    for (var type in preloaders) {
+        var dict = preloaders[type];
+
+        preload_data[type] = {};
+        for (var key in dict) {
+            var val = dict[key];
+
+            // this special character indicates a server preloader, which 
+            // we make a synchronous request for
+            if (val && val.indexOf("<") === 0) {
+                valback = jQuery.ajax({url: PRELOADER_URL, type: 'GET', data:{"param": val}, async: false}).responseText;
+                preload_data[type][key] = valback;
+            } else {
+                preload_data[type][key] = val
+            }
+        }
+    }
+    return preload_data;
 }
