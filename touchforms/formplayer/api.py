@@ -30,9 +30,9 @@ class XformsEvent(object):
     def __init__(self, datadict):
         self._dict = datadict
         self.type = datadict["type"]
-        self.caption = datadict.get("caption")
-        self.datatype = datadict.get("datatype")
-        self.output = datadict.get("output")
+        self.caption = datadict.get("caption", "")
+        self.datatype = datadict.get("datatype", "")
+        self.output = datadict.get("output", "")
             
     @property
     def text_prompt(self):
@@ -46,12 +46,11 @@ class XformsEvent(object):
                             enumerate(self._dict["choices"])]))
         else:
             return self.caption
-        
+
 class XformsResponse(object):
     """
     A wrapper for the json that comes back from touchforms, which 
     looks approximately like this:
-    
     {"event":
         { "datatype":"select",
           "style":{},
@@ -60,15 +59,38 @@ class XformsResponse(object):
      "session_id": 12,
      "status":"accepted",
      "seq_id":1}
+     
+    Although errors come back more like this:
+    {'status': 'validation-error', 
+     'seq_id': 2, 
+     'reason': 'some message about constraint', 
+     'type': 'constraint'}
+    
+    
     """
     
     def __init__(self, datadict):
         self._dict = datadict
-        self.event = XformsEvent(datadict["event"])
-        self.status = datadict.get("status", "")
+        self.is_error = False
+        
+        if "event" in datadict:
+            self.event = XformsEvent(datadict["event"])
+            self.text_prompt = self.event.text_prompt
+        else:
+            self.event = None
+        
         self.seq_id = datadict["seq_id"]
         self.session_id = datadict.get("session_id", "")
+        self.status = datadict.get("status", "")
         
+        # custom logic to handle errors
+        if self.status == "validation-error":
+            assert self.event is None, "There should be no touchforms event for errors"
+            self.is_error = True
+            self.text_prompt = datadict.get("reason", "that is not a legal answer")
+        elif self.event is None:
+            raise "unhandleable response: %s" % json.dumps(datadict)
+            
         
         
 
