@@ -1,5 +1,6 @@
 from java.util import Date
 from java.util import Vector
+import jarray
 
 from datetime import datetime, date, time
 
@@ -33,6 +34,9 @@ def to_vect(it):
     for e in it:
         v.addElement(e)
     return v
+
+def to_arr(it, type):
+    return jarray.array(it, type)
 
 def str_form_index(form_ix):
     if form_ix.isBeginningOfFormIndex():

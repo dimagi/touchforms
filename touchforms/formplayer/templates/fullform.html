@@ -15,10 +15,11 @@
    
     <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/jquery-1.4.2.min.js"></script>
     <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/shortcut.js"></script>
+    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/jquery-ui.min.js"></script>
 
-	  <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key={{ maps_api_key }}&sensor=false"></script>
 
-	  <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/themes/ui-lightness/jquery-ui.css">
+    <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/themes/ui-lightness/jquery-ui.css">
 
 {% for script in dynamic_scripts %}
     <script language="javascript" type="text/javascript;version=1.7" src="{{STATIC_URL}}{{script}}?version={{app_version}}"></script>   
