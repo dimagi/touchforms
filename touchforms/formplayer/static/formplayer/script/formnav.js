@@ -28,7 +28,7 @@ function xformAjaxAdapter (formName, sessionData, savedInstance) {
                                    'form-name': this.formName,
                                    'lang': lang,
                                    'instance-content': savedInstance,
-                                   'preloader-data': preload_data},
+                                   'session-data': {preloaders: preload_data}},
       function (resp) {
         adapter.session_id = resp["session_id"];
         adapter._renderEvent(resp["event"], true);

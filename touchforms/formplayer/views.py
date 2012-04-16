@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.conf import settings
-from touchforms.formplayer.models import XForm, PlaySession
+from touchforms.formplayer.models import XForm
 from touchforms.formplayer.const import *
 from touchforms.formplayer.autocomplete import autocompletion, DEFAULT_NUM_SUGGESTIONS
 from django.http import HttpResponseRedirect, HttpResponse,\
@@ -81,7 +81,7 @@ def enter_form(request, **kwargs):
     force_template = coalesce(kwargs.get('force_template'), None)
 
     # support for backwards compatibility; preloaders are DEPRECATED
-    preload_data = kwargs.get('preload_data')
+    preload_data = kwargs.get('preloader_data')
     if preload_data:
         session_data['preloaders'] = preload_data
 

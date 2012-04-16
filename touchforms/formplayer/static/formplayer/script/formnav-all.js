@@ -19,11 +19,11 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
     args[form_param] = this.formSpec.val;
 
     // handle preloaders (deprecated) for backwards compatibilty
-    if (args.session_data && args.session_data.preloaders) {
-	if (args.session_data == null) {
-	    args.session_data = {};
+    if (args['session-data'] && args['session-data'].preloaders) {
+	if (args['session-data'] == null) {
+	    args['session-data'] = {};
 	}
-	args.session_data.preloaders = init_preloaders(args.session_data.preloaders);
+	args['session-data'].preloaders = init_preloaders(args['session-data'].preloaders);
     }
 
     var adapter = this;
