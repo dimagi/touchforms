@@ -1,6 +1,7 @@
 from java.util import Date
 from java.util import Vector
 from java.util import Hashtable
+import jarray
 
 from datetime import datetime, date, time
 
@@ -40,6 +41,9 @@ def to_hashtable(dict):
     for k in dict:
         ht.put(k, dict[k])
     return ht
+
+def to_arr(it, type):
+    return jarray.array(it, type)
 
 def str_form_index(form_ix):
     if form_ix.isBeginningOfFormIndex():

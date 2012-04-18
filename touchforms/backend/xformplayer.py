@@ -11,7 +11,7 @@ from java.util import Vector
 from java.io import StringReader
 
 import customhandlers
-from util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect, index_from_str
+from util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect, to_arr, index_from_str
     
 from setup import init_classpath, init_jr_engine
 import logging
@@ -98,7 +98,8 @@ def load_form(xform, instance=None, extensions=[], session_data={}, api_auth=Non
     if instance != None:
         XFormParser.loadXmlInstance(form, StringReader(instance))
 
-    customhandlers.attach_handlers(form, extensions)
+    # retrieve preloaders out of session_data (for backwards compatibility)
+    customhandlers.attach_handlers(form, extensions, session_data.get('preloaders', {}))
 
     form.initialize(instance == None, CCInstances(session_data, api_auth))
     return form
@@ -270,10 +271,10 @@ class XFormSession:
                     Constants.DATATYPE_TIME: 'time',
                     Constants.DATATYPE_CHOICE: 'select',
                     Constants.DATATYPE_CHOICE_LIST: 'multiselect',
+                    Constants.DATATYPE_GEOPOINT: 'geo',
 
                     # not supported yet
                     Constants.DATATYPE_DATE_TIME: 'datetime',
-                    Constants.DATATYPE_GEOPOINT: 'geo',
                     Constants.DATATYPE_BARCODE: 'barcode',
                     Constants.DATATYPE_BINARY: 'binary',
                 }[q.getDataType()]
@@ -298,6 +299,8 @@ class XFormSession:
                 event['answer'] = value.getValue().index + 1
             elif event['datatype'] == 'multiselect':
                 event['answer'] = [sel.index + 1 for sel in value.getValue()]
+            elif event['datatype'] == 'geo':
+                event['answer'] = list(value.getValue())[:2]
 
     def _parse_repeat_juncture(self, event):
         r = self.fem.getCaptionPrompt(event['ix'])
@@ -334,6 +337,12 @@ class XFormSession:
             # answer verbatim
             return {'status': 'success'}
 
+        def multians(a):
+            if hasattr(a, '__iter__'):
+                return a
+            else:
+                return str(a).split()
+
         if answer == None or str(answer).strip() == '' or answer == [] or datatype == 'info':
             ans = None
         elif datatype == 'int':
@@ -351,11 +360,9 @@ class XFormSession:
         elif datatype == 'select':
             ans = SelectOneData(event['choices'][int(answer) - 1].to_sel())
         elif datatype == 'multiselect':
-            if hasattr(answer, '__iter__'):
-                ans_list = answer
-            else:
-                ans_list = str(answer).split()
-            ans = SelectMultiData(to_vect(event['choices'][int(k) - 1].to_sel() for k in ans_list))
+            ans = SelectMultiData(to_vect(event['choices'][int(k) - 1].to_sel() for k in multians(answer)))
+        elif datatype == 'geo':
+            ans = GeoPointData(to_arr((float(x) for x in multians(answer)), 'd'))
 
         result = self.fec.answerQuestion(*([ans] if ix is None else [ix, ans]))
         if result == self.fec.ANSWER_REQUIRED_BUT_EMPTY:

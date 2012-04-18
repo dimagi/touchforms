@@ -82,15 +82,6 @@ class XForm(models.Model):
         finally:
             f.close()
                         
-class PlaySession(Document):
-    xform_id = IntegerProperty()
-    next = StringProperty()
-    abort = StringProperty()
-    preloader_data = DictProperty()
-    saved_instance = StringProperty()
-    input_mode = StringProperty()
-    
-    def get_instance(self):
-        return self.fetch_attachment("form.xml")
+
         
     
