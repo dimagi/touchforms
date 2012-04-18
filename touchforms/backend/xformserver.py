@@ -4,6 +4,7 @@ from SocketServer import ThreadingMixIn
 import threading
 import logging
 import xformplayer
+import touchcare
 import os
 import java.lang
 import time
@@ -182,6 +183,9 @@ def handle_request (content, **kwargs):
 
             return xformplayer.purge(content['window'])
 
+        elif action in touchcare.SUPPORTED_ACTIONS:
+            return touchcare.handle_request(content, **kwargs)
+            
         else:
             return {'error': 'unrecognized action'}
     

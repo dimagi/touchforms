@@ -1,5 +1,6 @@
 from java.util import Date
 from java.util import Vector
+from java.util import Hashtable
 import jarray
 
 from datetime import datetime, date, time
@@ -34,6 +35,12 @@ def to_vect(it):
     for e in it:
         v.addElement(e)
     return v
+
+def to_hashtable(dict):
+    ht = Hashtable()
+    for k in dict:
+        ht.put(k, dict[k])
+    return ht
 
 def to_arr(it, type):
     return jarray.array(it, type)

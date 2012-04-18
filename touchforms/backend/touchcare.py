@@ -13,13 +13,22 @@ from org.commcare.cases.instance import CaseInstanceTreeElement
 from org.commcare.cases.model import Case
 from org.commcare.util import CommCareSession
 
+from org.javarosa.xpath.expr import XPathFuncExpr
+from org.javarosa.xpath import XPathParseTool
+from org.javarosa.core.model.condition import EvaluationContext
+from org.javarosa.core.model.instance import ExternalDataInstance
+from org.javarosa.core.model.instance import DataInstance
+
 from util import to_vect, to_jdate
+from util import to_hashtable
+
 
 def query_case_ids(q):
   return [c['case_id'] for c in q(settings.CASE_API_URL)]
 
-def query_cases(q, criteria):
-  query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria))
+def query_cases(q, criteria=None):
+  query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria)) \
+                if criteria else settings.CASE_API_URL
   return [case_from_json(cj) for cj in q(query_url)]
 
 def query_case(q, case_id):
@@ -57,8 +66,10 @@ def case_from_json(data):
   c.setTypeId(data['properties']['case_type'])
   c.setName(data['properties']['case_name'])
   c.setClosed(data['closed'])
-  c.setDateOpened(to_jdate(datetime.strptime(data['properties']['date_opened'], '%Y-%m-%dT%H:%M:%S'))) # 'Z' in fmt string omitted due to jython bug
-  c.setUserId(data['user_id'])
+  if data['properties']['date_opened']:
+    c.setDateOpened(to_jdate(datetime.strptime(data['properties']['date_opened'], 
+                                                 '%Y-%m-%dT%H:%M:%S'))) # 'Z' in fmt string omitted due to jython bug
+  c.setUserId(data['user_id'] or "")
 
   for k, v in data['properties'].iteritems():
     if v is not None and k not in ['case_name', 'case_type', 'date_opened']:
@@ -70,11 +81,17 @@ def case_from_json(data):
   return c
 
 class CaseDatabase(IStorageUtilityIndexed):
-  def __init__(self, domain, user, auth):
+  def __init__(self, domain, user, auth, additional_filters={}):
     self.query_func = query_factory(domain, user, auth)
 
-    self.case_ids = dict(enumerate(query_case_ids(self.query_func)))
     self.cases = {}
+    self.additional_filters = additional_filters
+    all_cases = query_cases(self.query_func, criteria=self.additional_filters)
+    for c in all_cases:
+        self.put_case(c)
+    
+    self.case_ids = dict(enumerate(self.cases.keys()))
+    
     self.cached_lookups = {}
 
   def put_case(self, c):
@@ -103,28 +120,13 @@ class CaseDatabase(IStorageUtilityIndexed):
 
     if (field_name, value) not in self.cached_lookups:
 
-      #get_val = {
-      #  'case-id': lambda c: c.getCaseId(),
-      #  'case-type': lambda c: c.getTypeId(),
-      #  'case-status': lambda c: 'closed' if c.isClosed() else 'open',
-      #}[field_name]
-
-      key = {
-        'case-id': 'case_id',
-        'case-type': 'properties/case_type',
-        'case-status': 'closed',
+      get_val = {
+        'case-id': lambda c: c.getCaseId(),
+        'case-type': lambda c: c.getTypeId(),
+        'case-status': lambda c: 'closed' if c.isClosed() else 'open',
       }[field_name]
-    
-      # TODO: querying based on case status doesn't work on HQ end
-      if field_name == 'case_status':
-        value = {
-          'open': 'false',
-          'closed': 'true',
-        }[value]
-
-      cases = query_cases(self.query_func, {key: value})
-      for c in cases:
-        self.put_case(c)
+      
+      cases = [c for c in self.cases.values() if get_val(c) == value]
       self.cached_lookups[(field_name, value)] = cases
 
     cases = self.cached_lookups[(field_name, value)]
@@ -132,7 +134,7 @@ class CaseDatabase(IStorageUtilityIndexed):
     return to_vect(id_map[c.getCaseId()] for c in cases)
 
   def getNumRecords(self):
-    return len(self.case_ids)
+    return len(self.cases)
 
   def iterate(self):
     return CaseIterator(self.case_ids.keys())
@@ -167,7 +169,10 @@ class CCInstances(InstanceInitializationFactory):
             return root
 
         if 'casedb' in ref:
-            return CaseInstanceTreeElement(instance.getBase(), CaseDatabase(self.vars['domain'], self.vars['username'], self.auth), False);
+            return CaseInstanceTreeElement(instance.getBase(), 
+                        CaseDatabase(self.vars['domain'], self.vars['username'], 
+                                     self.auth, self.vars.get("additional_filters", {})),
+                        False)
         elif 'fixture' in ref:
             fixture_id = ref.split('/')[-1]
             user_id = self.vars['user_id']
@@ -185,3 +190,29 @@ class CCInstances(InstanceInitializationFactory):
             return from_bundle(sess.getSessionInstance(*[self.vars.get(k, '') for k in meta_keys]))
 
 
+SUPPORTED_ACTIONS = ["touchcare-filter-cases"]
+
+# API stuff
+def handle_request (content, **kwargs):
+    action = content['action']
+    if action == "touchcare-filter-cases":
+        return filter_cases(content)
+    else:
+        return {'error': 'unrecognized action'}
+
+def filter_cases(content):
+    try: 
+        modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
+                {"filters": content["filter_expr"]}
+            
+        api_auth = content.get('hq_auth')
+        session_data = content.get("session_data", {})
+        ccInstances = CCInstances(session_data, api_auth)
+        caseInstance = ExternalDataInstance("jr://instance/casedb", "casedb")
+        caseInstance.initialize(ccInstances, "casedb")
+        instances = to_hashtable({"casedb": caseInstance})
+        case_list = XPathFuncExpr.toString(XPathParseTool.parseXPath(modified_xpath)\
+            .eval(EvaluationContext(None, instances)))
+        return {'cases': case_list.split(",")}
+    except Exception, e:
+        return {'error': str(e)}
