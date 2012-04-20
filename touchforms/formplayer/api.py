@@ -1,15 +1,17 @@
 import json
 from django.conf import settings
-from urlparse import urlparse
-import httplib
+import requests
+import logging
 
-
-'''
+"""
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
 backend for various sets of tasks.
 
 This API is currently highly beta and could use some hardening. 
-'''
+"""
+
+# Get an instance of a logger
+logging = logging.getLogger(__name__)
 
 class XformsEvent(object):
     """
@@ -33,6 +35,7 @@ class XformsEvent(object):
         self.caption = datadict.get("caption", "")
         self.datatype = datadict.get("datatype", "")
         self.output = datadict.get("output", "")
+        self.choices = datadict.get("choices", None)
             
     @property
     def text_prompt(self):
@@ -94,29 +97,24 @@ class XformsResponse(object):
         
         
 def post_data(data, url, content_type, auth=None):
+    logging.debug('Posting Data')
     if auth:
         d = json.loads(data)
         d['hq_auth'] = {'type': 'django-session', 'key': auth}
         data = json.dumps(d)
-
-    up = urlparse(url)
-    headers = {}
-    headers["content-type"] = content_type
-    headers["content-length"] = len(data)
-    conn = httplib.HTTPConnection(up.netloc)
-    conn.request('POST', up.path, data, headers)
-    resp = conn.getresponse()
-    results = resp.read()
-    return results
+    response = requests.post(url, data=data)
+    logging.debug('Got an HTTP Response from the API. Response Code: %s, Response Error: %s, Response Text: %s' % (response.status_code, response.error, response.content))
+    return response, response.error
 
 def get_response(data, url):
-    response = post_data(data, url, content_type="text/json")
-    return XformsResponse(json.loads(response))
+    response, error = post_data(data, url, content_type="text/json")
+    return XformsResponse(json.loads(response.content))
 
 def start_form_session(form_path, content=None, language="", preloader_data={}):
     """
     Start a new form session
     """
+    logging.debug('Starting a form session.')
     data = {"action":"new-form",
             "form-name": form_path,
             "instance-content": content,
@@ -130,6 +128,7 @@ def answer_question(session_id, answer):
     """
     Answer a question. 
     """
+    logging.debug('Answering question with session_id %s, answer: %s' % (session_id, answer))
     data = {"action": "answer",
             "session-id": session_id,
             "answer":answer }

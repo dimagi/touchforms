@@ -184,9 +184,9 @@ def player_proxy(request):
     """Proxy to an xform player, to avoid cross-site scripting issues"""
     data = request.raw_post_data if request.method == "POST" else None
     auth_cookie = request.COOKIES.get('sessionid')
-    response = api.post_data(data, settings.XFORMS_PLAYER_URL, 
+    response, error = api.post_data(data, settings.XFORMS_PLAYER_URL,
                              content_type="text/json", auth=auth_cookie)
-    return HttpResponse(response)
+    return HttpResponse(response.content)
 
 
 # DEPRECATED    
