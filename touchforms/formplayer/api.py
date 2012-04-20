@@ -83,7 +83,7 @@ class XformsResponse(object):
             self.event = None
         
         self.seq_id = datadict["seq_id"]
-        self.session_id = datadict.get("session_id", "")
+        self.session_id = datadict.get("session_id", "") or datadict.get("session-id","")
         self.status = datadict.get("status", "")
         
         # custom logic to handle errors
@@ -91,6 +91,14 @@ class XformsResponse(object):
             assert self.event is None, "There should be no touchforms event for errors"
             self.is_error = True
             self.text_prompt = datadict.get("reason", "that is not a legal answer")
+        # custom logic to handle http related errors
+        if self.status == "http-error":
+            assert self.event is None, "There should be no touchforms event for errors"
+            self.is_error = True
+            self.text_prompt = datadict.get("error")
+            self.status_code = datadict.get("status_code")
+            self.args = datadict.get("args")
+            self.url = datadict.get("url")
         elif self.event is None:
             raise "unhandleable response: %s" % json.dumps(datadict)
             
@@ -103,12 +111,37 @@ def post_data(data, url, content_type, auth=None):
         d['hq_auth'] = {'type': 'django-session', 'key': auth}
         data = json.dumps(d)
     response = requests.post(url, data=data)
-    logging.debug('Got an HTTP Response from the API. Response Code: %s, Response Error: %s, Response Text: %s' % (response.status_code, response.error, response.content))
+    logging.debug('HTTP Response from API:: RESPONSE CODE: %s, ERROR: %s, CONTENT: %s' % (response.status_code, response.error, response.content))
     return response, response.error
 
 def get_response(data, url):
     response, error = post_data(data, url, content_type="text/json")
+    if error:
+        logging.error('HTTP ERROR: %s' % error)
+        d = {
+            "response": response.content,
+            "error": error,
+            "status_code": response.status_code,
+            "status": "http-error",
+            "args": data,
+            "url": url,
+        }
+        if data.get("session-id"):
+            d["session-id"] = data["session-id"]
+        return XformsResponse(d)
+
     return XformsResponse(json.loads(response.content))
+
+def get_raw_instance(session_id):
+    """
+    Gets the raw xml instance of the current session regardless of the state that we're in (used for logging partially complete
+    forms to couch when errors happen).
+    """
+    data = {
+        "action":"get-instance",
+        "session-id": session_id,
+        }
+    return post_data(data, settings.XFORMS_PLAYER_URL, "text/json")
 
 def start_form_session(form_path, content=None, language="", preloader_data={}):
     """

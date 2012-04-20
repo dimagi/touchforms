@@ -182,6 +182,12 @@ def handle_request (content, **kwargs):
 
             return xformplayer.purge(content['window'])
 
+        elif action == 'get-instance':
+            if 'session-id' not in content:
+                return {'error': 'session id required'}
+            xfsess = xformplayer.global_state.get_session(content['session-id'])
+            return xfsess.output()
+
         else:
             return {'error': 'unrecognized action'}
     
