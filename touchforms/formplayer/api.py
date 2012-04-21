@@ -42,11 +42,11 @@ class XformsEvent(object):
         """
         A text-only prompt for this. Used in pure text (or sms) mode.
         """
-        if self.datatype == "select":
+        if self.datatype == "select" or self.datatype == "multiselect":
             return "%s %s" % \
                 (self.caption,
-                 ", ".join(["%s:%s" % (i, val) for i, val in \
-                            enumerate(self._dict["choices"])]))
+                 ", ".join(["%s:%s" % (i+1, val) for i, val in \
+                            enumerate(self._dict["choices"])])) #i shifted by 1 since it gets unshifted on server side.
         else:
             return self.caption
 
@@ -75,14 +75,14 @@ class XformsResponse(object):
     def __init__(self, datadict):
         self._dict = datadict
         self.is_error = False
-        
+        self.error = None
         if "event" in datadict:
             self.event = XformsEvent(datadict["event"])
             self.text_prompt = self.event.text_prompt
         else:
             self.event = None
         
-        self.seq_id = datadict["seq_id"]
+        self.seq_id = datadict.get("seq_id","")
         self.session_id = datadict.get("session_id", "") or datadict.get("session-id","")
         self.status = datadict.get("status", "")
         
@@ -92,32 +92,42 @@ class XformsResponse(object):
             self.is_error = True
             self.text_prompt = datadict.get("reason", "that is not a legal answer")
         # custom logic to handle http related errors
-        if self.status == "http-error":
+        elif self.status == "http-error":
             assert self.event is None, "There should be no touchforms event for errors"
+            self.error = datadict.get("error")
             self.is_error = True
-            self.text_prompt = datadict.get("error")
             self.status_code = datadict.get("status_code")
             self.args = datadict.get("args")
             self.url = datadict.get("url")
         elif self.event is None:
-            raise "unhandleable response: %s" % json.dumps(datadict)
+            raise NotImplementedError("unhandleable response: %s" % json.dumps(datadict))
             
         
         
 def post_data(data, url, content_type, auth=None):
-    logging.debug('Posting Data')
+    #try to convert data to json dict
+    if not isinstance(data, str):
+        try:
+            data = json.dumps(data)
+        except Exception:
+            raise
     if auth:
         d = json.loads(data)
         d['hq_auth'] = {'type': 'django-session', 'key': auth}
         data = json.dumps(d)
+    logging.debug('Posting Data: %s' % data)
     response = requests.post(url, data=data)
-    logging.debug('HTTP Response from API:: RESPONSE CODE: %s, ERROR: %s, CONTENT: %s' % (response.status_code, response.error, response.content))
+    logging.debug('HTTP Response:: %s' % response.content)
     return response, response.error
 
 def get_response(data, url):
     response, error = post_data(data, url, content_type="text/json")
     if error:
-        logging.error('HTTP ERROR: %s' % error)
+        #weak input checking
+        if isinstance(data, str):
+            data = json.loads(data)
+        logging.error('HTTP ERROR: %s' % str(error))
+        logging.debug('RESPONSE.ERROR.MSG %s' % response.error.msg)
         d = {
             "response": response.content,
             "error": error,
