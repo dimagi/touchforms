@@ -90,7 +90,11 @@ class XformsResponse(object):
         if self.status == "validation-error":
             assert self.event is None, "There should be no touchforms event for errors"
             self.is_error = True
-            self.text_prompt = datadict.get("reason", "that is not a legal answer")
+            reason = datadict.get("reason")
+            #"reason" could literally be None so manually put in default (as opposed to specifying it with .get()
+            if reason is None:
+                reason = "That is not a legal Answer"
+            self.error = reason
         # custom logic to handle http related errors
         elif self.status == "http-error":
             assert self.event is None, "There should be no touchforms event for errors"
@@ -151,7 +155,13 @@ def get_raw_instance(session_id):
         "action":"get-instance",
         "session-id": session_id,
         }
-    return post_data(data, settings.XFORMS_PLAYER_URL, "text/json")
+    response, error = post_data(data, settings.XFORMS_PLAYER_URL, "text/json")
+    if not error:
+        logging.debug('Formplayer API got raw instance: %s' % response.content)
+        ret = json.loads(response.content)
+        return json.loads(response.content)["output"]
+    else:
+        return None
 
 def start_form_session(form_path, content=None, language="", preloader_data={}):
     """

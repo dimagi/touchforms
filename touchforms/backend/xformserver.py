@@ -186,7 +186,7 @@ def handle_request (content, **kwargs):
             if 'session-id' not in content:
                 return {'error': 'session id required'}
             xfsess = xformplayer.global_state.get_session(content['session-id'])
-            return xfsess.output()
+            return {"output": xfsess.output()}
 
         else:
             return {'error': 'unrecognized action'}
