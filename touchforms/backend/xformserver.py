@@ -38,6 +38,9 @@ class XFormHTTPGateway(threading.Thread):
         self.server.shutdown()
 
 class XFormRequestHandler(BaseHTTPRequestHandler):
+    
+    error_content_type = "text/json"
+
     def do_POST(self):
         delay()
 
@@ -78,7 +81,34 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'text/json; charset=utf-8')
         self.end_headers()
         self.wfile.write(reply.encode('utf-8'))
+        
+    def send_error(self, code, message=None):
+        """
+        Override send_error to always return JSON.
+        """
+        # copied and pasted lots of this from the base class
+        # but had to override due to html escaping messing up
+        # the json format of the message
+        try:
+            short, long = self.responses[code]
+        except KeyError:
+            short, long = '???', '???'
+        if message is None:
+            message = short
+        explain = long
+        self.log_error("code %d, message %s", code, message)
+        content = json.dumps({'status': 'error',
+                              'code': code, 
+                              'message': message, 
+                              'explain': explain})
+        self.send_response(code, message)
+        self.send_header("Content-Type", self.error_content_type)
+        self.send_header('Connection', 'close')
+        self.end_headers()
+        if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
+            self.wfile.write(content)
 
+        
 def handle_request (content, **kwargs):
     if 'action' not in content:
         return {'error': 'action required'}

@@ -7,7 +7,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
   this.submitfunc = submitfunc;
   this.presubmitfunc = presubmitfunc;
 
-  this.loadForm = function ($div, init_lang, onlanginfo) {
+  this.loadForm = function ($div, init_lang, onlanginfo, onerror) {
     var args = {
       'action': 'new-form',
       'instance-content': savedInstance,
@@ -28,9 +28,16 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
 
     var adapter = this;
     this.ajaxfunc(args, function (resp) {
+        // special case short circuiting errors
+        if (resp.status === "error") {
+            if (onerror) {
+                console.log("error handling");
+                onerror(resp);
+            }
+            return;
+        }
         adapter.session_id = resp["session_id"];
         adapter.form = init_render(resp, adapter, $div);
-
         if (resp['langs'].length) {
           onlanginfo(function(lang) { adapter.switchLanguage(lang); }, resp['langs']);
         }
