@@ -11,6 +11,53 @@ backend for various sets of tasks.
 This API is currently highly beta and could use some hardening. 
 '''
 
+class XFormsConfigException(ValueError):
+    pass
+
+class XFormsConfig(object):
+    
+    def __init__(self, form_path=None, form_content=None, language="", 
+                 session_data=None, preloader_data={}, instance_content=None,
+                 touchforms_url=None):
+        
+        if bool(form_path) == bool(form_content):
+            raise XFormsConfigException\
+                ("Can specify file path or content but not both!\n" 
+                 "File Path: %s, Form Content: %s" % (form_path, form_content))
+        
+        self.form_path = form_path
+        self.form_content = form_content
+        self.language = language
+        self.session_data = session_data        
+        self.preloader_data = preloader_data        
+        self.instance_content = instance_content
+        self.touchforms_url = touchforms_url or settings.XFORMS_PLAYER_URL
+        
+        
+    def get_touchforms_dict(self):
+        """
+        Translates this config into something touchforms wants to 
+        work with
+        """
+        
+        vals = (("action", "new-form"),
+                ("form-name", self.form_path),
+                ("form-content", self.form_content),
+                ("instance-content", self.instance_content),
+                ("preloader-data", self.preloader_data),
+                ("session-data", self.session_data),
+                ("lang", self.language))
+        
+        # only include anything with a value, or touchforms gets mad
+        return dict(filter(lambda x: x[1], vals))
+        
+    def start_session(self):
+        """
+        Start a new session based on this configuration
+        """
+        return get_response(json.dumps(self.get_touchforms_dict()), 
+                            self.touchforms_url)
+    
 class XformsEvent(object):
     """
     A wrapper for the json event object that comes back from touchforms, which 
@@ -42,7 +89,7 @@ class XformsEvent(object):
         if self.datatype == "select":
             return "%s %s" % \
                 (self.caption,
-                 ", ".join(["%s:%s" % (i, val) for i, val in \
+                 ", ".join(["%s:%s" % (i+1, val) for i, val in \
                             enumerate(self._dict["choices"])]))
         else:
             return self.caption
@@ -65,7 +112,6 @@ class XformsResponse(object):
      'seq_id': 2, 
      'reason': 'some message about constraint', 
      'type': 'constraint'}
-    
     
     """
     
@@ -91,8 +137,6 @@ class XformsResponse(object):
         elif self.event is None:
             raise "unhandleable response: %s" % json.dumps(datadict)
             
-        
-        
 def post_data(data, url, content_type, auth=None):
     if auth:
         d = json.loads(data)
@@ -111,21 +155,24 @@ def post_data(data, url, content_type, auth=None):
 
 def get_response(data, url, auth=None):
     response = post_data(data, url, content_type="text/json", auth=auth)
-    return XformsResponse(json.loads(response))
+    try:
+        return XformsResponse(json.loads(response))
+    except Exception, e:
+        print response
+        raise e
+                                                                               
 
 def start_form_session(form_path, content=None, language="", preloader_data={}):
     """
     Start a new form session
     """
-    data = {"action":"new-form",
-            "form-name": form_path,
-            "instance-content": content,
-            "preloader-data":{}}
-    if language:
-        data['lang'] = language
+    # TODO: this method has been deprecated and the config object 
+    # should just be used directly. Temporarily left to support legacy code.
+    return XFormsConfig(form_path=form_path, 
+                        instance_content=content,
+                        preloader_data=preloader_data,
+                        language=language).start_session()
     
-    return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL)
-
 def answer_question(session_id, answer):
     """
     Answer a question. 
