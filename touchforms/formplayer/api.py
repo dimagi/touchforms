@@ -18,7 +18,7 @@ class XFormsConfig(object):
     
     def __init__(self, form_path=None, form_content=None, language="", 
                  session_data=None, preloader_data={}, instance_content=None,
-                 touchforms_url=None):
+                 touchforms_url=None, auth=None):
         
         if bool(form_path) == bool(form_content):
             raise XFormsConfigException\
@@ -32,7 +32,7 @@ class XFormsConfig(object):
         self.preloader_data = preloader_data        
         self.instance_content = instance_content
         self.touchforms_url = touchforms_url or settings.XFORMS_PLAYER_URL
-        
+        self.auth = auth
         
     def get_touchforms_dict(self):
         """
@@ -56,7 +56,7 @@ class XFormsConfig(object):
         Start a new session based on this configuration
         """
         return get_response(json.dumps(self.get_touchforms_dict()), 
-                            self.touchforms_url)
+                            self.touchforms_url, auth=self.auth)
     
 class XformsEvent(object):
     """
@@ -173,12 +173,13 @@ def start_form_session(form_path, content=None, language="", preloader_data={}):
                         preloader_data=preloader_data,
                         language=language).start_session()
     
-def answer_question(session_id, answer):
+def answer_question(session_id, answer, auth=None):
     """
     Answer a question. 
     """
     data = {"action": "answer",
             "session-id": session_id,
             "answer":answer }
-    return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL)
-    
+    return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
+
+
