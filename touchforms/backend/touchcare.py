@@ -213,6 +213,6 @@ def filter_cases(content):
         instances = to_hashtable({"casedb": caseInstance})
         case_list = XPathFuncExpr.toString(XPathParseTool.parseXPath(modified_xpath)\
             .eval(EvaluationContext(None, instances)))
-        return {'cases': case_list.split(",")}
+        return {'cases': filter(lambda x: x,case_list.split(","))}
     except Exception, e:
         return {'error': str(e)}

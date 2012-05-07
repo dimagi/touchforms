@@ -15,6 +15,7 @@ function WebFormSession(params) {
   this.onsubmit = params.onsubmit;
   this.onpresubmit = params.onpresubmit || function(){ return true; };
   this.onlanginfo = params.onlanginfo || function(f, langs){};
+  this.onerror = params.onerror || function(resp){};
 
   this.urls = {
     xform: params.xform_url,
@@ -33,7 +34,7 @@ function WebFormSession(params) {
                                        function(p) { sess.submit(p); },
                                        this.onpresubmit
                                        );
-    adapter.loadForm($div, init_lang, this.onlanginfo);
+    adapter.loadForm($div, init_lang, this.onlanginfo, this.onerror);
   }
 
   this.submit = function(params) {
@@ -47,7 +48,17 @@ function WebFormSession(params) {
     var url = this.urls.xform;
     this._serverRequest(
       function (cb) {
-        jQuery.post(url, JSON.stringify(params), cb, "json");
+        jQuery.ajax(
+            {type: "POST",
+             url: url, 
+             data: JSON.stringify(params), 
+             success: cb, 
+             dataType: "json",
+             error: function (jqXHR, textStatus, errorThrown) { 
+                console.log("Got an unexpected server error!", textStatus);
+             }
+        });
+        
       },
       callback,
       blocking
