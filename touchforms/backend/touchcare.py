@@ -40,20 +40,24 @@ def query_case(q, case_id):
 
 def query_factory(domain, user, auth):
   def api_query(_url):
+    url = domain.join(_url.split('{{DOMAIN}}'))
+
     if not auth:
       req = lambda url: urllib2.urlopen(url)
     elif auth['type'] == 'django-session':
-      def req(url):
-        opener = urllib2.build_opener()
-        opener.addheaders.append(('Cookie', 'sessionid=%s' % auth['key']))
-        return opener.open(url)
+      opener = urllib2.build_opener()
+      opener.addheaders.append(('Cookie', 'sessionid=%s' % auth['key']))
+      req = lambda url: opener.open(url)
     elif auth['type'] == 'oauth':
       # auth['key'] will be the oauth access token
       raise Exception('not supported yet')
     elif auth['type'] == 'http':
-      raise Exception('password-based API auth not supported in touchforms')
+      password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+      password_mgr.add_password(None, url, user, auth['key'])
+      handler = urllib2.HTTPBasicAuthHandler(password_mgr)
+      opener = urllib2.build_opener(handler)
+      req = lambda url: opener.open(url)
 
-    url = domain.join(_url.split('{{DOMAIN}}'))
     logging.debug('querying %s' % url)
     f = req(url)
     return json.loads(f.read())
