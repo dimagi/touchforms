@@ -296,9 +296,9 @@ class XFormSession:
             elif event['datatype'] == 'time':
                 event['answer'] = to_ptime(value.getValue())
             elif event['datatype'] == 'select':
-                event['answer'] = value.getValue().index + 1
+                event['answer'] = choice(q, selection=value.getValue()).ordinal()
             elif event['datatype'] == 'multiselect':
-                event['answer'] = [sel.index + 1 for sel in value.getValue()]
+                event['answer'] = [choice(q, selection=sel).ordinal() for sel in value.getValue()]
             elif event['datatype'] == 'geo':
                 event['answer'] = list(value.getValue())[:2]
 
@@ -435,21 +435,27 @@ class XFormSession:
         return resp
 
 class choice(object):
-    def __init__(self, q, select_choice):
+    def __init__(self, q, select_choice=None, selection=None):
         self.q = q
-        self.select_choice = select_choice
+
+        if select_choice is not None:
+            self.select_choice = select_choice
+
+        elif selection is not None:
+            selection.attachChoice(q.getFormElement())
+            self.select_choice = selection.choice
 
     def to_sel(self):
         return Selection(self.select_choice)
+
+    def ordinal(self):
+        return self.to_sel().index + 1
 
     def __repr__(self):
         return self.q.getSelectChoiceText(self.select_choice)
 
     def __json__(self):
         return json.dumps(repr(self))
-
-
-
 
 def load_file(path):
     if not os.path.exists(path):
