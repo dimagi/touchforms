@@ -51,13 +51,14 @@ def query_factory(domain, user, auth):
     elif auth['type'] == 'oauth':
       # auth['key'] will be the oauth access token
       raise Exception('not supported yet')
-    elif auth['type'] == 'http':
+    elif auth['type'] == 'http' or auth['type'] == 'http-digest':
       password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-      password_mgr.add_password(None, url, user, auth['key'])
-      handler = urllib2.HTTPBasicAuthHandler(password_mgr)
+      password_mgr.add_password(None, url, auth['username'], auth['key'])
+      handler = urllib2.HTTPBasicAuthHandler(password_mgr) if auth['type'] == 'http' \
+        else urllib2.HTTPDigestAuthHandler(password_mgr)
       opener = urllib2.build_opener(handler)
       req = lambda url: opener.open(url)
-
+    
     logging.debug('querying %s' % url)
     f = req(url)
     return json.loads(f.read())

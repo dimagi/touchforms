@@ -11,6 +11,32 @@ backend for various sets of tasks.
 This API is currently highly beta and could use some hardening. 
 '''
 
+class TouchformsAuth(object):
+    """
+    Used to authenticate with touchforms
+    """
+    def __init__(self, type, key):
+        self.type = type
+        self.key = key
+        
+    def to_dict(self):
+        return {'type': self.type, 'key': self.key}
+
+class DjangoAuth(TouchformsAuth):
+    
+    def __init__(self, key):
+        super(DjangoAuth, self).__init__("django-session", key)
+            
+class DigestAuth(TouchformsAuth):
+    
+    def __init__(self, username, password):
+        self.username = username
+        super(DigestAuth, self).__init__("http-digest", password)
+        
+    def to_dict(self):
+        return {'type': self.type, 'key': self.key, 'username': self.username}
+
+            
 class XFormsConfigException(ValueError):
     pass
 
@@ -140,7 +166,7 @@ class XformsResponse(object):
 def post_data(data, url, content_type, auth=None):
     if auth:
         d = json.loads(data)
-        d['hq_auth'] = {'type': 'django-session', 'key': auth}
+        d['hq_auth'] = auth.to_dict()
         data = json.dumps(d)
 
     up = urlparse(url)

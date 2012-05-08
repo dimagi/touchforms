@@ -22,6 +22,7 @@ from django.views.decorators.csrf import csrf_exempt
 import tempfile
 import os
 from . import api
+from touchforms.formplayer.api import DjangoAuth
 
 def xform_list(request):
     forms_by_namespace = defaultdict(list)
@@ -185,7 +186,7 @@ def player_proxy(request):
     data = request.raw_post_data if request.method == "POST" else None
     auth_cookie = request.COOKIES.get('sessionid')
     response = api.post_data(data, settings.XFORMS_PLAYER_URL, 
-                             content_type="text/json", auth=auth_cookie)
+                             content_type="text/json", auth=DjangoAuth(auth_cookie))
     return HttpResponse(response)
 
 
