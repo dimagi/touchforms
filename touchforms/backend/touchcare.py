@@ -38,7 +38,7 @@ def query_case(q, case_id):
   except IndexError:
     return None
 
-def query_factory(domain, user, auth):
+def query_factory(domain, auth):
   def api_query(_url):
     url = domain.join(_url.split('{{DOMAIN}}'))
 
@@ -89,11 +89,13 @@ def case_from_json(data):
 
 class CaseDatabase(IStorageUtilityIndexed):
   def __init__(self, domain, user, auth, additional_filters={}):
-    self.query_func = query_factory(domain, user, auth)
+    self.query_func = query_factory(domain, auth)
 
     self.cases = {}
     self.additional_filters = additional_filters
-    all_cases = query_cases(self.query_func, criteria=self.additional_filters)
+    criteria = {"user_id": user}
+    criteria.update(additional_filters)
+    all_cases = query_cases(self.query_func, criteria=criteria)
     for c in all_cases:
         self.put_case(c)
     
@@ -177,7 +179,7 @@ class CCInstances(InstanceInitializationFactory):
 
         if 'casedb' in ref:
             return CaseInstanceTreeElement(instance.getBase(), 
-                        CaseDatabase(self.vars['domain'], self.vars['username'], 
+                        CaseDatabase(self.vars['domain'], self.vars['user_id'], 
                                      self.auth, self.vars.get("additional_filters", {})),
                         False)
         elif 'fixture' in ref:
