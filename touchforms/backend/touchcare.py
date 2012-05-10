@@ -41,7 +41,6 @@ def query_case(q, case_id):
 def query_factory(domain, auth):
   def api_query(_url):
     url = domain.join(_url.split('{{DOMAIN}}'))
-
     if not auth:
       req = lambda url: urllib2.urlopen(url)
     elif auth['type'] == 'django-session':
@@ -93,9 +92,7 @@ class CaseDatabase(IStorageUtilityIndexed):
 
     self.cases = {}
     self.additional_filters = additional_filters
-    criteria = {"user_id": user}
-    criteria.update(additional_filters)
-    all_cases = query_cases(self.query_func, criteria=criteria)
+    all_cases = query_cases(self.query_func, criteria=additional_filters)
     for c in all_cases:
         self.put_case(c)
     
@@ -190,10 +187,10 @@ class CCInstances(InstanceInitializationFactory):
             pass  # save till end... just get raw xml payload from HQ, i presume? -- look up based solely on user id
         elif 'session' in ref:
             meta_keys = ['device_id', 'app_version', 'username', 'user_id']
-
+            exclude_keys = ['additional_filters']
             sess = CommCareSession(None) # will not passing a CCPlatform cause problems later?
             for k, v in self.vars.iteritems():
-                if k not in meta_keys:
+                if k not in meta_keys and k not in exclude_keys:
                     sess.setDatum(k, v)
 
             return from_bundle(sess.getSessionInstance(*[self.vars.get(k, '') for k in meta_keys]))
