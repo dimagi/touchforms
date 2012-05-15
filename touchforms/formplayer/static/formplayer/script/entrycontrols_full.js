@@ -552,7 +552,7 @@ function GeoPointEntry () {
 
   this.load = function (q, $container) {
     this.mkWidget(q, $container);
-    this.setAnswer(this.default_answer);
+    this.setAnswer(this.default_answer, true);
 
     this.commit = function() {
       q.onchange();
@@ -569,6 +569,18 @@ function GeoPointEntry () {
     var H = 250;
     $map.css('width', W+'px');
     $map.css('height', H+'px');
+
+    $map.css('background', '#eee');
+
+    var $wait = $('<div />');
+    $wait.css('margin', 'auto');
+    $wait.css('padding-top', '60px');
+    $wait.css('max-width', '200px');
+    $wait.css('color', '#bbb');
+    $wait.css('font-size', '24pt');
+    $wait.css('line-height', '28pt');
+    $wait.text('please wait while the map loads...');
+    $map.append($wait);
 
     this.lat = null;
     this.lon = null;
@@ -599,6 +611,7 @@ function GeoPointEntry () {
       });
 
     var on_gmap_load = function() {
+	$map.empty();
 	widget.map = new google.maps.Map($map[0], {
 		mapTypeId: google.maps.MapTypeId.ROADMAP,
 		center: new google.maps.LatLng(widget.DEFAULT.lat, widget.DEFAULT.lon),
@@ -632,7 +645,7 @@ function GeoPointEntry () {
   }
 
   this.setAnswer = function (answer, postLoad) {
-    if (this.map) {
+    if (postLoad) {
       if (answer) {
         this.set_latlon(answer[0], answer[1]);
         this.map.setCenter(new google.maps.LatLng(answer[0], answer[1]));
