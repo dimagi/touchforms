@@ -598,23 +598,33 @@ function GeoPointEntry () {
 	return false;
       });
 
-    this.map = new google.maps.Map($map[0], {
-      mapTypeId: google.maps.MapTypeId.ROADMAP,
-      center: new google.maps.LatLng(this.DEFAULT.lat, this.DEFAULT.lon),
-      zoom: this.DEFAULT.zoom
-    });
+    var on_gmap_load = function() {
+	widget.map = new google.maps.Map($map[0], {
+		mapTypeId: google.maps.MapTypeId.ROADMAP,
+		center: new google.maps.LatLng(widget.DEFAULT.lat, widget.DEFAULT.lon),
+		zoom: widget.DEFAULT.zoom
+	    });
 
-    this.geocoder = new google.maps.Geocoder();
+	widget.geocoder = new google.maps.Geocoder();
 
-    var widget = this;
-    google.maps.event.addListener(this.map, "center_changed", function() { widget.update_center(); });
+	google.maps.event.addListener(widget.map, "center_changed", function() { widget.update_center(); });
 
-    $ch = $('<img src="data:image/png;base64,' + crosshairs + '">');
-    $ch.css('position', 'relative')
-    $ch.css('top', ((H/*$map.height()*/ - crosshair_size) / 2) + 'px');
-    $ch.css('left', ((W/*$map.width()*/ - crosshair_size) / 2) + 'px');
-    $ch.css('z-index', '500');
-    $map.append($ch);
+	$ch = $('<img src="data:image/png;base64,' + crosshairs + '">');
+	$ch.css('position', 'relative')
+	$ch.css('top', ((H/*$map.height()*/ - crosshair_size) / 2) + 'px');
+	$ch.css('left', ((W/*$map.width()*/ - crosshair_size) / 2) + 'px');
+	$ch.css('z-index', '500');
+	$map.append($ch);
+    };
+
+    var GMAPS_API = 'http://maps.googleapis.com/maps/api/js?key=' + GMAPS_API_KEY + '&sensor=false';
+    if (typeof google == "undefined") {
+	_GMAPS_INIT = on_gmap_load
+        $.getScript(GMAPS_API + '&callback=_GMAPS_INIT');
+    } else {
+	on_gmap_load();
+    }
+
   }
 
   this.getAnswer = function () {

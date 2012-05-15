@@ -15,8 +15,6 @@
 
     <link rel="stylesheet" href="{{STATIC_URL}}formplayer/style/webforms.css">
 
-    <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key={{ maps_api_key }}&sensor=false"></script>
-
     <script language="javascript">
 
 if (!window.console) {
@@ -25,6 +23,8 @@ if (!window.console) {
   };
 }
 
+
+GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
 
 // preloaders are deprecated -- support for backwards compatibility
 PRELOADER_URL = "{% url xform_preloader %}";
