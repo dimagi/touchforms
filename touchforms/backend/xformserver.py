@@ -10,6 +10,7 @@ import java.lang
 import time
 from optparse import OptionParser
 from datetime import datetime, timedelta
+import settings
 
 from setup import init_classpath
 init_classpath()
@@ -279,6 +280,9 @@ if __name__ == "__main__":
     purger = Purger(options.stale_window)
     purger.start()
     logging.info('purging sessions inactive for more than %d minutes' % options.stale_window)
+
+    if settings.HACKS_MODE:
+        logging.info('hacks mode is enabled, and you should feel bad about that')
 
     try:
         while True:

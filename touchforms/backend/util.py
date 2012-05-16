@@ -18,6 +18,8 @@ FormIndex.__json__ = lambda self: json.dumps(str(self))
 FormIndex.__str__ = lambda self: str_form_index(self)
 FormIndex.__repr__ = FormIndex.__json__
 
+import settings
+
 def to_jdate(pdate):
     return Date(pdate.year - 1900, pdate.month - 1, pdate.day)
 
@@ -25,9 +27,15 @@ def to_jtime(ptime):
     return Date(1970, 0, 1, ptime.hour, ptime.minute)
 
 def to_pdate(jdate):
+    if not isinstance(jdate, Date) and settings.HACKS_MODE:
+        return datetime.strptime(jdate, '%Y-%m-%d').date()
+
     return datetime(jdate.getYear() + 1900, jdate.getMonth() + 1, jdate.getDate())
 
 def to_ptime(jtime):
+    if not isinstance(jtime, Date) and settings.HACKS_MODE:
+        return datetime.strptime(jtime, '%H:%M:%S').time()
+
     return time(jtime.getHours(), jtime.getMinutes())
 
 def to_vect(it):
