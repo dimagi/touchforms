@@ -55,7 +55,7 @@ function WebFormSession(params) {
              success: cb, 
              dataType: "json",
              error: function (jqXHR, textStatus, errorThrown) { 
-                console.log("Got an unexpected server error!", textStatus);
+                console.log("Got an unexpected server error!", textStatus, errorThrown);
              }
         });
         
