@@ -8,9 +8,6 @@ import re
 import os
 import logging
 import hashlib
-from couchdbkit.schema.properties import StringProperty, IntegerProperty, DictProperty
-from couchdbkit.ext.django.schema import Document
-from couchdbkit.resource import ResourceNotFound
 
 VERSION_KEY = "version"
 UIVERSION_KEY = "uiVersion" 
