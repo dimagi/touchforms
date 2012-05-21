@@ -126,3 +126,5 @@ COUCHDB_DATABASE = 'http://%s%s/%s' % (
 COUCHDB_DATABASES = [('formplayer', COUCHDB_DATABASE)]
 
 REVISION = util.get_revision('git', ROOT_DIR, 'flag')
+
+GMAPS_API_KEY = ''
