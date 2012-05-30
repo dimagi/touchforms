@@ -473,12 +473,13 @@ function DateEntry (args) {
     this.widget_id = 'datepicker-' + nonce();
     $container.html('<input id="' + this.widget_id + '" type="text"><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.format.replace('yy', 'yyyy') + ')</span>');
     this.$picker = $container.find('#' + this.widget_id);
-
-		this.$picker.datepicker({
+    var nextYear = new Date().getFullYear() + 1;
+    this.$picker.datepicker({
         changeMonth: true,
         changeYear: true,
-        dateFormat: this.format
-      });
+        dateFormat: this.format,
+        yearRange: "" + (nextYear - 100) + ":" + nextYear
+    });
 
     this.initted = true;
 
