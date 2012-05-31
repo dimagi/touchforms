@@ -84,7 +84,6 @@ class XForm(models.Model):
         with os.fdopen(fd, 'w') as f:
             f.write(raw_xml)
 
-        name = 'an xform'
         checksum = hashlib.sha1(raw_xml).hexdigest()
         element = ElementTree.XML(raw_xml)
         head = element[0]
@@ -107,6 +106,8 @@ class XForm(models.Model):
                                 uiversion = int(value)
                             
                         namespace = r.group(0).strip('{').strip('}')
+            if 'title' in child.tag:
+                name = child.text
         if not namespace:
             raise Exception("No namespace found in xform: %s" % name)
         
