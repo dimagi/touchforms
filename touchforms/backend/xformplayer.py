@@ -32,63 +32,63 @@ from touchcare import CCInstances
 DEBUG = False
 
 class NoSuchSession(Exception):
-  pass
+    pass
 
 class global_state_mgr:
-  instances = {}
-  instance_id_counter = 0
+    instances = {}
+    instance_id_counter = 0
 
-  session_cache = {}
-  session_id_counter = 0
-  
-  def __init__(self):
-    self.lock = threading.Lock()
-  
-  def new_session(self, xfsess):
-    with self.lock:
-      self.session_id_counter += 1
-      self.session_cache[self.session_id_counter] = xfsess
-    return self.session_id_counter
-  
-  def get_session(self, session_id):
-    with self.lock:
-      try:
-        return self.session_cache[session_id]
-      except KeyError:
-        raise NoSuchSession()
+    session_cache = {}
+    session_id_counter = 0
     
-  #todo: we're not calling this currently, but should, or else xform sessions will hang around in memory forever    
-  def destroy_session(self, session_id):
-    with self.lock:
-      try:
-        del self.session_cache[session_id]
-      except KeyError:
-        raise NoSuchSession()
+    def __init__(self):
+        self.lock = threading.Lock()
     
-  def save_instance(self, data):        
-    with self.lock:
-      self.instance_id_counter += 1
-      self.instances[self.instance_id_counter] = data
-    return self.instance_id_counter
+    def new_session(self, xfsess):
+        with self.lock:
+            self.session_id_counter += 1
+            self.session_cache[self.session_id_counter] = xfsess
+        return self.session_id_counter
+    
+    def get_session(self, session_id):
+        with self.lock:
+            try:
+                return self.session_cache[session_id]
+            except KeyError:
+                raise NoSuchSession()
+        
+    #todo: we're not calling this currently, but should, or else xform sessions will hang around in memory forever        
+    def destroy_session(self, session_id):
+        with self.lock:
+            try:
+                del self.session_cache[session_id]
+            except KeyError:
+                raise NoSuchSession()
+        
+    def save_instance(self, data):                
+        with self.lock:
+            self.instance_id_counter += 1
+            self.instances[self.instance_id_counter] = data
+        return self.instance_id_counter
 
-  #todo: add ways to get xml, delete xml, and option not to save xml at all
+    #todo: add ways to get xml, delete xml, and option not to save xml at all
 
-  def purge(self, older_than):
-    num_sess_purged = 0
-    num_sess_active = 0
+    def purge(self, older_than):
+        num_sess_purged = 0
+        num_sess_active = 0
 
-    with self.lock:
-      now = time.time()
-      for sess_id, sess in self.session_cache.items():
-        if now - sess.last_activity > older_than:
-          del self.session_cache[sess_id]
-          num_sess_purged += 1
-        else:
-          num_sess_active += 1
-      #what about saved instances? we don't track when they were saved
-      #for now will just assume instances are not saved
+        with self.lock:
+            now = time.time()
+            for sess_id, sess in self.session_cache.items():
+                if now - sess.last_activity > older_than:
+                    del self.session_cache[sess_id]
+                    num_sess_purged += 1
+                else:
+                    num_sess_active += 1
+            #what about saved instances? we don't track when they were saved
+            #for now will just assume instances are not saved
 
-    return {'purged': num_sess_purged, 'active': num_sess_active}
+        return {'purged': num_sess_purged, 'active': num_sess_active}
 
 global_state = global_state_mgr()
   
