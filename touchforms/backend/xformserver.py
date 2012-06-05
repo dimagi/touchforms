@@ -172,6 +172,12 @@ def handle_request (content, **kwargs):
 
             return xformplayer.go_back(content['session-id'])
 
+        elif action == 'current':
+            if 'session-id' not in content:
+                return {'error': 'session id required'}
+
+            return xformplayer.current_question(content['session-id'])
+
         elif action == 'edit-repeat':
             if 'session-id' not in content:
                 return {'error': 'session id required'}

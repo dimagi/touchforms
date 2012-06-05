@@ -549,6 +549,10 @@ def set_locale(session_id, lang):
         ev = xfsess.set_locale(lang)
         return xfsess.response({}, ev)
 
+def current_question(session_id):
+    with global_state.get_session(session_id) as xfsess:
+        return xfsess.response({}, xfsess.cur_event)
+
 def next_event (xfsess):
     ev = xfsess.next_event()
     if ev['type'] != 'form-complete':
