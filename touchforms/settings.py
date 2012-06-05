@@ -118,13 +118,6 @@ MANAGERS = ADMINS
 
 util.initialize_logging(init_logging)
 
-COUCHDB_DATABASE = 'http://%s%s/%s' % (
-    "%s:%s@" % (COUCH_USERNAME, COUCH_PASSWORD) if COUCH_USERNAME else "",
-    COUCH_SERVER_ROOT,
-    COUCH_DATABASE_NAME
-)
-COUCHDB_DATABASES = [('formplayer', COUCHDB_DATABASE)]
-
 REVISION = util.get_revision('git', ROOT_DIR, 'flag')
 
 GMAPS_API_KEY = ''

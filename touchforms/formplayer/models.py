@@ -8,6 +8,7 @@ import re
 import os
 import logging
 import hashlib
+import tempfile
 
 VERSION_KEY = "version"
 UIVERSION_KEY = "uiVersion" 
@@ -69,9 +70,6 @@ class XForm(models.Model):
             if not namespace:
                 raise Exception("No namespace found in xform: %s" % name)
         
-            if not namespace:
-                raise Exception("No namespace found in xform: %s" % name)
-        
             instance = XForm.objects.create(name=name, namespace=namespace, 
                                             version=version, uiversion=uiversion,
                                             checksum=checksum, file=f)           
@@ -79,6 +77,54 @@ class XForm(models.Model):
         finally:
             f.close()
                         
+    @classmethod
+    def from_raw(cls, raw_xml):
+        """Create an xform from the raw xml content"""
+        fd, path = tempfile.mkstemp()
+        with os.fdopen(fd, 'w') as f:
+            f.write(raw_xml)
+
+        checksum = hashlib.sha1(raw_xml).hexdigest()
+        element = ElementTree.XML(raw_xml)
+        head = element[0]
+        namespace, version, uiversion = [None,] * 3
+        for child in head:
+            if "model" in child.tag:
+                for subchild in child:
+                    if "instance" in subchild.tag and 'src' not in subchild.attrib:
+                        instance_root = subchild[0]
+                        r = re.search('{[a-zA-Z0-9_\-\.\/\:]*}', instance_root.tag)
+                        if r is None:
+                            raise Exception("No namespace found in xform: %s" % name)
+                        for key, value in instance_root.attrib.items():
+                            # we do case-sensitive comparison because that's the 
+                            # xml spec.  we may want to make this less academic
+                            # and more user friendly.
+                            if key.strip() == VERSION_KEY:
+                                version = int(value)
+                            elif key.strip() == UIVERSION_KEY:
+                                uiversion = int(value)
+                            
+                        namespace = r.group(0).strip('{').strip('}')
+            if 'title' in child.tag:
+                name = child.text
+        if not namespace:
+            raise Exception("No namespace found in xform: %s" % name)
+        
+        try:
+            return XForm.objects.get(checksum=checksum)
+        except XForm.DoesNotExist:
+            with File(open(path)) as f:
+                o = XForm(name=name, namespace=namespace, 
+                          version=version, uiversion=uiversion,
+                          checksum=checksum, file=f)
+                o.save()
+                return o
+
+                        
+
+        
+    
 
         
     
