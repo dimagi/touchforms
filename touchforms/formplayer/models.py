@@ -70,7 +70,7 @@ class XForm(models.Model):
             if not namespace:
                 raise Exception("No namespace found in xform: %s" % name)
         
-            instance = XForm.objects.create(name=name, namespace=namespace, 
+            instance = cls.objects.create(name=name, namespace=namespace, 
                                             version=version, uiversion=uiversion,
                                             checksum=checksum, file=f)           
             return instance
@@ -112,12 +112,12 @@ class XForm(models.Model):
             raise Exception("No namespace found in xform: %s" % name)
         
         try:
-            return XForm.objects.get(checksum=checksum)
-        except XForm.DoesNotExist:
+            return cls.objects.get(checksum=checksum)
+        except cls.DoesNotExist:
             with File(open(path)) as f:
-                o = XForm(name=name, namespace=namespace, 
-                          version=version, uiversion=uiversion,
-                          checksum=checksum, file=f)
+                o = cls(name=name, namespace=namespace, 
+                        version=version, uiversion=uiversion,
+                        checksum=checksum, file=f)
                 o.save()
                 return o
 
