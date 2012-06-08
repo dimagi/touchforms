@@ -1,39 +1,39 @@
 /* === INHERITANCE PATTERN === */
 
-function inherit (subclass, superclass) {
-  subclass._super = superclass._super || {};
-  for (var e in superclass) {
-    if (e != '_super' && e != 'super') {
-      if (typeof(superclass[e]) != 'function') {
-        subclass[e] = superclass[e];
+function inherit (subclass, parentclass) {
+  subclass._parent = parentclass._parent || {};
+  for (var e in parentclass) {
+    if (e != '_parent' && e != 'parent') {
+      if (typeof(parentclass[e]) != 'function') {
+        subclass[e] = parentclass[e];
       } else {
-        if (subclass._super[e] == null) {
-          subclass._super[e] = [];
+        if (subclass._parent[e] == null) {
+          subclass._parent[e] = [];
         }
-        subclass._super[e].push(superclass[e]);
+        subclass._parent[e].push(parentclass[e]);
         subclass[e] = passToParent(e);
       }
     }
   }
-  subclass.super = function (funcName) {
-    return invokeSuper(this, funcName);
+  subclass.parent = function (funcName) {
+    return invokeParent(this, funcName);
   }
 }
 
 function passToParent (funcName) {
   return function () {
-    return this.super(funcName).apply(null, arguments);
+    return this.parent(funcName).apply(null, arguments);
   }
 }
 
-function invokeSuper (self, funcName) {
+function invokeParent (self, funcName) {
   return function () {
-    var basefunc = self._super[funcName].pop();
+    var basefunc = self._parent[funcName].pop();
     if (!basefunc) {
-      throw new Error('function ' + funcName + ' not defined in superclass');
+      throw new Error('function ' + funcName + ' not defined in parentclass');
     }
     var retval = basefunc.apply(self, arguments);
-    self._super[funcName].push(basefunc);
+    self._parent[funcName].push(basefunc);
     return retval;
   }
 }
@@ -41,8 +41,8 @@ function invokeSuper (self, funcName) {
 /* TO USE:
  *
  * early in the constructor of the child class, call:
- *   inherit(this, new SuperClass(...));
- * this is akin to calling super(...); inside a java constructor
+ *   inherit(this, new ParentClass(...));
+ * this is akin to calling parent(...); inside a java constructor
  *
  * this call will load all variables and functions from the parent class
  * into this class.
@@ -52,8 +52,8 @@ function invokeSuper (self, funcName) {
  * in this class
  *
  * to call a parent method explicitly, do:
- *   this.super('someMethod')(args);
- * this is akin to calling super.someMethod(args); in java
+ *   this.parent('someMethod')(args);
+ * this is akin to calling parent.someMethod(args); in java
  */
 
 /* ============================= */
@@ -228,7 +228,7 @@ function IntEntry (parent, length_limit) {
   inherit(this, new FreeTextEntry({parent: parent, domain: 'numeric', length_limit: length_limit || 9}));
 
   this.getAnswer = function () {
-    var val = this.super('getAnswer')();
+    var val = this.parent('getAnswer')();
     return (val != null ? +val : val);
   }
 
@@ -249,7 +249,7 @@ function FloatEntry (parent) {
   inherit(this, new FreeTextEntry({parent: parent}));
 
   this.getAnswer = function () {
-    var val = this.super('getAnswer')();
+    var val = this.parent('getAnswer')();
     return (val != null ? +val : val);
   }
 
@@ -430,13 +430,13 @@ function SingleSelectEntry (args) {
   this.isMulti = false;
 
   this.getAnswer = function () {
-    var selected = this.super('getAnswer')();
+    var selected = this.parent('getAnswer')();
     return selected.length > 0 ? selected[0] : null;
   }
 
   this.setAnswer = function (answer, postLoad) {
     if (this.initted) {
-      this.super('setAnswer')(answer != null ? [answer] : null, postLoad);
+      this.parent('setAnswer')(answer != null ? [answer] : null, postLoad);
     } else {
       this.default_selections = answer;
     }
@@ -509,7 +509,7 @@ function TimeOfDayEntry (parent) {
   inherit(this, new FreeTextEntry({parent: parent, length_limit: 5}));
 
   this.getAnswer = function () {
-    var val = this.super('getAnswer')();
+    var val = this.parent('getAnswer')();
     var t = this.parseAnswer(val);
     if (t != null) {
       return intpad(t.h, 2) + ':' + intpad(t.m, 2);

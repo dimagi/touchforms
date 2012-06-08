@@ -1,4 +1,18 @@
 
+// IE compliance
+if (!Array.prototype.indexOf) {
+    Array.prototype.indexOf = function(e) {
+	var ix = -1;
+	for (var i = 0; i < this.length; i++) {
+	    if (this[i] === e) {
+		ix = i;
+		break;
+	    }
+	}
+	return ix;
+    }
+}
+
 
 function WebFormSession(params) {
   if (params.form_uid) {

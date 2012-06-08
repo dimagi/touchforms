@@ -494,7 +494,7 @@ var ixElementSet = function(e, set) {
 
 var inElementSet = function(e, set) {
   //return the matching object of 'e' within 'set'; null if no match
-  ix = ixElementSet(e, set);
+  var ix = ixElementSet(e, set);
   return (ix != -1 ? set[ix] : null);
 }
 
