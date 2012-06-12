@@ -38,9 +38,17 @@ class XformsEvent(object):
         self.choices = datadict.get("choices", None)
             
     @property
-    def text_prompt(self, select_display_func=None):
+    def text_prompt(self):
         """
         A text-only prompt for this. Used in pure text (or sms) mode.
+        
+        Kept for backwards compatibility. Should use get_text_prompt, below.
+        """
+        return self.get_text_prompt(None)
+    
+    def get_text_prompt(self, select_display_func=None):
+        """
+        Get a text-only prompt for this. Used in pure text (or sms) mode.
         
         Allows you to pass in a function to override how selects are displayed.
         
