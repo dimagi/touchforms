@@ -38,17 +38,43 @@ class XformsEvent(object):
         self.choices = datadict.get("choices", None)
             
     @property
-    def text_prompt(self):
+    def text_prompt(self, select_display_func=None):
         """
         A text-only prompt for this. Used in pure text (or sms) mode.
+        
+        Allows you to pass in a function to override how selects are displayed.
+        
+        The signature of that function should take in the prompt and choice list
+        and return a string. The default is select_to_text_compact
         """
+        display_func = select_display_func or select_to_text_compact
         if self.datatype == "select" or self.datatype == "multiselect":
-            return "%s %s" % \
-                (self.caption,
-                 ", ".join(["%s:%s" % (i+1, val) for i, val in \
-                            enumerate(self._dict["choices"])])) #i shifted by 1 since it gets unshifted on server side.
+            return display_func(self.caption, self._dict["choices"])
         else:
             return self.caption
+
+def select_to_text_compact(caption, choices):
+    """
+    A function to convert a select item to text in a compact format.
+    Format is:
+    
+    [question] 1:[choice1], 2:[choice2]...
+    """
+    return "%s %s." % (caption,
+                      ", ".join(["%s:%s" % (i+1, val) for i, val in \
+                                 enumerate(choices)])) 
+
+def select_to_text_readable(caption, choices):
+    """
+    A function to convert a select item to text in a more verbose, readable 
+    format.
+    Format is:
+    
+    [question] Send 1 for [choice1], 2 for [choice2]...
+    """
+    return "%s Send %s" % (caption,
+                      ", ".join(["%s for %s" % (i+1, val) for i, val in \
+                                 enumerate(choices)])) 
 
 class XformsResponse(object):
     """
