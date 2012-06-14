@@ -223,6 +223,12 @@ def handle_request (content, **kwargs):
         elif action in touchcare.SUPPORTED_ACTIONS:
             return touchcare.handle_request(content, **kwargs)
             
+        elif action == 'get-instance':
+            if 'session-id' not in content:
+                return {'error': 'session id required'}
+            xfsess = xformplayer.global_state.get_session(content['session-id'])
+            return {"output": xfsess.output()}
+
         else:
             return {'error': 'unrecognized action'}
     

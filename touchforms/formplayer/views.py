@@ -189,7 +189,6 @@ def player_proxy(request):
                              content_type="text/json", auth=DjangoAuth(auth_cookie))
     return HttpResponse(response)
 
-
 # DEPRECATED    
 def api_preload_provider(request):
     param = request.GET.get('param', "")
