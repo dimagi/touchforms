@@ -12,6 +12,7 @@ from org.javarosa.core.services.storage import IStorageIterator
 from org.commcare.cases.instance import CaseInstanceTreeElement
 from org.commcare.cases.model import Case
 from org.commcare.util import CommCareSession
+from org.commcare.xml import TreeElementParser
 
 from org.javarosa.xpath.expr import XPathFuncExpr
 from org.javarosa.xpath import XPathParseTool
@@ -19,9 +20,10 @@ from org.javarosa.core.model.condition import EvaluationContext
 from org.javarosa.core.model.instance import ExternalDataInstance
 from org.javarosa.core.model.instance import DataInstance
 
-from util import to_vect, to_jdate
-from util import to_hashtable
+from org.kxml2.io import KXmlParser
 
+
+from util import to_vect, to_jdate, to_hashtable, to_input_stream
 
 def query_case_ids(q):
     return [c['case_id'] for c in q(settings.CASE_API_URL)]
@@ -37,7 +39,8 @@ def query_case(q, case_id):
     except IndexError:
         return None
 
-def query_factory(domain, auth):
+def query_factory(domain, auth, format="json"):
+    
     def api_query(_url):
         url = domain.join(_url.split('{{DOMAIN}}'))
         if not auth:
@@ -59,11 +62,17 @@ def query_factory(domain, auth):
             opener = urllib2.build_opener(handler)
             req = lambda url: opener.open(url)
         
-        logging.debug('querying %s' % url)
-        f = req(url)
-        return json.loads(f.read())
-
-    return api_query
+        return req(url).read()
+    
+    def json_query(_url):
+        return json.loads(api_query(_url))
+        
+    if format == "json":
+        return json_query
+    elif format == "raw":
+        return api_query
+    else:
+        raise ValueError("Bad api query format: %s" % format)
 
 def case_from_json(data):
     c = Case()
@@ -163,6 +172,7 @@ class CCInstances(InstanceInitializationFactory):
     def __init__(self, sessionvars, api_auth):
         self.vars = sessionvars
         self.auth = api_auth
+        self.fixtures = {}
 
     def generateRoot(self, instance):
         ref = instance.getReference()
@@ -180,9 +190,10 @@ class CCInstances(InstanceInitializationFactory):
         elif 'fixture' in ref:
             fixture_id = ref.split('/')[-1]
             user_id = self.vars['user_id']
-
-            # return from_bundle( CommCareUtil.loadFixtureForUser(fixture_id, userId)    )
-            pass    # save till end... just get raw xml payload from HQ, i presume? -- look up based solely on user id
+            ret = self._get_fixture(user_id, fixture_id)
+            # Unclear why this is necessary but it is
+            ret.setParent(instance.getBase())
+            return ret
         elif 'session' in ref:
             meta_keys = ['device_id', 'app_version', 'username', 'user_id']
             exclude_keys = ['additional_filters']
@@ -192,7 +203,19 @@ class CCInstances(InstanceInitializationFactory):
                     sess.setDatum(k, v)
 
             return from_bundle(sess.getSessionInstance(*[self.vars.get(k, '') for k in meta_keys]))
-
+    
+    def _get_fixture(self, user_id, fixture_id):
+        query_url = '%(base)s/%(user)s/%(fixture)s' % { "base": settings.FIXTURE_API_URL, 
+                                                        "user": user_id,
+                                                        "fixture": fixture_id }
+        q = query_factory(self.vars['domain'], self.auth, format="raw")
+        results = q(query_url)
+        parser = KXmlParser()
+        parser.setInput(to_input_stream(results), "UTF-8")
+        parser.setFeature(KXmlParser.FEATURE_PROCESS_NAMESPACES, True)
+        parser.next()
+        return TreeElementParser(parser, 0, fixture_id).parse()
+        
 
 SUPPORTED_ACTIONS = ["touchcare-filter-cases"]
 
@@ -204,6 +227,7 @@ def handle_request (content, **kwargs):
     else:
         return {'error': 'unrecognized action'}
 
+            
 def filter_cases(content):
     try: 
         modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \

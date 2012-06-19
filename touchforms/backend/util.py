@@ -1,6 +1,7 @@
 from java.util import Date
 from java.util import Vector
 from java.util import Hashtable
+from java.io import ByteArrayInputStream
 import jarray
 
 from datetime import datetime, date, time
@@ -53,6 +54,9 @@ def to_hashtable(dict):
 def to_arr(it, type):
     return jarray.array(it, type)
 
+def to_input_stream(string):
+    return ByteArrayInputStream(string)
+    
 def str_form_index(form_ix):
     if form_ix.isBeginningOfFormIndex():
         return '<'
