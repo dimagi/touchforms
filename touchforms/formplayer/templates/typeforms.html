@@ -73,9 +73,9 @@ $('#waiting').hide();
   var preloaders = null;
 {% if preloader_data %}
     preloaders = {{ preloader_data|safe }};
-{% elif session_data.preloaders %}
+{% else %}{% if session_data.preloaders %}
     preloaders = {{ session_data.preloaders|safe }};
-{% endif %}
+{% endif %}{% endif %}
 
 
   gFormAdapter = new xformAjaxAdapter(XFORM_UID, preloaders, {{ instance_xml|safe }});
