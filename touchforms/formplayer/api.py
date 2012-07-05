@@ -147,6 +147,16 @@ def select_to_text_compact(caption, choices):
                       ", ".join(["%s:%s" % (i+1, val) for i, val in \
                                  enumerate(choices)])) 
 
+def select_to_text_vals_only(caption, choices):
+    """
+    A function to convert a select item to text in a compact format.
+    Format is:
+    
+    [question], choices: [choice1], [choice2]...
+    """
+    return "%s, choices: %s" % (caption, ", ".join(choices)) 
+                  
+
 def select_to_text_readable(caption, choices):
     """
     A function to convert a select item to text in a more verbose, readable 
