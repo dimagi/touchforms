@@ -266,7 +266,6 @@ def get_raw_instance(session_id):
     response, error = post_data(data, settings.XFORMS_PLAYER_URL, "text/json")
     if not error:
         logging.debug('Formplayer API got raw instance: %s' % response.content)
-        ret = json.loads(response.content)
         return json.loads(response.content)["output"]
     else:
         return None
