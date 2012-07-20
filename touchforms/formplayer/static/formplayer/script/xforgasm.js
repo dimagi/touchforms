@@ -94,6 +94,7 @@ function WebFormSession(params) {
 
     this.NUM_PENDING_REQUESTS++;
     this.$loading.show();
+    $("input#submit").attr('disabled', 'disabled');
 
     if (blocking) {
       this.inputActivate(false); // sets BLOCKING_REQUEST_IN_PROGRESS
@@ -114,6 +115,7 @@ function WebFormSession(params) {
         sess.NUM_PENDING_REQUESTS--;
         if (sess.NUM_PENDING_REQUESTS == 0) {
           sess.$loading.hide();
+          $("input#submit").removeAttr('disabled');
         }
       });
   }
