@@ -11,6 +11,7 @@ import time
 from optparse import OptionParser
 from datetime import datetime, timedelta
 import settings
+import re
 
 from setup import init_classpath
 init_classpath()
@@ -59,6 +60,13 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         try:
             logging.debug('received: [%s]' % body)
             data_in = json.loads(body)
+            old_form_content = data_in.get('form-content')
+            if old_form_content:
+                # strip out the leading '<?xml version="1.0"?>' tag
+                # or the java XML parser explodes
+                new_form_content = re.sub(r'^\s*<\?xml[^>]*\?>', '', data_in['form-content'])
+                logging.debug('trimmed xml:\n%s\n' % new_form_content)
+                data_in['form-content'] = new_form_content
         except:
             logging.warn('content does not parse')
             self.send_error(400, 'content does not parse as valid json')
