@@ -273,6 +273,7 @@ function MultiSelectEntry (args) {
   this.choicevals = args.choicevals;
   this.layout_override = args.layout_override;
   this.as_single = (args.meta || {}).as_single;
+  this.appearance = args.meta.appearance;
 
   this.isMulti = true;
   //this.buttons = null;
@@ -731,7 +732,7 @@ function renderQuestion (q, $container, init_answer) {
   //  } else if (q.datatype == "passwd") {
   //control = new PasswordEntry({domain: q.domain});
   } else if (q.datatype == "select") {
-    control = new SingleSelectEntry({choices: q.choices, choicevals: q.choicevals});
+      control = new SingleSelectEntry({choices: q.choices, choicevals: q.choicevals, meta: q.domain_meta});
   } else if (q.datatype == "multiselect") {
     control = new MultiSelectEntry({choices: q.choices, choicevals: q.choicevals, meta: q.domain_meta});
   } else if (q.datatype == "date") {

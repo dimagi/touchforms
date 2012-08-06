@@ -116,6 +116,10 @@ function parse_meta(type, style) {
     }
   }
   
+  if (type == "select" || type == "multiselect") {
+    meta.appearance = style.raw;
+  }
+
   return meta;
 }
 
