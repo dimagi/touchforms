@@ -70,7 +70,15 @@ $('#waiting').hide();
 {% ifequal mode 'xform' %}
 
   XFORM_UID = $('#form-uid')[0].value;
-  gFormAdapter = new xformAjaxAdapter(XFORM_UID, {{ preloader_data|safe }}, {{ instance_xml|safe }});
+  var preloaders = null;
+{% if preloader_data %}
+    preloaders = {{ preloader_data|safe }};
+{% else %}{% if session_data.preloaders %}
+    preloaders = {{ session_data.preloaders|safe }};
+{% endif %}{% endif %}
+
+
+  gFormAdapter = new xformAjaxAdapter(XFORM_UID, preloaders, {{ instance_xml|safe }});
   
 {% else %}
 
@@ -86,7 +94,6 @@ $('#waiting').hide();
   </head>
 
   <body id="body" onLoad="init();" style="font-family: sans-serif; ">
-
     <style>
       .histq {
         background: #fca;

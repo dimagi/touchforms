@@ -2,14 +2,18 @@ import json
 from django.conf import settings
 from urlparse import urlparse
 import httplib
+import logging
+import socket
 
-
-'''
+"""
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
 backend for various sets of tasks.
 
 This API is currently highly beta and could use some hardening. 
-'''
+"""
+
+# Get an instance of a logger
+logging = logging.getLogger(__name__)
 
 class TouchformsAuth(object):
     """
@@ -106,19 +110,64 @@ class XformsEvent(object):
         self.caption = datadict.get("caption", "")
         self.datatype = datadict.get("datatype", "")
         self.output = datadict.get("output", "")
+        self.choices = datadict.get("choices", None)
             
     @property
     def text_prompt(self):
         """
         A text-only prompt for this. Used in pure text (or sms) mode.
+        
+        Kept for backwards compatibility. Should use get_text_prompt, below.
         """
-        if self.datatype == "select":
-            return "%s %s" % \
-                (self.caption,
-                 ", ".join(["%s:%s" % (i+1, val) for i, val in \
-                            enumerate(self._dict["choices"])]))
+        return self.get_text_prompt(None)
+    
+    def get_text_prompt(self, select_display_func=None):
+        """
+        Get a text-only prompt for this. Used in pure text (or sms) mode.
+        
+        Allows you to pass in a function to override how selects are displayed.
+        
+        The signature of that function should take in the prompt and choice list
+        and return a string. The default is select_to_text_compact
+        """
+        display_func = select_display_func or select_to_text_compact
+        if self.datatype == "select" or self.datatype == "multiselect":
+            return display_func(self.caption, self._dict["choices"])
         else:
             return self.caption
+
+def select_to_text_compact(caption, choices):
+    """
+    A function to convert a select item to text in a compact format.
+    Format is:
+    
+    [question] 1:[choice1], 2:[choice2]...
+    """
+    return "%s %s." % (caption,
+                      ", ".join(["%s:%s" % (i+1, val) for i, val in \
+                                 enumerate(choices)])) 
+
+def select_to_text_vals_only(caption, choices):
+    """
+    A function to convert a select item to text in a compact format.
+    Format is:
+    
+    [question], choices: [choice1], [choice2]...
+    """
+    return "%s, choices: %s" % (caption, ", ".join(choices)) 
+                  
+
+def select_to_text_readable(caption, choices):
+    """
+    A function to convert a select item to text in a more verbose, readable 
+    format.
+    Format is:
+    
+    [question] Send 1 for [choice1], 2 for [choice2]...
+    """
+    return "%s Send %s" % (caption,
+                      ", ".join(["%s for %s" % (i+1, val) for i, val in \
+                                 enumerate(choices)])) 
 
 class XformsResponse(object):
     """
@@ -144,14 +193,14 @@ class XformsResponse(object):
     def __init__(self, datadict):
         self._dict = datadict
         self.is_error = False
-        
+        self.error = None
         if "event" in datadict:
             self.event = XformsEvent(datadict["event"])
             self.text_prompt = self.event.text_prompt
         else:
             self.event = None
         
-        self.seq_id = datadict["seq_id"]
+        self.seq_id = datadict.get("seq_id","")
         self.session_id = datadict.get("session_id", "")
         self.status = datadict.get("status", "")
         
@@ -160,15 +209,31 @@ class XformsResponse(object):
             assert self.event is None, "There should be no touchforms event for errors"
             self.is_error = True
             self.text_prompt = datadict.get("reason", "that is not a legal answer")
+            
+        # custom logic to handle http related errors
+        elif self.status == "http-error":
+            assert self.event is None, "There should be no touchforms event for errors"
+            self.error = datadict.get("error")
+            self.is_error = True
+            self.status_code = datadict.get("status_code")
+            self.args = datadict.get("args")
+            self.url = datadict.get("url")
         elif self.event is None:
-            raise "unhandleable response: %s" % json.dumps(datadict)
+            raise ValueError("unhandleable response: %s" % json.dumps(datadict))
+    
+    @classmethod
+    def server_down(cls):
+        # TODO: this should probably be configurable
+        return XformsResponse({"status": "http-error",
+                               "error": "No response from server. Please "
+                                        "contact your administrator for help."})
+    
             
 def post_data(data, url, content_type, auth=None):
     if auth:
         d = json.loads(data)
         d['hq_auth'] = auth.to_dict()
         data = json.dumps(d)
-
     up = urlparse(url)
     headers = {}
     headers["content-type"] = content_type
@@ -178,15 +243,32 @@ def post_data(data, url, content_type, auth=None):
     resp = conn.getresponse()
     results = resp.read()
     return results
-
+    
 def get_response(data, url, auth=None):
-    response = post_data(data, url, content_type="text/json", auth=auth)
+    try:
+        response = post_data(data, url, content_type="text/json", auth=auth)
+    except socket.error, e:
+        return XformsResponse.server_down()
     try:
         return XformsResponse(json.loads(response))
     except Exception, e:
-        print response
         raise e
                                                                                
+def get_raw_instance(session_id):
+    """
+    Gets the raw xml instance of the current session regardless of the state that we're in (used for logging partially complete
+    forms to couch when errors happen).
+    """
+    data = {
+        "action":"get-instance",
+        "session-id": session_id,
+        }
+    response, error = post_data(data, settings.XFORMS_PLAYER_URL, "text/json")
+    if not error:
+        logging.debug('Formplayer API got raw instance: %s' % response.content)
+        return json.loads(response.content)["output"]
+    else:
+        return None
 
 def start_form_session(form_path, content=None, language="", preloader_data={}):
     """
@@ -208,4 +290,11 @@ def answer_question(session_id, answer, auth=None):
             "answer":answer }
     return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
 
+def current_question(session_id, auth=None):
+    """
+    Retrieves information about the current question.
+    """
+    data = {"action": "current",
+            "session-id": session_id}
+    return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
 
