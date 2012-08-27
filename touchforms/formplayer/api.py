@@ -261,7 +261,7 @@ def get_raw_instance(session_id):
     else:
         return None
 
-def start_form_session(form_path, content=None, language="", preloader_data={}):
+def start_form_session(form_path, content=None, language="", session_data={}):
     """
     Start a new form session
     """
@@ -269,7 +269,7 @@ def start_form_session(form_path, content=None, language="", preloader_data={}):
     # should just be used directly. Temporarily left to support legacy code.
     return XFormsConfig(form_path=form_path, 
                         instance_content=content,
-                        preloader_data=preloader_data,
+                        session_data=session_data,
                         language=language).start_session()
     
 def answer_question(session_id, answer, auth=None):
@@ -288,4 +288,3 @@ def current_question(session_id, auth=None):
     data = {"action": "current",
             "session-id": session_id}
     return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
-
