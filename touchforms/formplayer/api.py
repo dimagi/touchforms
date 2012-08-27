@@ -163,7 +163,7 @@ def get_raw_instance(session_id):
     else:
         return None
 
-def start_form_session(form_path, content=None, language="", preloader_data={}):
+def start_form_session(form_path, content=None, language="", session_data={}):
     """
     Start a new form session
     """
@@ -171,7 +171,7 @@ def start_form_session(form_path, content=None, language="", preloader_data={}):
     data = {"action":"new-form",
             "form-name": form_path,
             "instance-content": content,
-            "preloader-data":{}}
+            "session-data": session_data}
     if language:
         data['lang'] = language
     
