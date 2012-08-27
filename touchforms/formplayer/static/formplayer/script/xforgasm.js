@@ -23,6 +23,9 @@ function WebFormSession(params) {
     this.form_spec = {type: 'url', val: params.form_url};
   } 
 
+  //note: the 'allow_html' params will open you up to XSS attacks if you have
+  //forms that insert user-entered data into captions!
+
   //todo: support instance_xml ?
   this.session_data = params.session_data;
 
@@ -46,7 +49,8 @@ function WebFormSession(params) {
     var adapter = new xformAjaxAdapter(this.form_spec, this.session_data, null,
                                        function(p, cb, bl) { sess.serverRequest(p, cb, bl); },
                                        function(p) { sess.submit(p); },
-                                       this.onpresubmit
+                                       this.onpresubmit,
+                                       {allow_html: params.allow_html}
                                        );
     adapter.loadForm($div, init_lang, this.onlanginfo, this.onerror);
   }
@@ -94,6 +98,7 @@ function WebFormSession(params) {
 
     this.NUM_PENDING_REQUESTS++;
     this.$loading.show();
+    $("input#submit").attr('disabled', 'disabled');
 
     if (blocking) {
       this.inputActivate(false); // sets BLOCKING_REQUEST_IN_PROGRESS
@@ -114,6 +119,7 @@ function WebFormSession(params) {
         sess.NUM_PENDING_REQUESTS--;
         if (sess.NUM_PENDING_REQUESTS == 0) {
           sess.$loading.hide();
+          $("input#submit").removeAttr('disabled');
         }
       });
   }

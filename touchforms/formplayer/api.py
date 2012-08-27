@@ -147,6 +147,16 @@ def select_to_text_compact(caption, choices):
                       ", ".join(["%s:%s" % (i+1, val) for i, val in \
                                  enumerate(choices)])) 
 
+def select_to_text_vals_only(caption, choices):
+    """
+    A function to convert a select item to text in a compact format.
+    Format is:
+    
+    [question], choices: [choice1], [choice2]...
+    """
+    return "%s, choices: %s" % (caption, ", ".join(choices)) 
+                  
+
 def select_to_text_readable(caption, choices):
     """
     A function to convert a select item to text in a more verbose, readable 
@@ -256,7 +266,6 @@ def get_raw_instance(session_id):
     response, error = post_data(data, settings.XFORMS_PLAYER_URL, "text/json")
     if not error:
         logging.debug('Formplayer API got raw instance: %s' % response.content)
-        ret = json.loads(response.content)
         return json.loads(response.content)["output"]
     else:
         return None

@@ -1,11 +1,12 @@
 
-function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc) {
+function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc, render_context) {
   this.formSpec = formSpec;
   this.sessionData = sessionData;
   this.session_id = -1;
   this.ajaxfunc = ajaxfunc;
   this.submitfunc = submitfunc;
   this.presubmitfunc = presubmitfunc;
+  this.render_context = render_context;
 
   this.loadForm = function ($div, init_lang, onlanginfo, onerror) {
     var args = {
