@@ -139,8 +139,14 @@ def handle_request (content, **kwargs):
                     pass
 
             session_data = content.get("session-data", {})
-            return xformplayer.open_form(form_spec, inst_spec,
-                                         content.get('lang'), kwargs.get('extensions', []), session_data, nav_mode, content.get('hq_auth'))
+            return xformplayer.open_form(form_spec, inst_spec, **{
+                    'init_lang': content.get('lang'),
+                    'extensions': kwargs.get('extensions', []),
+                    'session_data': session_data,
+                    'nav_mode': nav_mode,
+                    'api_auth': content.get('hq_auth'),
+                    'staleness_window': content.get('staleness_window'),
+                })
 
         elif action == 'edit-form':
             return {'error': 'unsupported'}

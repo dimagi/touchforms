@@ -73,14 +73,14 @@ class global_state_mgr:
 
     #todo: add ways to get xml, delete xml, and option not to save xml at all
 
-    def purge(self, older_than):
+    def purge(self, default_older_than):
         num_sess_purged = 0
         num_sess_active = 0
 
         with self.lock:
             now = time.time()
             for sess_id, sess in self.session_cache.items():
-                if now - sess.last_activity > older_than:
+                if now - sess.last_activity > (sess.staleness_window or default_older_than):
                     del self.session_cache[sess_id]
                     num_sess_purged += 1
                 else:
@@ -108,7 +108,7 @@ class SequencingException(Exception):
     pass
 
 class XFormSession:
-    def __init__(self, xform, instance=None, init_lang=None, session_data={}, extensions=[], nav_mode='prompt', api_auth=None):
+    def __init__(self, xform, instance=None, init_lang=None, session_data={}, extensions=[], nav_mode='prompt', api_auth=None, staleness_window=None):
         self.lock = threading.Lock()
         self.nav_mode = nav_mode
         self.seq_id = 0
@@ -122,6 +122,7 @@ class XFormSession:
 
         self._parse_current_event()
 
+        self.staleness_window = 3600. * staleness_window
         self.update_last_activity()
 
     def __enter__(self):
@@ -479,14 +480,14 @@ def get_loader(spec):
     }[type]
 
 
-def open_form(form_spec, inst_spec=None, lang=None, extensions=[], session_data={}, nav_mode='prompt', api_auth=None):
+def open_form(form_spec, inst_spec=None, **kwargs):
     try:
         xform_xml = get_loader(form_spec)()
         instance_xml = get_loader(inst_spec)()
     except Exception, e:
         return {'error': str(e)}
 
-    xfsess = XFormSession(xform_xml, instance_xml, init_lang=lang, session_data=session_data, extensions=extensions, nav_mode=nav_mode, api_auth=api_auth)
+    xfsess = XFormSession(xform_xml, instance_xml, **kwargs)
     sess_id = global_state.new_session(xfsess)
     return xfsess.response({'session_id': sess_id, 'title': xfsess.form_title(), 'langs': xfsess.get_locales()})
 
@@ -581,8 +582,8 @@ def form_completion(xfsess):
 
 
 
-def purge(window):
-    resp = global_state.purge(window)
+def purge(default_window):
+    resp = global_state.purge(default_window)
     resp.update({'status': 'ok'})
     return resp
 
