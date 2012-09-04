@@ -220,7 +220,7 @@ class CCInstances(InstanceInitializationFactory):
 SUPPORTED_ACTIONS = ["touchcare-filter-cases"]
 
 # API stuff
-def handle_request (content, **kwargs):
+def handle_request (content, server):
     action = content['action']
     if action == "touchcare-filter-cases":
         return filter_cases(content)

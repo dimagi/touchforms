@@ -5,6 +5,8 @@ URL_ROOT = "http://commcarehq.org/a/{{DOMAIN}}"
 
 HACKS_MODE = True
 
+SESSION_CACHE_URL = 'http://localhost:8000/session-cache/'
+
 try:
     from localsettings import *
 except ImportError:
@@ -12,3 +14,4 @@ except ImportError:
 
 CASE_API_URL = '%s/cloudcare/api/cases' % URL_ROOT
 FIXTURE_API_URL = '%s/cloudcare/api/fixtures' % URL_ROOT
+

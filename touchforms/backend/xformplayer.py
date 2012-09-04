@@ -5,6 +5,7 @@ from datetime import datetime
 import threading
 import codecs
 import time
+import uuid
 
 from java.util import Date
 from java.util import Vector
@@ -28,6 +29,7 @@ from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
 
 from touchcare import CCInstances
+import persistence
 
 DEBUG = False
 
@@ -73,14 +75,14 @@ class global_state_mgr:
 
     #todo: add ways to get xml, delete xml, and option not to save xml at all
 
-    def purge(self, default_older_than):
+    def purge(self):
         num_sess_purged = 0
         num_sess_active = 0
 
         with self.lock:
             now = time.time()
             for sess_id, sess in self.session_cache.items():
-                if now - sess.last_activity > (sess.staleness_window or default_older_than):
+                if now - sess.last_activity > sess.staleness_window:
                     del self.session_cache[sess_id]
                     num_sess_purged += 1
                 else:
@@ -108,21 +110,32 @@ class SequencingException(Exception):
     pass
 
 class XFormSession:
-    def __init__(self, xform, instance=None, init_lang=None, session_data={}, extensions=[], nav_mode='prompt', api_auth=None, staleness_window=None):
+    def __init__(self, xform, instance=None, **params):
+        # params.get('cur_index')   # used for restoring sessions
+
+        self.uuid = uuid.uuid4().hex
         self.lock = threading.Lock()
-        self.nav_mode = nav_mode
+        self.nav_mode = params.get('nav_mode', 'prompt')
         self.seq_id = 0
 
-        self.form = load_form(xform, instance, extensions, session_data, api_auth)
+        self.form = load_form(xform, instance, params.get('extensions', []), params.get('session_data', {}), params.get('api_auth'))
         self.fem = FormEntryModel(self.form, FormEntryModel.REPEAT_STRUCTURE_NON_LINEAR)
         self.fec = FormEntryController(self.fem)
 
-        if init_lang is not None:
-            self.fec.setLanguage(init_lang)
+        if params.get('init_lang'):
+            self.fec.setLanguage(params.get('init_lang'))
 
         self._parse_current_event()
 
-        self.staleness_window = 3600. * staleness_window
+        self.staleness_window = 3600. * params['staleness_window']
+        self.persist = params.get('persist', True)
+        self.orig_params = {
+            'xform': xform,
+            'session_data': params.get('session_data'),
+            'api_auth': params.get('api_auth'),
+            'staleness_window': params['staleness_window'],
+        }
+
         self.update_last_activity()
 
     def __enter__(self):
@@ -136,10 +149,32 @@ class XFormSession:
         return self
 
     def __exit__(self, *_):
+        if self.persist:
+            self.dump_state()
         self.lock.release()
  
     def update_last_activity(self):
         self.last_activity = time.time()
+
+    def session_state(self):
+        # workaround
+        def get_lang():
+            if self.fem.getForm().getLocalizer() is not None:
+                return self.fem.getLanguage()
+            else:
+                return None
+
+        state = dict(self.orig_params)
+        state.update({
+            'instance': self.output(),
+            'init_lang': get_lang(),
+            'cur_index': str(self.fem.getFormIndex()) if self.nav_mode != 'fao' else None,
+        })
+        return state
+
+    # TODO: make this async?
+    def dump_state(self):
+        persistence.persist(self)
 
     def output(self):
         if self.cur_event['type'] != 'form-complete':
@@ -582,8 +617,8 @@ def form_completion(xfsess):
 
 
 
-def purge(default_window):
-    resp = global_state.purge(default_window)
+def purge():
+    resp = global_state.purge()
     resp.update({'status': 'ok'})
     return resp
 

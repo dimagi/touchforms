@@ -19,7 +19,7 @@ import com.xhaus.jyson.JysonCodec as json
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
 DEFAULT_PORT = 4444
-DEFAULT_STALE_WINDOW = 180 #minutes
+DEFAULT_STALE_WINDOW = 3. #hours
 
 SIMULATED_DELAY = 0 #ms
 
@@ -27,10 +27,11 @@ class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     pass
 
 class XFormHTTPGateway(threading.Thread):
-    def __init__(self, port, extensions=[]):
+    def __init__(self, port, stale_window, extensions=[]):
         threading.Thread.__init__(self)
         self.server = ThreadingHTTPServer(('', port), XFormRequestHandler)
         self.server.extensions = extensions
+        self.server.default_stale_window = stale_window
 
     def run(self):
         self.server.serve_forever()
@@ -65,7 +66,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            data_out = handle_request(data_in, extensions=self.server.extensions)
+            data_out = handle_request(data_in, self.server)
         except (Exception, java.lang.Exception), e:
             if isinstance(e, java.lang.Exception):
                 e.printStackTrace() #todo: log the java stacktrace
@@ -110,7 +111,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(content)
 
         
-def handle_request (content, **kwargs):
+def handle_request (content, server):
     if 'action' not in content:
         return {'error': 'action required'}
 
@@ -141,11 +142,11 @@ def handle_request (content, **kwargs):
             session_data = content.get("session-data", {})
             return xformplayer.open_form(form_spec, inst_spec, **{
                     'init_lang': content.get('lang'),
-                    'extensions': kwargs.get('extensions', []),
+                    'extensions': server.extensions,
                     'session_data': session_data,
                     'nav_mode': nav_mode,
                     'api_auth': content.get('hq_auth'),
-                    'staleness_window': content.get('staleness_window'),
+                    'staleness_window': content.get('staleness_window', server.default_stale_window),
                 })
 
         elif action == 'edit-form':
@@ -227,7 +228,7 @@ def handle_request (content, **kwargs):
             return xformplayer.purge(content['window'])
 
         elif action in touchcare.SUPPORTED_ACTIONS:
-            return touchcare.handle_request(content, **kwargs)
+            return touchcare.handle_request(content, server)
             
         elif action == 'get-instance':
             if 'session-id' not in content:
@@ -247,9 +248,8 @@ def delay():
     time.sleep(.5 * SIMULATED_DELAY / 1000)
 
 class Purger(threading.Thread):
-    def __init__(self, stale_window, purge_freq=5.):
+    def __init__(self, purge_freq=5.):
         threading.Thread.__init__(self)
-        self.stale_window = 60. * stale_window
         self.purge_freq = timedelta(minutes=purge_freq)
 
         self.last_purge = None
@@ -260,7 +260,7 @@ class Purger(threading.Thread):
         while self.up:
             if self.purge_due():
                 self.update()
-                result = xformplayer.purge(self.stale_window)
+                result = xformplayer.purge()
                 logging.info('purging sessions: ' + str(result))
 
             time.sleep(0.1)
@@ -284,20 +284,20 @@ class Purger(threading.Thread):
 if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option('-p', '--port', dest='port', type='int', default=DEFAULT_PORT)
-    parser.add_option('--stale', dest='stale_window', type='int', default=DEFAULT_STALE_WINDOW,
-                      help='length of inactivity before a form session is discarded (minutes)')
+    parser.add_option('--stale', dest='stale_window', type='float', default=DEFAULT_STALE_WINDOW,
+                      help='length of inactivity before a form session is discarded (hours)')
 
     (options, args) = parser.parse_args()
 
     extension_modules = args
 
-    gw = XFormHTTPGateway(options.port, extension_modules)
+    gw = XFormHTTPGateway(options.port, options.stale_window, extension_modules)
     gw.start()
     logging.info('started server on port %d' % options.port)
 
-    purger = Purger(options.stale_window)
+    purger = Purger()
     purger.start()
-    logging.info('purging sessions inactive for more than %d minutes' % options.stale_window)
+    logging.info('purging sessions inactive for more than %s hours' % options.stale_window)
 
     if settings.HACKS_MODE:
         logging.info('hacks mode is enabled, and you should feel bad about that')
