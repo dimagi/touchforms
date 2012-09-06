@@ -41,26 +41,30 @@ class global_state_mgr:
     instance_id_counter = 0
 
     session_cache = {}
-    session_id_counter = 0
     
     def __init__(self):
         self.lock = threading.Lock()
     
     def new_session(self, xfsess):
         with self.lock:
-            self.session_id_counter += 1
-            self.session_cache[self.session_id_counter] = xfsess
-        return self.session_id_counter
+            self.session_cache[xfsess.uuid] = xfsess
     
     def get_session(self, session_id):
         with self.lock:
             try:
                 return self.session_cache[session_id]
             except KeyError:
-                raise NoSuchSession()
+                # see if session has been persisted
+                sess = persistence.restore(session_id, XFormSession)
+                if sess:
+                    self.new_session(sess) # repopulate in-memory cache
+                    return sess
+                else:
+                    raise NoSuchSession()
         
     #todo: we're not calling this currently, but should, or else xform sessions will hang around in memory forever        
     def destroy_session(self, session_id):
+        # todo: should purge from cache too
         with self.lock:
             try:
                 del self.session_cache[session_id]
@@ -90,6 +94,8 @@ class global_state_mgr:
             #what about saved instances? we don't track when they were saved
             #for now will just assume instances are not saved
 
+        # note that persisted entries use the timeout functionality provided by the caching framework
+
         return {'purged': num_sess_purged, 'active': num_sess_active}
 
 global_state = global_state_mgr()
@@ -111,12 +117,10 @@ class SequencingException(Exception):
 
 class XFormSession:
     def __init__(self, xform, instance=None, **params):
-        # params.get('cur_index')   # used for restoring sessions
-
-        self.uuid = uuid.uuid4().hex
+        self.uuid = params.get('uuid', uuid.uuid4().hex)
         self.lock = threading.Lock()
         self.nav_mode = params.get('nav_mode', 'prompt')
-        self.seq_id = 0
+        self.seq_id = params.get('seq_id', 0)
 
         self.form = load_form(xform, instance, params.get('extensions', []), params.get('session_data', {}), params.get('api_auth'))
         self.fem = FormEntryModel(self.form, FormEntryModel.REPEAT_STRUCTURE_NON_LINEAR)
@@ -125,12 +129,16 @@ class XFormSession:
         if params.get('init_lang'):
             self.fec.setLanguage(params.get('init_lang'))
 
+        if params.get('cur_index'):
+            self.fec.jumpToIndex(self.parse_ix(params.get('cur_index')))
+
         self._parse_current_event()
 
         self.staleness_window = 3600. * params['staleness_window']
         self.persist = params.get('persist', True)
         self.orig_params = {
             'xform': xform,
+            'nav_mode': params.get('nav_mode'),
             'session_data': params.get('session_data'),
             'api_auth': params.get('api_auth'),
             'staleness_window': params['staleness_window'],
@@ -150,7 +158,8 @@ class XFormSession:
 
     def __exit__(self, *_):
         if self.persist:
-            self.dump_state()
+            # TODO should this be done async? we must dump state before releasing the lock, however
+            persistence.persist(self)
         self.lock.release()
  
     def update_last_activity(self):
@@ -169,12 +178,11 @@ class XFormSession:
             'instance': self.output(),
             'init_lang': get_lang(),
             'cur_index': str(self.fem.getFormIndex()) if self.nav_mode != 'fao' else None,
+            'seq_id': self.seq_id,
         })
+        # prune entries with null value, so that defaults will take effect when the session is re-created
+        state = dict((k, v) for k, v in state.iteritems() if v is not None)
         return state
-
-    # TODO: make this async?
-    def dump_state(self):
-        persistence.persist(self)
 
     def output(self):
         if self.cur_event['type'] != 'form-complete':
@@ -523,8 +531,8 @@ def open_form(form_spec, inst_spec=None, **kwargs):
         return {'error': str(e)}
 
     xfsess = XFormSession(xform_xml, instance_xml, **kwargs)
-    sess_id = global_state.new_session(xfsess)
-    return xfsess.response({'session_id': sess_id, 'title': xfsess.form_title(), 'langs': xfsess.get_locales()})
+    global_state.new_session(xfsess)
+    return xfsess.response({'session_id': xfsess.uuid, 'title': xfsess.form_title(), 'langs': xfsess.get_locales()})
 
 def answer_question (session_id, answer, ix):
     with global_state.get_session(session_id) as xfsess:
