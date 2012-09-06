@@ -178,7 +178,7 @@ class XformsResponse(object):
           "style":{},
           ... (see above)
          },
-     "session_id": 12,
+     "session_id": 'd0addaa40dbcefefc6a687472a4e65d2',
      "status":"accepted",
      "seq_id":1}
      

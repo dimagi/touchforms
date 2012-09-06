@@ -10,8 +10,7 @@ def start_session(config):
     """
     xformsresponse = config.start_session()
     # this is an implicit assert that the id is present and an integer
-    session_id = int(xformsresponse.session_id)
-    return (session_id,  
+    return (xformsresponse.session_id,  
             list(_next_responses(xformsresponse, xformsresponse.session_id)))
     
 def next_responses(session_id, answer, auth=None):
@@ -28,7 +27,7 @@ def _next_responses(xformsresponse, session_id, auth=None):
             # We have to deal with Trigger/Label type messages 
             # expecting an 'ok' type response. So auto-send that 
             # and move on to the next question.
-            response = answer_question(int(session_id),'ok', auth)
+            response = answer_question(session_id, 'ok', auth)
             for additional_resp in _next_responses(response, session_id, auth):
                 yield additional_resp
     elif xformsresponse.event.type == "form-complete":
