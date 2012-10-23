@@ -201,8 +201,8 @@ class CCInstances(InstanceInitializationFactory):
             for k, v in self.vars.iteritems():
                 if k not in meta_keys and k not in exclude_keys:
                     sess.setDatum(k, v)
-
-            return from_bundle(sess.getSessionInstance(*[self.vars.get(k, '') for k in meta_keys]))
+            # Clayton added user_data to the interface for 2.1, so I'm just adding an empty dict to what gets passed in
+            return from_bundle(sess.getSessionInstance(*([self.vars.get(k, '') for k in meta_keys] + [to_hashtable({})])))
     
     def _get_fixture(self, user_id, fixture_id):
         query_url = '%(base)s/%(user)s/%(fixture)s' % { "base": settings.FIXTURE_API_URL, 
