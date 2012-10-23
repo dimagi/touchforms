@@ -532,7 +532,8 @@ def open_form(form_spec, inst_spec=None, **kwargs):
 
     xfsess = XFormSession(xform_xml, instance_xml, **kwargs)
     global_state.new_session(xfsess)
-    return xfsess.response({'session_id': xfsess.uuid, 'title': xfsess.form_title(), 'langs': xfsess.get_locales()})
+    with xfsess: # triggers persisting of the fresh session
+        return xfsess.response({'session_id': xfsess.uuid, 'title': xfsess.form_title(), 'langs': xfsess.get_locales()})
 
 def answer_question (session_id, answer, ix):
     with global_state.get_session(session_id) as xfsess:
