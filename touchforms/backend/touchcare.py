@@ -30,6 +30,8 @@ def query_case_ids(q):
 
 def query_cases(q, criteria=None):
     query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria)) if criteria else settings.CASE_API_URL
+    logging.debug('querying %s' % query_url)
+
     return [case_from_json(cj) for cj in q(query_url)]
 
 def query_case(q, case_id):
@@ -75,6 +77,7 @@ def query_factory(domain, auth, format="json"):
         raise ValueError("Bad api query format: %s" % format)
 
 def case_from_json(data):
+    logging.debug("case from json for %s" % data['case_id'])
     c = Case()
     c.setCaseId(data['case_id'])
     c.setTypeId(data['properties']['case_type'])
@@ -117,6 +120,7 @@ class CaseDatabase(IStorageUtilityIndexed):
         try:
             case_id = self.case_ids[record_id]
         except KeyError:
+            logging.debug('empty case %s' % case_id)
             return None
 
         logging.debug('read case %s' % case_id)
@@ -159,7 +163,10 @@ class CaseIterator(IStorageIterator):
         self.i = 0
 
     def hasMore(self):
-        return self.i < len(self.case_ids)
+        ret = self.i < len(self.case_ids)
+        if not ret:
+            logging.debug('returning false from case iterator')
+        return ret
 
     def nextID(self):
         case_id = self.case_ids[self.i]
