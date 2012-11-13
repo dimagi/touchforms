@@ -64,7 +64,11 @@ def query_factory(domain, auth, format="json"):
             opener = urllib2.build_opener(handler)
             req = lambda url: opener.open(url)
         
-        return req(url).read()
+        resp = req(url)
+        ret = req(url).read()
+        logging.debug("response: %s" % ret)
+        logging.debug("info: %s" % resp.info())
+        return ret
     
     def json_query(_url):
         return json.loads(api_query(_url))
