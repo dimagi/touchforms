@@ -141,7 +141,7 @@ function Form(json, adapter) {
         if (!proceed) {
           return;
         }
-
+        
         form.submit();
       });
 
@@ -282,7 +282,7 @@ function Question(json, parent) {
       this.$container = $('<div><span id="ix"></span><span id="caption"></span></div>');
       this.$container.addClass('info');
       this.control = new InfoEntry();
-
+      this.control.setAnswer("OK"); // for triggers set them answered as soon as they are rendered
       this.update(false);
     }
   }

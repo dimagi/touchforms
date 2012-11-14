@@ -387,7 +387,7 @@ class XFormSession:
             else:
                 return str(a).split()
 
-        if answer == None or str(answer).strip() == '' or answer == [] or datatype == 'info':
+        if answer == None or str(answer).strip() == '' or answer == []:
             ans = None
         elif datatype == 'int':
             ans = IntegerData(int(answer))
@@ -395,7 +395,7 @@ class XFormSession:
             ans = LongData(int(answer))
         elif datatype == 'float':
             ans = DecimalData(float(answer))
-        elif datatype == 'str':
+        elif datatype == 'str' or datatype == 'info':
             ans = StringData(str(answer))
         elif datatype == 'date':
             ans = DateData(to_jdate(datetime.strptime(str(answer), '%Y-%m-%d').date()))
