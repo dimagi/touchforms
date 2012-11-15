@@ -6,6 +6,7 @@ import threading
 import codecs
 import time
 import uuid
+import hashlib
 
 from java.util import Date
 from java.util import Vector
@@ -234,8 +235,13 @@ class XFormSession:
               'repeatable': True,
               'children': [],
             }
-            # ghettoooo; if this pays off, this should be better incorporated into the form entry API
-            subevt['uuid'] = self.form.getInstance().resolveReference(subevt['ix'].getReference()).hashCode()
+
+            # kinda ghetto; we need to be able to track distinct repeat instances, even if their position
+            # within the list of repetitions changes (such as by deleting a rep in the middle)
+            # would be nice to have proper FormEntryAPI support for this
+            java_uid = self.form.getInstance().resolveReference(subevt['ix'].getReference()).hashCode()
+            subevt['uuid'] = hashlib.sha1(str(java_uid)).hexdigest()[:12]
+
             evt['children'].append(subevt)
             self._walk(subevt['ix'], subevt['children'])
           for key in ['repetitions', 'del-choice', 'del-header', 'done-choice']:
