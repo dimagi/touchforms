@@ -22,7 +22,10 @@ Update your settings.py::
 
 Syncdb::
     python manage.py syncdb
-    
+
+Set localsettings.py for this backend::
+    add URL_ROOT = "http://your.commcarehq/a/{{DOMAIN}}"
+
 Run the backend::
     cd backend
     jython xformserver.py 4444
