@@ -7,6 +7,7 @@ import jarray
 from datetime import datetime, date, time
 
 from setup import init_classpath
+import urllib2
 init_classpath()
 import com.xhaus.jyson.JysonCodec as json
 
@@ -105,3 +106,38 @@ def index_from_str(s_ix, form):
                 None)
     ix.assignRefs(form)
     return ix
+
+def query_factory(domain='', auth=None, format="json"):
+
+    def api_query(_url):
+        url = domain.join(_url.split('{{DOMAIN}}'))
+        if not auth:
+            req = lambda url: urllib2.urlopen(url)
+        elif auth['type'] == 'django-session':
+            opener = urllib2.build_opener()
+            opener.addheaders.append(('Cookie', 'sessionid=%s' % auth['key']))
+            req = lambda url: opener.open(url)
+        elif auth['type'] == 'oauth':
+            # auth['key'] will be the oauth access token
+            raise Exception('not supported yet')
+        elif auth['type'] in ('http', 'http-digest'):
+            password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            password_mgr.add_password(None, url, auth['username'], auth['key'])
+            handler = {
+                'http':        urllib2.HTTPBasicAuthHandler,
+                'http-digest': urllib2.HTTPDigestAuthHandler,
+            }[auth['type']](password_mgr)
+            opener = urllib2.build_opener(handler)
+            req = lambda url: opener.open(url)
+
+        return req(url).read()
+
+    def json_query(_url):
+        return json.loads(api_query(_url))
+
+    if format == "json":
+        return json_query
+    elif format == "raw":
+        return api_query
+    else:
+        raise ValueError("Bad api query format: %s" % format)
