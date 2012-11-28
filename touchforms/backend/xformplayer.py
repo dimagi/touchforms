@@ -30,6 +30,7 @@ from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
 
 from touchcare import CCInstances
+from util import query_factory
 import persistence
 
 DEBUG = False
@@ -514,10 +515,15 @@ def load_file(path):
     with codecs.open(path, encoding='utf-8') as f:
         return f.read()
 
-def load_url(url):
-    raise Exception('not supported yet')
+class FormUrlLoader():
+    def __init__(self, url, auth):
+        self.url = url
+        self.auth = auth
+    
+    def __call__(self):
+        return query_factory(auth=self.auth, format='raw')(self.url)
 
-def get_loader(spec):
+def get_loader(spec, **kwargs):
     if not spec:
         return lambda: None
 
@@ -525,14 +531,14 @@ def get_loader(spec):
     return {
         'uid': lambda: load_file(val),
         'raw': lambda: val,
-        'url': lambda: load_url(val),
+        'url': FormUrlLoader(val, kwargs.get('api_auth', None)),
     }[type]
 
 
 def open_form(form_spec, inst_spec=None, **kwargs):
     try:
-        xform_xml = get_loader(form_spec)()
-        instance_xml = get_loader(inst_spec)()
+        xform_xml = get_loader(form_spec, **kwargs)()
+        instance_xml = get_loader(inst_spec, **kwargs)()
     except Exception, e:
         return {'error': str(e)}
 

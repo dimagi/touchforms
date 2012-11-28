@@ -1,4 +1,3 @@
-import urllib2
 import urllib
 import com.xhaus.jyson.JysonCodec as json
 import logging
@@ -23,7 +22,7 @@ from org.javarosa.core.model.instance import DataInstance
 from org.kxml2.io import KXmlParser
 
 
-from util import to_vect, to_jdate, to_hashtable, to_input_stream
+from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
 
 def query_case_ids(q):
     return [c['case_id'] for c in q(settings.CASE_API_URL)]
@@ -38,41 +37,6 @@ def query_case(q, case_id):
         return cases[0]
     except IndexError:
         return None
-
-def query_factory(domain, auth, format="json"):
-    
-    def api_query(_url):
-        url = domain.join(_url.split('{{DOMAIN}}'))
-        if not auth:
-            req = lambda url: urllib2.urlopen(url)
-        elif auth['type'] == 'django-session':
-            opener = urllib2.build_opener()
-            opener.addheaders.append(('Cookie', 'sessionid=%s' % auth['key']))
-            req = lambda url: opener.open(url)
-        elif auth['type'] == 'oauth':
-            # auth['key'] will be the oauth access token
-            raise Exception('not supported yet')
-        elif auth['type'] in ('http', 'http-digest'):
-            password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-            password_mgr.add_password(None, url, auth['username'], auth['key'])
-            handler = {
-                'http':        urllib2.HTTPBasicAuthHandler,
-                'http-digest': urllib2.HTTPDigestAuthHandler,
-            }[auth['type']](password_mgr)
-            opener = urllib2.build_opener(handler)
-            req = lambda url: opener.open(url)
-        
-        return req(url).read()
-    
-    def json_query(_url):
-        return json.loads(api_query(_url))
-        
-    if format == "json":
-        return json_query
-    elif format == "raw":
-        return api_query
-    else:
-        raise ValueError("Bad api query format: %s" % format)
 
 def case_from_json(data):
     c = Case()
