@@ -27,6 +27,7 @@ from org.javarosa.form.api import FormEntryModel, FormEntryController
 from org.javarosa.core.model import Constants, FormIndex
 from org.javarosa.core.model.data import *
 from org.javarosa.core.model.data.helper import Selection
+from org.javarosa.core.util import UnregisteredLocaleException
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
 
 from touchcare import CCInstances
@@ -129,7 +130,10 @@ class XFormSession:
         self.fec = FormEntryController(self.fem)
 
         if params.get('init_lang'):
-            self.fec.setLanguage(params.get('init_lang'))
+            try:
+                self.fec.setLanguage(params.get('init_lang'))
+            except UnregisteredLocaleException:
+                pass # just use default language
 
         if params.get('cur_index'):
             self.fec.jumpToIndex(self.parse_ix(params.get('cur_index')))
@@ -145,7 +149,6 @@ class XFormSession:
             'api_auth': params.get('api_auth'),
             'staleness_window': params['staleness_window'],
         }
-
         self.update_last_activity()
 
     def __enter__(self):
