@@ -8,6 +8,7 @@ import touchcare
 import os
 import java.lang
 import time
+import urllib2
 from optparse import OptionParser
 from datetime import datetime, timedelta
 import settings
@@ -68,10 +69,16 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         try:
             data_out = handle_request(data_in, self.server)
         except (Exception, java.lang.Exception), e:
+            msg = ""
             if isinstance(e, java.lang.Exception):
                 e.printStackTrace() #todo: log the java stacktrace
+            elif isinstance(e, urllib2.HTTPError):
+                if e.headers.get("content-type", "") == "text/plain":
+                    msg = e.read()
+                
             logging.exception('error handling request')
-            self.send_error(500, 'internal error handling request: %s: %s' % (type(e), str(e)))
+            self.send_error(500, u'internal error handling request: %s: %s%s' % (type(e), str(e), 
+                                                                                 u": %s" % msg if msg else ""))
             return
 
         reply = json.dumps(data_out)

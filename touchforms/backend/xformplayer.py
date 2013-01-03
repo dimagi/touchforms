@@ -6,6 +6,7 @@ import threading
 import codecs
 import time
 import uuid
+import hashlib
 
 from java.util import Date
 from java.util import Vector
@@ -26,9 +27,11 @@ from org.javarosa.form.api import FormEntryModel, FormEntryController
 from org.javarosa.core.model import Constants, FormIndex
 from org.javarosa.core.model.data import *
 from org.javarosa.core.model.data.helper import Selection
+from org.javarosa.core.util import UnregisteredLocaleException
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
 
 from touchcare import CCInstances
+from util import query_factory
 import persistence
 
 DEBUG = False
@@ -127,7 +130,10 @@ class XFormSession:
         self.fec = FormEntryController(self.fem)
 
         if params.get('init_lang'):
-            self.fec.setLanguage(params.get('init_lang'))
+            try:
+                self.fec.setLanguage(params.get('init_lang'))
+            except UnregisteredLocaleException:
+                pass # just use default language
 
         if params.get('cur_index'):
             self.fec.jumpToIndex(self.parse_ix(params.get('cur_index')))
@@ -143,7 +149,6 @@ class XFormSession:
             'api_auth': params.get('api_auth'),
             'staleness_window': params['staleness_window'],
         }
-
         self.update_last_activity()
 
     def __enter__(self):
@@ -234,8 +239,13 @@ class XFormSession:
               'repeatable': True,
               'children': [],
             }
-            # ghettoooo; if this pays off, this should be better incorporated into the form entry API
-            subevt['uuid'] = self.form.getInstance().resolveReference(subevt['ix'].getReference()).uuid
+
+            # kinda ghetto; we need to be able to track distinct repeat instances, even if their position
+            # within the list of repetitions changes (such as by deleting a rep in the middle)
+            # would be nice to have proper FormEntryAPI support for this
+            java_uid = self.form.getInstance().resolveReference(subevt['ix'].getReference()).hashCode()
+            subevt['uuid'] = hashlib.sha1(str(java_uid)).hexdigest()[:12]
+
             evt['children'].append(subevt)
             self._walk(subevt['ix'], subevt['children'])
           for key in ['repetitions', 'del-choice', 'del-header', 'done-choice']:
@@ -387,7 +397,7 @@ class XFormSession:
             else:
                 return str(a).split()
 
-        if answer == None or str(answer).strip() == '' or answer == [] or datatype == 'info':
+        if answer == None or str(answer).strip() == '' or answer == []:
             ans = None
         elif datatype == 'int':
             ans = IntegerData(int(answer))
@@ -395,7 +405,7 @@ class XFormSession:
             ans = LongData(int(answer))
         elif datatype == 'float':
             ans = DecimalData(float(answer))
-        elif datatype == 'str':
+        elif datatype == 'str' or datatype == 'info':
             ans = StringData(str(answer))
         elif datatype == 'date':
             ans = DateData(to_jdate(datetime.strptime(str(answer), '%Y-%m-%d').date()))
@@ -508,10 +518,15 @@ def load_file(path):
     with codecs.open(path, encoding='utf-8') as f:
         return f.read()
 
-def load_url(url):
-    raise Exception('not supported yet')
+class FormUrlLoader():
+    def __init__(self, url, auth):
+        self.url = url
+        self.auth = auth
+    
+    def __call__(self):
+        return query_factory(auth=self.auth, format='raw')(self.url)
 
-def get_loader(spec):
+def get_loader(spec, **kwargs):
     if not spec:
         return lambda: None
 
@@ -519,20 +534,21 @@ def get_loader(spec):
     return {
         'uid': lambda: load_file(val),
         'raw': lambda: val,
-        'url': lambda: load_url(val),
+        'url': FormUrlLoader(val, kwargs.get('api_auth', None)),
     }[type]
 
 
 def open_form(form_spec, inst_spec=None, **kwargs):
     try:
-        xform_xml = get_loader(form_spec)()
-        instance_xml = get_loader(inst_spec)()
+        xform_xml = get_loader(form_spec, **kwargs)()
+        instance_xml = get_loader(inst_spec, **kwargs)()
     except Exception, e:
         return {'error': str(e)}
 
     xfsess = XFormSession(xform_xml, instance_xml, **kwargs)
     global_state.new_session(xfsess)
-    return xfsess.response({'session_id': xfsess.uuid, 'title': xfsess.form_title(), 'langs': xfsess.get_locales()})
+    with xfsess: # triggers persisting of the fresh session
+        return xfsess.response({'session_id': xfsess.uuid, 'title': xfsess.form_title(), 'langs': xfsess.get_locales()})
 
 def answer_question (session_id, answer, ix):
     with global_state.get_session(session_id) as xfsess:

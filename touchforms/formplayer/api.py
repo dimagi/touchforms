@@ -262,7 +262,7 @@ def get_response(data, url, auth=None):
     except Exception, e:
         raise e
                                                                                
-def get_raw_instance(session_id):
+def get_raw_instance(session_id, auth=None):
     """
     Gets the raw xml instance of the current session regardless of the state that we're in (used for logging partially complete
     forms to couch when errors happen).
@@ -271,12 +271,9 @@ def get_raw_instance(session_id):
         "action":"get-instance",
         "session-id": session_id,
         }
-    response, error = post_data(data, settings.XFORMS_PLAYER_URL, "text/json")
-    if not error:
-        logging.debug('Formplayer API got raw instance: %s' % response.content)
-        return json.loads(response.content)["output"]
-    else:
-        return None
+    response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
+    response = json.loads(response)
+    return response["output"]
 
 def start_form_session(form_path, content=None, language="", session_data={}):
     """

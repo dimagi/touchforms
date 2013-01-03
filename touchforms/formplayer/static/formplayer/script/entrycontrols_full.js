@@ -92,14 +92,19 @@ function SimpleEntry () {
 
 function InfoEntry () {
   inherit(this, new SimpleEntry());
+  this.answer = null;
+
+  this.setAnswer = function (val) {
+    this.answer = val;
+  };
 
   this.getAnswer = function () {
-    return null;
-  }
+    return this.answer;
+  };
 
   this.load = function (q, $container) {
     //not needed
-  }
+  };
 }
 
 function UnsupportedEntry (datatype) {

@@ -141,7 +141,7 @@ function Form(json, adapter) {
         if (!proceed) {
           return;
         }
-
+        
         form.submit();
       });
 
@@ -277,13 +277,12 @@ function Question(json, parent) {
     if (this.datatype != 'info') {
       this.$container = $('<div class="q"><div id="widget"></div><span id="req"></span><span id="caption"></span> <span id="ix"></span> <div id="error"></div><div class="eoq" /></div>');
       this.$error = this.$container.find('#error');
-
       this.update(true);
     } else {
       this.$container = $('<div><span id="ix"></span><span id="caption"></span></div>');
       this.$container.addClass('info');
       this.control = new InfoEntry();
-
+      this.control.setAnswer("OK"); // for triggers set them answered as soon as they are rendered
       this.update(false);
     }
   }
@@ -371,7 +370,9 @@ function Question(json, parent) {
   }
 
   this.showError = function(content) {
-    this.$error.text(content ? content : '');
+    if (this.$error) {
+        this.$error.text(content ? content : '');
+    }
     this.$container[content ? 'addClass' : 'removeClass']('qerr');
   }
 

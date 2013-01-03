@@ -26,7 +26,7 @@ function WebFormSession(params) {
   //note: the 'allow_html' params will open you up to XSS attacks if you have
   //forms that insert user-entered data into captions!
 
-  //todo: support instance_xml ?
+  this.instance_xml = params.instance_xml;
   this.session_data = params.session_data;
 
   this.onsubmit = params.onsubmit;
@@ -46,7 +46,7 @@ function WebFormSession(params) {
     this.$div.addClass('webforms');
 
     var sess = this;
-    var adapter = new xformAjaxAdapter(this.form_spec, this.session_data, null,
+    var adapter = new xformAjaxAdapter(this.form_spec, this.session_data, this.instance_xml,
                                        function(p, cb, bl) { sess.serverRequest(p, cb, bl); },
                                        function(p) { sess.submit(p); },
                                        this.onpresubmit,
