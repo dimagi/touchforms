@@ -169,6 +169,14 @@ def select_to_text_readable(caption, choices):
                       ", ".join(["%s for %s" % (i+1, val) for i, val in \
                                  enumerate(choices)])) 
 
+def select_to_text_caption_only(caption, choices):
+    """
+    A select choices => text function that ignores choice captions entirely.
+    All presentation of choices must be included in the main question caption.
+    A DRY violation, for sure, but gives the maximum flexibility
+    """
+    return caption
+
 class XformsResponse(object):
     """
     A wrapper for the json that comes back from touchforms, which 
