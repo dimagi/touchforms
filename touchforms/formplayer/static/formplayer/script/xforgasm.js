@@ -63,7 +63,8 @@ function WebFormSession(params) {
   }
 
   this.serverRequest = function(params, callback, blocking) {
-    var url = this.urls.xform;
+    var that = this;
+    var url = that.urls.xform;
     this._serverRequest(
       function (cb) {
         jQuery.ajax(
@@ -78,7 +79,14 @@ function WebFormSession(params) {
         });
         
       },
-      callback,
+      function (response) {
+        // wrap the callback so we can catch generic errors and handle them
+        if (response.status === "error") {
+          that.onerror(response);
+        } else {
+          callback(response);
+        }
+      },
       blocking
     );
   }
