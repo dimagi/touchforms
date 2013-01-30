@@ -63,7 +63,15 @@ function WebFormSession(params) {
   }
 
   this.serverRequest = function(params, callback, blocking) {
-    var url = this.urls.xform;
+    var that = this;
+    var url = that.urls.xform;
+    var wrappedCallback = function (response) {
+        if (response["status"] === "error") {
+            return that.onerror(response);
+        } else {
+            return callback(response);
+        }
+    }
     this._serverRequest(
       function (cb) {
         jQuery.ajax(
@@ -78,7 +86,7 @@ function WebFormSession(params) {
         });
         
       },
-      callback,
+      wrappedCallback,
       blocking
     );
   }
