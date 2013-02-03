@@ -2,6 +2,7 @@ import urllib
 import com.xhaus.jyson.JysonCodec as json
 import logging
 from datetime import datetime
+from copy import copy
 
 import settings
 
@@ -24,11 +25,16 @@ from org.kxml2.io import KXmlParser
 
 from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
 
-def query_case_ids(q):
-    return [c['case_id'] for c in q(settings.CASE_API_URL)]
+def query_case_ids(q, criteria=None):
+    criteria = copy(criteria) or {} # don't modify the passed in dict
+    criteria["ids_only"] = True
+    query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria)) \
+                    if criteria else settings.CASE_API_URL
+    return [id for id in q(query_url)]
 
 def query_cases(q, criteria=None):
-    query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria)) if criteria else settings.CASE_API_URL
+    query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria)) \
+                    if criteria else settings.CASE_API_URL
     return [case_from_json(cj) for cj in q(query_url)]
 
 def query_case(q, case_id):
@@ -58,21 +64,38 @@ def case_from_json(data):
     return c
 
 class CaseDatabase(IStorageUtilityIndexed):
-    def __init__(self, domain, user, auth, additional_filters={}):
+    def __init__(self, domain, user, auth, additional_filters=None,
+                 preload=False):
         self.query_func = query_factory(domain, auth)
-
-        self.cases = {}
-        self.additional_filters = additional_filters
-        all_cases = query_cases(self.query_func, criteria=additional_filters)
-        for c in all_cases:
-            self.put_case(c)
-        
-        self.case_ids = dict(enumerate(self.cases.keys()))
-        
+        self.additional_filters = additional_filters or {}
         self.cached_lookups = {}
+        self._cases = {}
+        self.fully_loaded = False # when we've loaded every possible case
+
+        if preload:
+            self.load_all_cases()
+        else:
+            case_ids = query_case_ids(self.query_func, criteria=self.additional_filters)
+            self.case_ids = dict(enumerate(case_ids))
+
+    @property
+    def cases(self):
+        if self.fully_loaded:
+            return self._cases
+        else:
+            self.load_all_cases()
+        return self._cases
+
+    def load_all_cases(self):
+        cases = query_cases(self.query_func,
+                            criteria=self.additional_filters)
+        for c in cases:
+            self.put_case(c)
+        self.case_ids = dict(enumerate(self._cases.keys()))
+        self.fully_loaded = True
 
     def put_case(self, c):
-        self.cases[c.getCaseId()] = c
+        self._cases[c.getCaseId()] = c
 
     def setReadOnly(self):
         pass
@@ -82,13 +105,15 @@ class CaseDatabase(IStorageUtilityIndexed):
             case_id = self.case_ids[record_id]
         except KeyError:
             return None
+        return self.readCase(case_id)
 
+    def readCase(self, case_id):
         logging.debug('read case %s' % case_id)
-        if case_id not in self.cases:
+        if case_id not in self._cases:
             self.put_case(query_case(self.query_func, case_id))
 
         try:
-            return self.cases[case_id]
+            return self._cases[case_id]
         except KeyError:
             raise Exception('could not find a case for case id [%s]' % case_id)
 
@@ -96,14 +121,16 @@ class CaseDatabase(IStorageUtilityIndexed):
         logging.debug('case index lookup %s %s' % (field_name, value))
 
         if (field_name, value) not in self.cached_lookups:
+            if field_name == 'case-id':
+                cases = [self.readCase(value)]
+            else:
+                get_val = {
+                    'case-type': lambda c: c.getTypeId(),
+                    'case-status': lambda c: 'closed' if c.isClosed() else 'open',
+                }[field_name]
 
-            get_val = {
-                'case-id': lambda c: c.getCaseId(),
-                'case-type': lambda c: c.getTypeId(),
-                'case-status': lambda c: 'closed' if c.isClosed() else 'open',
-            }[field_name]
-            
-            cases = [c for c in self.cases.values() if get_val(c) == value]
+                cases = [c for c in self.cases.values() if get_val(c) == value]
+
             self.cached_lookups[(field_name, value)] = cases
 
         cases = self.cached_lookups[(field_name, value)]
@@ -111,11 +138,10 @@ class CaseDatabase(IStorageUtilityIndexed):
         return to_vect(id_map[c.getCaseId()] for c in cases)
 
     def getNumRecords(self):
-        return len(self.cases)
+        return len(self.case_ids)
 
     def iterate(self):
         return CaseIterator(self.case_ids.keys())
-
 
 class CaseIterator(IStorageIterator):
     def __init__(self, case_ids):
@@ -149,7 +175,8 @@ class CCInstances(InstanceInitializationFactory):
         if 'casedb' in ref:
             return CaseInstanceTreeElement(instance.getBase(), 
                         CaseDatabase(self.vars['domain'], self.vars['user_id'], 
-                                     self.auth, self.vars.get("additional_filters", {})),
+                                     self.auth, self.vars.get("additional_filters", {}),
+                                     self.vars.get("preload_cases", False)),
                         False)
         elif 'fixture' in ref:
             fixture_id = ref.split('/')[-1]
@@ -199,6 +226,10 @@ def filter_cases(content):
             
         api_auth = content.get('hq_auth')
         session_data = content.get("session_data", {})
+        # whenever we do a filter case operation we need to load all
+        # the cases, so force this unless manually specified
+        if 'preload_cases' not in session_data:
+            session_data['preload_cases'] = True
         ccInstances = CCInstances(session_data, api_auth)
         caseInstance = ExternalDataInstance("jr://instance/casedb", "casedb")
         caseInstance.initialize(ccInstances, "casedb")
@@ -207,4 +238,4 @@ def filter_cases(content):
             .eval(EvaluationContext(None, instances)))
         return {'cases': filter(lambda x: x,case_list.split(","))}
     except Exception, e:
-        return {'error': str(e)}
+        return {'status': 'error', 'message': str(e)}
