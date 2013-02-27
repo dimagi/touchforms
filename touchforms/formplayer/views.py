@@ -1,20 +1,13 @@
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from touchforms.formplayer.models import XForm
-from touchforms.formplayer.const import *
 from touchforms.formplayer.autocomplete import autocompletion, DEFAULT_NUM_SUGGESTIONS
 from django.http import HttpResponseRedirect, HttpResponse,\
-    HttpResponseServerError, HttpRequest
+    HttpResponseNotFound
 from django.core.urlresolvers import reverse
 import logging
-import httplib
-from urlparse import urlparse
-import traceback
-import sys
-from django.views.decorators.http import require_POST
 import json
 from collections import defaultdict
-from StringIO import StringIO
 from touchforms.formplayer.signals import xform_received
 from django.template.context import RequestContext
 from django.shortcuts import render_to_response
@@ -23,7 +16,10 @@ import tempfile
 import os
 from . import api
 from touchforms.formplayer.api import DjangoAuth
+from django.contrib.auth.decorators import login_required
+from touchforms.formplayer.const import PRELOADER_TAG_UID
 
+@login_required
 def xform_list(request):
     forms_by_namespace = defaultdict(list)
     success = True
@@ -36,7 +32,7 @@ def xform_list(request):
                 tmp_file = os.fdopen(tmp_file_handle, 'w')
                 tmp_file.write(file.read())
                 tmp_file.close()
-                new_form = XForm.from_file(tmp_file_path, str(file))
+                XForm.from_file(tmp_file_path, str(file))
                 notice = "Created form: %s " % file
             except Exception, e:
                 logging.error("Problem creating xform from %s: %s" % (file, e))
@@ -59,9 +55,16 @@ def download(request, xform_id):
     Download an xform
     """
     xform = get_object_or_404(XForm, id=xform_id)
-    response = HttpResponse(mimetype='application/xml')
-    response.write(xform.file.read()) 
-    return response
+    try:
+        contents = xform.file.read()
+    except IOError:
+        # file not found, don't fail hard as in a multi-worker environment
+        # this method is just kind of deprecated.
+        return HttpResponseNotFound("Sorry that form is no longer available.")
+    else:
+        response = HttpResponse(mimetype='application/xml')
+        response.write(contents)
+        return response
 
 
 def coalesce(*args):
