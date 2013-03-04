@@ -187,13 +187,13 @@ class CCInstances(InstanceInitializationFactory):
             return ret
         elif 'session' in ref:
             meta_keys = ['device_id', 'app_version', 'username', 'user_id']
-            exclude_keys = ['additional_filters']
+            exclude_keys = ['additional_filters', 'user_data']
             sess = CommCareSession(None) # will not passing a CCPlatform cause problems later?
             for k, v in self.vars.iteritems():
                 if k not in meta_keys and k not in exclude_keys:
                     sess.setDatum(k, v)
-            # Clayton added user_data to the interface for 2.1, so I'm just adding an empty dict to what gets passed in
-            return from_bundle(sess.getSessionInstance(*([self.vars.get(k, '') for k in meta_keys] + [to_hashtable({})])))
+            return from_bundle(sess.getSessionInstance(*([self.vars.get(k, '') for k in meta_keys] + \
+                                                         [to_hashtable(self.vars.get('user_data', {}))])))
     
     def _get_fixture(self, user_id, fixture_id):
         query_url = '%(base)s/%(user)s/%(fixture)s' % { "base": settings.FIXTURE_API_URL, 
