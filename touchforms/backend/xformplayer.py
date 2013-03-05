@@ -420,7 +420,7 @@ class XFormSession:
 
         result = self.fec.answerQuestion(*([ans] if ix is None else [ix, ans]))
         if result == self.fec.ANSWER_REQUIRED_BUT_EMPTY:
-            return {'status': 'error', 'type': 'required', 'message': 'missing required question'}
+            return {'status': 'error', 'type': 'required'}
         elif result == self.fec.ANSWER_CONSTRAINT_VIOLATED:
             q = self.fem.getQuestionPrompt(*([] if ix is None else [ix]))
             return {'status': 'error', 'type': 'constraint', 'reason': q.getConstraintText()}
@@ -597,12 +597,7 @@ def submit_form(session_id, answers, prevalidated):
                              ((_ix, xfsess.answer_question(answer, _ix)) for _ix, answer in answers.iteritems())))
 
         if errors or not prevalidated:
-            message = None
-            if errors:
-                message = '; '.join([e['message'] for e in errors.values() if 'message' in e])
-            if not message:
-                message = 'there were errors in your form'
-            resp = {'status': 'error', 'errors': errors, 'message': message}
+            resp = {'status': 'error', 'errors': errors}
         else:
             resp = form_completion(xfsess)
             resp['status'] = 'success'
