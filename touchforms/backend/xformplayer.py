@@ -597,7 +597,7 @@ def submit_form(session_id, answers, prevalidated):
                              ((_ix, xfsess.answer_question(answer, _ix)) for _ix, answer in answers.iteritems())))
 
         if errors or not prevalidated:
-            resp = {'status': 'error', 'errors': errors}
+            resp = {'status': 'validation-error', 'errors': errors}
         else:
             resp = form_completion(xfsess)
             resp['status'] = 'success'
