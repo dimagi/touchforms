@@ -528,16 +528,13 @@ var answer_eq = function(ans1, ans2) {
 }
 
 function scroll_pin(pin_threshold, $container, $elem) {
-  var base_offset = $container.offset().top;
-  var pos_type = $elem.css('position');
-
   return function() {
+    var base_offset = $container.offset().top;
     var scroll_pos = $(window).scrollTop();
     var elem_pos = base_offset - scroll_pos;
     var pinned = (elem_pos < pin_threshold);
 
-    $elem.css('position', pinned ? 'fixed' : pos_type);
-    $elem.css('top', pinned ? pin_threshold + 'px' : 0);
+    $elem.css('top', pinned ? pin_threshold + 'px' : base_offset);
   };
 }
   
