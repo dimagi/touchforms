@@ -75,7 +75,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             elif isinstance(e, urllib2.HTTPError):
                 if e.headers.get("content-type", "") == "text/plain":
                     msg = e.read()
-                
+
             logging.exception('error handling request')
             self.send_error(500, u'internal error handling request: %s: %s%s' % (type(e), str(e), 
                                                                                  u": %s" % msg if msg else ""))
@@ -110,6 +110,9 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
                               'code': code, 
                               'message': message, 
                               'explain': explain})
+
+        # if this is more than one line it messes up the response content
+        message = message.split("\n")[0] if message else ""
         self.send_response(code, message)
         self.send_header("Content-Type", self.error_content_type)
         self.send_header('Connection', 'close')
