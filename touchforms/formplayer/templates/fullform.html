@@ -40,8 +40,8 @@ function onlanginfo(switchfunc, langs) {
 }
 
 function onload(adapter, response) {
-    if (resp['langs'].length) {
-        onlanginfo(function(lang) { adapter.switchLanguage(lang); }, resp['langs']);
+    if (response['langs'].length) {
+        onlanginfo(function(lang) { adapter.switchLanguage(lang); }, response['langs']);
     }
 }
 
