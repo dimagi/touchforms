@@ -31,7 +31,19 @@ function WebFormSession(params) {
 
   this.onsubmit = params.onsubmit;
   this.onpresubmit = params.onpresubmit || function(){ return true; };
-  this.onload = params.onload || function(adapter, response){};
+  if (params.onlanginfo) {
+      if (params.onload) {
+          throw "onlanginfo cannot be used with onload. please include language info in the onload param";
+      }
+      this.onload = function onload(adapter, response) {
+          if (response['langs'].length) {
+              params.onlanginfo(function(lang) { adapter.switchLanguage(lang); }, response['langs']);
+          }
+      }
+  } else{
+      this.onload = params.onload || function(adapter, response){};
+  }
+
   this.onerror = params.onerror || function(resp){};
 
   this.urls = {
