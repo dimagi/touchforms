@@ -39,6 +39,12 @@ function onlanginfo(switchfunc, langs) {
     });
 }
 
+function onload(adapter, response) {
+    if (response['langs'].length) {
+        onlanginfo(function(lang) { adapter.switchLanguage(lang); }, response['langs']);
+    }
+}
+
 function onpresubmit() {
   return confirm('Submit this form finally, for all time and evermore?');
 }
@@ -52,7 +58,7 @@ $(document).ready(function() {
     xform_url: "{% url xform_player_proxy %}",
     onpresubmit: onpresubmit,
     onsubmit: submit_form_post,
-    onlanginfo: onlanginfo,
+    onload: onload
   });
 
   var init_lang = {% if lang %}'{{ lang|escapejs }}'{% else %}null{% endif %};

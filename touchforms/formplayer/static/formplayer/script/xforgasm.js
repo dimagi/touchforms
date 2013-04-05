@@ -31,12 +31,25 @@ function WebFormSession(params) {
 
   this.onsubmit = params.onsubmit;
   this.onpresubmit = params.onpresubmit || function(){ return true; };
-  this.onlanginfo = params.onlanginfo || function(f, langs){};
+
+  // onload/onlanginfo
+  this._onload = params.onload || function(adapter, response){};
+  if (params.onlanginfo) {
+      this.onload = function (adapter, response) {
+          this._onload(adapter, response);
+          if (response['langs'].length) {
+              params.onlanginfo(function(lang) { adapter.switchLanguage(lang); }, response['langs']);
+          }
+      }
+  } else{
+      this.onload = this._onload;
+  }
+
   this.onerror = params.onerror || function(resp){};
 
   this.urls = {
     xform: params.xform_url,
-    autocomplete: params.autocomplete_url,
+    autocomplete: params.autocomplete_url
   };
 
   this.load = function($div, $loading, init_lang) {
@@ -52,7 +65,7 @@ function WebFormSession(params) {
                                        this.onpresubmit,
                                        {allow_html: params.allow_html}
                                        );
-    adapter.loadForm($div, init_lang, this.onlanginfo, this.onerror);
+    adapter.loadForm($div, init_lang, this.onload, this.onerror);
   }
 
   this.submit = function(params) {
