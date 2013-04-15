@@ -33,10 +33,10 @@ if (!window.console) {
   };
 }
 
-XFORM_URL = "{% url xform_player_proxy %}";
-PRELOADER_URL = "{% url xform_preloader %}";
-AUTOCOMPLETE_URL = "{% url touchforms_autocomplete %}";
-FORCE_ABORT_URL = "{% url touchforms_force_abort %}";
+XFORM_URL = "{% url 'xform_player_proxy' %}";
+PRELOADER_URL = "{% url 'xform_preloader' %}";
+AUTOCOMPLETE_URL = "{% url 'touchforms_autocomplete' %}";
+FORCE_ABORT_URL = "{% url 'touchforms_force_abort' %}";
 STATIC_MEDIA_URL = "{{ STATIC_URL }}"
 
 XFORM_NAME = "{{form.name}}";
