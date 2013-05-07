@@ -310,6 +310,7 @@ class XFormSession:
         event['caption'] = q.getLongText()
         event['help'] = q.getHelpText()
         event['style'] = self._parse_style_info(q.getAppearanceHint())
+        event['binding'] = q.getQuestion().getBind().getReference().toString()
 
         if q.getControlType() == Constants.CONTROL_TRIGGER:
             event['datatype'] = 'info'
