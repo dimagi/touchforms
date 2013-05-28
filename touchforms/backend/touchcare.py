@@ -52,7 +52,8 @@ def case_from_json(data):
     c.setClosed(data['closed'])
     if data['properties']['date_opened']:
         c.setDateOpened(to_jdate(datetime.strptime(data['properties']['date_opened'], '%Y-%m-%dT%H:%M:%S'))) # 'Z' in fmt string omitted due to jython bug
-    c.setUserId(data['user_id'] or "")
+    owner_id = data['properties']['owner_id'] or data['user_id'] or ""
+    c.setUserId(owner_id) # according to clayton "there is no user_id, only owner_id"
 
     for k, v in data['properties'].iteritems():
         if v is not None and k not in ['case_name', 'case_type', 'date_opened']:
