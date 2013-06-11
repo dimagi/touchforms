@@ -23,13 +23,13 @@ def restore(sess_id, factory):
 # TODO integrate with real caching framework (django ideally)
 def cache_set(key, value, timeout):
     with open(cache_path(key), 'w') as f:
-        f.write(json.dumps(value))
+        f.write(json.dumps(value).encode('utf8'))
 
 # TODO integrate with real caching framework (django ideally)
 def cache_get(key):
     try:
         with open(cache_path(key)) as f:
-            return json.loads(f.read())
+            return json.loads(f.read().decode('utf8'))
     except IOError:
         raise KeyError
 
