@@ -159,7 +159,7 @@ function Form(json, adapter) {
   }
 
   this.submitting = function() {
-    $('#submit').val('Submitting...');
+    this.$container.find('#submit').val('Submitting...');
   }
 }
 
