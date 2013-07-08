@@ -637,7 +637,7 @@ function GeoPointEntry () {
 	$map.append($ch);
     };
 
-    var GMAPS_API = 'http://maps.googleapis.com/maps/api/js?key=' + GMAPS_API_KEY + '&sensor=false';
+    var GMAPS_API = 'https://maps.googleapis.com/maps/api/js?key=' + GMAPS_API_KEY + '&sensor=false';
     if (typeof google == "undefined") {
 	_GMAPS_INIT = on_gmap_load
         $.getScript(GMAPS_API + '&callback=_GMAPS_INIT');
