@@ -36,9 +36,8 @@ def _next_responses(xformsresponse, session_id, auth=None):
         yield xformsresponse
 
 def _tf_format(text):
-    # touchforms likes ints to be ints so force it if necessary.
     # any additional formatting needs can go here if they come up
-    try:
-        return int(text)
-    except ValueError:
-        return text
+    # be careful to check datatypes before casting i.e., ok to cast an
+    # integer question to an int, but don't cast text questions to int
+    # because it will strip leading zeroes.
+    return text
