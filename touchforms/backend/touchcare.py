@@ -27,9 +27,8 @@ from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
 
 def query_case_ids(q, criteria=None):
     criteria = copy(criteria) or {} # don't modify the passed in dict
-    criteria["ids_only"] = True
-    query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria)) \
-                    if criteria else settings.CASE_API_URL
+    criteria["ids_only"] = 'true'
+    query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria))
     return [id for id in q(query_url)]
 
 def query_cases(q, criteria=None):
