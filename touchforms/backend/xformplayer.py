@@ -204,6 +204,11 @@ class XFormSession:
         return tree
 
     def _walk(self, parent_ix, siblings):
+      def step(ix, descend):
+        next_ix = self.fem.incrementIndex(ix, descend)
+        self.fem.setQuestionIndex(next_ix)  # needed to trigger events in form engine
+        return next_ix
+
       def ix_in_scope(form_ix):
         if form_ix.isEndOfFormIndex():
           return False
@@ -212,12 +217,12 @@ class XFormSession:
         else:
           return FormIndex.isSubElement(parent_ix, form_ix)
 
-      form_ix = self.fem.incrementIndex(parent_ix, True)
+      form_ix = step(parent_ix, True)
       while ix_in_scope(form_ix):
         relevant = self.fem.isIndexRelevant(form_ix)
 
         if not relevant:
-          form_ix = self.fem.incrementIndex(form_ix, False)
+          form_ix = step(form_ix, False)
           continue
 
         evt = self.__parse_event(form_ix)
@@ -250,10 +255,10 @@ class XFormSession:
             self._walk(subevt['ix'], subevt['children'])
           for key in ['repetitions', 'del-choice', 'del-header', 'done-choice']:
             del evt[key]
-          form_ix = self.fem.incrementIndex(form_ix, True) # why True?
+          form_ix = step(form_ix, True) # why True?
         else:
           siblings.append(evt)
-          form_ix = self.fem.incrementIndex(form_ix, True) # why True?
+          form_ix = step(form_ix, True) # why True?
 
       return form_ix
 
