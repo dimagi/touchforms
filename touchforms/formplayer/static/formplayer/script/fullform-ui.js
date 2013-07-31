@@ -459,6 +459,7 @@ function addChild(parent, child, final_ordering) {
     child.$container.hide();
     insert(child.$container);
     child.$container.slideDown();
+    child.control.onShow();
   }
 
   if (insertionIx < parent.children.length) {
