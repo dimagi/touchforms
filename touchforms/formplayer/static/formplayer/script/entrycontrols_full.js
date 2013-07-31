@@ -67,6 +67,8 @@ function Entry () {
   this.clear = function () {
     this.setAnswer(null, true);
   }
+
+  this.onShow = function() { }
 }
 
 function SimpleEntry () {
@@ -618,6 +620,11 @@ function GeoPointEntry () {
       });
 
     var on_gmap_load = function() {
+	if (!$container.is(':visible')) {
+	    // google maps gets unhappy if you initialize the map when its <div> is hidden
+	    widget.delayed_init_reqd = true;
+	}
+
 	$map.empty();
 	widget.map = new google.maps.Map($map[0], {
 		mapTypeId: google.maps.MapTypeId.ROADMAP,
@@ -627,7 +634,9 @@ function GeoPointEntry () {
 
 	widget.geocoder = new google.maps.Geocoder();
 
-	google.maps.event.addListener(widget.map, "center_changed", function() { widget.update_center(); });
+	if (!widget.delayed_init_reqd) {
+	    widget.bindListener();
+	}
 
 	$ch = $('<img src="data:image/png;base64,' + crosshairs + '">');
 	$ch.css('position', 'relative')
@@ -645,6 +654,25 @@ function GeoPointEntry () {
 	on_gmap_load();
     }
 
+  }
+
+  this.bindListener = function() {
+      var widget = this;
+      google.maps.event.addListener(widget.map, "center_changed", function() { widget.update_center(); });
+  }
+
+  this.onShow = function() {
+      if (!this.delayed_init_reqd) {
+	  return;
+      }
+
+      // if the google map is initialized while the container div is hidden
+      // we need to do a little cleanup
+      var center = this.map.getCenter();
+      google.maps.event.trigger(this.map, 'resize');
+      this.map.setCenter(center);
+      // only set this now so the re-centering doesn't trigger an 'answering' of the question
+      this.bindListener();
   }
 
   this.getAnswer = function () {
