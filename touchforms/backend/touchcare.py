@@ -121,17 +121,20 @@ class CaseDatabase(IStorageUtilityIndexed):
         logging.debug('case index lookup %s %s' % (field_name, value))
 
         if (field_name, value) not in self.cached_lookups:
-            # handles 'case-in-goal' defined in suite file of PACT Care Plan
-            # app
-            if field_name == 'case-id' or field_name.startswith('case-in'):
+            if field_name == 'case-id':
                 cases = [self.readCase(value)]
             else:
-                get_val = {
-                    'case-type': lambda c: c.getTypeId(),
-                    'case-status': lambda c: 'closed' if c.isClosed() else 'open',
-                }[field_name]
-
-                cases = [c for c in self.cases.values() if get_val(c) == value]
+                try:
+                    get_val = {
+                        'case-type': lambda c: c.getTypeId(),
+                        'case-status': lambda c: 'closed' if c.isClosed() else 'open',
+                    }[field_name]
+                except KeyError:
+                    # Try any unrecognized field name as a case id field.
+                    # Needed for 'case-in-goal' lookup in PACT Care Plan app.
+                    cases = [self.readCase(value)]
+                else:
+                    cases = [c for c in self.cases.values() if get_val(c) == value]
 
             self.cached_lookups[(field_name, value)] = cases
 
