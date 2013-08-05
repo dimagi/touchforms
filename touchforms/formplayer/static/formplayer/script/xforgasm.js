@@ -132,7 +132,17 @@ function WebFormSession(params) {
         }
         sess.LAST_REQUEST_HANDLED = resp.seq_id;
 
-        callback(resp);
+        try {
+            callback(resp);
+        } catch (err) {
+            error_msg = "".concat(
+                "Something unexpected went wrong on that request. ",
+                "If you have problems filling in the rest of your form please submit an issue. ",
+                "Technical Details: ", err
+            );
+            sess.onerror({message: error_msg});
+
+        }
         if (blocking) {
           sess.inputActivate(true); // clears BLOCKING_REQUEST_IN_PROGRESS
         }
