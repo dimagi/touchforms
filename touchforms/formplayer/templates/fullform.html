@@ -1,3 +1,4 @@
+{% load url from future %}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
@@ -27,7 +28,7 @@ if (!window.console) {
 GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
 
 // preloaders are deprecated -- support for backwards compatibility
-PRELOADER_URL = "{% url xform_preloader %}";
+PRELOADER_URL = "{% url 'xform_preloader' %}";
 
 
 function onlanginfo(switchfunc, langs) {
@@ -55,7 +56,7 @@ $(document).ready(function() {
     form_uid: '{{ form.file.path|escapejs }}',
     session_data: {{ session_data|safe }},
     instance_xml: {{ instance_xml|safe }},
-    xform_url: "{% url xform_player_proxy %}",
+    xform_url: "{% url 'xform_player_proxy' %}",
     onpresubmit: onpresubmit,
     onsubmit: submit_form_post,
     onload: onload

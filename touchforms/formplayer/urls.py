@@ -1,6 +1,5 @@
 from django.conf.urls.defaults import *
 from touchforms.formplayer.models import XForm
-from django.views.generic import list_detail
 
 xform_info = {
     "queryset" : XForm.objects.order_by('namespace'),
