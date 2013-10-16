@@ -9,7 +9,7 @@ import os
 import java.lang
 import time
 import urllib2
-from optparse import OptionParser
+#from optparse import OptionParser FIXME -- breaks with jnlp
 from datetime import datetime, timedelta
 import settings
 
@@ -159,6 +159,7 @@ def handle_request (content, server):
                     'nav_mode': nav_mode,
                     'api_auth': content.get('hq_auth'),
                     'staleness_window': content.get('staleness_window', server.default_stale_window),
+                    'persist': False,
                 })
 
         elif action == 'edit-form':
@@ -293,7 +294,7 @@ class Purger(threading.Thread):
         self.up = False
 
 def main(**kwargs):
-    gw = XFormHTTPGateway(kwargs['port'], kwargs['stale_window'], kwargs.get('ext_mod'))
+    gw = XFormHTTPGateway(kwargs['port'], kwargs['stale_window'], kwargs['ext_mod'])
     gw.start()
     logging.info('started server on port %d' % kwargs['port'])
 

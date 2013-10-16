@@ -33,10 +33,10 @@ public class InitJython extends AbstractJythonInit {
 
 	public void run() throws ScriptException {
         //c.exec("try:\n import fibcalc\n fibcalc.main()\nexcept SystemExit: pass");
-        //c.execfile(InitJython.class.getResourceAsStream("Lib/touchforms/xformserver.py"),
-        //           "touchforms/xformserver.py");
+        c.execfile(InitJython.class.getResourceAsStream("Lib/touchforms/xformserver.py"),
+                   "touchforms/xformserver.py");
 
-
-        c.exec("from touchforms import xformserver\nxformserver.main(port=4444, stale_window=3, ext_mod=[])\n");
+        //c.exec("from touchforms import xformserver\nxformserver.main(port=4444, stale_window=3, ext_mod=[])\n");
 	}
 }
+
