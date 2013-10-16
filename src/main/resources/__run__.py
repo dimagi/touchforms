@@ -1,0 +1,2 @@
+import fibcalc
+fibcalc.main()
