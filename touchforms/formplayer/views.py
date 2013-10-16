@@ -19,7 +19,7 @@ from touchforms.formplayer.api import DjangoAuth
 from django.contrib.auth.decorators import login_required
 from touchforms.formplayer.const import PRELOADER_TAG_UID
 
-@login_required
+#@login_required
 def xform_list(request):
     forms_by_namespace = defaultdict(list)
     success = True
