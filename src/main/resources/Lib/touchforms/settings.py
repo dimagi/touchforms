@@ -7,7 +7,7 @@ HACKS_MODE = True
 
 SESSION_CACHE_URL = 'http://localhost:8000/session-cache/'
 
-ALLOW_CROSS_ORIGIN = False
+ALLOW_CROSS_ORIGIN = True
 
 try:
     from localsettings import *

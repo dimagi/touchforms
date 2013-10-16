@@ -37,6 +37,6 @@ public class InitJython extends AbstractJythonInit {
         //           "touchforms/xformserver.py");
 
 
-        c.exec("from touchforms import xformserver\nxformserver.main(port=4444, stale_window=3)\n");
+        c.exec("from touchforms import xformserver\nxformserver.main(port=4444, stale_window=3, ext_mod=[])\n");
 	}
 }
