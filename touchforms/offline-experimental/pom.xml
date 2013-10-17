@@ -15,7 +15,7 @@
 			<plugin>
 				<groupId>net.sf.mavenjython</groupId>
 				<artifactId>jython-compile-maven-plugin</artifactId>
-				<version>1.1</version>
+				<version>1.2</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -26,7 +26,6 @@
 				</executions>
 				<configuration>
 					<libraries>
-                        <param>nose</param> <!-- you HAVE to install an external python dependency or maven crashes -->
 					</libraries>
 				</configuration>
 			</plugin>
