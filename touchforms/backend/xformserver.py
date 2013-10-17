@@ -22,8 +22,6 @@ logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 DEFAULT_PORT = 4444
 DEFAULT_STALE_WINDOW = 3. #hours
 
-SIMULATED_DELAY = 0 #ms
-
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     pass
 
@@ -45,8 +43,6 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
     error_content_type = "text/json"
 
     def do_POST(self):
-        delay()
-
         if 'content-length' in self.headers.dict:
             length = int(self.headers.dict['content-length'])
         else:
@@ -84,12 +80,10 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         reply = json.dumps(data_out)
 
         logging.debug('returned: [%s]' % reply)
-        delay()
 
         self.send_response(200)
         self.send_header('Content-Type', 'text/json; charset=utf-8')
-        if settings.ALLOW_CROSS_ORIGIN:
-            self.send_header('Access-Control-Allow-Origin', '*')
+        self.cross_origin_header()
         self.end_headers()
         self.wfile.write(reply.encode('utf-8'))
         
@@ -117,11 +111,21 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         message = message.split("\n")[0] if message else ""
         self.send_response(code, message)
         self.send_header("Content-Type", self.error_content_type)
+        self.cross_origin_header()
         self.send_header('Connection', 'close')
         self.end_headers()
         if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
             self.wfile.write(content)
 
+    # we don't support GET but still want to allow heartbeat responses via cross-origin
+    def do_GET(self):
+        self.send_response(405, 'method not allowed')
+        self.cross_origin_header()
+        self.end_headers()
+
+    def cross_origin_header(self):
+        if settings.ALLOW_CROSS_ORIGIN:
+            self.send_header('Access-Control-Allow-Origin', '*')
         
 def handle_request (content, server):
     if 'action' not in content:
@@ -256,9 +260,6 @@ def handle_request (content, server):
     except xformplayer.SequencingException:
         return {'error': 'session is locked by another request'}
 
-def delay():
-    time.sleep(.5 * SIMULATED_DELAY / 1000)
-
 class Purger(threading.Thread):
     def __init__(self, purge_freq=5.):
         threading.Thread.__init__(self)
@@ -292,24 +293,14 @@ class Purger(threading.Thread):
     def terminate(self):
         self.up = False
 
-
-if __name__ == "__main__":
-    parser = OptionParser()
-    parser.add_option('-p', '--port', dest='port', type='int', default=DEFAULT_PORT)
-    parser.add_option('--stale', dest='stale_window', type='float', default=DEFAULT_STALE_WINDOW,
-                      help='length of inactivity before a form session is discarded (hours)')
-
-    (options, args) = parser.parse_args()
-
-    extension_modules = args
-
-    gw = XFormHTTPGateway(options.port, options.stale_window, extension_modules)
+def main(**kwargs):
+    gw = XFormHTTPGateway(kwargs['port'], kwargs['stale_window'], kwargs['ext_mod'])
     gw.start()
-    logging.info('started server on port %d' % options.port)
+    logging.info('started server on port %d' % kwargs['port'])
 
     purger = Purger()
     purger.start()
-    logging.info('purging sessions inactive for more than %s hours' % options.stale_window)
+    logging.info('purging sessions inactive for more than %s hours' % kwargs['stale_window'])
 
     if settings.HACKS_MODE:
         logging.info('hacks mode is enabled, and you should feel bad about that')
@@ -324,3 +315,17 @@ if __name__ == "__main__":
         #jython, nor does jython2.5 support the httpserver 'shutdown' method
         logging.info('interrupted; shutting down...')
         gw.terminate()
+
+if __name__ == "__main__":
+    parser = OptionParser()
+    parser.add_option('-p', '--port', dest='port', type='int', default=DEFAULT_PORT)
+    parser.add_option('--stale', dest='stale_window', type='float', default=DEFAULT_STALE_WINDOW,
+                      help='length of inactivity before a form session is discarded (hours)')
+
+    (options, args) = parser.parse_args()
+
+    main(
+        port=options.port,
+        stale_window=options.stale_window,
+        ext_mod=args
+    )

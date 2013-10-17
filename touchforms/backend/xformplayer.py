@@ -25,7 +25,7 @@ import com.xhaus.jyson.JysonCodec as json
 from org.javarosa.xform.parse import XFormParser
 from org.javarosa.form.api import FormEntryModel, FormEntryController
 from org.javarosa.core.model import Constants, FormIndex
-from org.javarosa.core.model.data import *
+from org.javarosa.core.model.data import IntegerData, LongData, DecimalData, StringData, DateData, TimeData, SelectOneData, SelectMultiData, GeoPointData
 from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.core.util import UnregisteredLocaleException
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
