@@ -9,3 +9,7 @@ local*settings.py
 data/
 *.log
 staticroot/
+
+touchforms/offline-experimental/target/
+touchforms/offline-experimental/cachedir/
+touchforms/offline-experimental/artifact/*.jar
