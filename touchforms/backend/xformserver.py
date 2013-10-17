@@ -293,14 +293,17 @@ class Purger(threading.Thread):
     def terminate(self):
         self.up = False
 
-def main(**kwargs):
-    gw = XFormHTTPGateway(kwargs['port'], kwargs['stale_window'], kwargs['ext_mod'])
+def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, ext_mod=[], offline=False):
+    if offline:
+        settings.ALLOW_CROSS_ORIGIN = True
+
+    gw = XFormHTTPGateway(port, stale_window, ext_mod)
     gw.start()
-    logging.info('started server on port %d' % kwargs['port'])
+    logging.info('started server on port %d' % port)
 
     purger = Purger()
     purger.start()
-    logging.info('purging sessions inactive for more than %s hours' % kwargs['stale_window'])
+    logging.info('purging sessions inactive for more than %s hours' % stale_window)
 
     if settings.HACKS_MODE:
         logging.info('hacks mode is enabled, and you should feel bad about that')

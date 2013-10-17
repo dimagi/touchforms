@@ -38,4 +38,6 @@ def cache_del(key):
 
 # for debugging
 def cache_path(key):
-    return '/tmp/tfsess-%s' % key
+    import os.path
+    import tempfile
+    return os.path.join(tempfile.gettempdir(), 'tfsess-%s' % key)
