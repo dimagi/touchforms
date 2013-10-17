@@ -39,7 +39,7 @@
 					</descriptorRefs>
 					<archive>
 						<manifest>
-							<mainClass>demo.Main</mainClass>
+							<mainClass>Launch</mainClass>
 						</manifest>
 					</archive>
 				</configuration>

@@ -1,26 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jnlp spec="1.0+" codebase="http://mrgris.com/a/dimagi/">
-    <information>
-        <title>Offline Cloudcare Test</title>
-        <vendor>Dimagi</vendor>
-    </information>
-    <resources>
-        <!-- Application Resources -->
-        <j2se version="1.6+"
-              href="http://java.sun.com/products/autodl/j2se"/>
-        <jar href="offline-cloudcare.jar" main="true" />
+  <information>
+    <title>Offline Cloudcare Test</title>
+    <vendor>Dimagi</vendor>
+  </information>
+  <resources>
+    <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
+    <jar href="offline-cloudcare.jar" main="true" />
+  </resources>
+  <security>
+    <all-permissions/>
+  </security>
 
-    </resources>
-    <security>
-      <all-permissions/>
-    </security>
-
-<application-desc name="offline cloudcare" main-class="org.python.util.jython">
-    <argument>-c</argument>
-    <argument>import sys; sys.path.insert(0, '__pyclasspath__/Lib') ; from touchforms import xformserver ; xformserver.main(port=4444, stale_window=3, ext_mod=[])</argument>
+  <application-desc name="offline cloudcare" main-class="Launch">
   </application-desc>
-<!--
-    <application-desc name="offline cloudcare">
-     </application-desc>-->
-     <update check="background"/>
+  
+  <update check="background"/>
 </jnlp>
