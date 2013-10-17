@@ -166,3 +166,28 @@ function WebFormSession(params) {
 function submit_form_post(xml) {
   submit_redirect({type: 'form-complete', output: xml});
 }
+
+function touchformsHeartbeat(url, online, offline) {
+    $.get(url).done(function() {
+        online();
+    }).fail(function(resp) {
+        if (resp.status == 0) {
+            offline();
+        } else {
+            // even error responses show that the daemon is still alive
+            online();
+        }
+    });
+}
+
+function runInterval(func, interval) {
+    var timer = setInterval(function() {
+        func(function() {
+            clearInterval(timer);
+        });
+    }, 1000. * interval);
+    // also run now without delay
+    func(function() {
+        clearInterval(timer);
+    });
+}

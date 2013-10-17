@@ -22,8 +22,6 @@ logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 DEFAULT_PORT = 4444
 DEFAULT_STALE_WINDOW = 3. #hours
 
-SIMULATED_DELAY = 0 #ms
-
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     pass
 
@@ -45,8 +43,6 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
     error_content_type = "text/json"
 
     def do_POST(self):
-        delay()
-
         if 'content-length' in self.headers.dict:
             length = int(self.headers.dict['content-length'])
         else:
@@ -84,12 +80,10 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         reply = json.dumps(data_out)
 
         logging.debug('returned: [%s]' % reply)
-        delay()
 
         self.send_response(200)
         self.send_header('Content-Type', 'text/json; charset=utf-8')
-        if settings.ALLOW_CROSS_ORIGIN:
-            self.send_header('Access-Control-Allow-Origin', '*')
+        self.cross_origin_header()
         self.end_headers()
         self.wfile.write(reply.encode('utf-8'))
         
@@ -117,11 +111,21 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         message = message.split("\n")[0] if message else ""
         self.send_response(code, message)
         self.send_header("Content-Type", self.error_content_type)
+        self.cross_origin_header()
         self.send_header('Connection', 'close')
         self.end_headers()
         if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
             self.wfile.write(content)
 
+    # we don't support GET but still want to allow heartbeat responses via cross-origin
+    def do_GET(self):
+        self.send_response(405, 'method not allowed')
+        self.cross_origin_header()
+        self.end_headers()
+
+    def cross_origin_header(self):
+        if settings.ALLOW_CROSS_ORIGIN:
+            self.send_header('Access-Control-Allow-Origin', '*')
         
 def handle_request (content, server):
     if 'action' not in content:
@@ -256,9 +260,6 @@ def handle_request (content, server):
         return {'error': 'invalid session id'}
     except xformplayer.SequencingException:
         return {'error': 'session is locked by another request'}
-
-def delay():
-    time.sleep(.5 * SIMULATED_DELAY / 1000)
 
 class Purger(threading.Thread):
     def __init__(self, purge_freq=5.):
