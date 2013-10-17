@@ -9,7 +9,7 @@ import os
 import java.lang
 import time
 import urllib2
-#from optparse import OptionParser FIXME -- breaks with jnlp
+from optparse import OptionParser
 from datetime import datetime, timedelta
 import settings
 
