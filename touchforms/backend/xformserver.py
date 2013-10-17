@@ -296,6 +296,7 @@ class Purger(threading.Thread):
 def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, ext_mod=[], offline=False):
     if offline:
         settings.ALLOW_CROSS_ORIGIN = True
+        #settings.PERSIST_SESSIONS = False
 
     gw = XFormHTTPGateway(port, stale_window, ext_mod)
     gw.start()

@@ -33,6 +33,7 @@ from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
 from touchcare import CCInstances
 from util import query_factory
 import persistence
+import settings
 
 DEBUG = False
 
@@ -141,7 +142,7 @@ class XFormSession:
         self._parse_current_event()
 
         self.staleness_window = 3600. * params['staleness_window']
-        self.persist = params.get('persist', True)
+        self.persist = params.get('persist', settings.PERSIST_SESSIONS)
         self.orig_params = {
             'xform': xform,
             'nav_mode': params.get('nav_mode'),
