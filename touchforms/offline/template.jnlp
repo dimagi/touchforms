@@ -6,7 +6,7 @@
   </information>
 
   <resources>
-    <j2se version="1.5+" href="http://java.sun.com/products/autodl/j2se"/>
+    <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
     <jar href="offline-cloudcare.jar" main="true" />
     {% for jar in external_jars %}
     <jar href="{{ jar }}" />

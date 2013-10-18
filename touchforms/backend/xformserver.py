@@ -12,6 +12,7 @@ import urllib2
 from optparse import OptionParser
 from datetime import datetime, timedelta
 import settings
+import desktop
 
 from setup import init_classpath
 init_classpath()
@@ -261,7 +262,7 @@ def handle_request (content, server):
         return {'error': 'session is locked by another request'}
 
 class Purger(threading.Thread):
-    def __init__(self, purge_freq=5.):
+    def __init__(self, purge_freq=1.):
         threading.Thread.__init__(self)
         self.purge_freq = timedelta(minutes=purge_freq)
 
@@ -297,6 +298,9 @@ def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, ext_mod=[], offli
     if offline:
         settings.ALLOW_CROSS_ORIGIN = True
         settings.PERSIST_SESSIONS = False
+        ctx = desktop.init_gui()
+    else:
+        ctx = desktop.StubContext()
 
     gw = XFormHTTPGateway(port, stale_window, ext_mod)
     gw.start()

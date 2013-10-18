@@ -21,8 +21,8 @@ def run(cmd, echo=True):
 
 TF_SRC_DIR = _('..', 'backend')   # touchforms code
 TF_JARS_DIR = _('..', 'backend', 'jrlib')   # touchforms external dependencies
-# where the touchforms code will go in the web start jar build tree
-TF_INST_DIR = _('src', 'main', 'resources', 'Lib', 'touchforms')
+TF_INST_DIR = _('src', 'main', 'resources', 'Lib', 'touchforms')   # where the touchforms
+   # code will go in the web start jar build tree
 DIST_DIR = _('dist')   # output dir of this build script
 JYTHON_JAR = _('jython-standalone-2.5.2.jar')
 
