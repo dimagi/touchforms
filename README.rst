@@ -9,6 +9,9 @@ Django (1.2+ recommended)
 Java (1.5+ recommended)
 Jython (2.5+ required)
 
+for building offline cloudcare:
+maven2
+jinja2
 
 Getting started
 =============
@@ -34,3 +37,16 @@ Run the django frontend::
     python manage.py runserver
     
 Play forms!
+
+Offline Cloudcare
+=================
+
+To build:
+
+    cd offline/
+    python build.py url-root
+
+url-root is the url you will download the java webstart package from.
+for example, if i download from http://commcarehq.org/offline-cloudcare/offline-cloudcare.jnlp, url-root is http://commcarehq.org/offline-cloudcare/
+
+the packaged result will be in dist/standalone (one jar) or dist/split (many jars). deploy the folder contents as-is to url-root

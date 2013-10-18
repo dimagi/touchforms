@@ -12,5 +12,5 @@ staticroot/
 
 touchforms/offline-experimental/target/
 touchforms/offline-experimental/cachedir/
-touchforms/offline-experimental/artifact/*.jar
+touchforms/offline-experimental/dist/
 touchforms/offline-experimental/src/main/resources/Lib/touchforms/
