@@ -14,12 +14,12 @@ public class GUI {
     int numSessions;
 
     public void load() {
-        boolan usingSystray = false;
+        boolean usingSystray = false;
         if (SystemTray.isSupported()) {
             SystemTray tray = SystemTray.getSystemTray();
             Image image = Toolkit.getDefaultToolkit().getImage(GUI.class.getResource("systray.png"));
             ActionListener listener = new ActionListener() {
-                    public void actionPerformed(Event e) {
+                    public void actionPerformed(ActionEvent e) {
                         String cmd = e.getActionCommand();
                         if (cmd == null) {
                             // systray icon was double-clicked
@@ -33,16 +33,16 @@ public class GUI {
 
         
             // systray doesn't support swing menus... come on!!
-            PopupMenu popup = PopupMenu();
-            MenuItem close = MenuItem(CMD_CLOSE);
+            PopupMenu popup = new PopupMenu();
+            MenuItem close = new MenuItem(CMD_CLOSE);
                 
-            this.status = MenuItem("Starting up...");
+            this.status = new MenuItem("Starting up...");
                 
             popup.add(status);
             popup.addSeparator();
             popup.add(close);
 
-            this.icon = TrayIcon(image, NAME, popup);
+            this.icon = new TrayIcon(image, NAME, popup);
             this.icon.setImageAutoSize(true);
 
             try {
@@ -54,6 +54,8 @@ public class GUI {
         if (!usingSystray) {
             // TODO fallback to a normal GUI window
         }
+
+        this.loaded = true;
     }
 
     public void setNumSessions(int numSessions) {
@@ -63,9 +65,9 @@ public class GUI {
             return;
         }
 
-        String sess = (numSessions ? numSessions : "no") + " active " + (numSessions == 1 ? "session" : "sessions");
+        String sess = (numSessions > 0 ? numSessions : "no") + " active " + (numSessions == 1 ? "session" : "sessions");
         this.status.setLabel("Running... " + sess);
-        this.icon.setToolTip(NAME + (numSessions ? ": " + sess : ""));
+        this.icon.setToolTip(NAME + (numSessions > 0 ? ": " + sess : ""));
     }
 
 }

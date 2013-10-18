@@ -49,11 +49,12 @@ class global_state_mgr(object):
     def __init__(self, ctx):
         self.ctx = ctx
         self.lock = threading.Lock()
+        self.ctx.setNumSessions(0)
     
     def new_session(self, xfsess):
         with self.lock:
             self.session_cache[xfsess.uuid] = xfsess
-            self.ctx.set_num_sessions(len(self.session_cache))
+            self.ctx.setNumSessions(len(self.session_cache))
 
     def get_session(self, session_id):
         with self.lock:
@@ -102,7 +103,7 @@ class global_state_mgr(object):
 
         # note that persisted entries use the timeout functionality provided by the caching framework
 
-        self.ctx.set_num_sessions(num_sess_active)
+        self.ctx.setNumSessions(num_sess_active)
 
         return {'purged': num_sess_purged, 'active': num_sess_active}
 
