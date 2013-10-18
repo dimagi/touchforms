@@ -10,7 +10,7 @@ data/
 *.log
 staticroot/
 
-touchforms/offline-experimental/target/
-touchforms/offline-experimental/cachedir/
-touchforms/offline-experimental/dist/
-touchforms/offline-experimental/src/main/resources/Lib/touchforms/
+touchforms/offline/target/
+touchforms/offline/cachedir/
+touchforms/offline/dist/
+touchforms/offline/src/main/resources/Lib/touchforms/
