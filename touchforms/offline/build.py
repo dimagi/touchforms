@@ -10,34 +10,41 @@ import itertools
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 def _(*relpath):
+    """normalize paths relative to the main directory for offline cloudcare"""
     return os.path.normpath(os.path.join(ROOT, *relpath))
 
 def run(cmd, echo=True):
+    """execute a command"""
     if echo:
         print '>>', cmd
     Popen(cmd, shell=True).communicate()
 
-TF_SRC_DIR = _('..', 'backend')
-TF_JARS_DIR = _('..', 'backend', 'jrlib')
+TF_SRC_DIR = _('..', 'backend')   # touchforms code
+TF_JARS_DIR = _('..', 'backend', 'jrlib')   # touchforms external dependencies
+# where the touchforms code will go in the web start jar build tree
 TF_INST_DIR = _('src', 'main', 'resources', 'Lib', 'touchforms')
-DIST_DIR = _('dist')
+DIST_DIR = _('dist')   # output dir of this build script
 JYTHON_JAR = _('jython-standalone-2.5.2.jar')
 
 def mkdir(path):
+    """create directory if needed (all ancestor dirs must exist)"""
     if not os.path.exists(path):
         print '** mkdir', path
         os.mkdir(path)
 
 def wipedir(path):
+    """remove all contents of a dir (but not the dir itself)"""
     shutil.rmtree(path)
     mkdir(path)
 
 def copy_pattern(pattern, dst):
+    """cp /a/b/*.c /d/e/"""
     for path in glob.glob(pattern):
         shutil.copy(path, dst)
 
 
 def register_deps():
+    """register jar dependencies with maven so that it can find them during build"""
     jars = itertools.chain([JYTHON_JAR], glob.glob(os.path.join(TF_JARS_DIR, '*.jar')))
     for jar in jars:
         filename = os.path.split(jar)[1]
@@ -46,18 +53,21 @@ def register_deps():
         run('mvn install:install-file -Dfile=%s -DgroupId=touchforms-deps -DartifactId=%s -Dversion=latest -Dpackaging=jar' % (jar, basename))
 
 def build_jars():
+    """run maven build script"""
     wipedir(TF_INST_DIR)
     print 'copying touchforms code into jar resources'
     copy_pattern(os.path.join(TF_SRC_DIR, '*.py'), TF_INST_DIR)
     run('mvn package')
 
 def get_built_jar(mode):
+    """get the appropriate jar that maven built"""
     ARTIFACT_DIR = _('target')
     jars = dict(('standalone' if 'with-dependencies' in path else 'split', path)
                 for path in glob.glob(os.path.join(ARTIFACT_DIR, '*.jar')))
     return jars[mode]
 
 def load_maven_properties():
+    """get build properties used by maven script"""
     with open(_('local.properties')) as f:
         lines = f.readlines()
 
@@ -76,18 +86,21 @@ def load_maven_properties():
     return dict(_props())
 
 def sign_jar(jar):
+    """sign jar with dimagi javarosa key"""
     print 'signing %s' % jar
     props = load_maven_properties()
     props['jar'] = jar
     run('jarsigner -keystore "%(keystore.path)s" -storepass %(keystore.password)s -keypass %(keystore.password)s %(jar)s %(keystore.alias)s' % props, False)
 
 def external_jars(distdir, fullpath=True):
+    """get list of all the extra jars that offline cloudcare depends on"""
     _f = lambda path: os.path.split(path)[1]
     return [k if fullpath else _f(k) for k in
             glob.glob(os.path.join(distdir, '*.jar')) if
             not _f(k).startswith('offline-cloudcare')]
 
 def make_jnlp(distdir, root_url):
+    """create jnlp file for web start deployment"""
     print 'creating jnlp file'
     with open(_('template.jnlp')) as f:
         template = Template(f.read())
@@ -98,6 +111,7 @@ def make_jnlp(distdir, root_url):
         ))
 
 def package(mode, root_url):
+    """package up jar (and any dependencies) for deployment via web start"""
     print 'packaging for [%s]' % mode
     DIST = os.path.join(DIST_DIR, mode)
     mkdir(DIST)
@@ -112,6 +126,7 @@ def package(mode, root_url):
     make_jnlp(DIST, root_url)
 
 def build(root_url, modes):
+    """main entry point"""
     wipedir(DIST_DIR)
 
     register_deps()
