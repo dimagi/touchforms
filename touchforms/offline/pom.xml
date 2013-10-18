@@ -109,18 +109,18 @@
       <version>4.8.2</version>
     </dependency>
     <dependency>
-      <groupId>org.python</groupId>
-      <artifactId>jython-standalone</artifactId>
-      <version>2.5.2</version>
-    </dependency>
-    <dependency>
       <groupId>touchforms-deps</groupId>
-      <artifactId>commcare</artifactId>
+      <artifactId>jython-standalone</artifactId>
       <version>latest</version>
     </dependency>
     <dependency>
       <groupId>touchforms-deps</groupId>
-      <artifactId>javarosa</artifactId>
+      <artifactId>commcare-libraries</artifactId>
+      <version>latest</version>
+    </dependency>
+    <dependency>
+      <groupId>touchforms-deps</groupId>
+      <artifactId>javarosa-libraries</artifactId>
       <version>latest</version>
     </dependency>
     <dependency>
@@ -130,7 +130,7 @@
     </dependency>
     <dependency>
       <groupId>touchforms-deps</groupId>
-      <artifactId>kxml</artifactId>
+      <artifactId>kxml2</artifactId>
       <version>latest</version>
     </dependency>
     <dependency>

@@ -6,6 +6,7 @@ import glob
 import shutil
 from jinja2 import Template
 import re
+import itertools
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 def _(*relpath):
@@ -36,6 +37,13 @@ def copy_pattern(pattern, dst):
         shutil.copy(path, dst)
 
 
+def register_deps():
+    jars = itertools.chain([JYTHON_JAR], glob.glob(os.path.join(TF_JARS_DIR, '*.jar')))
+    for jar in jars:
+        filename = os.path.split(jar)[1]
+        m = re.match('(?P<base>.*?)([.-]?[0-9.]+)?.jar', filename)
+        basename = m.group('base')
+        run('mvn install:install-file -Dfile=%s -DgroupId=touchforms-deps -DartifactId=%s -Dversion=latest -Dpackaging=jar' % (jar, basename))
 
 def build_jars():
     wipedir(TF_INST_DIR)
@@ -71,7 +79,7 @@ def sign_jar(jar):
     print 'signing %s' % jar
     props = load_maven_properties()
     props['jar'] = jar
-    run('jarsigner -keystore "%(keystore.path)s" -storepass %(keystore.password)s -keypass %(keystore.password)s %(jar)s %(keystore.alias)s' % props)
+    run('jarsigner -keystore "%(keystore.path)s" -storepass %(keystore.password)s -keypass %(keystore.password)s %(jar)s %(keystore.alias)s' % props, False)
 
 def external_jars(distdir, fullpath=True):
     _f = lambda path: os.path.split(path)[1]
@@ -106,6 +114,7 @@ def package(mode, root_url):
 def build(root_url, modes):
     wipedir(DIST_DIR)
 
+    register_deps()
     build_jars()
     for mode in modes:
         package(mode, root_url)
