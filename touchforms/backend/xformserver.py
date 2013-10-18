@@ -12,7 +12,6 @@ import urllib2
 from optparse import OptionParser
 from datetime import datetime, timedelta
 import settings
-import desktop
 
 from setup import init_classpath
 init_classpath()
@@ -294,14 +293,24 @@ class Purger(threading.Thread):
     def terminate(self):
         self.up = False
 
+def init_gui():
+    try:
+        import GUI
+        ctx = GUI()
+        ctx.load()
+        return ctx
+    except ImportError:
+        # not in offline mode
+        class GUIStub(object):
+            def __getattr__(self, name):
+                return lambda _self: None
+        return GUIStub()
+
 def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, ext_mod=[], offline=False):
     if offline:
         settings.ALLOW_CROSS_ORIGIN = True
         settings.PERSIST_SESSIONS = False
-        ctx = desktop.init_gui()
-    else:
-        ctx = desktop.StubContext()
-    xformplayer._init(ctx)
+    xformplayer._init(init_gui())
 
     gw = XFormHTTPGateway(port, stale_window, ext_mod)
     gw.start()
