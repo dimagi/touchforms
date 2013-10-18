@@ -5,6 +5,7 @@ from subprocess import Popen, PIPE
 import glob
 import shutil
 from jinja2 import Template
+import re
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 def _(*relpath):
@@ -48,12 +49,29 @@ def get_built_jar(mode):
                 for path in glob.glob(os.path.join(ARTIFACT_DIR, '*.jar')))
     return jars[mode]
 
-keystore_path = '/mnt/ext/Dropbox/Dimagi/JavaRosa/KeyStore/DimagiKeyStore'
-keystore_alias = 'javarosakey'
-keystore_pass = '****'
+def load_maven_properties():
+    with open(_('local.properties')) as f:
+        lines = f.readlines()
+
+    def _props():
+        for ln in lines:
+            if re.match(r'\s*#', ln):
+                continue
+            m = re.match(r'(?P<key>.*?)=(?P<val>.*)', ln)
+            if not m:
+                continue
+            key = m.group('key').strip()
+            val = m.group('val').strip()
+            if not key:
+                continue
+            yield key, val
+    return dict(_props())
+
 def sign_jar(jar):
     print 'signing %s' % jar
-    run('jarsigner -keystore "%s" -storepass %s -keypass %s %s %s' % (keystore_path, keystore_pass, keystore_pass, jar, keystore_alias), False)
+    props = load_maven_properties()
+    props['jar'] = jar
+    run('jarsigner -keystore "%(keystore.path)s" -storepass %(keystore.password)s -keypass %(keystore.password)s %(jar)s %(keystore.alias)s' % props)
 
 def external_jars(distdir, fullpath=True):
     _f = lambda path: os.path.split(path)[1]

@@ -10,6 +10,7 @@ data/
 *.log
 staticroot/
 
+touchforms/offline/local.properties
 touchforms/offline/target/
 touchforms/offline/cachedir/
 touchforms/offline/dist/
