@@ -629,6 +629,11 @@ def current_question(session_id):
     with global_state.get_session(session_id) as xfsess:
         return xfsess.response({}, xfsess.cur_event)
 
+def heartbeat(session_id):
+    # just touch the session
+    with global_state.get_session(session_id) as xfsess:
+        return {}
+
 def next_event (xfsess):
     ev = xfsess.next_event()
     if ev['type'] != 'form-complete':

@@ -201,6 +201,12 @@ def handle_request (content, server):
 
             return xformplayer.current_question(content['session-id'])
 
+        elif action == 'heartbeat':
+            if 'session-id' not in content:
+                return {'error': 'session id required'}
+
+            return xformplayer.heartbeat(content['session-id'])
+
         elif action == 'edit-repeat':
             if 'session-id' not in content:
                 return {'error': 'session id required'}
