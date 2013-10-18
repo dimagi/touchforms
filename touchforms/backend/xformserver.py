@@ -301,6 +301,7 @@ def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, ext_mod=[], offli
         ctx = desktop.init_gui()
     else:
         ctx = desktop.StubContext()
+    xformplayer._init(ctx)
 
     gw = XFormHTTPGateway(port, stale_window, ext_mod)
     gw.start()

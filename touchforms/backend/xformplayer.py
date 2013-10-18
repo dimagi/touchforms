@@ -40,19 +40,21 @@ DEBUG = False
 class NoSuchSession(Exception):
     pass
 
-class global_state_mgr:
+class global_state_mgr(object):
     instances = {}
     instance_id_counter = 0
 
     session_cache = {}
     
-    def __init__(self):
+    def __init__(self, ctx):
+        self.ctx = ctx
         self.lock = threading.Lock()
     
     def new_session(self, xfsess):
         with self.lock:
             self.session_cache[xfsess.uuid] = xfsess
-    
+            self.ctx.set_num_sessions(len(self.session_cache))
+
     def get_session(self, session_id):
         with self.lock:
             try:
@@ -100,10 +102,17 @@ class global_state_mgr:
 
         # note that persisted entries use the timeout functionality provided by the caching framework
 
+        self.ctx.set_num_sessions(num_sess_active)
+
         return {'purged': num_sess_purged, 'active': num_sess_active}
 
-global_state = global_state_mgr()
-  
+global_state = None
+def _init(ctx):
+    global global_state
+    global_state = global_state_mgr(ctx)
+
+
+
 
 def load_form(xform, instance=None, extensions=[], session_data={}, api_auth=None):
     form = XFormParser(StringReader(xform)).parse()
