@@ -54,7 +54,7 @@ $(document).ready(function() {
 
   TF_URL = "http://localhost:4444";
 
-  var touchformsLoad = function() {
+  var tfLoad = function() {
     var sess = new WebFormSession({
       //form_uid: '{{ form.file.path|escapejs }}',
       form_content: '{{ form.file.read|escapejs }}',
@@ -69,19 +69,11 @@ $(document).ready(function() {
     var init_lang = {% if lang %}'{{ lang|escapejs }}'{% else %}null{% endif %};
     sess.load($('#content'), $('#loading'), init_lang);
   };
-
-  var touchformsOnline = function(cancel) {
-    $('#get-offline').hide();
-    touchformsLoad();
-    cancel();
+  var offlinePrompt = function(show) {
+    $('#get-offline')[show ? 'show' : 'hide']();
   };
-  var touchformsOffline = function() {
-    $('#get-offline').show();
-  };
+  offlineTouchformsInit(TF_URL, tfLoad, offlinePrompt);
 
-  runInterval(function(cancel) {
-    touchformsHeartbeat(TF_URL, function() { touchformsOnline(cancel); }, touchformsOffline);
-  }, 1.);
 });
 
 

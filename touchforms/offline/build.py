@@ -17,7 +17,10 @@ def run(cmd, echo=True):
     """execute a command"""
     if echo:
         print '>>', cmd
-    Popen(cmd, shell=True).communicate()
+    p = Popen(cmd, shell=True)
+    p.communicate()
+    if p.returncode:
+        raise RuntimeError('command failed')
 
 TF_SRC_DIR = _('..', 'backend')   # touchforms code
 TF_JARS_DIR = _('..', 'backend', 'jrlib')   # touchforms external dependencies
@@ -125,20 +128,21 @@ def package(mode, root_url):
 
     make_jnlp(DIST, root_url)
 
-def build(root_url, modes):
+def build(root_url, modes, opts):
     """main entry point"""
     wipedir(DIST_DIR)
 
-    register_deps()
+    if not opts.nodeps:
+        register_deps()
     build_jars()
     for mode in modes:
         package(mode, root_url)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     parser = OptionParser(usage='usage: %prog [options] deploy-url-root')
-
+    parser.add_option('--nodeps', dest='nodeps', action='store_true', help='skip installing external dependencies')
     (options, args) = parser.parse_args()
 
-    build(args[0], ['standalone', 'split'])
+    build(args[0], ['standalone', 'split'], options)
 

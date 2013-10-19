@@ -35,7 +35,8 @@ public class GUI {
             // systray doesn't support swing menus... come on!!
             PopupMenu popup = new PopupMenu();
             MenuItem close = new MenuItem(CMD_CLOSE);
-                
+            close.addActionListener(listener);
+
             this.status = new MenuItem("Starting up...");
                 
             popup.add(status);
@@ -43,6 +44,7 @@ public class GUI {
             popup.add(close);
 
             this.icon = new TrayIcon(image, NAME, popup);
+            this.icon.addActionListener(listener);
             this.icon.setImageAutoSize(true);
 
             try {

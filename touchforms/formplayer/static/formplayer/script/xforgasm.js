@@ -191,3 +191,18 @@ function runInterval(func, interval) {
         clearInterval(timer);
     });
 }
+
+// loadfunc: function that initializes the touchforms session (creates an adapter, loads a form, ...)
+// promptfunc(show): function that controls UI that notifies user that offline cloudcare isn't running
+//     and prompts them to install it. show == true: show this UI; false: hide it
+function offlineTouchformsInit(url, loadfunc, promptfunc) {
+    runInterval(function(cancel) {
+        touchformsHeartbeat(url, function() {
+            promptfunc(false);
+            loadfunc();
+            cancel();
+        }, function() {
+            promptfunc(true);
+        });
+    }, 1.);
+}
