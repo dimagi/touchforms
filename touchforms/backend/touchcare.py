@@ -63,9 +63,9 @@ def case_from_json(data):
     return c
 
 class CaseDatabase(IStorageUtilityIndexed):
-    def __init__(self, domain, user, auth, additional_filters=None,
+    def __init__(self, host, domain, user, auth, additional_filters=None,
                  preload=False):
-        self.query_func = query_factory(domain, auth)
+        self.query_func = query_factory(host, domain, auth)
         self.additional_filters = additional_filters or {}
         self.cached_lookups = {}
         self._cases = {}
@@ -178,7 +178,7 @@ class CCInstances(InstanceInitializationFactory):
 
         if 'casedb' in ref:
             return CaseInstanceTreeElement(instance.getBase(), 
-                        CaseDatabase(self.vars['domain'], self.vars['user_id'], 
+                        CaseDatabase(self.vars.get('host'), self.vars['domain'], self.vars['user_id'], 
                                      self.auth, self.vars.get("additional_filters", {}),
                                      self.vars.get("preload_cases", False)),
                         False)
@@ -203,7 +203,7 @@ class CCInstances(InstanceInitializationFactory):
         query_url = '%(base)s/%(user)s/%(fixture)s' % { "base": settings.FIXTURE_API_URL, 
                                                         "user": user_id,
                                                         "fixture": fixture_id }
-        q = query_factory(self.vars['domain'], self.auth, format="raw")
+        q = query_factory(self.vars.get('host'), self.vars['domain'], self.auth, format="raw")
         results = q(query_url)
         parser = KXmlParser()
         parser.setInput(to_input_stream(results), "UTF-8")

@@ -37,7 +37,8 @@ def mkdir(path):
 
 def wipedir(path):
     """remove all contents of a dir (but not the dir itself)"""
-    shutil.rmtree(path)
+    if os.path.exists(path):
+        shutil.rmtree(path)
     mkdir(path)
 
 def copy_pattern(pattern, dst):

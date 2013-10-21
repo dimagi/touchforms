@@ -32,6 +32,9 @@ function WebFormSession(params) {
 
   this.instance_xml = params.instance_xml;
   this.session_data = params.session_data;
+  if (!this.session_data.host) {
+    this.session_data.host = window.location.protocol + '//' + window.location.host;
+  }
 
   this.onsubmit = params.onsubmit;
   this.onpresubmit = params.onpresubmit || function(){ return true; };
