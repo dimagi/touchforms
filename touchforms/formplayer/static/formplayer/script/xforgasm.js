@@ -16,14 +16,17 @@ if (!Array.prototype.indexOf) {
 
 function WebFormSession(params) {
   if (params.form_uid) {
+    if (isOffline(params.xform_url)) {
+      throw "load form by UID is not possible for offline mode";
+    }
     this.form_spec = {type: 'uid', val: params.form_uid};
   } else if (params.form_content) {
     this.form_spec = {type: 'raw', val: params.form_content};
   } else if (params.form_url) {
     this.form_spec = {type: 'url', val: params.form_url};
-  } 
+  }
 
-  //note: the 'allow_html' params will open you up to XSS attacks if you have
+  //note: the 'allow_html' param will open you up to XSS attacks if you have
   //forms that insert user-entered data into captions!
 
   this.instance_xml = params.instance_xml;
@@ -192,15 +195,26 @@ function runInterval(func, interval) {
     });
 }
 
+function isOffline(touchforms_url) {
+    var tf = $('<a>').attr('href', touchforms_url)[0];
+    return (window.location.host != tf.host);
+}
+
 // loadfunc: function that initializes the touchforms session (creates an adapter, loads a form, ...)
 // promptfunc(show): function that controls UI that notifies user that offline cloudcare isn't running
 //     and prompts them to install it. show == true: show this UI; false: hide it
-function offlineTouchformsInit(url, loadfunc, promptfunc) {
+function touchformsInit(url, loadfunc, promptfunc) {
+    if (!isOffline(url)) {
+        // don't bother with heartbeat
+        loadfunc();
+        return;
+    }
+
     runInterval(function(cancel) {
         touchformsHeartbeat(url, function() {
+            cancel();
             promptfunc(false);
             loadfunc();
-            cancel();
         }, function() {
             promptfunc(true);
         });
