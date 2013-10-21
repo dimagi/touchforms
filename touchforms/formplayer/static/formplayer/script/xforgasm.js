@@ -15,8 +15,9 @@ if (!Array.prototype.indexOf) {
 
 
 function WebFormSession(params) {
+  this.offline_mode = isOffline(params.xform_url);
   if (params.form_uid) {
-    if (isOffline(params.xform_url)) {
+    if (this.offline_mode) {
       throw "load form by UID is not possible for offline mode";
     }
     this.form_spec = {type: 'uid', val: params.form_uid};
@@ -81,13 +82,19 @@ function WebFormSession(params) {
   this.serverRequest = function(params, callback, blocking) {
     var that = this;
     var url = that.urls.xform;
+
+    if (this.offline_mode) {
+      // give local touchforms daemon credentials to talk to HQ independently
+      params.hq_auth = {type: 'django-session', key: $.cookie('sessionid')};
+    }
+
     this._serverRequest(
       function (cb) {
         jQuery.ajax(
             {type: "POST",
              url: url, 
              data: JSON.stringify(params), 
-             success: cb, 
+             success: cb,
              dataType: "json",
              error: function (jqXHR, textStatus, errorThrown) { 
                 console.log("Got an unexpected server error!", textStatus, errorThrown);
