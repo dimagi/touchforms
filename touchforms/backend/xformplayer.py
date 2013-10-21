@@ -535,14 +535,6 @@ def load_file(path):
     with codecs.open(path, encoding='utf-8') as f:
         return f.read()
 
-class FormUrlLoader():
-    def __init__(self, url, auth):
-        self.url = url
-        self.auth = auth
-    
-    def __call__(self):
-        return query_factory(auth=self.auth, format='raw')(self.url)
-
 def get_loader(spec, **kwargs):
     if not spec:
         return lambda: None
@@ -551,9 +543,8 @@ def get_loader(spec, **kwargs):
     return {
         'uid': lambda: load_file(val),
         'raw': lambda: val,
-        'url': FormUrlLoader(val, kwargs.get('api_auth', None)),
+        'url': lambda: query_factory(auth=kwargs.get('api_auth', None), format='raw')(val),
     }[type]
-
 
 def open_form(form_spec, inst_spec=None, **kwargs):
     try:

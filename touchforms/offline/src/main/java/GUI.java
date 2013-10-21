@@ -31,7 +31,6 @@ public class GUI {
                     }
                 };
 
-        
             // systray doesn't support swing menus... come on!!
             PopupMenu popup = new PopupMenu();
             MenuItem close = new MenuItem(CMD_CLOSE);
