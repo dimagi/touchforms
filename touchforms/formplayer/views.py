@@ -83,6 +83,7 @@ def enter_form(request, **kwargs):
     submit_callback = coalesce(kwargs.get('onsubmit'), default_submit)
     abort_callback = coalesce(kwargs.get('onabort'), default_abort)
     force_template = coalesce(kwargs.get('force_template'), None)
+    offline_mode = kwargs.get('offline', False)
 
     # support for backwards compatibility; preloaders are DEPRECATED
     preload_data = kwargs.get('preloader_data')
@@ -102,10 +103,10 @@ def enter_form(request, **kwargs):
             return form_entry_abort(request, xform, abort_callback)
 
     return form_entry_new(request, xform, instance_xml, session_data, 
-                          input_mode, force_template)
+                          input_mode, offline_mode, force_template)
 
 def form_entry_new(request, xform, instance_xml, session_data, input_mode, 
-                   force_template=None):
+                   offline_mode, force_template=None):
     """start a new touchforms/typeforms session"""
     if force_template is not None:
         templ = force_template
@@ -115,7 +116,12 @@ def form_entry_new(request, xform, instance_xml, session_data, input_mode,
             'type': 'typeforms.html',
             'full': 'fullform.html',
         }[input_mode]
+    if offline_mode:
+        touchforms_url = 'http://localhost:%d' % settings.OFFLINE_TOUCHFORMS_PORT
+    else:
+        touchforms_url = reverse('xform_player_proxy')
     return render_to_response(templ, {
+            "touchforms_url": touchforms_url,
             "form": xform,
             "mode": 'xform',
             "instance_xml": json.dumps(instance_xml),

@@ -41,8 +41,9 @@
             <td>{{ xform.uiversion }}</td>
             <td><a href="{% url 'xform_download' xform.id %}">download</a></td>
             <td><a href="{% url 'xform_play' xform.id %}">touch</a></td>
-            <td><a href="{% url 'xform_play_kb' xform.id %}">type</a></td>
+            <!--<td><a href="{% url 'xform_play_kb' xform.id %}">type</a></td>-->
             <td><a href="{% url 'xform_play_all' xform.id %}">full</a></td>
+            <td><a href="{% url 'xform_play_offline' xform.id %}">full (offline)</a></td>
         </tr>
     {% endfor %}
 {% empty %}

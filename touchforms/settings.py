@@ -102,6 +102,7 @@ STATIC_ROOT = os.path.join(ROOT_DIR, 'staticroot')
 XFORMS_BOOTSTRAP_PATH = "static/demo_forms"
 XFORMS_PATH = "data/xforms"
 XFORMS_PLAYER_URL = "http://localhost:4444/"
+OFFLINE_TOUCHFORMS_PORT = 4444
 TOUCHFORMS_AUTOCOMPL_DATA_DIR = os.path.join(ROOT_DIR, 'static', 'census')
 
 LOG_FILE = os.path.join(ROOT_DIR, 'touchforms.log')

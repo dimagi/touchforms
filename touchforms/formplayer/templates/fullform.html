@@ -52,7 +52,7 @@ function onpresubmit() {
 
 $(document).ready(function() {
 
-  TF_URL = "http://localhost:4444";
+  TF_URL = '{{ touchforms_url }}';
 
   var tfLoad = function() {
     var sess = new WebFormSession({
@@ -60,7 +60,7 @@ $(document).ready(function() {
       form_content: '{{ form.file.read|escapejs }}',
       session_data: {{ session_data|safe }},
       instance_xml: {{ instance_xml|safe }},
-      xform_url: TF_URL, //"{% url 'xform_player_proxy' %}",
+      xform_url: TF_URL,
       onpresubmit: onpresubmit,
       onsubmit: submit_form_post,
       onload: onload
