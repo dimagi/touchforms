@@ -21,6 +21,7 @@ FormIndex.__str__ = lambda self: str_form_index(self)
 FormIndex.__repr__ = FormIndex.__json__
 
 import settings
+import logging
 
 def to_jdate(pdate):
     return Date(pdate.year - 1900, pdate.month - 1, pdate.day)
@@ -130,6 +131,7 @@ def query_factory(domain='', auth=None, format="json"):
             opener = urllib2.build_opener(handler)
             req = lambda url: opener.open(url)
 
+        logging.info('making external call: %s' % url)
         return req(url).read()
 
     def json_query(_url):

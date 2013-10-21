@@ -13,7 +13,7 @@ PERSIST_SESSIONS = True
 HACKS_MODE = True
 
 # base url for touchcare api queries
-URL_ROOT = "http://commcarehq.org/a/{{DOMAIN}}"
+URL_ROOT = "https://commcarehq.org/a/{{DOMAIN}}"
 
 try:
     from localsettings import *

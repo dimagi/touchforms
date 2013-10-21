@@ -22,7 +22,6 @@ from org.javarosa.core.model.instance import DataInstance
 
 from org.kxml2.io import KXmlParser
 
-
 from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
 
 def query_case_ids(q, criteria=None):
