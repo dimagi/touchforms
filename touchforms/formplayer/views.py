@@ -208,7 +208,16 @@ def api_autocomplete(request):
     key = request.GET.get('key', '')
     max_results = int(request.GET.get('max', str(DEFAULT_NUM_SUGGESTIONS)))
 
-    return HttpResponse(json.dumps(autocompletion(domain, key, max_results)), 'text/json')
+    if domain is None or key is None or max_results is None:
+        return HttpResponse("Please specify 'domain', 'key' and 'max' parameters.", status=400)
+
+    try:
+        response = HttpResponse(json.dumps(autocompletion(domain, key, max_results)), 'text/json')
+    except Exception:
+        logging.error("Exception on getting response from api_autocomplete")
+        return HttpResponse(status=500)
+
+    return response
 
 def player_abort(request):
     class TimeoutException(Exception):
