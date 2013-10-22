@@ -5,5 +5,9 @@ branches:
   only:
    - travis
 install:
+- "apt-get install maven2"
+- "pip install jinja2"
+before_script:
+- "cd touchforms/offline/"
 script: "python build.py https://www.commcarehq.org/offline-cloudcare/"
 
