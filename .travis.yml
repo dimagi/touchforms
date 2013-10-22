@@ -1,13 +1,17 @@
 language: python
 python:
- - "2.6"
+- '2.6'
 branches:
   only:
-   - travis
+  - travis
 install:
-- "sudo apt-get install maven2"
-- "pip install jinja2"
+- sudo apt-get install maven2
+- pip install jinja2
 before_script:
-- "cd touchforms/offline/"
-script: "python build.py https://www.commcarehq.org/offline-cloudcare/"
-
+- cd touchforms/offline/
+- ./travis_setup.sh
+script: python build.py https://www.commcarehq.org/offline-cloudcare/
+env:
+  global:
+  - secure: HT8zKXlWewOTM+0PQ3/bL8arasqHjTYmF96a/Gz+3g7y6a27yOvLXctCsj2omynww+FJ4JjkmzUMsUaBAc3RB7PPTuqacZ/LzUXDa59rpWEIWLkyzqLSRSnbEykchBy6M5e3N7UZx615WAzrcNnh8uE/C/cIwUQ7+knXwJUBzec=
+  - secure: KcMRWwCAlLD0cSMcqfjOuj2LX9dopiRFG+eUvwSwFo4rYlIOX+3sB1Kdwv9gQHqfBFMtJbv27n6W86FuuMBx+Ey0MqLtY3d8s7RZDjONGJL1zvKy9k/dZ7R8o3TMJi6vKvGYHfnLmDtly/C48HyM7EXaJPxGOto8Slngfb/7Vag=
