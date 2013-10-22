@@ -6,3 +6,5 @@ for line in $LOCAL_PROPS
 do
   echo $line >> local.properties
 done
+
+md5sum *
