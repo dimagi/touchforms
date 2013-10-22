@@ -14,4 +14,5 @@ script: python build.py https://www.commcarehq.org/offline-cloudcare/
 env:
   global:
   - secure: HT8zKXlWewOTM+0PQ3/bL8arasqHjTYmF96a/Gz+3g7y6a27yOvLXctCsj2omynww+FJ4JjkmzUMsUaBAc3RB7PPTuqacZ/LzUXDa59rpWEIWLkyzqLSRSnbEykchBy6M5e3N7UZx615WAzrcNnh8uE/C/cIwUQ7+knXwJUBzec=
-  - secure: KcMRWwCAlLD0cSMcqfjOuj2LX9dopiRFG+eUvwSwFo4rYlIOX+3sB1Kdwv9gQHqfBFMtJbv27n6W86FuuMBx+Ey0MqLtY3d8s7RZDjONGJL1zvKy9k/dZ7R8o3TMJi6vKvGYHfnLmDtly/C48HyM7EXaJPxGOto8Slngfb/7Vag=
+  - secure: eDnESWSQipxY0ADPfTXZn723phAFNRo/YVWYaqabnAf86zUBc9oROOfplrdjbQafE/f4GrOCHVpwVXmltAkOxfMFS0W9VkpkaNcys9p1M9S2cu10ytQnltblu6kDh5HeLVcCPHHBqvUMinKS2iQGK9NvR940aw6Aa7oWa1Tt8dI=
+  - secure: Kz+OmDvLuEKQ7+zu+xloz+I+Qg1dYmwzl/KexKzK4CwMNoRSOqDpwybg/lOeHGseeoPW31TNIFRwa3SLntOSoTLOMURtbZz6cXsgiCIX8usLkXiUhoUG5B/ptpzdqqlqxY+sqrDuytmkfPXLvs1y590SfO3q/zNcBZVvhJZ8++A=

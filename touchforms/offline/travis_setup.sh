@@ -1,10 +1,7 @@
 #!/bin/bash
 
-wget -q -O DimagiKeyStore $KEYSTORE_URL
+wget -q -O keystore $KEYSTORE_URL
 
-for line in $LOCAL_PROPS
-do
-  echo $line >> local.properties
-done
-
-md5sum *
+echo "keystore.path=keystore" >> local.properties
+echo "keystore.alias=$KEY_ALIAS" >> local.properties
+echo "keystore.password=$PASSWORD" >> local.properties
