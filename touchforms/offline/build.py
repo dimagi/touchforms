@@ -9,7 +9,7 @@ import re
 import itertools
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-def _(*relpath):
+def _path(*relpath):
     """normalize paths relative to the main directory for offline cloudcare"""
     return os.path.normpath(os.path.join(ROOT, *relpath))
 
@@ -22,12 +22,12 @@ def run(cmd, echo=True):
     if p.returncode:
         raise RuntimeError('command failed')
 
-TF_SRC_DIR = _('..', 'backend')   # touchforms code
-TF_JARS_DIR = _('..', 'backend', 'jrlib')   # touchforms external dependencies
-TF_INST_DIR = _('src', 'main', 'resources', 'Lib', 'touchforms')   # where the touchforms
+TF_SRC_DIR = _path('..', 'backend')   # touchforms code
+TF_JARS_DIR = _path('..', 'backend', 'jrlib')   # touchforms external dependencies
+TF_INST_DIR = _path('src', 'main', 'resources', 'Lib', 'touchforms')   # where the touchforms
    # code will go in the web start jar build tree
-DIST_DIR = _('dist')   # output dir of this build script
-JYTHON_JAR = _('jython-standalone-2.5.2.jar')
+DIST_DIR = _path('dist')   # output dir of this build script
+JYTHON_JAR = _path('jython-standalone-2.5.2.jar')
 
 def mkdir(path):
     """create directory if needed (all ancestor dirs must exist)"""
@@ -65,14 +65,14 @@ def build_jars():
 
 def get_built_jar(mode):
     """get the appropriate jar that maven built"""
-    ARTIFACT_DIR = _('target')
+    ARTIFACT_DIR = _path('target')
     jars = dict(('standalone' if 'with-dependencies' in path else 'split', path)
                 for path in glob.glob(os.path.join(ARTIFACT_DIR, '*.jar')))
     return jars[mode]
 
 def load_maven_properties():
     """get build properties used by maven script"""
-    with open(_('local.properties')) as f:
+    with open(_path('local.properties')) as f:
         lines = f.readlines()
 
     def _props():
@@ -106,7 +106,7 @@ def external_jars(distdir, fullpath=True):
 def make_jnlp(distdir, root_url):
     """create jnlp file for web start deployment"""
     print 'creating jnlp file'
-    with open(_('template.jnlp')) as f:
+    with open(_path('template.jnlp')) as f:
         template = Template(f.read())
     with open(os.path.join(distdir, 'offline-cloudcare.jnlp'), 'w') as f:
         f.write(template.render(

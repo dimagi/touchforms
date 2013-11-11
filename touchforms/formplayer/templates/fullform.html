@@ -52,12 +52,14 @@ function onpresubmit() {
 
 $(document).ready(function() {
 
-  TF_URL = '{{ touchforms_url }}';
+  TF_URL = '{{ touchforms_url|escapejs }}';
 
   var tfLoad = function() {
     var sess = new WebFormSession({
+      // one of form_uid or form_content; form_uid does not work for offline mode
       //form_uid: '{{ form.file.path|escapejs }}',
       form_content: '{{ form.file.read|escapejs }}',
+
       session_data: {{ session_data|safe }},
       instance_xml: {{ instance_xml|safe }},
       xform_url: TF_URL,
