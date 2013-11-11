@@ -25,7 +25,7 @@ import com.xhaus.jyson.JysonCodec as json
 from org.javarosa.xform.parse import XFormParser
 from org.javarosa.form.api import FormEntryModel, FormEntryController
 from org.javarosa.core.model import Constants, FormIndex
-from org.javarosa.core.model.data import *
+from org.javarosa.core.model.data import IntegerData, LongData, DecimalData, StringData, DateData, TimeData, SelectOneData, SelectMultiData, GeoPointData
 from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.core.util import UnregisteredLocaleException
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
@@ -33,25 +33,29 @@ from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
 from touchcare import CCInstances
 from util import query_factory
 import persistence
+import settings
 
 DEBUG = False
 
 class NoSuchSession(Exception):
     pass
 
-class global_state_mgr:
+class global_state_mgr(object):
     instances = {}
     instance_id_counter = 0
 
     session_cache = {}
     
-    def __init__(self):
+    def __init__(self, ctx):
+        self.ctx = ctx
         self.lock = threading.Lock()
+        self.ctx.setNumSessions(0)
     
     def new_session(self, xfsess):
         with self.lock:
             self.session_cache[xfsess.uuid] = xfsess
-    
+            self.ctx.setNumSessions(len(self.session_cache))
+
     def get_session(self, session_id):
         with self.lock:
             try:
@@ -99,10 +103,17 @@ class global_state_mgr:
 
         # note that persisted entries use the timeout functionality provided by the caching framework
 
+        self.ctx.setNumSessions(num_sess_active)
+
         return {'purged': num_sess_purged, 'active': num_sess_active}
 
-global_state = global_state_mgr()
-  
+global_state = None
+def _init(ctx):
+    global global_state
+    global_state = global_state_mgr(ctx)
+
+
+
 
 def load_form(xform, instance=None, extensions=[], session_data={}, api_auth=None):
     form = XFormParser(StringReader(xform)).parse()
@@ -141,7 +152,7 @@ class XFormSession:
         self._parse_current_event()
 
         self.staleness_window = 3600. * params['staleness_window']
-        self.persist = params.get('persist', True)
+        self.persist = params.get('persist', settings.PERSIST_SESSIONS)
         self.orig_params = {
             'xform': xform,
             'nav_mode': params.get('nav_mode'),
@@ -524,14 +535,6 @@ def load_file(path):
     with codecs.open(path, encoding='utf-8') as f:
         return f.read()
 
-class FormUrlLoader():
-    def __init__(self, url, auth):
-        self.url = url
-        self.auth = auth
-    
-    def __call__(self):
-        return query_factory(auth=self.auth, format='raw')(self.url)
-
 def get_loader(spec, **kwargs):
     if not spec:
         return lambda: None
@@ -540,9 +543,8 @@ def get_loader(spec, **kwargs):
     return {
         'uid': lambda: load_file(val),
         'raw': lambda: val,
-        'url': FormUrlLoader(val, kwargs.get('api_auth', None)),
+        'url': lambda: query_factory(auth=kwargs.get('api_auth', None), format='raw')(val),
     }[type]
-
 
 def open_form(form_spec, inst_spec=None, **kwargs):
     try:
@@ -618,6 +620,11 @@ def set_locale(session_id, lang):
 def current_question(session_id):
     with global_state.get_session(session_id) as xfsess:
         return xfsess.response({}, xfsess.cur_event)
+
+def heartbeat(session_id):
+    # just touch the session
+    with global_state.get_session(session_id) as xfsess:
+        return {}
 
 def next_event (xfsess):
     ev = xfsess.next_event()
