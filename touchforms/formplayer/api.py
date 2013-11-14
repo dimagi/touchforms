@@ -41,6 +41,12 @@ class DigestAuth(TouchformsAuth):
         return {'type': self.type, 'key': self.key, 'username': self.username}
 
             
+class TouchformsException(Exception):
+    pass
+
+class InvalidSessionIdException(TouchformsException):
+    pass
+
 class XFormsConfigException(ValueError):
     pass
 
@@ -273,6 +279,12 @@ def get_raw_instance(session_id, auth=None):
         }
     response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
     response = json.loads(response)
+    if "error" in response:
+        error = response["error"]
+        if error == "invalid session id":
+            raise InvalidSessionIdException("Invalid Touchforms Session Id")
+        else:
+            raise TouchformsException(error)
     return response["output"]
 
 def start_form_session(form_path, content=None, language="", session_data={}):
