@@ -5,7 +5,6 @@ import threading
 import logging
 import xformplayer
 import touchcare
-import os
 import java.lang
 import time
 import urllib2

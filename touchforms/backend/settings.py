@@ -8,6 +8,7 @@ ALLOW_CROSS_ORIGIN = False
 # whether to save interim sessions so that they may be recovered after a
 # daemon restart
 PERSIST_SESSIONS = True
+PERSISTENCE_DIRECTORY = None  # defaults to /tmp
 
 # be more forgiving about data types in api
 HACKS_MODE = True

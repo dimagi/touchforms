@@ -1,8 +1,8 @@
 from __future__ import with_statement
+import tempfile
+import os
 
-import urllib2
 import settings
-import logging
 import com.xhaus.jyson.JysonCodec as json
 
 def persist(sess):
@@ -36,8 +36,9 @@ def cache_get(key):
 def cache_del(key):
     raise RuntimeError('not implemented')
 
-# for debugging
 def cache_path(key):
-    import os.path
-    import tempfile
-    return os.path.join(tempfile.gettempdir(), 'tfsess-%s' % key)
+    # todo: make this use something other than the filesystem
+    persistence_dir = settings.PERSISTENCE_DIRECTORY or tempfile.gettempdir()
+    if not os.path.exists(persistence_dir):
+        os.makedirs(persistence_dir)
+    return os.path.join(persistence_dir, 'tfsess-%s' % key)
