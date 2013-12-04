@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.conf import settings
+from django.views.decorators.http import require_POST
 from touchforms.formplayer.models import XForm
 from touchforms.formplayer.autocomplete import autocompletion, DEFAULT_NUM_SUGGESTIONS
 from django.http import HttpResponseRedirect, HttpResponse,\
@@ -189,9 +190,12 @@ def get_player_dimensions(request):
     }
 
 @csrf_exempt
+@require_POST
 def player_proxy(request):
-    """Proxy to an xform player, to avoid cross-site scripting issues"""
-    data = request.raw_post_data if request.method == "POST" else None
+    """
+    Proxy to an xform player, to avoid cross-site scripting issues
+    """
+    data = request.raw_post_data
     auth_cookie = request.COOKIES.get('sessionid')
     response = api.post_data(data, settings.XFORMS_PLAYER_URL, 
                              content_type="text/json", auth=DjangoAuth(auth_cookie))
