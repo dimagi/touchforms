@@ -90,6 +90,12 @@ function WebFormSession(params) {
       // give local touchforms daemon credentials to talk to HQ independently
       params.hq_auth = {type: 'django-session', key: $.cookie('sessionid')};
     }
+    var _errMsg = function (msg) {
+        var ERROR_MESSAGE = "Something unexpected went wrong on that request. " +
+            "If you have problems filling in the rest of your form please submit an issue. " +
+            "Technical Details: ";
+        return "".concat(ERROR_MESSAGE, msg);
+    };
 
     this._serverRequest(
       function (cb) {
@@ -99,8 +105,9 @@ function WebFormSession(params) {
              data: JSON.stringify(params), 
              success: cb,
              dataType: "json",
-             error: function (jqXHR, textStatus, errorThrown) { 
-                console.log("Got an unexpected server error!", textStatus, errorThrown);
+             error: function (jqXHR, textStatus, errorThrown) {
+                that.onerror({message: _errMsg(errorThrown)});
+                that.$loading.hide();
              }
         });
         
@@ -130,6 +137,7 @@ function WebFormSession(params) {
       return;
     }
 
+
     this.NUM_PENDING_REQUESTS++;
     this.$loading.show();
     $("input#submit").attr('disabled', 'disabled');
@@ -148,13 +156,7 @@ function WebFormSession(params) {
         try {
             callback(resp);
         } catch (err) {
-            error_msg = "".concat(
-                "Something unexpected went wrong on that request. ",
-                "If you have problems filling in the rest of your form please submit an issue. ",
-                "Technical Details: ", err
-            );
-            sess.onerror({message: error_msg});
-
+            sess.onerror({message: _errMsg(error_msg)});
         }
         if (blocking) {
           sess.inputActivate(true); // clears BLOCKING_REQUEST_IN_PROGRESS
