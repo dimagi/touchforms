@@ -4,6 +4,7 @@ from urlparse import urlparse
 import httplib
 import logging
 import socket
+from touchforms.formplayer.exceptions import BadDataError
 
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
@@ -245,9 +246,13 @@ class XformsResponse(object):
             
 def post_data(data, url, content_type, auth=None):
     if auth:
-        d = json.loads(data)
+        try:
+            d = json.loads(data)
+        except TypeError:
+            raise BadDataError('unhandleable touchforms query: %s' % data)
         d['hq_auth'] = auth.to_dict()
         data = json.dumps(d)
+
     up = urlparse(url)
     headers = {}
     headers["content-type"] = content_type
