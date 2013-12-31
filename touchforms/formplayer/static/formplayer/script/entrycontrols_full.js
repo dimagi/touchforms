@@ -147,7 +147,7 @@ function FreeTextEntry (args) {
 
   this.mkWidget = function (q, $container) {
     if (!this.textarea) {
-      $container.html('<input id="textfield" maxlength="' + this.length_limit + '" type="text" style="width: ' + this.widgetWidth() + '" /><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.domainText() + ')</span>');
+      $container.html('<textarea id="textfield" maxlength="' + this.length_limit + '" type="text" style="width: ' + this.widgetWidth() + '; height: 1.2em" /><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.domainText() + ')</span>');
       var widget = $container.find('#textfield');
     } else {
       $container.html('<textarea id="textarea" style="width: 33em; height: 10em; font-family: sans-serif;"></textarea>');
