@@ -81,8 +81,12 @@ function loadFromJSON(o, json) {
       } else if (key == 'answer') {
         key = 'last_answer';
       } else if (key == 'style') {
-        key = 'domain_meta';
-        val = parse_meta(json.datatype, val);
+        if ('domain_meta' in json) {
+          key = 'domain_meta';
+          val = parse_meta(json.datatype, val);
+        } else {
+          key = 'style';
+        }
       }
 
       o[key] = val;

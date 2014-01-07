@@ -252,6 +252,16 @@ function IntEntry (parent, length_limit) {
   }
 }
 
+function PhoneEntry (parent, length_limit) {
+  inherit(this, new FreeTextEntry({parent: parent, domain: 'numeric', length_limit: length_limit || 9}));
+
+  this.domainText = function() {
+    return 'phone/numeric';
+  }
+
+}
+
+
 function FloatEntry (parent) {
   inherit(this, new FreeTextEntry({parent: parent}));
 
@@ -755,7 +765,11 @@ function renderQuestion (q, $container, init_answer) {
   if (q.customlayout != null) {
     control = q.customlayout();
   } else if (q.datatype == "str") {
-    control = new FreeTextEntry({domain: q.domain, prose: q.domain_meta.longtext});
+    if (q.style["raw"] == 'numeric') {
+      control = new PhoneEntry();
+    } else {
+      control = new FreeTextEntry({domain: q.domain, prose: q.domain_meta.longtext});
+    }
   } else if (q.datatype == "int") {
     control = new IntEntry();
   } else if (q.datatype == "longint") {
