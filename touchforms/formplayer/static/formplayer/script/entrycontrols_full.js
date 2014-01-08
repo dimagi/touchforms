@@ -253,7 +253,11 @@ function IntEntry (parent, length_limit) {
 }
 
 function PhoneEntry (parent, length_limit) {
-  inherit(this, new FreeTextEntry({parent: parent, domain: 'numeric', length_limit: length_limit || 9}));
+  inherit(this, new FreeTextEntry({parent: parent, domain: 'numeric', length_limit: length_limit || 15}));
+
+  this._prevalidate = function (raw) {
+    return (!(/^\+?[0-9]+$/.test(raw)) ? "This does not appear to be a valid phone/numeric number" : null);
+  }
 
   this.domainText = function() {
     return 'phone/numeric';
