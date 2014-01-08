@@ -326,8 +326,9 @@ function Question(json, parent) {
   // don't currently.
 
   this.update = function(refresh_widget) {
+    this.caption = this.caption.replace(/\n/g, '<br/>');
     var $capt = this.$container.find('#caption');
-    $capt[getForm(this).adapter.render_context.allow_html ? 'html' : 'text'](this.caption);
+    $capt[getForm(this).adapter.render_context.allow_html = 'html'](this.caption);
     this.$container.find('#req').text(this.required ? '*' : '');
     this.$container.find('#ix').text('[' + ixInfo(this) + ']');
 
