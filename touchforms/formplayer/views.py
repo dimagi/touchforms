@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.conf import settings
+from django.views.decorators.http import require_POST
 from touchforms.formplayer.models import XForm
 from touchforms.formplayer.autocomplete import autocompletion, DEFAULT_NUM_SUGGESTIONS
 from django.http import HttpResponseRedirect, HttpResponse,\
@@ -83,6 +84,7 @@ def enter_form(request, **kwargs):
     submit_callback = coalesce(kwargs.get('onsubmit'), default_submit)
     abort_callback = coalesce(kwargs.get('onabort'), default_abort)
     force_template = coalesce(kwargs.get('force_template'), None)
+    offline_mode = kwargs.get('offline', False)
 
     # support for backwards compatibility; preloaders are DEPRECATED
     preload_data = kwargs.get('preloader_data')
@@ -102,10 +104,10 @@ def enter_form(request, **kwargs):
             return form_entry_abort(request, xform, abort_callback)
 
     return form_entry_new(request, xform, instance_xml, session_data, 
-                          input_mode, force_template)
+                          input_mode, offline_mode, force_template)
 
 def form_entry_new(request, xform, instance_xml, session_data, input_mode, 
-                   force_template=None):
+                   offline_mode, force_template=None):
     """start a new touchforms/typeforms session"""
     if force_template is not None:
         templ = force_template
@@ -115,7 +117,12 @@ def form_entry_new(request, xform, instance_xml, session_data, input_mode,
             'type': 'typeforms.html',
             'full': 'fullform.html',
         }[input_mode]
+    if offline_mode:
+        touchforms_url = 'http://localhost:%d' % settings.OFFLINE_TOUCHFORMS_PORT
+    else:
+        touchforms_url = reverse('xform_player_proxy')
     return render_to_response(templ, {
+            "touchforms_url": touchforms_url,
             "form": xform,
             "mode": 'xform',
             "instance_xml": json.dumps(instance_xml),
@@ -183,9 +190,12 @@ def get_player_dimensions(request):
     }
 
 @csrf_exempt
+@require_POST
 def player_proxy(request):
-    """Proxy to an xform player, to avoid cross-site scripting issues"""
-    data = request.raw_post_data if request.method == "POST" else None
+    """
+    Proxy to an xform player, to avoid cross-site scripting issues
+    """
+    data = request.raw_post_data
     auth_cookie = request.COOKIES.get('sessionid')
     response = api.post_data(data, settings.XFORMS_PLAYER_URL, 
                              content_type="text/json", auth=DjangoAuth(auth_cookie))
@@ -208,7 +218,16 @@ def api_autocomplete(request):
     key = request.GET.get('key', '')
     max_results = int(request.GET.get('max', str(DEFAULT_NUM_SUGGESTIONS)))
 
-    return HttpResponse(json.dumps(autocompletion(domain, key, max_results)), 'text/json')
+    if domain is None or key is None or max_results is None:
+        return HttpResponse("Please specify 'domain', 'key' and 'max' parameters.", status=400)
+
+    try:
+        response = HttpResponse(json.dumps(autocompletion(domain, key, max_results)), 'text/json')
+    except Exception:
+        logging.error("Exception on getting response from api_autocomplete")
+        return HttpResponse(status=500)
+
+    return response
 
 def player_abort(request):
     class TimeoutException(Exception):

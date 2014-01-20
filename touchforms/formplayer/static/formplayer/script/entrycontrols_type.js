@@ -139,7 +139,7 @@ function FreeTextEntry (args) {
 
   this.mkWidget = function () {
     if (!this.textarea) {
-      $('#answer')[0].innerHTML = '<input id="textfield" maxlength="' + this.length_limit + '" type="text" style="width: ' + this.widgetWidth() + '" /><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.domainText() + ')</span>';
+      $('#answer')[0].innerHTML = ('<textarea id="textfield" maxlength="' + this.length_limit + '" type="text" style="width: ' + this.widgetWidth() + '; height: 1.2em" /><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.domainText() + ')</span>');
       var widget = $('#textfield');
     } else {
       $('#answer')[0].innerHTML = '<textarea id="textarea" style="width: 33em; height: 10em; font-family: sans-serif;"></textarea><br><span id="type" style="font-size: x-small; font-style: italic; color: grey;">(<b>ctrl+enter</b> or <b>shift+enter</b> for new line!)</span>';

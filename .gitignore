@@ -9,3 +9,9 @@ local*settings.py
 data/
 *.log
 staticroot/
+
+touchforms/offline/local.properties
+touchforms/offline/target/
+touchforms/offline/cachedir/
+touchforms/offline/dist/
+touchforms/offline/src/main/resources/Lib/touchforms/

@@ -1,13 +1,20 @@
 
 # TODO how to harmonize this with django settings?
 
-URL_ROOT = "http://commcarehq.org/a/{{DOMAIN}}"
+# allow cross-origin requests to touchforms daemon. if false, all access to
+# daemon must be proxied through the django web server
+ALLOW_CROSS_ORIGIN = False
 
+# whether to save interim sessions so that they may be recovered after a
+# daemon restart
+PERSIST_SESSIONS = True
+PERSISTENCE_DIRECTORY = None  # defaults to /tmp
+
+# be more forgiving about data types in api
 HACKS_MODE = True
 
-SESSION_CACHE_URL = 'http://localhost:8000/session-cache/'
-
-ALLOW_CROSS_ORIGIN = False
+# base url for touchcare api queries
+URL_ROOT = "{{HOST}}/a/{{DOMAIN}}"
 
 try:
     from localsettings import *

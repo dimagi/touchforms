@@ -4,6 +4,7 @@ from urlparse import urlparse
 import httplib
 import logging
 import socket
+from touchforms.formplayer.exceptions import BadDataError
 
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
@@ -41,6 +42,12 @@ class DigestAuth(TouchformsAuth):
         return {'type': self.type, 'key': self.key, 'username': self.username}
 
             
+class TouchformsException(Exception):
+    pass
+
+class InvalidSessionIdException(TouchformsException):
+    pass
+
 class XFormsConfigException(ValueError):
     pass
 
@@ -239,9 +246,13 @@ class XformsResponse(object):
             
 def post_data(data, url, content_type, auth=None):
     if auth:
-        d = json.loads(data)
+        try:
+            d = json.loads(data)
+        except TypeError:
+            raise BadDataError('unhandleable touchforms query: %s' % data)
         d['hq_auth'] = auth.to_dict()
         data = json.dumps(d)
+
     up = urlparse(url)
     headers = {}
     headers["content-type"] = content_type
@@ -273,6 +284,12 @@ def get_raw_instance(session_id, auth=None):
         }
     response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
     response = json.loads(response)
+    if "error" in response:
+        error = response["error"]
+        if error == "invalid session id":
+            raise InvalidSessionIdException("Invalid Touchforms Session Id")
+        else:
+            raise TouchformsException(error)
     return response["output"]
 
 def start_form_session(form_path, content=None, language="", session_data={}):

@@ -21,6 +21,7 @@ FormIndex.__str__ = lambda self: str_form_index(self)
 FormIndex.__repr__ = FormIndex.__json__
 
 import settings
+import logging
 
 def to_jdate(pdate):
     return Date(pdate.year - 1900, pdate.month - 1, pdate.day)
@@ -107,10 +108,21 @@ def index_from_str(s_ix, form):
     ix.assignRefs(form)
     return ix
 
-def query_factory(domain='', auth=None, format="json"):
+def query_factory(host='', domain='', auth=None, format="json"):
+
+    def build_url(url, host, domain):
+        # for backwards compatibility
+        host = host or 'https://www.commcarehq.org'
+
+        placeholders = {
+            'HOST': host,
+            'DOMAIN': domain,
+        }
+        return reduce(lambda url, (placeholder, val): val.join(url.split('{{%s}}' % placeholder)),
+                      placeholders.iteritems(), url)
 
     def api_query(_url):
-        url = domain.join(_url.split('{{DOMAIN}}'))
+        url = build_url(_url, host, domain)
         if not auth:
             req = lambda url: urllib2.urlopen(url)
         elif auth['type'] == 'django-session':
@@ -130,6 +142,7 @@ def query_factory(domain='', auth=None, format="json"):
             opener = urllib2.build_opener(handler)
             req = lambda url: opener.open(url)
 
+        logging.info('making external call: %s' % url)
         return req(url).read()
 
     def json_query(_url):

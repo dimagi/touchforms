@@ -22,14 +22,12 @@ from org.javarosa.core.model.instance import DataInstance
 
 from org.kxml2.io import KXmlParser
 
-
 from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
 
 def query_case_ids(q, criteria=None):
     criteria = copy(criteria) or {} # don't modify the passed in dict
-    criteria["ids_only"] = True
-    query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria)) \
-                    if criteria else settings.CASE_API_URL
+    criteria["ids_only"] = 'true'
+    query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria))
     return [id for id in q(query_url)]
 
 def query_cases(q, criteria=None):
@@ -65,9 +63,9 @@ def case_from_json(data):
     return c
 
 class CaseDatabase(IStorageUtilityIndexed):
-    def __init__(self, domain, user, auth, additional_filters=None,
+    def __init__(self, host, domain, user, auth, additional_filters=None,
                  preload=False):
-        self.query_func = query_factory(domain, auth)
+        self.query_func = query_factory(host, domain, auth)
         self.additional_filters = additional_filters or {}
         self.cached_lookups = {}
         self._cases = {}
@@ -125,12 +123,17 @@ class CaseDatabase(IStorageUtilityIndexed):
             if field_name == 'case-id':
                 cases = [self.readCase(value)]
             else:
-                get_val = {
-                    'case-type': lambda c: c.getTypeId(),
-                    'case-status': lambda c: 'closed' if c.isClosed() else 'open',
-                }[field_name]
-
-                cases = [c for c in self.cases.values() if get_val(c) == value]
+                try:
+                    get_val = {
+                        'case-type': lambda c: c.getTypeId(),
+                        'case-status': lambda c: 'closed' if c.isClosed() else 'open',
+                    }[field_name]
+                except KeyError:
+                    # Try any unrecognized field name as a case id field.
+                    # Needed for 'case-in-goal' lookup in PACT Care Plan app.
+                    cases = [self.readCase(value)]
+                else:
+                    cases = [c for c in self.cases.values() if get_val(c) == value]
 
             self.cached_lookups[(field_name, value)] = cases
 
@@ -175,7 +178,7 @@ class CCInstances(InstanceInitializationFactory):
 
         if 'casedb' in ref:
             return CaseInstanceTreeElement(instance.getBase(), 
-                        CaseDatabase(self.vars['domain'], self.vars['user_id'], 
+                        CaseDatabase(self.vars.get('host'), self.vars['domain'], self.vars['user_id'], 
                                      self.auth, self.vars.get("additional_filters", {}),
                                      self.vars.get("preload_cases", False)),
                         False)
@@ -200,7 +203,7 @@ class CCInstances(InstanceInitializationFactory):
         query_url = '%(base)s/%(user)s/%(fixture)s' % { "base": settings.FIXTURE_API_URL, 
                                                         "user": user_id,
                                                         "fixture": fixture_id }
-        q = query_factory(self.vars['domain'], self.auth, format="raw")
+        q = query_factory(self.vars.get('host'), self.vars['domain'], self.auth, format="raw")
         results = q(query_url)
         parser = KXmlParser()
         parser.setInput(to_input_stream(results), "UTF-8")

@@ -15,19 +15,26 @@ if (!Array.prototype.indexOf) {
 
 
 function WebFormSession(params) {
+  this.offline_mode = isOffline(params.xform_url);
   if (params.form_uid) {
+    if (this.offline_mode) {
+      throw "load form by UID is not possible for offline mode";
+    }
     this.form_spec = {type: 'uid', val: params.form_uid};
   } else if (params.form_content) {
     this.form_spec = {type: 'raw', val: params.form_content};
   } else if (params.form_url) {
     this.form_spec = {type: 'url', val: params.form_url};
-  } 
+  }
 
-  //note: the 'allow_html' params will open you up to XSS attacks if you have
+  //note: the 'allow_html' param will open you up to XSS attacks if you have
   //forms that insert user-entered data into captions!
 
   this.instance_xml = params.instance_xml;
   this.session_data = params.session_data;
+  if (!this.session_data.host) {
+    this.session_data.host = window.location.protocol + '//' + window.location.host;
+  }
 
   this.onsubmit = params.onsubmit;
   this.onpresubmit = params.onpresubmit || function(){ return true; };
@@ -78,16 +85,29 @@ function WebFormSession(params) {
   this.serverRequest = function(params, callback, blocking) {
     var that = this;
     var url = that.urls.xform;
+
+    if (this.offline_mode) {
+      // give local touchforms daemon credentials to talk to HQ independently
+      params.hq_auth = {type: 'django-session', key: $.cookie('sessionid')};
+    }
+    var _errMsg = function (msg) {
+        var ERROR_MESSAGE = "Something unexpected went wrong on that request. " +
+            "If you have problems filling in the rest of your form please submit an issue. " +
+            "Technical Details: ";
+        return "".concat(ERROR_MESSAGE, msg);
+    };
+
     this._serverRequest(
       function (cb) {
         jQuery.ajax(
             {type: "POST",
              url: url, 
              data: JSON.stringify(params), 
-             success: cb, 
+             success: cb,
              dataType: "json",
-             error: function (jqXHR, textStatus, errorThrown) { 
-                console.log("Got an unexpected server error!", textStatus, errorThrown);
+             error: function (jqXHR, textStatus, errorThrown) {
+                that.onerror({message: _errMsg(errorThrown)});
+                that.$loading.hide();
              }
         });
         
@@ -117,6 +137,7 @@ function WebFormSession(params) {
       return;
     }
 
+
     this.NUM_PENDING_REQUESTS++;
     this.$loading.show();
     $("input#submit").attr('disabled', 'disabled');
@@ -132,7 +153,11 @@ function WebFormSession(params) {
         }
         sess.LAST_REQUEST_HANDLED = resp.seq_id;
 
-        callback(resp);
+        try {
+            callback(resp);
+        } catch (err) {
+            sess.onerror({message: _errMsg(error_msg)});
+        }
         if (blocking) {
           sess.inputActivate(true); // clears BLOCKING_REQUEST_IN_PROGRESS
         }
@@ -155,4 +180,55 @@ function WebFormSession(params) {
 
 function submit_form_post(xml) {
   submit_redirect({type: 'form-complete', output: xml});
+}
+
+function touchformsHeartbeat(url, online, offline) {
+    $.get(url).done(function() {
+        online();
+    }).fail(function(resp) {
+        if (resp.status == 0) {
+            offline();
+        } else {
+            // even error responses show that the daemon is still alive
+            online();
+        }
+    });
+}
+
+function runInterval(func, interval) {
+    var timer = setInterval(function() {
+        func(function() {
+            clearInterval(timer);
+        });
+    }, 1000. * interval);
+    // also run now without delay
+    func(function() {
+        clearInterval(timer);
+    });
+}
+
+function isOffline(touchforms_url) {
+    var tf = $('<a>').attr('href', touchforms_url)[0];
+    return (window.location.host != tf.host);
+}
+
+// loadfunc: function that initializes the touchforms session (creates an adapter, loads a form, ...)
+// promptfunc(show): function that controls UI that notifies user that offline cloudcare isn't running
+//     and prompts them to install it. show == true: show this UI; false: hide it
+function touchformsInit(url, loadfunc, promptfunc) {
+    if (!isOffline(url)) {
+        // don't bother with heartbeat
+        loadfunc();
+        return;
+    }
+
+    runInterval(function(cancel) {
+        touchformsHeartbeat(url, function() {
+            cancel();
+            promptfunc(false);
+            loadfunc();
+        }, function() {
+            promptfunc(true);
+        });
+    }, 1.);
 }

@@ -159,7 +159,7 @@ function Form(json, adapter) {
   }
 
   this.submitting = function() {
-    $('#submit').val('Submitting...');
+    this.$container.find('#submit').val('Submitting...');
   }
 }
 
@@ -459,6 +459,9 @@ function addChild(parent, child, final_ordering) {
     child.$container.hide();
     insert(child.$container);
     child.$container.slideDown();
+    if (child.control) {
+        child.control.onShow();
+    }
   }
 
   if (insertionIx < parent.children.length) {
