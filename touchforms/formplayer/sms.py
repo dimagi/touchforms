@@ -1,4 +1,4 @@
-from touchforms.formplayer.api import answer_question
+from touchforms.formplayer.api import answer_question, next
 from touchforms.formplayer.signals import sms_form_complete
 
 class SessionStartInfo(object):
@@ -32,6 +32,10 @@ def next_responses(session_id, answer, auth=None):
 def _next_responses(xformsresponse, session_id, auth=None):
     if xformsresponse.is_error:
         yield xformsresponse
+    elif xformsresponse.event.type == "sub-group":
+        response = next(session_id, auth)
+        for additional_resp in _next_responses(response, session_id, auth):
+            yield additional_resp
     elif xformsresponse.event.type == "question":
         yield xformsresponse
         if xformsresponse.event.datatype == "info":
