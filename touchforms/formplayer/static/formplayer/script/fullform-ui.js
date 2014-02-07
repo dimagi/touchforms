@@ -330,8 +330,22 @@ function Question(json, parent) {
   // don't currently.
 
   this.update = function(refresh_widget) {
+    var caption = this.caption;
+    var html_content = getForm(this).adapter.render_context.allow_html;
+
     var $capt = this.$container.find('#caption');
-    $capt[getForm(this).adapter.render_context.allow_html ? 'html' : 'text'](this.caption);
+    $capt.empty();
+    if (html_content) {
+      caption = caption.replace(/\n/g, '<br/>');
+      $capt.html(caption);
+    } else {
+      $.each(caption.split('\n'), function(i, e) {
+        var $ln = $('<div>');
+        $ln.text(e + '\ufeff'); // add zero-width space to make empty lines show up
+        $capt.append($ln);
+      });
+    }
+
     this.$container.find('#req').text(this.required ? '*' : '');
     this.$container.find('#ix').text('[' + ixInfo(this) + ']');
 
