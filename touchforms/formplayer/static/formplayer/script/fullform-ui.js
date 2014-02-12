@@ -350,6 +350,9 @@ function Question(json, parent) {
   }
 
   this.onchange = function() {
+    if (window.mainView) {
+        window.mainView.router.view.dirty = true
+    }
     if (this.prevalidate()) {
       //check if answer has actually changed
       if (['select', 'multiselect', 'date'].indexOf(this.datatype) != -1) {
