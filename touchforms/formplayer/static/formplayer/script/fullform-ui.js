@@ -350,7 +350,7 @@ function Question(json, parent) {
   }
 
   this.onchange = function() {
-    if (window.mainView) {
+    if (window.mainView && !answer_eq(this.last_answer, this.getAnswer())) {
         window.mainView.router.view.dirty = true
     }
     if (this.prevalidate()) {
@@ -443,6 +443,9 @@ function deleteChild(parent, child) {
       child.$container.remove();
       child.destroy();
       arrayDelItem(parent.children, child);
+      if (window.mainView) {
+        window.mainView.router.view.dirty = true
+      }
       empty_check(parent, 'fast');
     });
 }
@@ -473,6 +476,9 @@ function addChild(parent, child, final_ordering) {
     domInsert(function(e) { parent.child_container().append(e); });
   }
   arrayInsertAt(parent.children, insertionIx, child);
+  if (window.mainView) {
+    window.mainView.router.view.dirty = true
+  }
   empty_check(parent, 'slow');
 }
 
