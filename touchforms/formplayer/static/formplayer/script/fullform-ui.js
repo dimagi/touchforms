@@ -1,3 +1,4 @@
+
 function getForm(o) {
   var form = o.parent;
   while (form.parent) {
@@ -79,7 +80,6 @@ function loadFromJSON(o, json) {
         val = relativeIndex(val);
       } else if (key == 'answer') {
         key = 'last_answer';
-        o['original_answer'] = val
       } else if (key == 'style') {
         key = 'domain_meta';
         val = parse_meta(json.datatype, val);
@@ -350,22 +350,6 @@ function Question(json, parent) {
   }
 
   this.onchange = function() {
-    var new_answer = this.getAnswer();
-
-    if (this.original_answer == null && new_answer instanceof Array) {
-        this.original_answer = [];
-    }
-    if (window.mainView) {
-        if (window.mainView.router.view.dirty === undefined) {
-            window.mainView.router.view.dirty = {}
-        }
-        if (!answer_eq(this.original_answer, new_answer)) {
-            window.mainView.router.view.dirty[this.caption] = true
-        } else {
-            delete window.mainView.router.view.dirty[this.caption]
-        }
-
-    }
     if (window.mainView) {
         window.mainView.router.view.dirty = true
     }
@@ -373,6 +357,7 @@ function Question(json, parent) {
       //check if answer has actually changed
       if (['select', 'multiselect', 'date'].indexOf(this.datatype) != -1) {
         //free-entry datatypes are suitably handled by the 'onchange' event
+        var new_answer = this.getAnswer();
         if (answer_eq(this.last_answer, new_answer)) {
           return;
         }
@@ -457,17 +442,6 @@ function deleteChild(parent, child) {
   child.$container.slideUp('slow', function() {
       child.$container.remove();
       child.destroy();
-      if (window.mainView) {
-        if (window.mainView.router.view.dirty === undefined) {
-            window.mainView.router.view.dirty = {}
-        }
-        if (!window.mainView.router.view.dirty.hasOwnProperty(child.caption)) {
-            window.mainView.router.view.dirty[child.caption] = true
-        } else {
-            delete window.mainView.router.view.dirty[child.caption]
-        }
-        clearDirtyFlagFromRepeatType(child)
-      }
       arrayDelItem(parent.children, child);
       empty_check(parent, 'fast');
     });
@@ -499,27 +473,9 @@ function addChild(parent, child, final_ordering) {
     domInsert(function(e) { parent.child_container().append(e); });
   }
   arrayInsertAt(parent.children, insertionIx, child);
-  if (window.mainView) {
-    if (window.mainView.router.view.dirty === undefined) {
-        window.mainView.router.view.dirty = {}
-    }
-    window.mainView.router.view.dirty[child.caption] = true
-  }
   empty_check(parent, 'slow');
 }
 
-function clearDirtyFlagFromRepeatType(child) {
-  for (var key in child.children) {
-    if (child.children[key] instanceof Repeat || child.children[key] instanceof Group) {
-      clearDirtyFlagFromRepeatType(child.children[key]);
-      delete window.mainView.router.view.dirty[child.children[key].caption]
-    } else {
-      if (window.mainView.router.view.dirty.hasOwnProperty(child.children[key].caption)) {
-        delete window.mainView.router.view.dirty[child.children[key].caption]
-      }
-    }
-  }
-}
 function arrayDel(arr, i) {
   return arr.splice(i, 1)[0];
 }
