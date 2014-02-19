@@ -546,6 +546,13 @@ def get_loader(spec, **kwargs):
         'url': lambda: query_factory(auth=kwargs.get('api_auth', None), format='raw')(val),
     }[type]
 
+def init_context(xfsess):
+    """return the 'extra' response context needed when initializing a session"""
+    return {
+        'title': xfsess.form_title(),
+        'langs': xfsess.get_locales(),
+    }
+
 def open_form(form_spec, inst_spec=None, **kwargs):
     try:
         xform_xml = get_loader(form_spec, **kwargs)()
@@ -556,7 +563,9 @@ def open_form(form_spec, inst_spec=None, **kwargs):
     xfsess = XFormSession(xform_xml, instance_xml, **kwargs)
     global_state.new_session(xfsess)
     with xfsess: # triggers persisting of the fresh session
-        return xfsess.response({'session_id': xfsess.uuid, 'title': xfsess.form_title(), 'langs': xfsess.get_locales()})
+        extra = {'session_id': xfsess.uuid}
+        extra.update(init_context(xfsess))
+        return xfsess.response(extra)
 
 def answer_question (session_id, answer, ix):
     with global_state.get_session(session_id) as xfsess:
@@ -619,7 +628,7 @@ def set_locale(session_id, lang):
 
 def current_question(session_id):
     with global_state.get_session(session_id) as xfsess:
-        return xfsess.response({}, xfsess.cur_event)
+        return xfsess.response(init_context(xfsess), xfsess.cur_event)
 
 def heartbeat(session_id):
     # just touch the session
