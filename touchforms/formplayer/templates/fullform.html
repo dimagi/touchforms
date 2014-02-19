@@ -53,20 +53,28 @@ function onpresubmit() {
 $(document).ready(function() {
 
   TF_URL = '{{ touchforms_url|escapejs }}';
+  var session_id = {% if session_id %}'{{ session_id|escapejs }}'{% else %}null{% endif %};
 
   var tfLoad = function() {
-    var sess = new WebFormSession({
-      // one of form_uid or form_content; form_uid does not work for offline mode
-      //form_uid: '{{ form.file.path|escapejs }}',
-      form_content: '{{ form.file.read|escapejs }}',
 
-      session_data: {{ session_data|safe }},
-      instance_xml: {{ instance_xml|safe }},
+    var args = {
       xform_url: TF_URL,
       onpresubmit: onpresubmit,
       onsubmit: submit_form_post,
       onload: onload
-    });
+    };
+
+    if (session_id) {
+      args.session_id = session_id;
+    } else {
+      // one of form_uid or form_content; form_uid does not work for offline mode
+      //args.form_uid = '{{ form.file.path|escapejs }}';
+      args.form_content = '{{ form.file.read|escapejs }}';
+
+      args.session_data = {{ session_data|safe }};
+      args.instance_xml = {{ instance_xml|safe }};
+    }
+    var sess = new WebFormSession(args);
 
     var init_lang = {% if lang %}'{{ lang|escapejs }}'{% else %}null{% endif %};
     sess.load($('#content'), $('#loading'), init_lang);

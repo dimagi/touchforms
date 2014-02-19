@@ -132,6 +132,7 @@ def form_entry_new(request, xform, instance_xml, session_data, input_mode,
             "dim": get_player_dimensions(request),
             "fullscreen": request.GET.get('mode', '').startswith('full'),
             "lang": request.GET.get('lang'),
+            'session_id': request.GET.get('sess'),
             'maps_api_key': settings.GMAPS_API_KEY,
         }, context_instance=RequestContext(request))
 
