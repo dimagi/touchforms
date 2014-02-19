@@ -182,17 +182,10 @@ class XFormSession:
         self.last_activity = time.time()
 
     def session_state(self):
-        # workaround
-        def get_lang():
-            if self.fem.getForm().getLocalizer() is not None:
-                return self.fem.getLanguage()
-            else:
-                return None
-
         state = dict(self.orig_params)
         state.update({
             'instance': self.output(),
-            'init_lang': get_lang(),
+            'init_lang': self.get_lang(),
             'cur_index': str(self.fem.getFormIndex()) if self.nav_mode != 'fao' else None,
             'seq_id': self.seq_id,
         })
@@ -477,6 +470,12 @@ class XFormSession:
     def get_locales(self):
         return self.fem.getLanguages() or []
 
+    def get_lang(self):
+        if self.fem.getForm().getLocalizer() is not None:
+            return self.fem.getLanguage()
+        else:
+            return None
+
     def finalize(self):
         self.fem.getForm().postProcessInstance() 
 
@@ -628,7 +627,9 @@ def set_locale(session_id, lang):
 
 def current_question(session_id):
     with global_state.get_session(session_id) as xfsess:
-        return xfsess.response(init_context(xfsess), xfsess.cur_event)
+        extra = {'lang': xfsess.get_lang()}
+        extra.update(init_context(xfsess))
+        return xfsess.response(extra, xfsess.cur_event)
 
 def heartbeat(session_id):
     # just touch the session

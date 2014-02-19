@@ -73,7 +73,7 @@ function WebFormSession(params) {
                                            {allow_html: params.allow_html}
                                           );
         if (params.session_id) {
-            adapter.resumeForm(params.session_id, $div, init_lang, this.onload, this.onerror);
+            adapter.resumeForm(params.session_id, $div, this.onload, this.onerror);
         } else {
             adapter.loadForm($div, init_lang, this.onload, this.onerror);
         }

@@ -4,7 +4,7 @@ HEARTBEAT_INTERVAL = 60.;
 function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc, render_context) {
   this.formSpec = formSpec;
   this.sessionData = sessionData;
-  this.session_id = -1;
+  this.session_id = null;
   this.ajaxfunc = ajaxfunc;
   this.submitfunc = submitfunc;
   this.presubmitfunc = presubmitfunc;
@@ -32,7 +32,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
         this.initForm(args, $div, onload, onerror);
     }
 
-    this.resumeForm = function(session_id, $div, init_lang, onload, onerror) {
+    this.resumeForm = function(session_id, $div, onload, onerror) {
         var args = {
             "action": "current",
             "session-id": session_id
