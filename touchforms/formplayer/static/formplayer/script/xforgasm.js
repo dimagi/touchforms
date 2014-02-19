@@ -59,25 +59,25 @@ function WebFormSession(params) {
     autocomplete: params.autocomplete_url
   };
 
-    this.load = function($div, $loading, init_lang) {
-        this.$div = $div;
-        this.$loading = $loading || $div.find('#loading');
-        
-        this.$div.addClass('webforms');
+  this.load = function($div, $loading, init_lang) {
+    this.$div = $div;
+    this.$loading = $loading || $div.find('#loading');
+    
+    this.$div.addClass('webforms');
 
-        var sess = this;
-        var adapter = new xformAjaxAdapter(this.form_spec, this.session_data, this.instance_xml,
-                                           function(p, cb, bl) { sess.serverRequest(p, cb, bl); },
-                                           function(p) { sess.submit(p); },
-                                           this.onpresubmit,
-                                           {allow_html: params.allow_html}
-                                          );
-        if (params.session_id) {
-            adapter.resumeForm(params.session_id, $div, this.onload, this.onerror);
-        } else {
-            adapter.loadForm($div, init_lang, this.onload, this.onerror);
-        }
+    var sess = this;
+    var adapter = new xformAjaxAdapter(this.form_spec, this.session_data, this.instance_xml,
+                                       function(p, cb, bl) { sess.serverRequest(p, cb, bl); },
+                                       function(p) { sess.submit(p); },
+                                       this.onpresubmit,
+                                       {allow_html: params.allow_html}
+                                      );
+    if (params.session_id) {
+      adapter.resumeForm(params.session_id, $div, this.onload, this.onerror);
+    } else {
+      adapter.loadForm($div, init_lang, this.onload, this.onerror);
     }
+  }
 
   this.submit = function(params) {
     this.inputActivate(false);
