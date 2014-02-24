@@ -335,15 +335,17 @@ function Question(json, parent) {
 
     var $capt = this.$container.find('#caption');
     $capt.empty();
-    if (html_content) {
-      caption = caption.replace(/\n/g, '<br/>');
-      $capt.html(caption);
-    } else {
-      $.each(caption.split('\n'), function(i, e) {
-        var $ln = $('<div>');
-        $ln.text(e + '\ufeff'); // add zero-width space to make empty lines show up
-        $capt.append($ln);
-      });
+    if (caption) {
+        if (html_content) {
+          caption = caption.replace(/\n/g, '<br/>');
+          $capt.html(caption);
+        } else {
+          $.each(caption.split('\n'), function(i, e) {
+            var $ln = $('<div>');
+            $ln.text(e + '\ufeff'); // add zero-width space to make empty lines show up
+            $capt.append($ln);
+          });
+        }
     }
 
     this.$container.find('#req').text(this.required ? '*' : '');
@@ -356,6 +358,18 @@ function Question(json, parent) {
       this.control = renderQuestion(this, this.$container.find('#widget'), this.last_answer);
 
       //this.control.restore_ui_state(uistate);
+    }
+
+    if (this.hasOwnProperty('caption_image') && this.caption_image) {
+        var imageSrc = this.caption_image;
+        var $img = $('<img>');
+        $img.attr("src", imageSrc);
+        var $widget = this.$container.find('#widget');
+        if ($widget.length) {
+            $widget.append($img);
+        } else {
+            $capt.append($img);
+        }
     }
   }
 
