@@ -330,6 +330,7 @@ function Question(json, parent) {
   // don't currently.
 
   this.update = function(refresh_widget) {
+    var self = this;
     var caption = this.caption;
     var html_content = getForm(this).adapter.render_context.allow_html;
 
@@ -360,18 +361,27 @@ function Question(json, parent) {
       //this.control.restore_ui_state(uistate);
     }
 
-    if (this.hasOwnProperty('caption_image') && this.caption_image) {
-        var imageSrc = getForm(this).adapter.render_context.resourceMap(this.caption_image);
-        if (imageSrc) {
-            var $img = $('<img>');
-            $img.attr("src", imageSrc);
-            var $widget = this.$container.find('#widget');
-            if ($widget.length) {
-                $widget.append($img);
-            } else {
-                $capt.append($img);
-            }
+    var add_multimedia = function(attrib, control) {
+      if (self.hasOwnProperty(attrib) && self[attrib]) {
+        var mediaSrc = getForm(self).adapter.render_context.resourceMap(self[attrib]);
+        if (mediaSrc) {
+          control.attr("src", mediaSrc);
+          $mediaContainer = $('<div>');
+          $mediaContainer.append(control);
+          var $widget = self.$container.find('#widget');
+          if ($widget.length) {
+            $widget.append($mediaContainer);
+          } else {
+            $capt.append($mediaContainer);
+          }
         }
+      }
+    }
+
+    if (refresh_widget || !self.$container.find('#widget').length) {
+      add_multimedia('caption_image', $('<img>'));
+      add_multimedia('caption_audio', $('<audio controls>Your browser does not support audio</audio>'));
+      add_multimedia('caption_video', $('<video controls>Your browser does not support video</video>'));
     }
   }
 
