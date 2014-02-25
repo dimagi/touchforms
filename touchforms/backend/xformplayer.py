@@ -23,7 +23,7 @@ init_jr_engine()
 import com.xhaus.jyson.JysonCodec as json
 
 from org.javarosa.xform.parse import XFormParser
-from org.javarosa.form.api import FormEntryModel, FormEntryController
+from org.javarosa.form.api import FormEntryModel, FormEntryController, FormEntryPrompt
 from org.javarosa.core.model import Constants, FormIndex
 from org.javarosa.core.model.data import IntegerData, LongData, DecimalData, StringData, DateData, TimeData, SelectOneData, SelectMultiData, GeoPointData
 from org.javarosa.core.model.data.helper import Selection
@@ -293,9 +293,11 @@ class XFormSession:
             self._parse_repeat_juncture(event)
         else:
             event['type'] = 'sub-group'
-            event['caption'] = self.fem.getCaptionPrompt(form_ix).getLongText()
-            event['caption_audio'] = self.fem.getCaptionPrompt(form_ix).getAudioText()
-            event['caption_image'] = self.fem.getCaptionPrompt(form_ix).getImageText()
+            prompt = self.fem.getCaptionPrompt(form_ix)
+            event['caption'] = prompt.getLongText()
+            event['caption_audio'] = prompt.getAudioText()
+            event['caption_image'] = prompt.getImageText()
+            event['caption_video'] = prompt.getSpecialFormQuestionText(FormEntryPrompt.TEXT_FORM_VIDEO)
             if status == self.fec.EVENT_GROUP:
                 event['repeatable'] = False
             elif status == self.fec.EVENT_REPEAT:
@@ -328,6 +330,7 @@ class XFormSession:
         event['caption'] = q.getLongText()
         event['caption_audio'] = q.getAudioText()
         event['caption_image'] = q.getImageText()
+        event['caption_video'] = q.getSpecialFormQuestionText(FormEntryPrompt.TEXT_FORM_VIDEO)
         event['help'] = q.getHelpText()
         event['style'] = self._parse_style_info(q.getAppearanceHint())
         event['binding'] = q.getQuestion().getBind().getReference().toString()
