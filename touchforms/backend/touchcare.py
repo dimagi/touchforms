@@ -60,6 +60,9 @@ def case_from_json(data):
     for k, v in data['indices'].iteritems():
         c.setIndex(k, v['case_type'], v['case_id'])
 
+    for k, v in data['attachments'].iteritems():
+        c.updateAttachment(k, v['url'])
+
     return c
 
 class CaseDatabase(IStorageUtilityIndexed):

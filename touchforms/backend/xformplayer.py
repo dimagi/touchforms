@@ -23,7 +23,7 @@ init_jr_engine()
 import com.xhaus.jyson.JysonCodec as json
 
 from org.javarosa.xform.parse import XFormParser
-from org.javarosa.form.api import FormEntryModel, FormEntryController
+from org.javarosa.form.api import FormEntryModel, FormEntryController, FormEntryPrompt
 from org.javarosa.core.model import Constants, FormIndex
 from org.javarosa.core.model.data import IntegerData, LongData, DecimalData, StringData, DateData, TimeData, SelectOneData, SelectMultiData, GeoPointData
 from org.javarosa.core.model.data.helper import Selection
@@ -118,7 +118,7 @@ def _init(ctx):
 def load_form(xform, instance=None, extensions=[], session_data={}, api_auth=None):
     form = XFormParser(StringReader(xform)).parse()
     if instance != None:
-        XFormParser.loadXmlInstance(form, StringReader(instance))
+        XFormParser(None).loadXmlInstance(form, StringReader(instance))
 
     # retrieve preloaders out of session_data (for backwards compatibility)
     customhandlers.attach_handlers(form, extensions, session_data.get('preloaders', {}))
@@ -293,7 +293,11 @@ class XFormSession:
             self._parse_repeat_juncture(event)
         else:
             event['type'] = 'sub-group'
-            event['caption'] = self.fem.getCaptionPrompt(form_ix).getLongText()
+            prompt = self.fem.getCaptionPrompt(form_ix)
+            event['caption'] = prompt.getLongText()
+            event['caption_audio'] = prompt.getAudioText()
+            event['caption_image'] = prompt.getImageText()
+            event['caption_video'] = prompt.getSpecialFormQuestionText(FormEntryPrompt.TEXT_FORM_VIDEO)
             if status == self.fec.EVENT_GROUP:
                 event['repeatable'] = False
             elif status == self.fec.EVENT_REPEAT:
@@ -324,6 +328,9 @@ class XFormSession:
         q = self.fem.getQuestionPrompt(event['ix'])
 
         event['caption'] = q.getLongText()
+        event['caption_audio'] = q.getAudioText()
+        event['caption_image'] = q.getImageText()
+        event['caption_video'] = q.getSpecialFormQuestionText(FormEntryPrompt.TEXT_FORM_VIDEO)
         event['help'] = q.getHelpText()
         event['style'] = self._parse_style_info(q.getAppearanceHint())
         event['binding'] = q.getQuestion().getBind().getReference().toString()
