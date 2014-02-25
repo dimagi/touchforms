@@ -361,14 +361,16 @@ function Question(json, parent) {
     }
 
     if (this.hasOwnProperty('caption_image') && this.caption_image) {
-        var imageSrc = this.caption_image;
-        var $img = $('<img>');
-        $img.attr("src", imageSrc);
-        var $widget = this.$container.find('#widget');
-        if ($widget.length) {
-            $widget.append($img);
-        } else {
-            $capt.append($img);
+        var imageSrc = getForm(this).adapter.render_context.resourceMap(this.caption_image);
+        if (imageSrc) {
+            var $img = $('<img>');
+            $img.attr("src", imageSrc);
+            var $widget = this.$container.find('#widget');
+            if ($widget.length) {
+                $widget.append($img);
+            } else {
+                $capt.append($img);
+            }
         }
     }
   }

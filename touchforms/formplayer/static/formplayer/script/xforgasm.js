@@ -73,7 +73,7 @@ function WebFormSession(params) {
                                        function(p, cb, bl) { sess.serverRequest(p, cb, bl); },
                                        function(p) { sess.submit(p); },
                                        this.onpresubmit,
-                                       {allow_html: params.allow_html}
+                                       {allow_html: params.allow_html, resourceMap: params.resourceMap}
                                        );
     adapter.loadForm($div, init_lang, this.onload, this.onerror);
   }
