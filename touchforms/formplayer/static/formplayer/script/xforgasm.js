@@ -13,6 +13,9 @@ if (!Array.prototype.indexOf) {
     }
 }
 
+var ERROR_MESSAGE = "Something unexpected went wrong on that request. " +
+            "If you have problems filling in the rest of your form please submit an issue. " +
+            "Technical Details: ";
 
 function WebFormSession(params) {
   this.offline_mode = isOffline(params.xform_url);
@@ -70,7 +73,7 @@ function WebFormSession(params) {
                                        function(p, cb, bl) { sess.serverRequest(p, cb, bl); },
                                        function(p) { sess.submit(p); },
                                        this.onpresubmit,
-                                       {allow_html: params.allow_html}
+                                       {allow_html: params.allow_html, resourceMap: params.resourceMap}
                                        );
     adapter.loadForm($div, init_lang, this.onload, this.onerror);
   }
@@ -91,9 +94,6 @@ function WebFormSession(params) {
       params.hq_auth = {type: 'django-session', key: $.cookie('sessionid')};
     }
     var _errMsg = function (msg) {
-        var ERROR_MESSAGE = "Something unexpected went wrong on that request. " +
-            "If you have problems filling in the rest of your form please submit an issue. " +
-            "Technical Details: ";
         return "".concat(ERROR_MESSAGE, msg);
     };
 
@@ -156,7 +156,8 @@ function WebFormSession(params) {
         try {
             callback(resp);
         } catch (err) {
-            sess.onerror({message: _errMsg(error_msg)});
+            var msg = "".concat(ERROR_MESSAGE, err.message);
+            sess.onerror({message: msg});
         }
         if (blocking) {
           sess.inputActivate(true); // clears BLOCKING_REQUEST_IN_PROGRESS
