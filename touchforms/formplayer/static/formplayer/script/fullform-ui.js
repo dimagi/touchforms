@@ -330,20 +330,23 @@ function Question(json, parent) {
   // don't currently.
 
   this.update = function(refresh_widget) {
+    var self = this;
     var caption = this.caption;
     var html_content = getForm(this).adapter.render_context.allow_html;
 
     var $capt = this.$container.find('#caption');
     $capt.empty();
-    if (html_content) {
-      caption = caption.replace(/\n/g, '<br/>');
-      $capt.html(caption);
-    } else {
-      $.each(caption.split('\n'), function(i, e) {
-        var $ln = $('<div>');
-        $ln.text(e + '\ufeff'); // add zero-width space to make empty lines show up
-        $capt.append($ln);
-      });
+    if (caption) {
+        if (html_content) {
+          caption = caption.replace(/\n/g, '<br/>');
+          $capt.html(caption);
+        } else {
+          $.each(caption.split('\n'), function(i, e) {
+            var $ln = $('<div>');
+            $ln.text(e + '\ufeff'); // add zero-width space to make empty lines show up
+            $capt.append($ln);
+          });
+        }
     }
 
     this.$container.find('#req').text(this.required ? '*' : '');
@@ -357,6 +360,29 @@ function Question(json, parent) {
 
       //this.control.restore_ui_state(uistate);
     }
+
+    var add_multimedia = function(attrib, control) {
+      if (self.hasOwnProperty(attrib) && self[attrib]) {
+        var mediaSrc = getForm(self).adapter.render_context.resourceMap(self[attrib]);
+        if (mediaSrc) {
+          control.attr("src", mediaSrc);
+          $mediaContainer = $('<div>');
+          $mediaContainer.append(control);
+          var $widget = self.$container.find('#widget');
+          if ($widget.length) {
+            $widget.append($mediaContainer);
+          } else {
+            $capt.append($mediaContainer);
+          }
+        }
+      }
+    }
+
+    if (refresh_widget || !self.$container.find('#widget').length) {
+      add_multimedia('caption_image', $('<img>'));
+      add_multimedia('caption_audio', $('<audio controls>Your browser does not support audio</audio>'));
+      add_multimedia('caption_video', $('<video controls>Your browser does not support video</video>'));
+    }
   }
 
   this.getAnswer = function() {
@@ -368,6 +394,9 @@ function Question(json, parent) {
   }
 
   this.onchange = function() {
+    if (window.mainView && !answer_eq(this.last_answer, this.getAnswer())) {
+        window.mainView.router.view.dirty = true
+    }
     if (this.prevalidate()) {
       //check if answer has actually changed
       if (['select', 'multiselect', 'date'].indexOf(this.datatype) != -1) {
@@ -458,6 +487,9 @@ function deleteChild(parent, child) {
       child.$container.remove();
       child.destroy();
       arrayDelItem(parent.children, child);
+      if (window.mainView) {
+        window.mainView.router.view.dirty = true
+      }
       empty_check(parent, 'fast');
     });
 }
@@ -488,6 +520,9 @@ function addChild(parent, child, final_ordering) {
     domInsert(function(e) { parent.child_container().append(e); });
   }
   arrayInsertAt(parent.children, insertionIx, child);
+  if (window.mainView) {
+    window.mainView.router.view.dirty = true
+  }
   empty_check(parent, 'slow');
 }
 
