@@ -222,6 +222,11 @@ def track_session(request, payload, response):
             session_id=session_id,
         )
         sess.save()
+    elif action == 'submit-all':
+        if response['status'] == 'success':
+            session_id = payload['session-id']
+            sess = EntrySession.objects.get(session_id=session_id)
+            sess.delete()
     elif action not in ('current', 'heartbeat'):
         # these actions don't make the session dirty
         session_id = payload['session-id']

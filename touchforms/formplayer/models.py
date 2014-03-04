@@ -18,7 +18,7 @@ class EntrySession(models.Model):
     user = models.ForeignKey(User)
     form = models.CharField(max_length=255) # url of cloudcare form
     session_name = models.CharField(max_length=100)
-    session_id = models.CharField(max_length=100)
+    session_id = models.CharField(max_length=100, primary_key=True)
 
     created_date = models.DateTimeField(default=datetime.utcnow)
     last_activity_date = models.DateTimeField(null=True)
