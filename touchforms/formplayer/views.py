@@ -20,8 +20,10 @@ from touchforms.formplayer.api import DjangoAuth
 from django.contrib.auth.decorators import login_required
 from touchforms.formplayer.const import PRELOADER_TAG_UID
 
-@login_required
 def xform_list(request):
+    if not settings.DEBUG:
+        return HttpResponseNotFound()
+
     forms_by_namespace = defaultdict(list)
     success = True
     notice = ""
@@ -130,6 +132,7 @@ def form_entry_new(request, xform, instance_xml, session_data, input_mode,
             "dim": get_player_dimensions(request),
             "fullscreen": request.GET.get('mode', '').startswith('full'),
             "lang": request.GET.get('lang'),
+            'session_id': request.GET.get('sess'),
             'maps_api_key': settings.GMAPS_API_KEY,
         }, context_instance=RequestContext(request))
 

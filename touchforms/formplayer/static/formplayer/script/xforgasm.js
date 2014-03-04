@@ -34,7 +34,7 @@ function WebFormSession(params) {
   //forms that insert user-entered data into captions!
 
   this.instance_xml = params.instance_xml;
-  this.session_data = params.session_data;
+  this.session_data = params.session_data || {};
   if (!this.session_data.host) {
     this.session_data.host = window.location.protocol + '//' + window.location.host;
   }
@@ -65,7 +65,7 @@ function WebFormSession(params) {
   this.load = function($div, $loading, init_lang) {
     this.$div = $div;
     this.$loading = $loading || $div.find('#loading');
-
+    
     this.$div.addClass('webforms');
 
     var sess = this;
@@ -73,9 +73,16 @@ function WebFormSession(params) {
                                        function(p, cb, bl) { sess.serverRequest(p, cb, bl); },
                                        function(p) { sess.submit(p); },
                                        this.onpresubmit,
-                                       {allow_html: params.allow_html, resourceMap: params.resourceMap}
-                                       );
-    adapter.loadForm($div, init_lang, this.onload, this.onerror);
+                                       {
+                                           allow_html: params.allow_html,
+                                           resourceMap: params.resourceMap
+                                       }
+                                      );
+    if (params.session_id) {
+      adapter.resumeForm(params.session_id, $div, this.onload, this.onerror);
+    } else {
+      adapter.loadForm($div, init_lang, this.onload, this.onerror);
+    }
   }
 
   this.submit = function(params) {

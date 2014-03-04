@@ -4,7 +4,7 @@ HEARTBEAT_INTERVAL = 60.;
 function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc, render_context) {
   this.formSpec = formSpec;
   this.sessionData = sessionData;
-  this.session_id = -1;
+  this.session_id = null;
   this.ajaxfunc = ajaxfunc;
   this.submitfunc = submitfunc;
   this.presubmitfunc = presubmitfunc;
@@ -20,40 +20,57 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
     };
     var form_param = {uid: 'form-name', raw: 'form-content', url: 'form-url'}[this.formSpec.type];
     args[form_param] = this.formSpec.val;
-
+        
     // handle preloaders (deprecated) for backwards compatibilty
     if (args['session-data'] && args['session-data'].preloaders) {
-	if (args['session-data'] == null) {
-	    args['session-data'] = {};
-	}
-	args['session-data'].preloaders = init_preloaders(args['session-data'].preloaders);
+      if (args['session-data'] == null) {
+        args['session-data'] = {};
+      }
+      args['session-data'].preloaders = init_preloaders(args['session-data'].preloaders);
     }
+        
+    this.initForm(args, $div, onload, onerror);
+  }
 
+  this.resumeForm = function(session_id, $div, onload, onerror) {
+    var args = {
+      "action": "current",
+      "session-id": session_id
+    };
+
+    this.session_id = session_id;
+    this.initForm(args, $div, onload, onerror);
+  }
+
+  this.initForm = function(args, $div, onload, onerror) {
     var adapter = this;
     this.ajaxfunc(args, function (resp) {
-        // special case short circuiting errors
-        if (resp.status === "error") {
-            if (onerror) {
-                onerror(resp);
-            }
-            return;
+      // special case short circuiting errors
+      if (resp.status === "error") {
+        if (onerror) {
+          onerror(resp);
         }
-        adapter.session_id = resp["session_id"];
-        adapter.form = init_render(resp, adapter, $div);
-        if (onload) {
-            onload(adapter, resp);
-        }
-      });
-
-      if (HEARTBEAT_INTERVAL > 0) {
-          var adapter = this;
-          setInterval(function() {
-              adapter.ajaxfunc({
-                  'action': 'heartbeat',
-                  'session-id': adapter.session_id
-              }, function(resp) { /* do nothing */ });
-          }, HEARTBEAT_INTERVAL * 1000);
+        return;
       }
+      if (!adapter.session_id) { // already know session id for resumed sessions
+        adapter.session_id = resp["session_id"];
+        console.log('session id: ' + adapter.session_id);
+      }
+      adapter.form = init_render(resp, adapter, $div);
+      if (onload) {
+        onload(adapter, resp);
+      }
+    });
+        
+    if (HEARTBEAT_INTERVAL > 0) {
+      var adapter = this;
+      setInterval(function() {
+        adapter.ajaxfunc({
+          'action': 'heartbeat',
+          'session-id': adapter.session_id
+        }, function(resp) { /* do nothing */ });
+      }, HEARTBEAT_INTERVAL * 1000);
+    }
   }
 
   this.answerQuestion = function (q) {
