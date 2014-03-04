@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.views.decorators.http import require_POST
-from touchforms.formplayer.models import XForm
+from touchforms.formplayer.models import XForm, EntrySession
 from touchforms.formplayer.autocomplete import autocompletion, DEFAULT_NUM_SUGGESTIONS
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseNotFound
@@ -19,6 +19,7 @@ from . import api
 from touchforms.formplayer.api import DjangoAuth
 from django.contrib.auth.decorators import login_required
 from touchforms.formplayer.const import PRELOADER_TAG_UID
+from datetime import datetime
 
 def xform_list(request):
     if not settings.DEBUG:
@@ -202,7 +203,31 @@ def player_proxy(request):
     auth_cookie = request.COOKIES.get('sessionid')
     response = api.post_data(data, settings.XFORMS_PLAYER_URL, 
                              content_type="text/json", auth=DjangoAuth(auth_cookie))
+
+    try:
+        track_session(request, json.loads(data), json.loads(response))
+    except:
+        logging.exception('error recording touchforms session for resumption')
+
     return HttpResponse(response)
+
+def track_session(request, payload, response):
+    action = payload['action']
+    if action == 'new-form':
+        session_id = response['session_id']
+        sess = EntrySession(
+            user=request.user,
+            form=payload['form-url'],
+            session_name='???', # TODO put something useful here
+            session_id=session_id,
+        )
+        sess.save()
+    elif action not in ('current', 'heartbeat'):
+        # these actions don't make the session dirty
+        session_id = payload['session-id']
+        sess = EntrySession.objects.get(session_id=session_id)
+        sess.last_activity_date = datetime.utcnow()
+        sess.save()
 
 # DEPRECATED    
 def api_preload_provider(request):
