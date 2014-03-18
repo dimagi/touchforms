@@ -13,11 +13,11 @@ from touchforms.formplayer.signals import xform_received
 from django.template.context import RequestContext
 from django.shortcuts import render_to_response
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.translation import ugettext as _
 import tempfile
 import os
 from . import api
 from touchforms.formplayer.api import DjangoAuth
-from django.contrib.auth.decorators import login_required
 from touchforms.formplayer.const import PRELOADER_TAG_UID
 from datetime import datetime
 
@@ -204,11 +204,7 @@ def player_proxy(request):
     response = api.post_data(data, settings.XFORMS_PLAYER_URL, 
                              content_type="text/json", auth=DjangoAuth(auth_cookie))
 
-    try:
-        track_session(request, json.loads(data), json.loads(response))
-    except:
-        logging.exception('error recording touchforms session for resumption')
-
+    track_session(request, json.loads(data), json.loads(response))
     return HttpResponse(response)
 
 def track_session(request, payload, response):
@@ -218,7 +214,7 @@ def track_session(request, payload, response):
         sess = EntrySession(
             user=request.user,
             form=payload['form-url'],
-            session_name='???', # TODO put something useful here
+            session_name=response.get('title', _('Unknown Form')),
             session_id=session_id,
         )
         sess.save()
