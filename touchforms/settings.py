@@ -122,3 +122,4 @@ util.initialize_logging(init_logging)
 REVISION = util.get_revision('git', ROOT_DIR, 'flag')
 
 GMAPS_API_KEY = ''
+SECRET_KEY = 'you should really change this'
