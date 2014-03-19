@@ -211,10 +211,13 @@ def track_session(request, payload, response):
     action = payload['action']
     if action == 'new-form':
         session_id = response['session_id']
+        session_name = payload['session-data'].get(
+            'session_name', response.get('title', _('Unknown Form'))
+        )
         sess = EntrySession(
             user=request.user,
             form=payload['form-url'],
-            session_name=response.get('title', _('Unknown Form')),
+            session_name=session_name,
             session_id=session_id,
         )
         sess.save()
