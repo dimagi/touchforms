@@ -126,7 +126,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         if settings.ALLOW_CROSS_ORIGIN:
             self.send_header('Access-Control-Allow-Origin', '*')
         
-def handle_request (content, server):
+def handle_request(content, server):
     if 'action' not in content:
         return {'error': 'action required'}
 
