@@ -232,6 +232,14 @@ def track_session(request, payload, response):
         sess = EntrySession.objects.get(session_id=session_id)
         sess.last_activity_date = datetime.utcnow()
         sess.save()
+    elif response.get('error') == 'invalid session id':
+        # purge dead sessions
+        try:
+            session_id = payload['session-id']
+            sess = EntrySession.objects.get(session_id=session_id)
+            sess.delete()
+        except EntrySession.DoesNotExist:
+            pass
 
 # DEPRECATED    
 def api_preload_provider(request):
