@@ -214,11 +214,13 @@ def track_session(request, payload, response):
         session_name = payload['session-data'].get(
             'session_name', response.get('title', _('Unknown Form'))
         )
+        app_id = payload['session-data'].get('app_id', None)
         sess = EntrySession(
+            session_id=session_id,
             user=request.user,
             form=payload['form-url'],
             session_name=session_name,
-            session_id=session_id,
+            app_id=app_id,
         )
         sess.save()
     elif action == 'submit-all':
