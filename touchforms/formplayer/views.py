@@ -223,25 +223,25 @@ def track_session(request, payload, response):
             app_id=app_id,
         )
         sess.save()
-    elif action == 'submit-all':
-        if response['status'] == 'success':
-            session_id = payload['session-id']
-            sess = EntrySession.objects.get(session_id=session_id)
-            sess.delete()
-    elif action not in ('current', 'heartbeat'):
-        # these actions don't make the session dirty
-        session_id = payload['session-id']
-        sess = EntrySession.objects.get(session_id=session_id)
-        sess.last_activity_date = datetime.utcnow()
-        sess.save()
-    elif response.get('error') == 'invalid session id':
-        # purge dead sessions
+    elif 'session-id' in payload:
         try:
-            session_id = payload['session-id']
-            sess = EntrySession.objects.get(session_id=session_id)
-            sess.delete()
+            sess = EntrySession.objects.get(session_id=payload['session-id'])
         except EntrySession.DoesNotExist:
+            # we must have manually purged our session. don't bother doing
+            # any updates to it.
             pass
+        else:
+            if action == 'submit-all':
+                if response['status'] == 'success':
+                    sess.delete()
+            elif action not in ('current', 'heartbeat'):
+                # these actions don't make the session dirty
+                if sess is not None:
+                    sess.last_activity_date = datetime.utcnow()
+                    sess.save()
+            elif response.get('error') == 'invalid session id':
+                # purge dead sessions
+                sess.delete()
 
 # DEPRECATED    
 def api_preload_provider(request):
