@@ -76,7 +76,7 @@ $(document).ready(function() {
     var sess = new WebFormSession(args);
 
     var init_lang = {% if lang %}'{{ lang|escapejs }}'{% else %}null{% endif %};
-    sess.load($('#content'), $('#loading'), init_lang);
+    sess.load($('#content'), init_lang);
   };
   var offlinePrompt = function(show) {
     $('#get-offline')[show ? 'show' : 'hide']();

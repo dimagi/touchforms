@@ -62,11 +62,19 @@ function WebFormSession(params) {
     autocomplete: params.autocomplete_url
   };
 
-  this.load = function($div, $loading, init_lang) {
+  this.load = function($div, init_lang, options) {
+    /*
+      options currently allows for two parameters:
+        onLoading: a function to call when there are pending requests to the server
+        onLoadingComplete: a function to call when requests are completed. can take an optional
+          parameter which will be true if an error occurred.
+    */
     this.$div = $div;
-    this.$loading = $loading || $div.find('#loading');
-    
     this.$div.addClass('webforms');
+
+    options = options || {};
+    this.onLoading = options.onLoading || function () { $('#loading').show(); };
+    this.onLoadingComplete = options.onLoadingComplete || function () { $('#loading').hide(); };
 
     var sess = this;
     var adapter = new xformAjaxAdapter(this.form_spec, this.session_data, this.instance_xml,
@@ -114,7 +122,7 @@ function WebFormSession(params) {
              dataType: "json",
              error: function (jqXHR, textStatus, errorThrown) {
                 that.onerror({message: _errMsg(errorThrown)});
-                that.$loading.hide();
+                that.onLoadingComplete(true);
              }
         });
         
@@ -146,7 +154,7 @@ function WebFormSession(params) {
 
 
     this.NUM_PENDING_REQUESTS++;
-    this.$loading.show();
+    this.onLoading();
     $("input#submit").attr('disabled', 'disabled');
 
     if (blocking) {
@@ -172,7 +180,7 @@ function WebFormSession(params) {
 
         sess.NUM_PENDING_REQUESTS--;
         if (sess.NUM_PENDING_REQUESTS == 0) {
-          sess.$loading.hide();
+          sess.onLoadingComplete();
           $("input#submit").removeAttr('disabled');
         }
       });
