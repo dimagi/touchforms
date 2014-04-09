@@ -209,7 +209,7 @@ def player_proxy(request):
 
 def track_session(request, payload, response):
     action = payload['action']
-    if action == 'new-form' and 'form-url' in payload:
+    if action == 'new-form' and 'form-url' in payload and 'session_id' in response:
         session_id = response['session_id']
         session_name = payload['session-data'].get(
             'session_name', response.get('title', _('Unknown Form'))
