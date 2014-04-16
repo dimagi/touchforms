@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.views.decorators.http import require_POST
-from touchforms.formplayer.models import XForm
+from touchforms.formplayer.models import XForm, EntrySession
 from touchforms.formplayer.autocomplete import autocompletion, DEFAULT_NUM_SUGGESTIONS
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseNotFound
@@ -13,12 +13,13 @@ from touchforms.formplayer.signals import xform_received
 from django.template.context import RequestContext
 from django.shortcuts import render_to_response
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.translation import ugettext as _
 import tempfile
 import os
 from . import api
 from touchforms.formplayer.api import DjangoAuth
-from django.contrib.auth.decorators import login_required
 from touchforms.formplayer.const import PRELOADER_TAG_UID
+from datetime import datetime
 
 def xform_list(request):
     if not settings.DEBUG:
@@ -202,7 +203,45 @@ def player_proxy(request):
     auth_cookie = request.COOKIES.get('sessionid')
     response = api.post_data(data, settings.XFORMS_PLAYER_URL, 
                              content_type="text/json", auth=DjangoAuth(auth_cookie))
+
+    track_session(request, json.loads(data), json.loads(response))
     return HttpResponse(response)
+
+def track_session(request, payload, response):
+    action = payload['action']
+    if action == 'new-form' and 'form-url' in payload and 'session_id' in response:
+        session_id = response['session_id']
+        session_name = payload['session-data'].get(
+            'session_name', response.get('title', _('Unknown Form'))
+        )
+        app_id = payload['session-data'].get('app_id', None)
+        sess = EntrySession(
+            session_id=session_id,
+            user=request.user,
+            form=payload['form-url'],
+            session_name=session_name,
+            app_id=app_id,
+        )
+        sess.save()
+    elif 'session-id' in payload:
+        try:
+            sess = EntrySession.objects.get(session_id=payload['session-id'])
+        except EntrySession.DoesNotExist:
+            # we must have manually purged our session. don't bother doing
+            # any updates to it.
+            pass
+        else:
+            if action == 'submit-all':
+                if response['status'] == 'success':
+                    sess.delete()
+            elif action not in ('current', 'heartbeat'):
+                # these actions don't make the session dirty
+                if sess is not None:
+                    sess.last_activity_date = datetime.utcnow()
+                    sess.save()
+            elif response.get('error') == 'invalid session id':
+                # purge dead sessions
+                sess.delete()
 
 # DEPRECATED    
 def api_preload_provider(request):

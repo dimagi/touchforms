@@ -46,7 +46,10 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
     var adapter = this;
     this.ajaxfunc(args, function (resp) {
       // special case short circuiting errors
-      if (resp.status === "error") {
+      if (resp.status === "error" || resp.error) {
+        if (!resp.message) {
+          resp.message = resp.error;
+        }
         if (onerror) {
           onerror(resp);
         }

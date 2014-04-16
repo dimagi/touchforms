@@ -1,17 +1,25 @@
 from __future__ import absolute_import
 from django.db import models
-from django.conf import settings
 from django.core.files import File
 from datetime import datetime
 from xml.etree import ElementTree
 import re
 import os
-import logging
 import hashlib
 import tempfile
+from django.contrib.auth.models import User
 
 VERSION_KEY = "version"
 UIVERSION_KEY = "uiVersion" 
+
+class EntrySession(models.Model):
+    session_id = models.CharField(max_length=100, primary_key=True)
+    user = models.ForeignKey(User)
+    form = models.CharField(max_length=255)  # url of cloudcare form
+    app_id = models.CharField(max_length=32, null=True, blank=True)  # HQ app ID, if relevant
+    session_name = models.CharField(max_length=100)
+    created_date = models.DateTimeField(default=datetime.utcnow)
+    last_activity_date = models.DateTimeField(null=True)
 
 class XForm(models.Model):
     """A record of an XForm"""
