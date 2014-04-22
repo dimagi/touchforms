@@ -20,17 +20,17 @@ class Migration(SchemaMigration):
         db.send_create_signal(u'formplayer', ['EntrySession'])
 
         # Adding model 'XForm'
-        db.create_table(u'formplayer_xform', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.utcnow)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('namespace', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('version', self.gf('django.db.models.fields.IntegerField')(null=True)),
-            ('uiversion', self.gf('django.db.models.fields.IntegerField')(null=True)),
-            ('checksum', self.gf('django.db.models.fields.CharField')(max_length=40, blank=True)),
-            ('file', self.gf('django.db.models.fields.files.FileField')(max_length=255)),
-        ))
-        db.send_create_signal('formplayer', ['XForm'])
+        # db.create_table(u'formplayer_xform', (
+        #     (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        #     ('created', self.gf('django.db.models.fields.DateTimeField')(default=datetime.datetime.utcnow)),
+        #     ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
+        #     ('namespace', self.gf('django.db.models.fields.CharField')(max_length=255)),
+        #     ('version', self.gf('django.db.models.fields.IntegerField')(null=True)),
+        #     ('uiversion', self.gf('django.db.models.fields.IntegerField')(null=True)),
+        #     ('checksum', self.gf('django.db.models.fields.CharField')(max_length=40, blank=True)),
+        #     ('file', self.gf('django.db.models.fields.files.FileField')(max_length=255)),
+        # ))
+        # db.send_create_signal('formplayer', ['XForm'])
 
 
     def backwards(self, orm):
@@ -38,8 +38,8 @@ class Migration(SchemaMigration):
         # Deleting model 'EntrySession'
         db.delete_table(u'formplayer_entrysession')
 
-        # Deleting model 'XForm'
-        db.delete_table(u'formplayer_xform')
+        # # Deleting model 'XForm'
+        # db.delete_table(u'formplayer_xform')
 
 
     models = {
