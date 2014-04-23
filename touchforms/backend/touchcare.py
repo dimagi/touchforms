@@ -225,12 +225,12 @@ def handle_request (content, server):
     else:
         return {'error': 'unrecognized action'}
 
-            
+
 def filter_cases(content):
-    try: 
+    try:
         modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
-                {"filters": content["filter_expr"]}
-            
+                         {"filters": content["filter_expr"]}
+
         api_auth = content.get('hq_auth')
         session_data = content.get("session_data", {})
         # whenever we do a filter case operation we need to load all
@@ -241,8 +241,16 @@ def filter_cases(content):
         caseInstance = ExternalDataInstance("jr://instance/casedb", "casedb")
         caseInstance.initialize(ccInstances, "casedb")
         instances = to_hashtable({"casedb": caseInstance})
-        case_list = XPathFuncExpr.toString(XPathParseTool.parseXPath(modified_xpath)\
-            .eval(EvaluationContext(None, instances)))
+
+        # load any additional instances needed
+        for extra_instance_config in session_data.get('extra_instances', []):
+            data_instance = ExternalDataInstance(extra_instance_config['src'], extra_instance_config['id'])
+            data_instance.initialize(ccInstances, extra_instance_config['id'])
+            instances[extra_instance_config['id']] = data_instance
+
+        case_list = XPathFuncExpr.toString(
+            XPathParseTool.parseXPath(modified_xpath).eval(
+                EvaluationContext(None, instances)))
         return {'cases': filter(lambda x: x,case_list.split(","))}
     except Exception, e:
         return {'status': 'error', 'message': str(e)}
