@@ -243,10 +243,10 @@ def filter_cases(content):
         instances = to_hashtable({"casedb": caseInstance})
 
         # load any additional instances needed
-        for extra_instance in session_data.get('extra_instances', []):
-            fixtureInstance = ExternalDataInstance(extra_instance['src'], extra_instance['id'])
-            fixtureInstance.initialize(ccInstances, extra_instance['id'])
-            instances[extra_instance['id']] = fixtureInstance
+        for extra_instance_config in session_data.get('extra_instances', []):
+            data_instance = ExternalDataInstance(extra_instance_config['src'], extra_instance_config['id'])
+            data_instance.initialize(ccInstances, extra_instance_config['id'])
+            instances[extra_instance_config['id']] = data_instance
 
         case_list = XPathFuncExpr.toString(
             XPathParseTool.parseXPath(modified_xpath).eval(
