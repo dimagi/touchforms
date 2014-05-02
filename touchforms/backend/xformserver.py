@@ -63,10 +63,11 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
 
         try:
             data_out = handle_request(data_in, self.server)
+            reply = json.dumps(data_out)
         except (Exception, java.lang.Exception), e:
             msg = ""
             if isinstance(e, java.lang.Exception):
-                e.printStackTrace() #todo: log the java stacktrace
+                e.printStackTrace()  # todo: log the java stacktrace
             elif isinstance(e, urllib2.HTTPError):
                 if e.headers.get("content-type", "") == "text/plain":
                     msg = e.read()
@@ -75,8 +76,6 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             self.send_error(500, u'internal error handling request: %s: %s%s' % (type(e), str(e), 
                                                                                  u": %s" % msg if msg else ""))
             return
-
-        reply = json.dumps(data_out)
 
         logging.debug('returned: [%s]' % reply)
 
