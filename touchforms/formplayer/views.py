@@ -207,7 +207,11 @@ def player_proxy(request):
     track_session(request, json.loads(data), json.loads(response))
     return HttpResponse(response)
 
+
 def track_session(request, payload, response):
+    def _concat_name(name):
+        return u'...{0}'.format(name[-96:]) if len(name) > 99 else name
+
     action = payload['action']
     if action == 'new-form' and 'form-url' in payload and 'session_id' in response:
         session_id = response['session_id']
@@ -219,7 +223,7 @@ def track_session(request, payload, response):
             session_id=session_id,
             user=request.user,
             form=payload['form-url'],
-            session_name=session_name,
+            session_name=_concat_name(session_name),
             app_id=app_id,
         )
         sess.save()
