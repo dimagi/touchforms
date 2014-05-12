@@ -1,4 +1,5 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+{% load hq_shared_tags %}
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
@@ -8,18 +9,18 @@
     <meta name="viewport" content="initial-scale=1.0; user-scalable=no;" />
     {% endif %}
 
-    <link rel="stylesheet" href="{{STATIC_URL}}formplayer/style/touchforms.css" type="text/css">
+    <link rel="stylesheet" href="{% static 'formplayer/style/touchforms.css' %}" type="text/css">
     <!-- warning; the formplayer is a highly-dynamic app, and doesn't get along all that well with static stylesheets -->
 
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/layout.js?version={{app_version}}"></script>   
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/touchscreen-ui.js?version={{app_version}}"></script>   
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/formnav.js?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/dates.js?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/entrycontrols.js?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript;version=1.7" src="{{STATIC_URL}}formplayer/script/workflow.js?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/layout.js?version={{app_version}}' %}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/touchscreen-ui.js?version={{app_version}}' %}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/formnav.js?version={{app_version}}' %}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/dates.js?version={{app_version}}' %}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/entrycontrols.js?version={{app_version}}' %}"></script>
+    <script language="javascript" type="text/javascript;version=1.7" src="{% static 'formplayer/script/workflow.js?version={{app_version}}' %}"></script>
    
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/jquery-1.4.2.min.js"></script>
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/shortcut.js"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/jquery-1.4.2.min.js' %}"></script>
+    <script language="javascript" type="text/javascript" src="{% static 'formplayer/script/shortcut.js' %}"></script>
 
 {% for script in dynamic_scripts %}
     <script language="javascript" type="text/javascript;version=1.7" src="{{script}}?version={{app_version}}"></script>   
