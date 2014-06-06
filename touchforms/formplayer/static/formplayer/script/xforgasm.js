@@ -208,6 +208,12 @@ function WebFormSession(params) {
         this.$div.find('a').css('color', enable ? 'blue' : 'grey');
     }
 
+    // workaround for "forever loading" bugs...
+    $(document).ajaxStop(function () {
+        self.NUM_PENDING_REQUESTS = 0;
+        self.BLOCKING_REQUEST_IN_PROGRESS = false;
+    });
+
 }
 
 function submit_form_post(xml) {
