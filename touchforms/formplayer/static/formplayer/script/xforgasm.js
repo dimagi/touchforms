@@ -17,38 +17,39 @@ var ERROR_MESSAGE = "Something unexpected went wrong on that request. " +
     "Technical Details: ";
 
 function WebFormSession(params) {
-    this.offline_mode = isOffline(params.xform_url);
+    var self = this;
+    self.offline_mode = isOffline(params.xform_url);
     if (params.form_uid) {
-        if (this.offline_mode) {
+        if (self.offline_mode) {
             throw "load form by UID is not possible for offline mode";
         }
-        this.form_spec = {type: 'uid', val: params.form_uid};
+        self.form_spec = {type: 'uid', val: params.form_uid};
     } else if (params.form_content) {
-        this.form_spec = {type: 'raw', val: params.form_content};
+        self.form_spec = {type: 'raw', val: params.form_content};
     } else if (params.form_url) {
-        this.form_spec = {type: 'url', val: params.form_url};
+        self.form_spec = {type: 'url', val: params.form_url};
     }
 
     //note: the 'allow_html' param will open you up to XSS attacks if you have
     //forms that insert user-entered data into captions!
 
-    this.instance_xml = params.instance_xml;
-    this.session_data = params.session_data || {};
-    if (!this.session_data.host) {
-        this.session_data.host = window.location.protocol + '//' + window.location.host;
+    self.instance_xml = params.instance_xml;
+    self.session_data = params.session_data || {};
+    if (!self.session_data.host) {
+        self.session_data.host = window.location.protocol + '//' + window.location.host;
     }
 
-    this.onsubmit = params.onsubmit;
-    this.onpresubmit = params.onpresubmit || function () {
+    self.onsubmit = params.onsubmit;
+    self.onpresubmit = params.onpresubmit || function () {
         return true;
     };
 
     // onload/onlanginfo
-    this._onload = params.onload || function (adapter, response) {
+    self._onload = params.onload || function (adapter, response) {
     };
     if (params.onlanginfo) {
-        this.onload = function (adapter, response) {
-            this._onload(adapter, response);
+        self.onload = function (adapter, response) {
+            self._onload(adapter, response);
             if (response['langs'].length) {
                 params.onlanginfo(function (lang) {
                     adapter.switchLanguage(lang);
@@ -56,18 +57,18 @@ function WebFormSession(params) {
             }
         }
     } else {
-        this.onload = this._onload;
+        self.onload = self._onload;
     }
 
-    this.onerror = params.onerror || function (resp) {
+    self.onerror = params.onerror || function (resp) {
     };
 
-    this.urls = {
+    self.urls = {
         xform: params.xform_url,
         autocomplete: params.autocomplete_url
     };
 
-    this.load = function ($div, init_lang, options) {
+    self.load = function ($div, init_lang, options) {
         /*
          options currently allows for two parameters:
          onLoading: a function to call when there are pending requests to the server
@@ -106,7 +107,7 @@ function WebFormSession(params) {
         }
     }
 
-    this.submit = function (params) {
+    self.submit = function (params) {
         this.inputActivate(false);
         this.inputActivate = function () {
         }; //hack to keep input fields disabled during final POST
@@ -114,7 +115,7 @@ function WebFormSession(params) {
         this.onsubmit(params.output);
     }
 
-    this.serverRequest = function (params, callback, blocking) {
+    self.serverRequest = function (params, callback, blocking) {
         var that = this;
         var url = that.urls.xform;
 
@@ -156,6 +157,7 @@ function WebFormSession(params) {
     this.BLOCKING_REQUEST_IN_PROGRESS = false;
     this.LAST_REQUEST_HANDLED = -1;
     this.NUM_PENDING_REQUESTS = 0;
+
     // makeRequest - function that takes in a callback function and executes an
     //     asynchronous request (GET, POST, etc.) with the given callback
     // callback - callback function for request
@@ -200,7 +202,7 @@ function WebFormSession(params) {
         });
     }
 
-    this.inputActivate = function (enable) {
+    self.inputActivate = function (enable) {
         this.BLOCKING_REQUEST_IN_PROGRESS = !enable;
         this.$div.find('input').attr('disabled', enable ? null : 'true');
         this.$div.find('a').css('color', enable ? 'blue' : 'grey');
