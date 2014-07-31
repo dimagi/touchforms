@@ -18,6 +18,7 @@ var ERROR_MESSAGE = "Something unexpected went wrong on that request. " +
 
 function WebFormSession(params) {
     var self = this;
+    self.heartbeat_has_failed = false;
     self.offline_mode = isOffline(params.xform_url);
     if (params.form_uid) {
         if (self.offline_mode) {
@@ -136,7 +137,19 @@ function WebFormSession(params) {
                         success: cb,
                         dataType: "json",
                         error: function (jqXHR, textStatus, errorThrown) {
-                            that.onerror({message: _errMsg(errorThrown)});
+                            var skip_error_msg = false;
+                            if (params.action == "heartbeat") {
+                                if (that.heartbeat_has_failed) {
+                                    // If the xformAjaxAdapter heartbeat can't find the server,
+                                    // we only want to log that error one time.
+                                    skip_error_msg = true;
+                                } else {
+                                    that.heartbeat_has_failed = true;
+                                }
+                            }
+                            if (!skip_error_msg) {
+                                that.onerror({message: _errMsg(errorThrown)});
+                            }
                             that.onLoadingComplete(true);
                         }
                     });
