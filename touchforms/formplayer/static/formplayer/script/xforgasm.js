@@ -138,8 +138,8 @@ function WebFormSession(params) {
                         dataType: "json",
                         error: function (jqXHR, textStatus, errorThrown) {
                             var skip_error_msg = false;
-                            if (params.action == "heartbeat"){
-                                if (that.heartbeat_has_failed){
+                            if (params.action == "heartbeat") {
+                                if (that.heartbeat_has_failed) {
                                     // If the xformAjaxAdapter heartbeat can't find the server,
                                     // we only want to log that error one time.
                                     skip_error_msg = true;
