@@ -198,7 +198,7 @@ class CCInstances(InstanceInitializationFactory):
             sess = CommCareSession(None) # will not passing a CCPlatform cause problems later?
             for k, v in self.vars.iteritems():
                 if k not in meta_keys and k not in exclude_keys:
-                    sess.setDatum(k, str(v))
+                    sess.setDatum(k, unicode(v))
             return from_bundle(sess.getSessionInstance(*([self.vars.get(k, '') for k in meta_keys] + \
                                                          [to_hashtable(self.vars.get('user_data', {}))])))
     
