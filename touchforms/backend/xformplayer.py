@@ -208,63 +208,63 @@ class XFormSession:
         return tree
 
     def _walk(self, parent_ix, siblings):
-      def step(ix, descend):
-        next_ix = self.fem.incrementIndex(ix, descend)
-        self.fem.setQuestionIndex(next_ix)  # needed to trigger events in form engine
-        return next_ix
+        def step(ix, descend):
+            next_ix = self.fem.incrementIndex(ix, descend)
+            self.fem.setQuestionIndex(next_ix)  # needed to trigger events in form engine
+            return next_ix
 
-      def ix_in_scope(form_ix):
-        if form_ix.isEndOfFormIndex():
-          return False
-        elif parent_ix.isBeginningOfFormIndex():
-          return True
-        else:
-          return FormIndex.isSubElement(parent_ix, form_ix)
+        def ix_in_scope(form_ix):
+            if form_ix.isEndOfFormIndex():
+                return False
+            elif parent_ix.isBeginningOfFormIndex():
+                return True
+            else:
+                return FormIndex.isSubElement(parent_ix, form_ix)
 
-      form_ix = step(parent_ix, True)
-      while ix_in_scope(form_ix):
-        relevant = self.fem.isIndexRelevant(form_ix)
+        form_ix = step(parent_ix, True)
+        while ix_in_scope(form_ix):
+            relevant = self.fem.isIndexRelevant(form_ix)
 
-        if not relevant:
-          form_ix = step(form_ix, False)
-          continue
+            if not relevant:
+                form_ix = step(form_ix, False)
+                continue
 
-        evt = self.__parse_event(form_ix)
-        evt['relevant'] = relevant
-        if evt['type'] == 'sub-group':
-          presentation_group = (evt['caption'] != None)
-          if presentation_group:
-            siblings.append(evt)
-            evt['children'] = []
-          form_ix = self._walk(form_ix, evt['children'] if presentation_group else siblings)
-        elif evt['type'] == 'repeat-juncture':
-          siblings.append(evt)
-          evt['children'] = []
-          for i in range(0, self.fem.getForm().getNumRepetitions(form_ix)):
-            subevt = {
-              'type': 'sub-group',
-              'ix': self.fem.getForm().descendIntoRepeat(form_ix, i),
-              'caption': evt['repetitions'][i],
-              'repeatable': True,
-              'children': [],
-            }
+            evt = self.__parse_event(form_ix)
+            evt['relevant'] = relevant
+            if evt['type'] == 'sub-group':
+                presentation_group = (evt['caption'] != None)
+                if presentation_group:
+                    siblings.append(evt)
+                    evt['children'] = []
+                form_ix = self._walk(form_ix, evt['children'] if presentation_group else siblings)
+            elif evt['type'] == 'repeat-juncture':
+                siblings.append(evt)
+                evt['children'] = []
+                for i in range(0, self.fem.getForm().getNumRepetitions(form_ix)):
+                    subevt = {
+                        'type': 'sub-group',
+                        'ix': self.fem.getForm().descendIntoRepeat(form_ix, i),
+                        'caption': evt['repetitions'][i],
+                        'repeatable': True,
+                        'children': [],
+                    }
 
-            # kinda ghetto; we need to be able to track distinct repeat instances, even if their position
-            # within the list of repetitions changes (such as by deleting a rep in the middle)
-            # would be nice to have proper FormEntryAPI support for this
-            java_uid = self.form.getInstance().resolveReference(subevt['ix'].getReference()).hashCode()
-            subevt['uuid'] = hashlib.sha1(str(java_uid)).hexdigest()[:12]
+                    # kinda ghetto; we need to be able to track distinct repeat instances, even if their position
+                    # within the list of repetitions changes (such as by deleting a rep in the middle)
+                    # would be nice to have proper FormEntryAPI support for this
+                    java_uid = self.form.getInstance().resolveReference(subevt['ix'].getReference()).hashCode()
+                    subevt['uuid'] = hashlib.sha1(str(java_uid)).hexdigest()[:12]
 
-            evt['children'].append(subevt)
-            self._walk(subevt['ix'], subevt['children'])
-          for key in ['repetitions', 'del-choice', 'del-header', 'done-choice']:
-            del evt[key]
-          form_ix = step(form_ix, True) # why True?
-        else:
-          siblings.append(evt)
-          form_ix = step(form_ix, True) # why True?
+                    evt['children'].append(subevt)
+                    self._walk(subevt['ix'], subevt['children'])
+                for key in ['repetitions', 'del-choice', 'del-header', 'done-choice']:
+                    del evt[key]
+                form_ix = step(form_ix, True)  # why True?
+            else:
+                siblings.append(evt)
+                form_ix = step(form_ix, True)  # why True?
 
-      return form_ix
+        return form_ix
 
     def _parse_current_event(self):
         self.cur_event = self.__parse_event(self.fem.getFormIndex())
