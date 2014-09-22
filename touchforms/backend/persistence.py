@@ -1,6 +1,7 @@
 from __future__ import with_statement
 import tempfile
 import os
+from django.utils.translation import ugettext as _
 
 import settings
 from com.xhaus.jyson import JSONDecodeError
@@ -37,11 +38,11 @@ def cache_get(key):
     except IOError:
         raise KeyError
     except JSONDecodeError:
-        raise EmptyCacheFileException(
+        raise EmptyCacheFileException(_(
             "Unfortunately an error has occurred on the server and your form cannot be saved. "
             "Please take note of the questions you have filled out so far, then refresh this page and enter them again. "
             "If this problem persists, please report an issue."
-        )
+        ))
 
 def cache_del(key):
     raise RuntimeError('not implemented')
