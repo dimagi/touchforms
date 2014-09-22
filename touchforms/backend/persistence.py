@@ -3,7 +3,11 @@ import tempfile
 import os
 
 import settings
+from com.xhaus.jyson import JSONDecodeError
 import com.xhaus.jyson.JysonCodec as json
+
+class EmptyCacheFileException(Exception):
+    pass
 
 def persist(sess):
     sess_id = sess.uuid
@@ -32,6 +36,12 @@ def cache_get(key):
             return json.loads(f.read().decode('utf8'))
     except IOError:
         raise KeyError
+    except JSONDecodeError:
+        raise EmptyCacheFileException(
+            "Unfortunately an error has occurred on the server and your form cannot be saved. "
+            "Please take note of the questions you have filled out so far, then refresh this page and enter them again. "
+            "If this problem persists, please report an issue."
+        )
 
 def cache_del(key):
     raise RuntimeError('not implemented')

@@ -73,7 +73,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
                     msg = e.read()
 
             logging.exception('error handling request')
-            self.send_error(500, u'internal error handling request: %s: %s%s' % (type(e), str(e), 
+            self.send_error(500, u'internal error handling request: %s: %s%s' % (type(e), str(e),
                                                                                  u": %s" % msg if msg else ""))
             return
 

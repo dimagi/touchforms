@@ -19,6 +19,7 @@ var ERROR_MESSAGE = "Something unexpected went wrong on that request. " +
 function WebFormSession(params) {
     var self = this;
     self.heartbeat_has_failed = false;
+    self.empty_cache_file_message_shown = false;
     self.offline_mode = isOffline(params.xform_url);
     if (params.form_uid) {
         if (self.offline_mode) {
@@ -158,7 +159,17 @@ function WebFormSession(params) {
             function (response) {
                 // wrap the callback so we can catch generic errors and handle them
                 if (response.status === "error") {
-                    that.onerror(response);
+                    var skip_error_msg = false;
+                    if (response.message.indexOf("EmptyCacheFileException") != -1){
+                        if (that.empty_cache_file_message_shown){
+                            skip_error_msg = true;
+                        } else {
+                            that.empty_cache_file_message_shown = true;
+                        }
+                    }
+                    if (!skip_error_msg) {
+                        that.onerror(response);
+                    }
                 } else {
                     callback(response);
                 }
