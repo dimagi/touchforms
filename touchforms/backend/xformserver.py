@@ -15,6 +15,7 @@ import settings
 from setup import init_classpath
 init_classpath()
 import com.xhaus.jyson.JysonCodec as json
+from xcp import TouchFormsException
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
@@ -66,15 +67,21 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             reply = json.dumps(data_out)
         except (Exception, java.lang.Exception), e:
             msg = ""
+            error_type = None
             if isinstance(e, java.lang.Exception):
                 e.printStackTrace()  # todo: log the java stacktrace
             elif isinstance(e, urllib2.HTTPError):
                 if e.headers.get("content-type", "") == "text/plain":
                     msg = e.read()
+            elif isinstance(e, TouchFormsException):
+                error_type = type(e).__name__
 
             logging.exception('error handling request')
-            self.send_error(500, u'internal error handling request: %s: %s%s' % (type(e), str(e),
-                                                                                 u": %s" % msg if msg else ""))
+            self.send_error(
+                500,
+                u'internal error handling request: %s: %s%s' % (type(e), str(e),u": %s" % msg if msg else ""),
+                error_type
+            )
             return
 
         logging.debug('returned: [%s]' % reply)
@@ -85,7 +92,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(reply.encode('utf-8'))
         
-    def send_error(self, code, message=None):
+    def send_error(self, code, message=None, error_type=None):
         """
         Override send_error to always return JSON.
         """
@@ -101,6 +108,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         explain = long
         self.log_error("code %d, message %s", code, message)
         content = json.dumps({'status': 'error',
+                              'type': error_type,
                               'code': code, 
                               'message': message, 
                               'explain': explain})

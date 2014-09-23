@@ -1,0 +1,2 @@
+class TouchFormsException(Exception):
+    pass
