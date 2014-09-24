@@ -1,5 +1,6 @@
 from __future__ import with_statement
 import tempfile
+from gettext import gettext as _
 import os
 from xcp import TouchFormsException
 import settings
@@ -37,11 +38,12 @@ def cache_get(key):
     except IOError:
         raise KeyError
     except JSONDecodeError:
-        raise EmptyCacheFileException(
-            "Unfortunately an error has occurred on the server and your form cannot be saved. "
-            "Please take note of the questions you have filled out so far, then refresh this page and enter them again. "
-            "If this problem persists, please report an issue."
-        )
+        raise EmptyCacheFileException(_(
+            u"Unfortunately an error has occurred on the server and your form cannot be saved. "
+            u"Please take note of the questions you have filled out so far, then refresh this page and enter them again. "
+            u"If this problem persists, please report an issue."
+            u"\u0229\u0228\u0227\u0226"
+        ).encode("ascii", "xmlcharrefreplace"))
 
 
 def cache_del(key):
