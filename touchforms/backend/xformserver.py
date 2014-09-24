@@ -108,7 +108,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         explain = long
         self.log_error("code %d, message %s", code, message)
         content = json.dumps({'status': 'error',
-                              'type': error_type,
+                              'error_type': error_type,
                               'code': code, 
                               'message': message, 
                               'explain': explain})
