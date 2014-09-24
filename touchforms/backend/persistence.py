@@ -42,7 +42,6 @@ def cache_get(key):
             u"Unfortunately an error has occurred on the server and your form cannot be saved. "
             u"Please take note of the questions you have filled out so far, then refresh this page and enter them again. "
             u"If this problem persists, please report an issue."
-            u"\u0229\u0228\u0227\u0226"
         ).encode("ascii", "xmlcharrefreplace"))
 
 
