@@ -2,13 +2,10 @@ from __future__ import with_statement
 import tempfile
 from gettext import gettext as _
 import os
-from xcp import TouchFormsException
+from xcp import EmptyCacheFileException
 import settings
 from com.xhaus.jyson import JSONDecodeError
 import com.xhaus.jyson.JysonCodec as json
-
-class EmptyCacheFileException(TouchFormsException):
-    pass
 
 def persist(sess):
     sess_id = sess.uuid
