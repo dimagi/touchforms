@@ -79,7 +79,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             logging.exception('error handling request')
             self.send_error(
                 500,
-                u'internal error handling request: %s: %s%s' % (type(e), str(e),u": %s" % msg if msg else ""),
+                u'internal error handling request: %s: %s%s' % (type(e), unicode(e),u": %s" % msg if msg else ""),
                 error_type
             )
             return
@@ -106,16 +106,16 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         if message is None:
             message = short
         explain = long
-        self.log_error("code %d, message %s", code, message)
+        self.log_error("code %d, message %s", code, message.encode("ascii", "xmlcharrefreplace")) # This logs to stderr, which only takes ascii
         content = json.dumps({'status': 'error',
                               'error_type': error_type,
                               'code': code, 
-                              'message': message, 
+                              'message': message.encode("ascii", "xmlcharrefreplace"),
                               'explain': explain})
 
         # if this is more than one line it messes up the response content
         message = message.split("\n")[0] if message else ""
-        self.send_response(code, message)
+        self.send_response(code, message.encode("ascii", "xmlcharrefreplace"))
         self.send_header("Content-Type", self.error_content_type)
         self.cross_origin_header()
         self.send_header('Connection', 'close')
