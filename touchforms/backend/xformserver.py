@@ -110,7 +110,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         content = json.dumps({'status': 'error',
                               'error_type': error_type,
                               'code': code, 
-                              'message': message.encode("ascii", "xmlcharrefreplace"),
+                              'message':message,
                               'explain': explain})
 
         # if this is more than one line it messes up the response content
@@ -121,7 +121,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Connection', 'close')
         self.end_headers()
         if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
-            self.wfile.write(content)
+            self.wfile.write(content.encode("utf-8"))
 
     # we don't support GET but still want to allow heartbeat responses via cross-origin
     def do_GET(self):
