@@ -15,6 +15,7 @@ import settings
 from setup import init_classpath
 init_classpath()
 import com.xhaus.jyson.JysonCodec as json
+from xcp import TouchFormsException
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
@@ -66,15 +67,22 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             reply = json.dumps(data_out)
         except (Exception, java.lang.Exception), e:
             msg = ""
+            error_type = None
             if isinstance(e, java.lang.Exception):
                 e.printStackTrace()  # todo: log the java stacktrace
             elif isinstance(e, urllib2.HTTPError):
                 if e.headers.get("content-type", "") == "text/plain":
                     msg = e.read()
+            elif isinstance(e, TouchFormsException):
+                error_type = type(e).__name__
 
             logging.exception('error handling request')
-            self.send_error(500, u'internal error handling request: %s: %s%s' % (type(e), str(e), 
-                                                                                 u": %s" % msg if msg else ""))
+            self.send_error(
+                500,
+                u'internal error handling request: %s: %s%s' % (
+                    type(e), unicode(e), u": %s" % msg if msg else ""),
+                error_type
+            )
             return
 
         logging.debug('returned: [%s]' % reply)
@@ -85,7 +93,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(reply.encode('utf-8'))
         
-    def send_error(self, code, message=None):
+    def send_error(self, code, message=None, error_type=None):
         """
         Override send_error to always return JSON.
         """
@@ -99,21 +107,22 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         if message is None:
             message = short
         explain = long
-        self.log_error("code %d, message %s", code, message)
+        self.log_error("code %d, message %s", code, message.encode("ascii", "xmlcharrefreplace")) # This logs to stderr, which only takes ascii
         content = json.dumps({'status': 'error',
+                              'error_type': error_type,
                               'code': code, 
-                              'message': message, 
+                              'message': message,
                               'explain': explain})
 
         # if this is more than one line it messes up the response content
         message = message.split("\n")[0] if message else ""
-        self.send_response(code, message)
+        self.send_response(code, message.encode("ascii", "xmlcharrefreplace"))
         self.send_header("Content-Type", self.error_content_type)
         self.cross_origin_header()
         self.send_header('Connection', 'close')
         self.end_headers()
         if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
-            self.wfile.write(content)
+            self.wfile.write(content.encode("utf-8"))
 
     # we don't support GET but still want to allow heartbeat responses via cross-origin
     def do_GET(self):
