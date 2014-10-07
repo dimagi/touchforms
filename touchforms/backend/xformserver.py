@@ -79,7 +79,8 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             logging.exception('error handling request')
             self.send_error(
                 500,
-                u'internal error handling request: %s: %s%s' % (type(e), unicode(e),u": %s" % msg if msg else ""),
+                u'internal error handling request: %s: %s%s' % (
+                    type(e), unicode(e), u": %s" % msg if msg else ""),
                 error_type
             )
             return
@@ -110,7 +111,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         content = json.dumps({'status': 'error',
                               'error_type': error_type,
                               'code': code, 
-                              'message':message,
+                              'message': message,
                               'explain': explain})
 
         # if this is more than one line it messes up the response content
