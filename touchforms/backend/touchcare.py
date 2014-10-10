@@ -65,57 +65,58 @@ def case_from_json(data):
 
     return c
 
+
 class CaseDatabase(IStorageUtilityIndexed):
     def __init__(self, host, domain, user, auth, additional_filters=None,
                  preload=False):
         self.query_func = query_factory(host, domain, auth)
         self.additional_filters = additional_filters or {}
         self.cached_lookups = {}
-        self._cases = {}
+        self._objects = {}
         self.fully_loaded = False # when we've loaded every possible case
 
         if preload:
-            self.load_all_cases()
+            self.load_all_objects()
         else:
             case_ids = query_case_ids(self.query_func, criteria=self.additional_filters)
-            self.case_ids = dict(enumerate(case_ids))
+            self.ids = dict(enumerate(case_ids))
 
     @property
-    def cases(self):
+    def objects(self):
         if self.fully_loaded:
-            return self._cases
+            return self._objects
         else:
-            self.load_all_cases()
-        return self._cases
+            self.load_all_objects()
+        return self._objects
 
-    def load_all_cases(self):
+    def load_all_objects(self):
         cases = query_cases(self.query_func,
                             criteria=self.additional_filters)
         for c in cases:
-            self.put_case(c)
-        self.case_ids = dict(enumerate(self._cases.keys()))
+            self.put_object(c)
+        self.ids = dict(enumerate(self._objects.keys()))
         self.fully_loaded = True
 
-    def put_case(self, c):
-        self._cases[c.getCaseId()] = c
+    def put_object(self, c):
+        self._objects[c.getCaseId()] = c
 
     def setReadOnly(self):
         pass
 
     def read(self, record_id):
         try:
-            case_id = self.case_ids[record_id]
+            case_id = self.ids[record_id]
         except KeyError:
             return None
-        return self.readCase(case_id)
+        return self.read_object(case_id)
 
-    def readCase(self, case_id):
+    def read_object(self, case_id):
         logging.debug('read case %s' % case_id)
-        if case_id not in self._cases:
-            self.put_case(query_case(self.query_func, case_id))
+        if case_id not in self._objects:
+            self.put_object(query_case(self.query_func, case_id))
 
         try:
-            return self._cases[case_id]
+            return self._objects[case_id]
         except KeyError:
             raise Exception('could not find a case for case id [%s]' % case_id)
 
@@ -124,7 +125,7 @@ class CaseDatabase(IStorageUtilityIndexed):
 
         if (field_name, value) not in self.cached_lookups:
             if field_name == 'case-id':
-                cases = [self.readCase(value)]
+                cases = [self.read_object(value)]
             else:
                 try:
                     get_val = {
@@ -134,21 +135,21 @@ class CaseDatabase(IStorageUtilityIndexed):
                 except KeyError:
                     # Try any unrecognized field name as a case id field.
                     # Needed for 'case-in-goal' lookup in PACT Care Plan app.
-                    cases = [self.readCase(value)]
+                    cases = [self.read_object(value)]
                 else:
-                    cases = [c for c in self.cases.values() if get_val(c) == value]
+                    cases = [c for c in self.objects.values() if get_val(c) == value]
 
             self.cached_lookups[(field_name, value)] = cases
 
         cases = self.cached_lookups[(field_name, value)]
-        id_map = dict((v, k) for k, v in self.case_ids.iteritems())
+        id_map = dict((v, k) for k, v in self.ids.iteritems())
         return to_vect(id_map[c.getCaseId()] for c in cases)
 
     def getNumRecords(self):
-        return len(self.case_ids)
+        return len(self.ids)
 
     def iterate(self):
-        return StaticIterator(self.case_ids.keys())
+        return StaticIterator(self.ids.keys())
 
 
 class StaticIterator(IStorageIterator):
