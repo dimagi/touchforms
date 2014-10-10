@@ -66,20 +66,13 @@ def case_from_json(data):
     return c
 
 
-class CaseDatabase(IStorageUtilityIndexed):
-    def __init__(self, host, domain, user, auth, additional_filters=None,
-                 preload=False):
-        self.query_func = query_factory(host, domain, auth)
-        self.additional_filters = additional_filters or {}
+class TouchformsStorageUtility(IStorageUtilityIndexed):
+
+    def __init__(self):
         self.cached_lookups = {}
         self._objects = {}
-        self.fully_loaded = False # when we've loaded every possible case
-
-        if preload:
-            self.load_all_objects()
-        else:
-            case_ids = query_case_ids(self.query_func, criteria=self.additional_filters)
-            self.ids = dict(enumerate(case_ids))
+        self.ids = {}
+        self.fully_loaded = False  # when we've loaded every possible object
 
     @property
     def objects(self):
@@ -88,6 +81,30 @@ class CaseDatabase(IStorageUtilityIndexed):
         else:
             self.load_all_objects()
         return self._objects
+
+    def setReadOnly(self):
+        # todo: not sure why this exists. is it part of the public javarosa API?
+        pass
+
+    def getNumRecords(self):
+        return len(self.ids)
+
+    def iterate(self):
+        return StaticIterator(self.ids.keys())
+
+
+class CaseDatabase(TouchformsStorageUtility):
+    def __init__(self, host, domain, user, auth, additional_filters=None,
+                 preload=False):
+        super(CaseDatabase, self).__init__()
+        self.query_func = query_factory(host, domain, auth)
+        self.additional_filters = additional_filters or {}
+
+        if preload:
+            self.load_all_objects()
+        else:
+            case_ids = query_case_ids(self.query_func, criteria=self.additional_filters)
+            self.ids = dict(enumerate(case_ids))
 
     def load_all_objects(self):
         cases = query_cases(self.query_func,
@@ -99,9 +116,6 @@ class CaseDatabase(IStorageUtilityIndexed):
 
     def put_object(self, c):
         self._objects[c.getCaseId()] = c
-
-    def setReadOnly(self):
-        pass
 
     def read(self, record_id):
         try:
@@ -144,12 +158,6 @@ class CaseDatabase(IStorageUtilityIndexed):
         cases = self.cached_lookups[(field_name, value)]
         id_map = dict((v, k) for k, v in self.ids.iteritems())
         return to_vect(id_map[c.getCaseId()] for c in cases)
-
-    def getNumRecords(self):
-        return len(self.ids)
-
-    def iterate(self):
-        return StaticIterator(self.ids.keys())
 
 
 class StaticIterator(IStorageIterator):
