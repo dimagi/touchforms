@@ -66,6 +66,20 @@ def case_from_json(data):
     return c
 
 
+class StaticIterator(IStorageIterator):
+    def __init__(self, ids):
+        self.ids = ids
+        self.i = 0
+
+    def hasMore(self):
+        return self.i < len(self.ids)
+
+    def nextID(self):
+        id = self.ids[self.i]
+        self.i += 1
+        return id
+
+
 class TouchformsStorageUtility(IStorageUtilityIndexed):
 
     def __init__(self):
@@ -158,20 +172,6 @@ class CaseDatabase(TouchformsStorageUtility):
         cases = self.cached_lookups[(field_name, value)]
         id_map = dict((v, k) for k, v in self.ids.iteritems())
         return to_vect(id_map[c.getCaseId()] for c in cases)
-
-
-class StaticIterator(IStorageIterator):
-    def __init__(self, ids):
-        self.ids = ids
-        self.i = 0
-
-    def hasMore(self):
-        return self.i < len(self.ids)
-
-    def nextID(self):
-        id = self.ids[self.i]
-        self.i += 1
-        return id
 
 
 class LedgerDatabase(IStorageUtilityIndexed):
