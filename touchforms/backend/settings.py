@@ -23,4 +23,5 @@ except ImportError:
 
 CASE_API_URL = '%s/cloudcare/api/cases/' % URL_ROOT
 FIXTURE_API_URL = '%s/cloudcare/api/fixtures' % URL_ROOT
+LEDGER_API_URL = '%s/cloudcare/api/ledgers/' % URL_ROOT
 
