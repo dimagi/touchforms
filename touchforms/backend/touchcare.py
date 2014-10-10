@@ -10,6 +10,7 @@ from org.javarosa.core.model.instance import InstanceInitializationFactory
 from org.javarosa.core.services.storage import IStorageUtilityIndexed
 from org.javarosa.core.services.storage import IStorageIterator
 from org.commcare.cases.instance import CaseInstanceTreeElement
+from org.commcare.cases.ledger.instance import LedgerInstanceTreeElement
 from org.commcare.cases.model import Case
 from org.commcare.util import CommCareSession
 from org.commcare.xml import TreeElementParser
@@ -18,7 +19,6 @@ from org.javarosa.xpath.expr import XPathFuncExpr
 from org.javarosa.xpath import XPathParseTool
 from org.javarosa.core.model.condition import EvaluationContext
 from org.javarosa.core.model.instance import ExternalDataInstance
-from org.javarosa.core.model.instance import DataInstance
 
 from org.kxml2.io import KXmlParser
 
@@ -148,20 +148,33 @@ class CaseDatabase(IStorageUtilityIndexed):
         return len(self.case_ids)
 
     def iterate(self):
-        return CaseIterator(self.case_ids.keys())
+        return StaticIterator(self.case_ids.keys())
 
-class CaseIterator(IStorageIterator):
-    def __init__(self, case_ids):
-        self.case_ids = case_ids
+
+class StaticIterator(IStorageIterator):
+    def __init__(self, ids):
+        self.ids = ids
         self.i = 0
 
     def hasMore(self):
-        return self.i < len(self.case_ids)
+        return self.i < len(self.ids)
 
     def nextID(self):
-        case_id = self.case_ids[self.i]
+        id = self.ids[self.i]
         self.i += 1
-        return case_id
+        return id
+
+
+class LedgerDatabase(IStorageUtilityIndexed):
+    # todo: this doesn't actually work or do anything
+    def __init__(self, host, domain, auth):
+        pass
+
+    def getIDsForValue(self, field_name, value):
+        return to_vect([])
+
+    def iterate(self):
+        return StaticIterator([])
 
 
 class CCInstances(InstanceInitializationFactory):
@@ -192,6 +205,15 @@ class CCInstances(InstanceInitializationFactory):
             # Unclear why this is necessary but it is
             ret.setParent(instance.getBase())
             return ret
+        elif 'ledgerdb' in ref:
+            return LedgerInstanceTreeElement(
+                instance.getBase(),
+                LedgerDatabase(
+                    self.vars.get('host'), self.vars['domain'],
+                    self.auth,
+                )
+            )
+
         elif 'session' in ref:
             meta_keys = ['device_id', 'app_version', 'username', 'user_id']
             exclude_keys = ['additional_filters', 'user_data']
