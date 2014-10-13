@@ -10,7 +10,9 @@ from org.javarosa.core.model.instance import InstanceInitializationFactory
 from org.javarosa.core.services.storage import IStorageUtilityIndexed
 from org.javarosa.core.services.storage import IStorageIterator
 from org.commcare.cases.instance import CaseInstanceTreeElement
+from org.commcare.cases.ledger.instance import LedgerInstanceTreeElement
 from org.commcare.cases.model import Case
+from org.commcare.cases.ledger import Ledger
 from org.commcare.util import CommCareSession
 from org.commcare.xml import TreeElementParser
 
@@ -18,7 +20,6 @@ from org.javarosa.xpath.expr import XPathFuncExpr
 from org.javarosa.xpath import XPathParseTool
 from org.javarosa.core.model.condition import EvaluationContext
 from org.javarosa.core.model.instance import ExternalDataInstance
-from org.javarosa.core.model.instance import DataInstance
 
 from org.kxml2.io import KXmlParser
 
@@ -41,6 +42,7 @@ def query_case(q, case_id):
         return cases[0]
     except IndexError:
         return None
+
 
 def case_from_json(data):
     c = Case()
@@ -65,66 +67,131 @@ def case_from_json(data):
 
     return c
 
-class CaseDatabase(IStorageUtilityIndexed):
-    def __init__(self, host, domain, user, auth, additional_filters=None,
-                 preload=False):
+
+def query_ledger_for_case(q, case_id):
+    query_string = urllib.urlencode({'case_id': case_id})
+    query_url = '%s?%s' % (settings.LEDGER_API_URL, query_string)
+    return ledger_from_json(q(query_url))
+
+
+def ledger_from_json(data):
+    ledger = Ledger(data['entity_id'])
+    for section_id, section in data['ledger'].items():
+        for product_id, amount in section.items():
+            ledger.setEntry(section_id, product_id, int(amount))
+    return ledger
+
+
+class StaticIterator(IStorageIterator):
+    def __init__(self, ids):
+        self.ids = ids
+        self.i = 0
+
+    def hasMore(self):
+        return self.i < len(self.ids)
+
+    def nextID(self):
+        id = self.ids[self.i]
+        self.i += 1
+        return id
+
+
+class TouchformsStorageUtility(IStorageUtilityIndexed):
+
+    def __init__(self, host, domain, auth, additional_filters=None, preload=False):
+        self.cached_lookups = {}
+        self._objects = {}
+        self.ids = {}
+        self.fully_loaded = False  # when we've loaded every possible object
         self.query_func = query_factory(host, domain, auth)
         self.additional_filters = additional_filters or {}
-        self.cached_lookups = {}
-        self._cases = {}
-        self.fully_loaded = False # when we've loaded every possible case
-
         if preload:
-            self.load_all_cases()
+            self.load_all_objects()
         else:
-            case_ids = query_case_ids(self.query_func, criteria=self.additional_filters)
-            self.case_ids = dict(enumerate(case_ids))
+            self.load_object_ids()
+
+    def get_object_id(self, object):
+        raise NotImplementedError("subclasses must handle this")
+
+    def fetch_object(self, object_id):
+        raise NotImplementedError("subclasses must handle this")
+
+    def load_all_objects(self):
+        raise NotImplementedError("subclasses must handle this")
+
+    def load_object_ids(self):
+        raise NotImplementedError("subclasses must handle this")
 
     @property
-    def cases(self):
+    def objects(self):
         if self.fully_loaded:
-            return self._cases
+            return self._objects
         else:
-            self.load_all_cases()
-        return self._cases
+            self.load_all_objects()
+        return self._objects
 
-    def load_all_cases(self):
+    def put_object(self, object):
+        object_id = self.get_object_id(object)
+        self._objects[object_id] = object
+
+    def read(self, record_id):
+        logging.debug('read record %s' % record_id)
+        try:
+            # record_id is an int, object_id is a guid
+            object_id = self.ids[record_id]
+        except KeyError:
+            return None
+        return self.read_object(object_id)
+
+    def read_object(self, object_id):
+        logging.debug('read object %s' % object_id)
+        if object_id not in self._objects:
+            self.put_object(self.fetch_object(object_id))
+        try:
+            return self._objects[object_id]
+        except KeyError:
+            raise Exception('could not find an object for id [%s]' % object_id)
+
+    def setReadOnly(self):
+        # todo: not sure why this exists. is it part of the public javarosa API?
+        pass
+
+    def getNumRecords(self):
+        return len(self.ids)
+
+    def iterate(self):
+        return StaticIterator(self.ids.keys())
+
+
+class CaseDatabase(TouchformsStorageUtility):
+    def __init__(self, host, domain, user, auth, additional_filters=None,
+                 preload=False):
+        super(CaseDatabase, self).__init__(host, domain, auth, additional_filters, preload)
+
+    def get_object_id(self, case):
+        return case.getCaseId()
+
+    def fetch_object(self, case_id):
+        return query_case(self.query_func, case_id)
+
+    def load_all_objects(self):
         cases = query_cases(self.query_func,
                             criteria=self.additional_filters)
         for c in cases:
-            self.put_case(c)
-        self.case_ids = dict(enumerate(self._cases.keys()))
+            self.put_object(c)
+        self.ids = dict(enumerate(self._objects.keys()))
         self.fully_loaded = True
 
-    def put_case(self, c):
-        self._cases[c.getCaseId()] = c
-
-    def setReadOnly(self):
-        pass
-
-    def read(self, record_id):
-        try:
-            case_id = self.case_ids[record_id]
-        except KeyError:
-            return None
-        return self.readCase(case_id)
-
-    def readCase(self, case_id):
-        logging.debug('read case %s' % case_id)
-        if case_id not in self._cases:
-            self.put_case(query_case(self.query_func, case_id))
-
-        try:
-            return self._cases[case_id]
-        except KeyError:
-            raise Exception('could not find a case for case id [%s]' % case_id)
+    def load_object_ids(self):
+        case_ids = query_case_ids(self.query_func, criteria=self.additional_filters)
+        self.ids = dict(enumerate(case_ids))
 
     def getIDsForValue(self, field_name, value):
         logging.debug('case index lookup %s %s' % (field_name, value))
 
         if (field_name, value) not in self.cached_lookups:
             if field_name == 'case-id':
-                cases = [self.readCase(value)]
+                cases = [self.read_object(value)]
             else:
                 try:
                     get_val = {
@@ -134,34 +201,46 @@ class CaseDatabase(IStorageUtilityIndexed):
                 except KeyError:
                     # Try any unrecognized field name as a case id field.
                     # Needed for 'case-in-goal' lookup in PACT Care Plan app.
-                    cases = [self.readCase(value)]
+                    cases = [self.read_object(value)]
                 else:
-                    cases = [c for c in self.cases.values() if get_val(c) == value]
+                    cases = [c for c in self.objects.values() if get_val(c) == value]
 
             self.cached_lookups[(field_name, value)] = cases
 
         cases = self.cached_lookups[(field_name, value)]
-        id_map = dict((v, k) for k, v in self.case_ids.iteritems())
+        id_map = dict((v, k) for k, v in self.ids.iteritems())
         return to_vect(id_map[c.getCaseId()] for c in cases)
 
-    def getNumRecords(self):
-        return len(self.case_ids)
 
-    def iterate(self):
-        return CaseIterator(self.case_ids.keys())
+class LedgerDatabase(TouchformsStorageUtility):
+    def __init__(self, host, domain, auth, additional_filters, preload):
+        super(LedgerDatabase, self).__init__(host, domain, auth, additional_filters, preload)
 
-class CaseIterator(IStorageIterator):
-    def __init__(self, case_ids):
-        self.case_ids = case_ids
-        self.i = 0
+    def get_object_id(self, ledger):
+        return ledger.getEntiyId()
 
-    def hasMore(self):
-        return self.i < len(self.case_ids)
+    def fetch_object(self, entity_id):
+        return query_ledger_for_case(self.query_func, entity_id)
 
-    def nextID(self):
-        case_id = self.case_ids[self.i]
-        self.i += 1
-        return case_id
+    def load_object_ids(self):
+        case_ids = query_case_ids(self.query_func, criteria=self.additional_filters)
+        self.ids = dict(enumerate(case_ids))
+
+    def getIDsForValue(self, field_name, value):
+        logging.debug('ledger lookup %s %s' % (field_name, value))
+        if (field_name, value) not in self.cached_lookups:
+            if field_name == 'entity-id':
+                ledgers = [self.read_object(value)]
+            else:
+                raise NotImplementedError("Only entity-id lookup is currently supported!")
+
+            self.cached_lookups[(field_name, value)] = ledgers
+
+        else:
+            ledgers = self.cached_lookups[(field_name, value)]
+
+        id_map = dict((v, k) for k, v in self.ids.iteritems())
+        return to_vect(id_map[l.getEntiyId()] for l in ledgers)
 
 
 class CCInstances(InstanceInitializationFactory):
@@ -192,6 +271,16 @@ class CCInstances(InstanceInitializationFactory):
             # Unclear why this is necessary but it is
             ret.setParent(instance.getBase())
             return ret
+        elif 'ledgerdb' in ref:
+            return LedgerInstanceTreeElement(
+                instance.getBase(),
+                LedgerDatabase(
+                    self.vars.get('host'), self.vars['domain'],
+                    self.auth, self.vars.get("additional_filters", {}),
+                    self.vars.get("preload_cases", False),
+                )
+            )
+
         elif 'session' in ref:
             meta_keys = ['device_id', 'app_version', 'username', 'user_id']
             exclude_keys = ['additional_filters', 'user_data']
