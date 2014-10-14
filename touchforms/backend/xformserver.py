@@ -81,7 +81,8 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
                 500,
                 u'internal error handling request: %s: %s%s' % (
                     type(e), unicode(e), u": %s" % msg if msg else ""),
-                error_type
+                error_type,
+                msg if msg else None,
             )
             return
 
@@ -93,7 +94,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(reply.encode('utf-8'))
         
-    def send_error(self, code, message=None, error_type=None):
+    def send_error(self, code, message=None, error_type=None, human_readable_message=None):
         """
         Override send_error to always return JSON.
         """
@@ -106,12 +107,15 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             short, long = '???', '???'
         if message is None:
             message = short
+        if human_readable_message is None:
+            human_readable_message = message
         explain = long
         self.log_error("code %d, message %s", code, message.encode("ascii", "xmlcharrefreplace")) # This logs to stderr, which only takes ascii
         content = json.dumps({'status': 'error',
                               'error_type': error_type,
                               'code': code, 
                               'message': message,
+                              'human_readable_message': human_readable_message,
                               'explain': explain})
 
         # if this is more than one line it messes up the response content
