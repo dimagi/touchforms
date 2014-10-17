@@ -157,14 +157,10 @@ def handle_request(content, server):
             if not form_spec:
                 return {'error': 'form specification required (form-name, form-content, or form-url)'}
 
-            inst_fields = {'instance-content': 'raw'}
-            inst_spec = None
-            for k, v in inst_fields.iteritems():
-                try:
-                    inst_spec = (v, content[k])
-                    break
-                except KeyError:
-                    pass
+            if 'instance-content' in content:
+                inst_spec = ('raw', content['instance-content'])
+            else:
+                inst_spec = None
 
             session_data = content.get("session-data", {})
             return xformplayer.open_form(form_spec, inst_spec, **{
