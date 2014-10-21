@@ -1,0 +1,8 @@
+URL_ROOT = "https://example.com/a/{{ DOMAIN }}"
+PERSISTENCE_DIRECTORY = "/path/to/www/data/touchforms"
+
+# If you want to test with https on a proxy
+# that doesn't have a valid cert, uncomment the following lines
+
+# from touchforms.jython_ssl import SSLContext, TRUST_ALL_CONTEXT
+# SSLContext.setDefault(TRUST_ALL_CONTEXT)
