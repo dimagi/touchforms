@@ -1,3 +1,4 @@
+from django.http.response import HttpResponseServerError
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.views.decorators.http import require_POST
@@ -199,13 +200,22 @@ def player_proxy(request):
     """
     Proxy to an xform player, to avoid cross-site scripting issues
     """
-    data = request.raw_post_data
+    data = request.body
     auth_cookie = request.COOKIES.get('sessionid')
-    response = api.post_data(data, settings.XFORMS_PLAYER_URL, 
-                             content_type="text/json", auth=DjangoAuth(auth_cookie))
+    try:
+        response = api.post_data(data, settings.XFORMS_PLAYER_URL,
+                                 content_type="text/json", auth=DjangoAuth(auth_cookie))
 
-    track_session(request, json.loads(data), json.loads(response))
-    return HttpResponse(response)
+        track_session(request, json.loads(data), json.loads(response))
+        return HttpResponse(response)
+    except IOError:
+        logging.exception('Unable to connect to touchforms.')
+
+        msg = _(
+            'An error occurred while trying to connect to the CloudCare service. '
+            'If you have problems filling in the rest of your form please report an issue.'
+        )
+        return HttpResponseServerError(json.dumps({'message': msg}))
 
 
 def track_session(request, payload, response):
