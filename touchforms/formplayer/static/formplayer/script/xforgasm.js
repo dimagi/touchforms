@@ -136,24 +136,7 @@ function WebFormSession(params) {
                         data: JSON.stringify(params),
                         success: cb,
                         dataType: "json",
-                        timeout: 2000,
                         error: function (jqXHR, textStatus, errorThrown) {
-                            var error = _errMsg(errorThrown);
-                            if (textStatus === 'timeout') {
-                                error = "CommCareHQ has detected a possible network connectivity problem. " +
-                                    "Please make sure you are connected to the " +
-                                    "Internet in order to submit your form."
-                            } else {
-                                try {
-                                    var json_resp = JSON.parse(jqXHR.responseText);
-                                    if (json_resp.hasOwnProperty('message')) {
-                                        error = json_resp.message;
-                                    }
-                                } catch (e) {
-                                    // do nothing
-                                }
-                            }
-
                             var skip_error_msg = false;
                             if (params.action == "heartbeat") {
                                 if (that.heartbeat_has_failed) {
@@ -165,7 +148,7 @@ function WebFormSession(params) {
                                 }
                             }
                             if (!skip_error_msg) {
-                                that.onerror({human_readable_message: error});
+                                that.onerror({message: _errMsg(errorThrown)});
                             }
                             that.onLoadingComplete(true);
                         }
