@@ -136,7 +136,6 @@ function WebFormSession(params) {
                         data: JSON.stringify(params),
                         success: cb,
                         dataType: "json",
-                        timeout: 2000,
                         error: function (jqXHR, textStatus, errorThrown) {
                             var error = _errMsg(errorThrown);
                             if (textStatus === 'timeout') {
