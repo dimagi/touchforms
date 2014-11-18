@@ -294,9 +294,11 @@ class CCInstances(InstanceInitializationFactory):
                                                          [to_hashtable(self.vars.get('user_data', {}))])))
     
     def _get_fixture(self, user_id, fixture_id):
-        query_url = '%(base)s/%(user)s/%(fixture)s' % { "base": settings.FIXTURE_API_URL, 
-                                                        "user": user_id,
-                                                        "fixture": fixture_id }
+        query_url = '%(base)s/%(user)s/%(fixture)s' % {
+            "base": settings.FIXTURE_API_URL,
+            "user": user_id,
+            "fixture": fixture_id,
+        }
         q = query_factory(self.vars.get('host'), self.vars['domain'], self.auth, format="raw")
         results = q(query_url)
         parser = KXmlParser()
