@@ -697,8 +697,10 @@ function GeoPointEntry () {
     if (postLoad) {
       if (answer) {
         this.set_latlon(answer[0], answer[1]);
-        this.map.setCenter(new google.maps.LatLng(answer[0], answer[1]));
-	this.map.setZoom(this.DEFAULT.anszoom);
+        if (this.map) {
+          this.map.setCenter(new google.maps.LatLng(answer[0], answer[1]));
+          this.map.setZoom(this.DEFAULT.anszoom);
+        }
       } else {
         this.set_latlon(null, null);
       }

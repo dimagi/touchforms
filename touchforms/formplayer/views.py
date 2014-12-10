@@ -210,7 +210,6 @@ def player_proxy(request):
         return HttpResponse(response)
     except IOError:
         logging.exception('Unable to connect to touchforms.')
-
         msg = _(
             'An error occurred while trying to connect to the CloudCare service. '
             'If you have problems filling in the rest of your form please report an issue.'
