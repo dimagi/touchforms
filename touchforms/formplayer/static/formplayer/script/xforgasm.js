@@ -134,6 +134,7 @@ function WebFormSession(params) {
                     {type: "POST",
                         url: url,
                         data: JSON.stringify(params),
+                        jsonp: false,
                         success: cb,
                         dataType: "json",
                         error: function (jqXHR, textStatus, errorThrown) {
