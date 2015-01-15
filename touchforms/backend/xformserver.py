@@ -206,7 +206,15 @@ def handle_request(content, server):
             if 'session-id' not in content:
                 return {'error': 'session id required'}
 
-            return xformplayer.current_question(content['session-id'])
+            override_state = None
+            # override api_auth with the current auth to avoid issues with expired django sessions
+            # when editing saved forms
+            hq_auth = content.get('hq_auth')
+            if hq_auth:
+                override_state = {
+                    'api_auth': hq_auth,
+                }
+            return xformplayer.current_question(content['session-id'], override_state=override_state)
 
         elif action == 'heartbeat':
             if 'session-id' not in content:
