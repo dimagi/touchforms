@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 from touchforms.formplayer.models import XForm
 
 xform_info = {
