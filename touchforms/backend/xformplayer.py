@@ -56,13 +56,13 @@ class global_state_mgr(object):
             self.session_cache[xfsess.uuid] = xfsess
             self.ctx.setNumSessions(len(self.session_cache))
 
-    def get_session(self, session_id):
+    def get_session(self, session_id, override_state=None):
         with self.lock:
             try:
                 return self.session_cache[session_id]
             except KeyError:
                 # see if session has been persisted
-                sess = persistence.restore(session_id, XFormSession)
+                sess = persistence.restore(session_id, XFormSession, override_state)
                 if sess:
                     self.new_session(sess) # repopulate in-memory cache
                     return sess
@@ -632,8 +632,8 @@ def set_locale(session_id, lang):
         ev = xfsess.set_locale(lang)
         return xfsess.response({}, ev)
 
-def current_question(session_id):
-    with global_state.get_session(session_id) as xfsess:
+def current_question(session_id, override_state=None):
+    with global_state.get_session(session_id, override_state) as xfsess:
         extra = {'lang': xfsess.get_lang()}
         extra.update(init_context(xfsess))
         return xfsess.response(extra, xfsess.cur_event)

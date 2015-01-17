@@ -13,13 +13,15 @@ def persist(sess):
     timeout = sess.staleness_window
     cache_set(sess_id, state, timeout)
 
-def restore(sess_id, factory):
+def restore(sess_id, factory, override_state=None):
     try:
         state = cache_get(sess_id)
     except KeyError:
         return None
 
     state['uuid'] = sess_id
+    if override_state:
+        state.update(override_state)
     return factory(**state)
 
 # TODO integrate with real caching framework (django ideally)
