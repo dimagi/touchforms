@@ -15,6 +15,7 @@ import settings
 from setup import init_classpath
 init_classpath()
 import com.xhaus.jyson.JysonCodec as json
+from xcp import TouchFormsException
 
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
@@ -63,20 +64,27 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
 
         try:
             data_out = handle_request(data_in, self.server)
+            reply = json.dumps(data_out)
         except (Exception, java.lang.Exception), e:
             msg = ""
+            error_type = None
             if isinstance(e, java.lang.Exception):
-                e.printStackTrace() #todo: log the java stacktrace
+                e.printStackTrace()  # todo: log the java stacktrace
             elif isinstance(e, urllib2.HTTPError):
                 if e.headers.get("content-type", "") == "text/plain":
                     msg = e.read()
+            elif isinstance(e, TouchFormsException):
+                error_type = type(e).__name__
 
             logging.exception('error handling request')
-            self.send_error(500, u'internal error handling request: %s: %s%s' % (type(e), str(e), 
-                                                                                 u": %s" % msg if msg else ""))
+            self.send_error(
+                500,
+                u'internal error handling request: %s: %s%s' % (
+                    type(e), unicode(e), u": %s" % msg if msg else ""),
+                error_type,
+                msg if msg else None,
+            )
             return
-
-        reply = json.dumps(data_out)
 
         logging.debug('returned: [%s]' % reply)
 
@@ -86,7 +94,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(reply.encode('utf-8'))
         
-    def send_error(self, code, message=None):
+    def send_error(self, code, message=None, error_type=None, human_readable_message=None):
         """
         Override send_error to always return JSON.
         """
@@ -99,22 +107,26 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             short, long = '???', '???'
         if message is None:
             message = short
+        if human_readable_message is None:
+            human_readable_message = message
         explain = long
-        self.log_error("code %d, message %s", code, message)
+        self.log_error("code %d, message %s", code, message.encode("ascii", "xmlcharrefreplace")) # This logs to stderr, which only takes ascii
         content = json.dumps({'status': 'error',
+                              'error_type': error_type,
                               'code': code, 
-                              'message': message, 
+                              'message': message,
+                              'human_readable_message': human_readable_message,
                               'explain': explain})
 
         # if this is more than one line it messes up the response content
         message = message.split("\n")[0] if message else ""
-        self.send_response(code, message)
+        self.send_response(code, message.encode("ascii", "xmlcharrefreplace"))
         self.send_header("Content-Type", self.error_content_type)
         self.cross_origin_header()
         self.send_header('Connection', 'close')
         self.end_headers()
         if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
-            self.wfile.write(content)
+            self.wfile.write(content.encode("utf-8"))
 
     # we don't support GET but still want to allow heartbeat responses via cross-origin
     def do_GET(self):
@@ -145,14 +157,10 @@ def handle_request(content, server):
             if not form_spec:
                 return {'error': 'form specification required (form-name, form-content, or form-url)'}
 
-            inst_fields = {'instance-content': 'raw'}
-            inst_spec = None
-            for k, v in inst_fields.iteritems():
-                try:
-                    inst_spec = (v, content[k])
-                    break
-                except KeyError:
-                    pass
+            if 'instance-content' in content:
+                inst_spec = ('raw', content['instance-content'])
+            else:
+                inst_spec = None
 
             session_data = content.get("session-data", {})
             return xformplayer.open_form(form_spec, inst_spec, **{
@@ -198,7 +206,15 @@ def handle_request(content, server):
             if 'session-id' not in content:
                 return {'error': 'session id required'}
 
-            return xformplayer.current_question(content['session-id'])
+            override_state = None
+            # override api_auth with the current auth to avoid issues with expired django sessions
+            # when editing saved forms
+            hq_auth = content.get('hq_auth')
+            if hq_auth:
+                override_state = {
+                    'api_auth': hq_auth,
+                }
+            return xformplayer.current_question(content['session-id'], override_state=override_state)
 
         elif action == 'heartbeat':
             if 'session-id' not in content:

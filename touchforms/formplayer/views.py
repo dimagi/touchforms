@@ -1,3 +1,4 @@
+from django.http.response import HttpResponseServerError
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.views.decorators.http import require_POST
@@ -199,15 +200,27 @@ def player_proxy(request):
     """
     Proxy to an xform player, to avoid cross-site scripting issues
     """
-    data = request.raw_post_data
+    data = request.body
     auth_cookie = request.COOKIES.get('sessionid')
-    response = api.post_data(data, settings.XFORMS_PLAYER_URL, 
-                             content_type="text/json", auth=DjangoAuth(auth_cookie))
+    try:
+        response = api.post_data(data, settings.XFORMS_PLAYER_URL,
+                                 content_type="text/json", auth=DjangoAuth(auth_cookie))
 
-    track_session(request, json.loads(data), json.loads(response))
-    return HttpResponse(response)
+        track_session(request, json.loads(data), json.loads(response))
+        return HttpResponse(response)
+    except IOError:
+        logging.exception('Unable to connect to touchforms.')
+        msg = _(
+            'An error occurred while trying to connect to the CloudCare service. '
+            'If you have problems filling in the rest of your form please report an issue.'
+        )
+        return HttpResponseServerError(json.dumps({'message': msg}))
+
 
 def track_session(request, payload, response):
+    def _concat_name(name):
+        return u'...{0}'.format(name[-96:]) if len(name) > 99 else name
+
     action = payload['action']
     if action == 'new-form' and 'form-url' in payload and 'session_id' in response:
         session_id = response['session_id']
@@ -219,7 +232,7 @@ def track_session(request, payload, response):
             session_id=session_id,
             user=request.user,
             form=payload['form-url'],
-            session_name=session_name,
+            session_name=_concat_name(session_name),
             app_id=app_id,
         )
         sess.save()

@@ -1,8 +1,10 @@
 from __future__ import with_statement
 import tempfile
+from gettext import gettext as _
 import os
-
+from xcp import EmptyCacheFileException
 import settings
+from com.xhaus.jyson import JSONDecodeError
 import com.xhaus.jyson.JysonCodec as json
 
 def persist(sess):
@@ -11,13 +13,15 @@ def persist(sess):
     timeout = sess.staleness_window
     cache_set(sess_id, state, timeout)
 
-def restore(sess_id, factory):
+def restore(sess_id, factory, override_state=None):
     try:
         state = cache_get(sess_id)
     except KeyError:
         return None
 
     state['uuid'] = sess_id
+    if override_state:
+        state.update(override_state)
     return factory(**state)
 
 # TODO integrate with real caching framework (django ideally)
@@ -32,6 +36,13 @@ def cache_get(key):
             return json.loads(f.read().decode('utf8'))
     except IOError:
         raise KeyError
+    except JSONDecodeError:
+        raise EmptyCacheFileException(_(
+            u"Unfortunately an error has occurred on the server and your form cannot be saved. "
+            u"Please take note of the questions you have filled out so far, then refresh this page and enter them again. "
+            u"If this problem persists, please report an issue."
+        ))
+
 
 def cache_del(key):
     raise RuntimeError('not implemented')
