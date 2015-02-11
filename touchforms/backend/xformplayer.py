@@ -221,7 +221,6 @@ class XFormSession:
             else:
                 return FormIndex.isSubElement(parent_ix, form_ix)
 
-
         form_ix = step(parent_ix, True)
         while ix_in_scope(form_ix):
             relevant = self.fem.isIndexRelevant(form_ix)
