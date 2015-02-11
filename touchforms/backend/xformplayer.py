@@ -214,7 +214,13 @@ class XFormSession:
             return next_ix
 
         def ix_in_scope(form_ix):
-            return form_ix.isInForm()
+            if form_ix.isEndOfFormIndex():
+                return False
+            elif parent_ix.isBeginningOfFormIndex():
+                return True
+            else:
+                return FormIndex.isSubElement(parent_ix, form_ix)
+
 
         form_ix = step(parent_ix, True)
         while ix_in_scope(form_ix):
