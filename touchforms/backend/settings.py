@@ -10,6 +10,15 @@ ALLOW_CROSS_ORIGIN = False
 PERSIST_SESSIONS = True
 PERSISTENCE_DIRECTORY = None  # defaults to /tmp
 
+
+# new peristence stuff
+
+#JDBC_URL = NONE #
+#POSTGRES_USERNAME = "wpride1"
+#POSTGRES_PASSWORD = "123"
+#JDCC_DRIVER = "org.postgresql.Driver"
+
+
 # be more forgiving about data types in api
 HACKS_MODE = True
 

@@ -20,6 +20,8 @@ def init_classpath():
         for jar in jars:
             if jar not in sys.path:
                 sys.path.append(os.path.join(jardir, jar))
+                print "jar: " + jar + " added"
+            print "jar: " + jar + " + already added."
         initialized = True
 
 def init_jr_engine():
