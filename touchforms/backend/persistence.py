@@ -59,9 +59,10 @@ def postgres_lookup(key):
     cursor = conn.cursor()
     query = "SELECT sess_json FROM " + settings.POSTGRES_TABLE + " WHERE sess_id='" + key + "'"
     cursor.execute(query)
-    value = cursor.fetchone()[0].getValue()
+    value = cursor.fetchone()[0].getValue()[1:-1]   # yeah... this is terrible. We get the Row -> PGObject ->
+                                                    # Unicode -> Strip [] so that json will convert to dict
     conn.close()
-    jsonobj = json.loads(value[1:-1].decode('utf8'))
+    jsonobj = json.loads(value.decode('utf8'))
     return jsonobj
 
 
