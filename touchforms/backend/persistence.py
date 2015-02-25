@@ -1,26 +1,16 @@
 from __future__ import with_statement
-import tempfile
-from gettext import gettext as _
-import os
-from xcp import EmptyCacheFileException
 import settings
 from com.xhaus.jyson import JSONDecodeError
+from xcp import EmptyCacheFileException
 import com.xhaus.jyson.JysonCodec as json
-from java.sql import DriverManager, PreparedStatement, Connection, ResultSet, SQLException
-from java.lang import Class
 from com.ziclix.python.sql import zxJDBC
-from org.postgresql import Driver
-from org.python.core import Py
-import sys
-import util
 import classPathHacker
 
 
 def persist(sess):
     sess_id = sess.uuid
     state = sess.session_state()
-    timeout = sess.staleness_window
-    cache_set(sess_id, state, timeout)
+    cache_set(sess_id, state)
 
 
 def restore(sess_id, factory, override_state=None):
@@ -36,39 +26,50 @@ def restore(sess_id, factory, override_state=None):
     return factory(**state)
 
 
-def cache_set(key, value, timeout):
+def cache_set(key, value):
     if key is None:
         raise KeyError
-    perform_insert(key, value)
+    postgres_insert(key, value)
 
 
 def cache_get(key):
     if key is None:
         raise KeyError
-    return perform_lookup(key)
+    try:
+        return postgres_lookup(key)
+    except JSONDecodeError:
+        raise EmptyCacheFileException(_(
+            u"Unfortunately an error has occurred on the server and your form cannot be saved. "
+            u"Please take note of the questions you have filled out so far, then refresh this page and enter them again. "
+            u"If this problem persists, please report an issue."
+        ))
 
 
 def cache_del(key):
-    print "derp"
-
-
-def perform_lookup(key):
     conn = get_conn()
     cursor = conn.cursor()
-    query = "SELECT sess_json FROM sessions7 WHERE sess_id='" + key + "'"
-    cursor.execute(query)
-    row = cursor.fetchone()
-    value = row[0]
+    delete_query = "DELETE FROM " + settings.POSTGRES_TABLE + " WHERE sess_id='" + key + "'"
+    cursor.execute(delete_query)
+    conn.commit()
     conn.close()
-    jsonobj = json.loads(value.getValue()[1:-1].decode('utf8'))
+
+
+def postgres_lookup(key):
+    conn = get_conn()
+    cursor = conn.cursor()
+    query = "SELECT sess_json FROM " + settings.POSTGRES_TABLE + " WHERE sess_id='" + key + "'"
+    cursor.execute(query)
+    value = cursor.fetchone()[0].getValue()
+    conn.close()
+    jsonobj = json.loads(value[1:-1].decode('utf8'))
     return jsonobj
 
 
-def perform_insert(key, value):
+def postgres_insert(key, value):
     conn = get_conn()
     cursor = conn.cursor()
-    delete_query = "DELETE FROM sessions7 WHERE sess_id='" + key + "'"
-    insert_query = "INSERT INTO sessions7 (sess_id, sess_json) VALUES ('" + key + "', $$[" + json.dumps(value).encode('utf8') + "]$$)"
+    delete_query = "DELETE FROM " + settings.POSTGRES_TABLE + " WHERE sess_id='" + key + "'"
+    insert_query = "INSERT INTO " + settings.POSTGRES_TABLE + " (sess_id, sess_json) VALUES ('" + key + "', $$[" + json.dumps(value).encode('utf8') + "]$$)"
     cursor.execute(delete_query)
     cursor.execute(insert_query)
     conn.commit()
@@ -76,10 +77,10 @@ def perform_insert(key, value):
 
 
 def get_conn():
-    jdbc_url = "jdbc:postgresql:touchform_sessions"
-    username = "wpride1"
-    password = "123"
-    driver = "org.postgresql.Driver"
+    jdbc_url = settings.POSTGRES_URL
+    username = settings.POSTGRES_USERNAME
+    password = settings.POSTGRES_PASSWORD
+    driver = settings.POSTGRES_DRIVER
 
     try:
         # if called from command line with .login CLASSPATH setup right,this works
@@ -87,8 +88,8 @@ def get_conn():
     except:
         # if called from Apache or account where the .login has not set CLASSPATH
         # need to use run-time CLASSPATH Hacker
-        jarLoad = classPathHacker.classPathHacker()
-        a = jarLoad.addFile("/Users/wpride1/commcare-hq/submodules/touchforms-src/touchforms/backend/jrlib/postgresql-9.4-1200.jdbc4.jar")
+        jarloader = classPathHacker.classPathHacker()
+        a = jarloader.addFile(settings.POSTGRES_JDBC_JAR)
         conn = zxJDBC.connect(jdbc_url, username, password, driver)
 
     return conn

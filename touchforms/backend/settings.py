@@ -11,13 +11,14 @@ PERSIST_SESSIONS = True
 PERSISTENCE_DIRECTORY = None  # defaults to /tmp
 
 
-# new peristence stuff
+# postgres peristence stuff
 
-#JDBC_URL = NONE #
-#POSTGRES_USERNAME = "wpride1"
-#POSTGRES_PASSWORD = "123"
-#JDCC_DRIVER = "org.postgresql.Driver"
-
+POSTGRES_URL = None
+POSTGRES_USERNAME = None
+POSTGRES_PASSWORD = None
+POSTGRES_DRIVER = None
+POSTGRES_TABLE = None
+POSTGRES_JDBC_JAR = None
 
 # be more forgiving about data types in api
 HACKS_MODE = True
