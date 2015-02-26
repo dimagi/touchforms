@@ -13,12 +13,12 @@ PERSISTENCE_DIRECTORY = None  # defaults to /tmp
 
 # postgres peristence stuff
 
-POSTGRES_URL = None
-POSTGRES_USERNAME = None
-POSTGRES_PASSWORD = None
-POSTGRES_DRIVER = None
-POSTGRES_TABLE = None
-POSTGRES_JDBC_JAR = None
+POSTGRES_URL = "jdbc:postgresql:touchform_sessions"  # whatever our DB name is after ':'
+POSTGRES_USERNAME = "admin"
+POSTGRES_PASSWORD = "*******"
+POSTGRES_DRIVER = "org.postgresql.Driver"
+POSTGRES_TABLE = "sessions"
+POSTGRES_JDBC_JAR = "${COMMCARE_HOME}/submodules/touchforms-src/touchforms/backend/jrlib/postgresql-9.4-1200.jdbc4.jar"
 
 # be more forgiving about data types in api
 HACKS_MODE = True

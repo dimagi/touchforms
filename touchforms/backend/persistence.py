@@ -1,10 +1,12 @@
 from __future__ import with_statement
 import settings
+import tempfile
 from com.xhaus.jyson import JSONDecodeError
 from xcp import EmptyCacheFileException
 import com.xhaus.jyson.JysonCodec as json
 from com.ziclix.python.sql import zxJDBC
 import classPathHacker
+import os
 
 
 def persist(sess):
@@ -37,8 +39,10 @@ def cache_get(key):
         raise KeyError
     try:
         return postgres_lookup(key)
+    except KeyError:
+        return cache_get_old(key)
     except JSONDecodeError:
-        raise EmptyCacheFileException(_(
+        raise EmptyCacheFileException((
             u"Unfortunately an error has occurred on the server and your form cannot be saved. "
             u"Please take note of the questions you have filled out so far, then refresh this page and enter them again. "
             u"If this problem persists, please report an issue."
@@ -57,8 +61,11 @@ def cache_del(key):
 def postgres_lookup(key):
     conn = get_conn()
     cursor = conn.cursor()
+    print "cursor type: " + str(type(cursor))
     query = "SELECT sess_json FROM " + settings.POSTGRES_TABLE + " WHERE sess_id='" + key + "'"
     cursor.execute(query)
+    if cursor.rowcount is 0:
+        raise KeyError
     value = cursor.fetchone()[0].getValue()[1:-1]   # yeah... this is terrible. We get the Row -> PGObject ->
                                                     # Unicode -> Strip [] so that json will convert to dict
     conn.close()
@@ -84,13 +91,35 @@ def get_conn():
     driver = settings.POSTGRES_DRIVER
 
     try:
-        # if called from command line with .login CLASSPATH setup right,this works
+        # try to connect regularly
         conn = zxJDBC.connect(jdbc_url, username, password, driver)
     except:
-        # if called from Apache or account where the .login has not set CLASSPATH
-        # need to use run-time CLASSPATH Hacker
+        # else fall back to this workaround
         jarloader = classPathHacker.classPathHacker()
         a = jarloader.addFile(settings.POSTGRES_JDBC_JAR)
         conn = zxJDBC.connect(jdbc_url, username, password, driver)
 
     return conn
+
+
+# now deprecated old method, used for fallback
+def cache_get_old(key):
+    try:
+        with open(cache_path(key)) as f:
+            return json.loads(f.read().decode('utf8'))
+    except IOError:
+        raise KeyError
+    except JSONDecodeError:
+        raise EmptyCacheFileException(_(
+            u"Unfortunately an error has occurred on the server and your form cannot be saved. "
+            u"Please take note of the questions you have filled out so far, then refresh this page and enter them again. "
+            u"If this problem persists, please report an issue."
+        ))
+
+
+def cache_path(key):
+    # todo: make this use something other than the filesystem
+    persistence_dir = settings.PERSISTENCE_DIRECTORY or tempfile.gettempdir()
+    if not os.path.exists(persistence_dir):
+        os.makedirs(persistence_dir)
+    return os.path.join(persistence_dir, 'tfsess-%s' % key)
