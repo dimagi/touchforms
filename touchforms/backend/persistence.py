@@ -18,7 +18,6 @@ def persist(sess):
 def restore(sess_id, factory, override_state=None):
     try:
         state = cache_get(sess_id)
-        print "final state: " + str(state)
     except KeyError:
         return None
 
@@ -41,12 +40,6 @@ def cache_get(key):
         return postgres_lookup(key)
     except KeyError:
         return cache_get_old(key)
-    except JSONDecodeError:
-        raise EmptyCacheFileException((
-            u"Unfortunately an error has occurred on the server and your form cannot be saved. "
-            u"Please take note of the questions you have filled out so far, then refresh this page and enter them again. "
-            u"If this problem persists, please report an issue."
-        ))
 
 
 def cache_del(key):
@@ -61,13 +54,16 @@ def cache_del(key):
 def postgres_lookup(key):
     conn = get_conn()
     cursor = conn.cursor()
-    print "cursor type: " + str(type(cursor))
-    query = "SELECT sess_json FROM " + settings.POSTGRES_TABLE + " WHERE sess_id='" + key + "'"
-    cursor.execute(query)
+
+    sel_sql = replace_table("SELECT * FROM %(kwarg)s WHERE sess_id=?")
+    sel_params = [str(key)]
+
+    cursor.execute(sel_sql, sel_params)
+
     if cursor.rowcount is 0:
         raise KeyError
-    value = cursor.fetchone()[0].getValue()[1:-1]   # yeah... this is terrible. We get the Row -> PGObject ->
-                                                    # Unicode -> Strip [] so that json will convert to dict
+    value = cursor.fetchone()[1]
+
     conn.close()
     jsonobj = json.loads(value.decode('utf8'))
     return jsonobj
@@ -76,10 +72,20 @@ def postgres_lookup(key):
 def postgres_insert(key, value):
     conn = get_conn()
     cursor = conn.cursor()
-    delete_query = "DELETE FROM " + settings.POSTGRES_TABLE + " WHERE sess_id='" + key + "'"
-    insert_query = "INSERT INTO " + settings.POSTGRES_TABLE + " (sess_id, sess_json) VALUES ('" + key + "', $$[" + json.dumps(value).encode('utf8') + "]$$)"
-    cursor.execute(delete_query)
-    cursor.execute(insert_query)
+
+    sel_sql = replace_table("SELECT * FROM %(kwarg)s WHERE sess_id=?")
+    sel_params = [str(key)]
+    cursor.execute(sel_sql, sel_params)
+    if cursor.rowcount is not 0:
+        del_sql = replace_table("DELETE FROM %(kwarg)s WHERE sess_id=?")
+        del_params = [str(key)]
+        cursor.execute(del_sql, del_params)
+
+    ins_sql = replace_table("INSERT INTO %(kwarg)s (sess_id, sess_json) VALUES (?, ?)")
+    ins_params = [str(key), json.dumps(value).encode('utf8')]
+
+    cursor.execute(ins_sql, ins_params)
+
     conn.commit()
     conn.close()
 
@@ -102,23 +108,27 @@ def get_conn():
     return conn
 
 
+def replace_table(qry):
+    table = settings.POSTGRES_TABLE
+    return qry % {'kwarg': table}
+
+
 # now deprecated old method, used for fallback
 def cache_get_old(key):
     try:
-        with open(cache_path(key)) as f:
+        with open(cache_path_old(key)) as f:
             return json.loads(f.read().decode('utf8'))
     except IOError:
         raise KeyError
     except JSONDecodeError:
-        raise EmptyCacheFileException(_(
+        raise EmptyCacheFileException((
             u"Unfortunately an error has occurred on the server and your form cannot be saved. "
             u"Please take note of the questions you have filled out so far, then refresh this page and enter them again. "
             u"If this problem persists, please report an issue."
         ))
 
 
-def cache_path(key):
-    # todo: make this use something other than the filesystem
+def cache_path_old(key):
     persistence_dir = settings.PERSISTENCE_DIRECTORY or tempfile.gettempdir()
     if not os.path.exists(persistence_dir):
         os.makedirs(persistence_dir)
