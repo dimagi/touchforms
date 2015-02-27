@@ -45,20 +45,30 @@ def cache_get(key):
 def cache_del(key):
     conn = get_conn()
     cursor = conn.cursor()
-    delete_query = "DELETE FROM " + settings.POSTGRES_TABLE + " WHERE sess_id='" + key + "'"
-    cursor.execute(delete_query)
+    postgres_delete(cursor, key)
     conn.commit()
     conn.close()
+
+
+def postgres_select(cursor, key):
+    sel_sql = replace_table("SELECT * FROM %(kwarg)s WHERE sess_id=?")
+    sel_params = [str(key)]
+    cursor.execute(sel_sql, sel_params)
+
+
+def postgres_delete(cursor, key):
+    postgres_select(cursor, key)
+    if cursor.rowcount is not 0:
+        del_sql = replace_table("DELETE FROM %(kwarg)s WHERE sess_id=?")
+        del_params = [str(key)]
+        cursor.execute(del_sql, del_params)
 
 
 def postgres_lookup(key):
     conn = get_conn()
     cursor = conn.cursor()
 
-    sel_sql = replace_table("SELECT * FROM %(kwarg)s WHERE sess_id=?")
-    sel_params = [str(key)]
-
-    cursor.execute(sel_sql, sel_params)
+    postgres_select(cursor, key)
 
     if cursor.rowcount is 0:
         raise KeyError
@@ -73,13 +83,7 @@ def postgres_insert(key, value):
     conn = get_conn()
     cursor = conn.cursor()
 
-    sel_sql = replace_table("SELECT * FROM %(kwarg)s WHERE sess_id=?")
-    sel_params = [str(key)]
-    cursor.execute(sel_sql, sel_params)
-    if cursor.rowcount is not 0:
-        del_sql = replace_table("DELETE FROM %(kwarg)s WHERE sess_id=?")
-        del_params = [str(key)]
-        cursor.execute(del_sql, del_params)
+    postgres_delete(cursor, key)
 
     ins_sql = replace_table("INSERT INTO %(kwarg)s (sess_id, sess_json) VALUES (?, ?)")
     ins_params = [str(key), json.dumps(value).encode('utf8')]
