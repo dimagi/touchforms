@@ -31,7 +31,7 @@ def cache_set(key, value):
     if key is None:
         raise KeyError
     if settings.USES_POSTGRES:
-        postgres_insert(key, value)
+        postgres_set(key, value)
     else:
         with open(cache_get_file_path(key), 'w') as f:
             f.write(json.dumps(value).encode('utf8'))
@@ -79,18 +79,30 @@ def postgres_lookup_command(cursor, key):
     return jsonobj
 
 
-def postgres_insert(key, value):
-    postgres_helper(postgres_insert_command, key, value)
+def postgres_update_command(cursor, key, value):
+    upd_sql = replace_table("UPDATE %(kwarg)s SET sess_json = ?  WHERE sess_id = ?")
+    upd_params = [json.dumps(value).encode('utf8'), str(key)]
+    cursor.execute(upd_sql, upd_params)
 
 
 def postgres_insert_command(cursor, key, value):
-
-    postgres_delete(cursor, key)
-
     ins_sql = replace_table("INSERT INTO %(kwarg)s (sess_id, sess_json) VALUES (?, ?)")
     ins_params = [str(key), json.dumps(value).encode('utf8')]
-
     cursor.execute(ins_sql, ins_params)
+
+
+def postgres_set(key, value):
+    postgres_helper(postgres_set_command, key, value)
+
+
+def postgres_set_command(cursor, key, value):
+
+    postgres_select(cursor, key)
+
+    if cursor.rowcount > 0:
+        postgres_update_command(cursor, key, value)
+    else:
+        postgres_insert_command(cursor, key, value)
 
 
 def postgres_helper(method, *kwargs):
