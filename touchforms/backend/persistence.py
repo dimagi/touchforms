@@ -7,7 +7,6 @@ import com.xhaus.jyson.JysonCodec as json
 from com.ziclix.python.sql import zxJDBC
 import classPathHacker
 import os
-import xformplayer
 
 
 def persist(sess):
@@ -43,14 +42,6 @@ def cache_get(key):
         return cache_get_old(key)
 
 
-def cache_del(key):
-    conn = get_conn()
-    cursor = conn.cursor()
-    postgres_delete(cursor, key)
-    conn.commit()
-    conn.close()
-
-
 def postgres_select(cursor, key):
     sel_sql = replace_table("SELECT * FROM %(kwarg)s WHERE sess_id=?")
     sel_params = [str(key)]
@@ -66,8 +57,10 @@ def postgres_delete(cursor, key):
 
 
 def postgres_lookup(key):
-    conn = get_conn()
-    cursor = conn.cursor()
+    return postgres_helper(postgres_lookup_command, key)
+
+
+def postgres_lookup_command(cursor, key):
 
     postgres_select(cursor, key)
 
@@ -75,15 +68,15 @@ def postgres_lookup(key):
         raise KeyError
     value = cursor.fetchone()[1]
 
-    conn.close()
     jsonobj = json.loads(value.decode('utf8'))
     return jsonobj
 
 
 def postgres_insert(key, value):
-    
-    conn = get_conn()
-    cursor = conn.cursor()
+    postgres_helper(postgres_insert_command, key, value)
+
+
+def postgres_insert_command(cursor, key, value):
 
     postgres_delete(cursor, key)
 
@@ -92,8 +85,14 @@ def postgres_insert(key, value):
 
     cursor.execute(ins_sql, ins_params)
 
+
+def postgres_helper(method, *kwargs):
+    conn = get_conn()
+    cursor = conn.cursor()
+    ret = method(cursor, *kwargs)
     conn.commit()
     conn.close()
+    return ret
 
 
 def get_conn():
