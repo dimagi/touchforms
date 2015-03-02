@@ -30,16 +30,23 @@ def restore(sess_id, factory, override_state=None):
 def cache_set(key, value):
     if key is None:
         raise KeyError
-    postgres_insert(key, value)
+    if settings.USES_POSTGRES:
+        postgres_insert(key, value)
+    else:
+        with open(cache_get_file_path(key), 'w') as f:
+            f.write(json.dumps(value).encode('utf8'))
 
 
 def cache_get(key):
     if key is None:
         raise KeyError
-    try:
-        return postgres_lookup(key)
-    except KeyError:
-        return cache_get_old(key)
+    if settings.USES_POSTGRES:
+        try:
+            return postgres_lookup(key)
+        except KeyError:
+            return cache_get_file(key)
+    else:
+        return cache_get_file(key)
 
 
 def postgres_select(cursor, key):
@@ -97,18 +104,13 @@ def postgres_helper(method, *kwargs):
 
 def get_conn():
 
-    params = {
-        'serverName': 'localhost:5432',
-        'databaseName': 'touchform_sessions',
-        'user': settings.POSTGRES_USERNAME,
-        'password': settings.POSTGRES_PASSWORD,
-    }
+    params = settings.DATABASE
 
     try:
         # try to connect regularly
         conn = apply(zxJDBC.connectx, ("org.postgresql.jdbc3.Jdbc3PoolingDataSource",), params)
     except:
-        # else fall back to this workaround
+        # else fall back to this workaround (we expect to do this)
         jarloader = classPathHacker.classPathHacker()
         a = jarloader.addFile(settings.POSTGRES_JDBC_JAR)
         conn = apply(zxJDBC.connectx, ("org.postgresql.jdbc3.Jdbc3PoolingDataSource",), params)
@@ -122,9 +124,9 @@ def replace_table(qry):
 
 
 # now deprecated old method, used for fallback
-def cache_get_old(key):
+def cache_get_file(key):
     try:
-        with open(cache_path_old(key)) as f:
+        with open(cache_get_file_path(key)) as f:
             return json.loads(f.read().decode('utf8'))
     except IOError:
         raise KeyError
@@ -136,7 +138,7 @@ def cache_get_old(key):
         ))
 
 
-def cache_path_old(key):
+def cache_get_file_path(key):
     persistence_dir = settings.PERSISTENCE_DIRECTORY or tempfile.gettempdir()
     if not os.path.exists(persistence_dir):
         os.makedirs(persistence_dir)
