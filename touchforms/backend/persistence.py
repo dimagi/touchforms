@@ -7,6 +7,7 @@ import com.xhaus.jyson.JysonCodec as json
 from com.ziclix.python.sql import zxJDBC
 import classPathHacker
 import os
+import xformplayer
 
 
 def persist(sess):
@@ -80,6 +81,7 @@ def postgres_lookup(key):
 
 
 def postgres_insert(key, value):
+    
     conn = get_conn()
     cursor = conn.cursor()
 
@@ -95,19 +97,22 @@ def postgres_insert(key, value):
 
 
 def get_conn():
-    jdbc_url = settings.POSTGRES_URL
-    username = settings.POSTGRES_USERNAME
-    password = settings.POSTGRES_PASSWORD
-    driver = settings.POSTGRES_DRIVER
+
+    params = {
+        'serverName': 'localhost:5432',
+        'databaseName': 'touchform_sessions',
+        'user': settings.POSTGRES_USERNAME,
+        'password': settings.POSTGRES_PASSWORD,
+    }
 
     try:
         # try to connect regularly
-        conn = zxJDBC.connect(jdbc_url, username, password, driver)
+        conn = apply(zxJDBC.connectx, ("org.postgresql.jdbc3.Jdbc3PoolingDataSource",), params)
     except:
         # else fall back to this workaround
         jarloader = classPathHacker.classPathHacker()
         a = jarloader.addFile(settings.POSTGRES_JDBC_JAR)
-        conn = zxJDBC.connect(jdbc_url, username, password, driver)
+        conn = apply(zxJDBC.connectx, ("org.postgresql.jdbc3.Jdbc3PoolingDataSource",), params)
 
     return conn
 
