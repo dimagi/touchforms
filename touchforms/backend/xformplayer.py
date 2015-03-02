@@ -29,7 +29,6 @@ from org.javarosa.core.model.data import IntegerData, LongData, DecimalData, Str
 from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.core.util import UnregisteredLocaleException
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
-from org.postgresql.jdbc3 import Jdbc3PoolingDataSource as ConnectionPool
 
 from touchcare import CCInstances
 from util import query_factory
@@ -37,6 +36,7 @@ import persistence
 import settings
 
 DEBUG = False
+
 
 class NoSuchSession(Exception):
     pass
@@ -52,7 +52,6 @@ class global_state_mgr(object):
         self.lock = threading.Lock()
         self.ctx.setNumSessions(0)
 
-    
     def new_session(self, xfsess):
         with self.lock:
             self.session_cache[xfsess.uuid] = xfsess
@@ -108,7 +107,6 @@ class global_state_mgr(object):
         self.ctx.setNumSessions(num_sess_active)
 
         return {'purged': num_sess_purged, 'active': num_sess_active}
-
 
 global_state = None
 def _init(ctx):
