@@ -6,17 +6,12 @@ from xcp import EmptyCacheFileException
 import settings
 from com.xhaus.jyson import JSONDecodeError
 import com.xhaus.jyson.JysonCodec as json
-from org.mapdb import DB, DBMaker
-from java.io import File
-from java.lang import System
-
 
 def persist(sess):
     sess_id = sess.uuid
     state = sess.session_state()
     timeout = sess.staleness_window
     cache_set(sess_id, state, timeout)
-
 
 def restore(sess_id, factory, override_state=None):
     try:
@@ -29,30 +24,32 @@ def restore(sess_id, factory, override_state=None):
         state.update(override_state)
     return factory(**state)
 
-
+# TODO integrate with real caching framework (django ideally)
 def cache_set(key, value, timeout):
-    tf_db = get_map_db()
-    sess_map = tf_db.getTreeMap("touchforms-map")
-    sess_map.put(key, value)
-    tf_db.commit()
+    with open(cache_path(key), 'w') as f:
+        f.write(json.dumps(value).encode('utf8'))
 
-
+# TODO integrate with real caching framework (django ideally)
 def cache_get(key):
-    tf_db = get_map_db()
-    sess_map = tf_db.getTreeMap("touchforms-map")
-    return sess_map.get(key)
+    try:
+        with open(cache_path(key)) as f:
+            return json.loads(f.read().decode('utf8'))
+    except IOError:
+        raise KeyError
+    except JSONDecodeError:
+        raise EmptyCacheFileException(_(
+            u"Unfortunately an error has occurred on the server and your form cannot be saved. "
+            u"Please take note of the questions you have filled out so far, then refresh this page and enter them again. "
+            u"If this problem persists, please report an issue."
+        ))
 
 
 def cache_del(key):
-    tf_db = get_map_db()
-    sess_map = tf_db.getTreeMap("touchforms-map")
-    sess_map.remove(key)
+    raise RuntimeError('not implemented')
 
-
-def get_map_db():
-    temp_file = (settings.PERSISTENCE_DIRECTORY or tempfile.gettempdir()) + "/tf-map-db"
-    f = File(temp_file)
-    if not f.exists():
-        f = File(temp_file)
-    db = DBMaker.newFileDB(f).closeOnJvmShutdown().make()
-    return db
+def cache_path(key):
+    # todo: make this use something other than the filesystem
+    persistence_dir = settings.PERSISTENCE_DIRECTORY or tempfile.gettempdir()
+    if not os.path.exists(persistence_dir):
+        os.makedirs(persistence_dir)
+    return os.path.join(persistence_dir, 'tfsess-%s' % key)
