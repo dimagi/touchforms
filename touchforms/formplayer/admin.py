@@ -1,5 +1,5 @@
 from django.contrib import admin
-from touchforms.formplayer.models import XForm, EntrySession
+from touchforms.formplayer.models import XForm, EntrySession, Session
 
 
 class XFormAdmin(admin.ModelAdmin):
@@ -11,3 +11,4 @@ class EntrySessionAdmin(admin.ModelAdmin):
 
 admin.site.register(XForm, XFormAdmin)
 admin.site.register(EntrySession, EntrySessionAdmin)
+admin.site.register(Session)
