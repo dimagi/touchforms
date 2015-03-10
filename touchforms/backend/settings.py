@@ -14,7 +14,7 @@ PERSISTENCE_DIRECTORY = None  # defaults to /tmp
 # postgres peristence stuff
 USES_POSTGRES = True
 POSTGRES_TABLE = "formplayer_session"
-POSTGRES_JDBC_JAR = "{{FILEPATH}}/submodules/touchforms-src/touchforms/backend/jrlib/postgresql-9.4-1200.jdbc3.jar"
+POSTGRES_JDBC_JAR = "{{FILEPATH}}/submodules/touchforms-src/touchforms/backend/jrlib/postgresql-9.0-801.jdbc3.jar"
 
 # be more forgiving about data types in api
 HACKS_MODE = True
