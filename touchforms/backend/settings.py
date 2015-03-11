@@ -1,4 +1,4 @@
-
+import os
 # TODO how to harmonize this with django settings?
 
 # allow cross-origin requests to touchforms daemon. if false, all access to
@@ -10,11 +10,10 @@ ALLOW_CROSS_ORIGIN = False
 PERSIST_SESSIONS = True
 PERSISTENCE_DIRECTORY = None  # defaults to /tmp
 
-
 # postgres peristence stuff
 USES_POSTGRES = True
 POSTGRES_TABLE = "formplayer_session"
-POSTGRES_JDBC_JAR = "{{FILEPATH}}/submodules/touchforms-src/touchforms/backend/jrlib/postgresql-9.0-801.jdbc3.jar"
+POSTGRES_JDBC_JAR = "%s/jrlib/postgresql-9.0-801.jdbc3.jar"%os.path.dirname(os.path.abspath(__file__))
 
 # be more forgiving about data types in api
 HACKS_MODE = True
