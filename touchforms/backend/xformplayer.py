@@ -12,6 +12,9 @@ from java.util import Date
 from java.util import Vector
 from java.io import StringReader
 
+from xml.etree import ElementTree
+from xml.dom import minidom
+
 import customhandlers
 from util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect, to_arr, index_from_str
     
@@ -21,6 +24,7 @@ init_classpath()
 init_jr_engine()
 
 import com.xhaus.jyson.JysonCodec as json
+import xml.etree.ElementTree as ET
 
 from org.javarosa.xform.parse import XFormParser
 from org.javarosa.form.api import FormEntryModel, FormEntryController, FormEntryPrompt
@@ -207,6 +211,7 @@ class XFormSession:
         self._walk(form_ix, tree)
         return tree
 
+
     def _walk(self, parent_ix, siblings):
         def step(ix, descend):
             next_ix = self.fec.getAdjacentIndex(ix, True, descend)
@@ -221,6 +226,33 @@ class XFormSession:
             else:
                 return FormIndex.isSubElement(parent_ix, form_ix)
 
+        def prettify(elem):
+            """Return a pretty-printed XML string for the Element.
+            """
+            rough_string = ElementTree.tostring(elem, 'utf-8')
+            reparsed = minidom.parseString(rough_string)
+            return reparsed.toprettyxml(indent="  ")
+
+        def print_node(node, acc, a):
+
+            attribute_count = node.getAttributeCount()
+            for x in range (0, attribute_count):
+                a.set(node.getAttributeName(x), node.getAttributeValue(x))
+
+            if not node.isChildable():
+                a.text = node.getValue().getDisplayText()
+
+            for x in range(0, node.getNumChildren()):
+                child = node.getChildAt(x)
+                b = ET.SubElement(a, child.getName())
+                print_node(child, acc + " : " + node.getName(), b)
+
+        def update_xml():
+            root = self.fem.getForm().getMainInstance().getRoot()
+            a = ET.Element(root.getName())
+            print_node(root, "", a)
+            print prettify(a)
+
         form_ix = step(parent_ix, True)
         while ix_in_scope(form_ix):
             relevant = self.fem.isIndexRelevant(form_ix)
@@ -228,6 +260,8 @@ class XFormSession:
             if not relevant:
                 form_ix = step(form_ix, False)
                 continue
+
+            update_xml()
 
             evt = self.__parse_event(form_ix)
             evt['relevant'] = relevant
