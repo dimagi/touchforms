@@ -139,6 +139,9 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Origin', '*')
         
 def handle_request(content, server):
+
+    print "Handle Request"
+
     if 'action' not in content:
         return {'error': 'action required'}
 
@@ -273,7 +276,18 @@ def handle_request(content, server):
             xfsess = xformplayer.global_state.get_session(content['session-id'])
             return {"output": xfsess.output()}
 
+        elif action == 'get-instance-xml':
+            print "Get Instance XML 1"
+            if 'session-id' not in content:
+                return {'error': 'session id required'}
+            xfsess = xformplayer.global_state.get_instance_xml(content['session-id'])
+            print "Get Instance XML 2"
+            print xfsess.prettify1()
+            print "Get Instance XML 3"
+            return {"output": xfsess.prettify1()}
+
         else:
+            print "Unrecognized Action: " + action
             return {'error': 'unrecognized action'}
     
     except xformplayer.NoSuchSession:

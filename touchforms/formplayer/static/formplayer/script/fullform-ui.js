@@ -132,9 +132,10 @@ function Form(json, adapter) {
   this.children = [];
 
   this.init_render = function() {
-    this.$container = $('<div><h1 id="title"></h1><div id="form"></div><input id="submit" type="submit" value="Submit" /></div>');
+    this.$container = $('<div><h1 id="title"></h1><div id="form"></div><input id="submit" type="submit" value="Submit" /></div><div id="instance-xml"><p>DERP!</p></div>');
     this.$title = this.$container.find('#title');
     this.$children = this.$container.find('#form');
+    this.$instancexml = this.$container.find('#instance-xml');
 
     this.$title.text(json.title);
     render_elements(this, json.tree);
@@ -160,6 +161,10 @@ function Form(json, adapter) {
 
   this.child_container = function() {
     return this.$children;
+  }
+
+  this.instance_container = function() {
+      return this.$instancexml
   }
 
   this.submitting = function() {

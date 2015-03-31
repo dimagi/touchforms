@@ -17,6 +17,9 @@ var ERROR_MESSAGE = "Something unexpected went wrong on that request. " +
     "Technical Details: ";
 
 function WebFormSession(params) {
+
+    //mark
+
     var self = this;
     self.heartbeat_has_failed = false;
     self.offline_mode = isOffline(params.xform_url);
@@ -69,7 +72,31 @@ function WebFormSession(params) {
         autocomplete: params.autocomplete_url
     };
 
+    self.buildInstance = function($div){
+        //window.alert("Build Instance");
+
+        var sess = this;
+
+        var adapter = new xformAjaxAdapter(this.form_spec, this.session_data, this.instance_xml,
+            function (p, cb, bl ) {
+                sess.serverRequest(p, cb, bl);
+            },
+            function (p) {
+                sess.submit(p);
+            },
+            this.onpresubmit,
+            {
+                allow_html: params.allow_html,
+                resourceMap: params.resourceMap
+            }
+        );
+
+        adapter.loadInstance($div, params.session_id);
+
+    }
+
     self.load = function ($div, init_lang, options) {
+
         /*
          options currently allows for two parameters:
          onLoading: a function to call when there are pending requests to the server
@@ -119,6 +146,8 @@ function WebFormSession(params) {
     self.serverRequest = function (params, callback, blocking) {
         var that = this;
         var url = that.urls.xform;
+
+        //alert("Sess server request params: " + params.keys());
 
         if (this.offline_mode) {
             // give local touchforms daemon credentials to talk to HQ independently

@@ -21,8 +21,12 @@ from . import api
 from touchforms.formplayer.api import DjangoAuth
 from touchforms.formplayer.const import PRELOADER_TAG_UID
 from datetime import datetime
+import sys
 
 def xform_list(request):
+
+    print "Xform List"
+
     if not settings.DEBUG:
         return HttpResponseNotFound()
 
@@ -56,6 +60,9 @@ def xform_list(request):
         }, context_instance=RequestContext(request))
                               
 def download(request, xform_id):
+
+    print "Download"
+
     """
     Download an xform
     """
@@ -80,6 +87,11 @@ def coalesce(*args):
 
 @csrf_exempt
 def enter_form(request, **kwargs):
+
+    print "Enter Form"
+
+    import traceback; traceback.print_stack()
+
     xform_id = kwargs.get('xform_id')
     xform = kwargs.get('xform')
     instance_xml = kwargs.get('instance_xml')
@@ -110,12 +122,19 @@ def enter_form(request, **kwargs):
     return form_entry_new(request, xform, instance_xml, session_data, 
                           input_mode, offline_mode, force_template)
 
-def form_entry_new(request, xform, instance_xml, session_data, input_mode, 
+def form_entry_new(request, xform, instance_xml, session_data, input_mode,
                    offline_mode, force_template=None):
+
+    print "Form Entry New"
+
+    import pdb; pdb.set_trace()
+
     """start a new touchforms/typeforms session"""
     if force_template is not None:
+        print ("force templ " + str(force_template))
         templ = force_template
     else:
+        print ("input mode: " + str(input_mode))
         templ = {
             'touch': 'touchforms/touchscreen.html',
             'type': 'typeforms.html',
@@ -197,6 +216,9 @@ def get_player_dimensions(request):
 @csrf_exempt
 @require_POST
 def player_proxy(request):
+    #import pdb; pdb.set_trace()
+    print "Player Proxy"
+
     """
     Proxy to an xform player, to avoid cross-site scripting issues
     """
@@ -217,7 +239,17 @@ def player_proxy(request):
         return HttpResponseServerError(json.dumps({'message': msg}))
 
 
+def load_instance(request):
+
+    print "Load Instance!"
+
+    return HttpResponse("derp")
+
+
 def track_session(request, payload, response):
+
+    print "Track Session"
+
     def _concat_name(name):
         return u'...{0}'.format(name[-96:]) if len(name) > 99 else name
 

@@ -72,6 +72,19 @@ class global_state_mgr(object):
                     return sess
                 else:
                     raise NoSuchSession()
+
+    def get_instance_xml(self, session_id, override_state=None):
+        with self.lock:
+            try:
+                return self.session_cache[session_id]
+            except KeyError:
+                # see if session has been persisted
+                sess = persistence.restore(session_id, XFormSession, override_state)
+                if sess:
+                    self.new_session(sess) # repopulate in-memory cache
+                    return sess
+                else:
+                    raise NoSuchSession()
         
     #todo: we're not calling this currently, but should, or else xform sessions will hang around in memory forever        
     def destroy_session(self, session_id):
@@ -112,11 +125,11 @@ class global_state_mgr(object):
         return {'purged': num_sess_purged, 'active': num_sess_active}
 
 global_state = None
+
+
 def _init(ctx):
     global global_state
     global_state = global_state_mgr(ctx)
-
-
 
 
 def load_form(xform, instance=None, extensions=[], session_data={}, api_auth=None):
@@ -212,6 +225,48 @@ class XFormSession:
         return tree
 
 
+
+    def build_ref(self, node, acc, a):
+
+        attribute_count = node.getAttributeCount()
+        for x in range (0, attribute_count):
+
+            if node.getAttributeValue(x) is None:
+                a.set(node.getAttributeName(x), "none")
+            else:
+                a.set(node.getAttributeName(x), node.getAttributeValue(x))
+
+        if not node.isChildable():
+            a.text = node.getValue().getDisplayText()
+            if a.text is None:
+                a.text = "none"
+
+        for x in range(0, node.getNumChildren()):
+            child = node.getChildAt(x)
+            b = ET.SubElement(a, child.getName())
+            self.build_ref(child, acc + " : " + node.getName(), b)
+
+    def prettify1(self):
+        """Return a pretty-printed XML string for the Element.
+        """
+        elem = self.fem.getForm().getMainInstance().getRoot()
+        a = ET.Element(elem.getName())
+
+        self.build_ref(elem, "", a)
+
+        rough_string = ElementTree.tostring(a, 'utf-8')
+        reparsed = minidom.parseString(rough_string)
+        return reparsed.toprettyxml(indent="  ")
+
+
+    def prettify(self, elem):
+        """Return a pretty-printed XML string for the Element.
+        """
+        rough_string = ElementTree.tostring(elem, 'utf-8')
+        reparsed = minidom.parseString(rough_string)
+        return reparsed.toprettyxml(indent="  ")
+
+
     def _walk(self, parent_ix, siblings):
         def step(ix, descend):
             next_ix = self.fec.getAdjacentIndex(ix, True, descend)
@@ -226,21 +281,21 @@ class XFormSession:
             else:
                 return FormIndex.isSubElement(parent_ix, form_ix)
 
-        def prettify(elem):
-            """Return a pretty-printed XML string for the Element.
-            """
-            rough_string = ElementTree.tostring(elem, 'utf-8')
-            reparsed = minidom.parseString(rough_string)
-            return reparsed.toprettyxml(indent="  ")
 
         def print_node(node, acc, a):
 
             attribute_count = node.getAttributeCount()
             for x in range (0, attribute_count):
-                a.set(node.getAttributeName(x), node.getAttributeValue(x))
+
+                if node.getAttributeValue(x) is None:
+                    a.set(node.getAttributeName(x), "none")
+                else:
+                    a.set(node.getAttributeName(x), node.getAttributeValue(x))
 
             if not node.isChildable():
                 a.text = node.getValue().getDisplayText()
+                if a.text is None:
+                    a.text = "none"
 
             for x in range(0, node.getNumChildren()):
                 child = node.getChildAt(x)
@@ -251,7 +306,7 @@ class XFormSession:
             root = self.fem.getForm().getMainInstance().getRoot()
             a = ET.Element(root.getName())
             print_node(root, "", a)
-            print prettify(a)
+            #print XFormSession.prettify(self, a)
 
         form_ix = step(parent_ix, True)
         while ix_in_scope(form_ix):

@@ -1,6 +1,8 @@
 
 HEARTBEAT_INTERVAL = 60.;
 
+//mark
+
 function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc, render_context) {
   this.formSpec = formSpec;
   this.sessionData = sessionData;
@@ -9,6 +11,19 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
   this.submitfunc = submitfunc;
   this.presubmitfunc = presubmitfunc;
   this.render_context = render_context;
+
+  this.loadInstance = function($div, sessid) {
+    alert("loadInstance 1: " + sessid);
+    //var adapter = this;
+    this.ajaxfunc({'action': 'get-instance-xml',
+                   //'session-id': session_id,
+                   'instance-content': savedInstance,
+                   'session-data': this.sessionData,
+                   'session-id': sessid},
+      function (resp) {
+        //adapter.form.reconcile(resp["tree"]);
+      });
+  }
 
   this.loadForm = function ($div, init_lang, onload, onerror) {
     var args = {
@@ -82,6 +97,19 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
 
     var adapter = this;
     this.ajaxfunc({'action': 'answer',
+                   'session-id': this.session_id,
+                   'ix': ix,
+                   'answer': answer},
+      function (resp) {
+        if (resp["status"] == "validation-error") {
+          adapter.showError(q, resp);
+        } else {
+          q.clearError();
+          getForm(q).reconcile(resp["tree"]);
+        }
+      });
+
+      this.ajaxfunc({'action': 'get-instance-xml',
                    'session-id': this.session_id,
                    'ix': ix,
                    'answer': answer},

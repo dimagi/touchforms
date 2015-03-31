@@ -4,6 +4,16 @@ function xformAjaxAdapter (formName, sessionData, savedInstance) {
   this.sessionData = sessionData;
   this.session_id = -1;
 
+  this.loadInstance = function($div) {
+    alert("loadInstance 4");
+    //var adapter = this;
+    this.ajaxfunc({'action': 'get-instance-xml',
+                   'session-id': this.session_id},
+      function (resp) {
+        //adapter.form.reconcile(resp["tree"]);
+      });
+  }
+
   this.loadForm = function (lang) {
     adapter = this;
 
