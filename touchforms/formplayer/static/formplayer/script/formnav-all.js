@@ -12,19 +12,6 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
   this.presubmitfunc = presubmitfunc;
   this.render_context = render_context;
 
-  this.loadInstance = function($div, sessid) {
-    alert("loadInstance 1: " + sessid);
-    //var adapter = this;
-    this.ajaxfunc({'action': 'get-instance-xml',
-                   //'session-id': session_id,
-                   'instance-content': savedInstance,
-                   'session-data': this.sessionData,
-                   'session-id': sessid},
-      function (resp) {
-        //adapter.form.reconcile(resp["tree"]);
-      });
-  }
-
   this.loadForm = function ($div, init_lang, onload, onerror) {
     var args = {
       'action': 'new-form',
@@ -109,16 +96,23 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
         }
       });
 
+
       this.ajaxfunc({'action': 'get-instance-xml',
                    'session-id': this.session_id,
                    'ix': ix,
                    'answer': answer},
       function (resp) {
+
+       var $instancexml = getForm(q).instance_container();
+       //$instancexml.append("<textarea>" + resp.output + "</textarea>")
+        //$instancexml.height((resp.output))
+        $instancexml.text(vkbeautify.xml(resp.output));
+        $instancexml.elastic();
         if (resp["status"] == "validation-error") {
           adapter.showError(q, resp);
         } else {
           q.clearError();
-          getForm(q).reconcile(resp["tree"]);
+
         }
       });
   }

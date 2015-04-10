@@ -132,7 +132,11 @@ function Form(json, adapter) {
   this.children = [];
 
   this.init_render = function() {
-    this.$container = $('<div><h1 id="title"></h1><div id="form"></div><input id="submit" type="submit" value="Submit" /></div><div id="instance-xml"><p>DERP!</p></div>');
+    this.$container = $('<div><h1 id="title"></h1><div id="form"></div>' +
+        '<input id="submit" type="submit" value="Submit" /></div>' +
+        '<div><textarea id="instance-xml" style="min-width: 800px;" name="instance-xml"/></textarea>' +
+        '<input id="m_evaluate" type="submit" value="Evaluate" />' +
+        '<input id="xpath" name="xpath" value="XPath"/></div>');
     this.$title = this.$container.find('#title');
     this.$children = this.$container.find('#form');
     this.$instancexml = this.$container.find('#instance-xml');
@@ -150,8 +154,50 @@ function Form(json, adapter) {
         form.submit();
       });
 
+    this.$container.find('#m_evaluate').click(function() {
+
+        var mxpath = document.getElementById("xpath").value;
+        var minstance = document.getElementById("instance-xml").value;
+
+        console.log("passing xpath: " + mxpath)
+        console.log("passing instance: " + minstance)
+
+        form.m_evaluate(mxpath, minstance, this.$instancexml);
+      });
+
     this.submit = function() {
       this.adapter.submitForm(this);
+    }
+
+    this.m_highlight = function(mxpath, instancexml) {
+
+    }
+
+    this.m_evaluate = function(mxpath, minstance, $instancexml) {
+
+      doc = (new DOMParser()).parseFromString(minstance, 'text/xml');
+
+      var element = document.evaluate(mxpath , doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null ).singleNodeValue;
+
+      console.log("doc: " + doc);
+      console.log("element: " + element);
+      console.log("element.value: " + element.nodeValue);
+      console.log("element.value: " + element.innerHTML);
+
+      if(element.innerHTML){
+          alert("Element: " + element.innerHTML);
+
+          element.innerHTML = "<b>" + element.innerHTML + "</b>";
+
+          var xmlString = (new XMLSerializer()).serializeToString(doc);
+
+          console.log("xml string: " + xmlString)
+
+          form.instance_container().text(vkbeautify.xml(xmlString));
+
+      } else{
+          alert("Element: " + element.value);
+      }
     }
   }
 

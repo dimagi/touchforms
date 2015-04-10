@@ -256,7 +256,7 @@ class XFormSession:
 
         rough_string = ElementTree.tostring(a, 'utf-8')
         reparsed = minidom.parseString(rough_string)
-        return reparsed.toprettyxml(indent="  ")
+        return rough_string
 
 
     def prettify(self, elem):
