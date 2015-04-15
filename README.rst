@@ -44,13 +44,14 @@ Information passing
 
 There are multiple calls that touchforms makes to CommCare HQ. Here is a summary of how they work.
 
-Call                | URL                                      | Auth
-------------------- | ---------------------------------------- | -------
-Get XForm           | `get_url_base()` / settings.BASE_ADDRESS | None required
-Load case data      | `touchforms.localsettings.URL_ROOT`      | Session (cloudcare) or `settings.TOUCHFORMS_API_USER` (sms)
-Load fixture data   | `touchforms.localsettings.URL_ROOT`      | Session (cloudcare) or `settings.TOUCHFORMS_API_USER` (sms)
-Load ledger data    | `touchforms.localsettings.URL_ROOT`      | Session (cloudcare) or `settings.TOUCHFORMS_API_USER` (sms)
-
+===================  ========================================  ===========================================================
+Call                 URL                                       Auth
+===================  ========================================  ===========================================================
+Get XForm            `get_url_base()` / settings.BASE_ADDRESS  None required
+Load case data       `touchforms.localsettings.URL_ROOT`       Session (cloudcare) or `settings.TOUCHFORMS_API_USER` (sms)
+Load fixture data    `touchforms.localsettings.URL_ROOT`       Session (cloudcare) or `settings.TOUCHFORMS_API_USER` (sms)
+Load ledger data     `touchforms.localsettings.URL_ROOT`       Session (cloudcare) or `settings.TOUCHFORMS_API_USER` (sms)
+===================  ========================================  ===========================================================
 
 Offline Cloudcare
 =================
