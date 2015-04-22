@@ -5,7 +5,6 @@ function xformAjaxAdapter (formName, sessionData, savedInstance) {
   this.session_id = -1;
 
   this.loadInstance = function($div) {
-    alert("loadInstance 4");
     //var adapter = this;
     this.ajaxfunc({'action': 'get-instance-xml',
                    'session-id': this.session_id},

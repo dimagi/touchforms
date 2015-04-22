@@ -277,13 +277,10 @@ def handle_request(content, server):
             return {"output": xfsess.output()}
 
         elif action == 'get-instance-xml':
-            print "Get Instance XML 1"
             if 'session-id' not in content:
                 return {'error': 'session id required'}
             xfsess = xformplayer.global_state.get_instance_xml(content['session-id'])
-            print "Get Instance XML 2"
             print xfsess.prettify1()
-            print "Get Instance XML 3"
             return {"output": xfsess.prettify1()}
 
         else:
