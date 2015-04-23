@@ -61,12 +61,17 @@ function ixInfo(o) {
 }
 
 function empty_check(o, anim_speed) {
-  if (o.type == 'repeat-juncture' || o.type == 'sub-group') {
-    var empty = (o.children.length == 0);
+  if (o.type === 'repeat-juncture') {
     if (anim_speed) {
-      o.$empty[empty ? 'slideDown' : 'slideUp'](anim_speed);
+      o.$empty[o.children.length ? 'slideUp' : 'slideDown'](anim_speed);
     } else {
-      o.$empty[empty ? 'show' : 'hide']();
+      o.$empty[o.children.length ? 'hide' : 'show']();
+    }
+  } else if (o.type === 'sub-group') {
+    if (anim_speed) {
+      o.$container[o.children.length ? 'slideDown' : 'slideUp'](anim_speed);
+    } else {
+      o.$container[o.children.length ? 'show' : 'hide']();
     }
   }
 }
@@ -174,11 +179,10 @@ function Group(json, parent) {
   this.children = [];
 
   this.init_render = function() {
-    this.$container = $('<div class="gr"><div class="gr-header"><span id="caption"></span> <span id="ix"></span> <a id="del" href="#">delete</a></div><div id="children"></div><div id="empty">This group is empty</div></div>');
+    this.$container = $('<div class="gr"><div class="gr-header"><span id="caption"></span> <span id="ix"></span> <a id="del" href="#">delete</a></div><div id="children"></div></div>');
     this.$children = this.$container.find('#children');
     this.$caption = this.$container.find('#caption');
     this.$ix = this.$container.find('#ix');
-    this.$empty = this.$container.find('#empty');
 
     render_elements(this, json.children);
     this.update();
