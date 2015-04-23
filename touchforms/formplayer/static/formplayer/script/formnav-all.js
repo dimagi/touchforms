@@ -1,7 +1,8 @@
 
 HEARTBEAT_INTERVAL = 60.;
 
-function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc, render_context) {
+function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc,
+                           render_context, answerCallback ) {
   this.formSpec = formSpec;
   this.sessionData = sessionData;
   this.session_id = null;
@@ -9,6 +10,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
   this.submitfunc = submitfunc;
   this.presubmitfunc = presubmitfunc;
   this.render_context = render_context;
+  this.answerCallback  = answerCallback ;
 
   this.loadForm = function ($div, init_lang, onload, onerror) {
     var args = {
@@ -93,6 +95,9 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
           getForm(q).reconcile(resp["tree"]);
         }
       });
+    if (this.answerCallback  !== undefined) {
+        this.answerCallback(this.session_id);
+    }
   }
 
   this.newRepeat = function(repeat) {
