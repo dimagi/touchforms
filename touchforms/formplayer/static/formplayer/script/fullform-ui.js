@@ -61,13 +61,13 @@ function ixInfo(o) {
 }
 
 function empty_check(o, anim_speed) {
-  if (o.type == 'repeat-juncture') {
+  if (o.type === 'repeat-juncture') {
     if (anim_speed) {
       o.$empty[o.children.length ? 'slideUp' : 'slideDown'](anim_speed);
     } else {
       o.$empty[o.children.length ? 'hide' : 'show']();
     }
-  } else if (o.type == 'sub-group') {
+  } else if (o.type === 'sub-group') {
     if (anim_speed) {
       o.$container[o.children.length ? 'slideDown' : 'slideUp'](anim_speed);
     } else {
