@@ -51,7 +51,6 @@ TaskQueue.prototype.clearTasks = function(name) {
     if (name) {
         idx = _.indexOf(_.pluck(this.queue, 'name'), name);
         while (idx !== -1) {
-            task = this.queue.slice(idx, idx + 1)[0];
             this.queue = [].concat(this.queue.slice(0, idx), this.queue.slice(idx + 1));
             idx = _.indexOf(_.pluck(this.queue, 'name'), name);
         }
