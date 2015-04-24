@@ -62,6 +62,7 @@ TaskQueue.prototype.clearTasks = function(name) {
 
 function WebFormSession(params) {
     var self = this;
+    self.taskQueue = new TaskQueue();
     self.heartbeat_has_failed = false;
     self.offline_mode = isOffline(params.xform_url);
     if (params.form_uid) {
@@ -163,6 +164,9 @@ function WebFormSession(params) {
     self.serverRequest = function (params, callback, blocking) {
         var that = this;
         var url = that.urls.xform;
+        if (params.action === 'submit-all' && this.NUM_PENDING_REQUESTS) {
+            self.taskQueue.addTask(params.action, self.serverRequest, arguments, self)
+        }
 
         if (this.offline_mode) {
             // give local touchforms daemon credentials to talk to HQ independently
@@ -245,7 +249,6 @@ function WebFormSession(params) {
 
         this.NUM_PENDING_REQUESTS++;
         this.onLoading();
-        $("input#submit").attr('disabled', 'disabled');
 
         if (blocking) {
             this.inputActivate(false); // sets BLOCKING_REQUEST_IN_PROGRESS
@@ -271,7 +274,9 @@ function WebFormSession(params) {
             sess.NUM_PENDING_REQUESTS--;
             if (sess.NUM_PENDING_REQUESTS == 0) {
                 sess.onLoadingComplete();
-                $("input#submit").removeAttr('disabled');
+                sess.taskQueue.execute('submit-all');
+                // Remove any submission tasks that have been queued up from spamming the submit button
+                sess.taskQueue.clearTasks('submit-all');
             }
         });
     }
