@@ -128,11 +128,3 @@ class XForm(models.Model):
                         checksum=checksum, file=f)
                 o.save()
                 return o
-
-                        
-
-        
-    
-
-        
-    
