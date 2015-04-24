@@ -7,7 +7,8 @@ from org.javarosa.core.model.data import StringData
 
 import logging
 
-def attach_handlers(form, extensions, preload_data={}):
+def attach_handlers(form, extensions, preload_data=None):
+    preload_data = preload_data or {}
     # default property preloader tries to access RMS; replace with a stub so as to
     # not break touchforms
     form.getPreloader().addPreloadHandler(StaticPreloadHandler('property', {}))
@@ -39,29 +40,30 @@ def attach_handlers(form, extensions, preload_data={}):
                 logging.debug('adding handler [%s / %s] from module [%s]' % (name, handler.getName(), ext))
                 form.exprEvalContext.addFunctionHandler(handler)
 
+
 class StaticPreloadHandler(IPreloadHandler):
     """
     Statically preload things, based on an initial dictionary.
-    
+
     Currently only supports strings
     """
-    
+
     _dict = {}
-    
+
     def __init__(self, name, dict, default=""):
         self._name = name
         self._dict = dict
         self._default = default
-        
+
     def preloadHandled(self):
         return self._name
-    
+
     def handlePreload(self, preloadParams):
         # TODO: support types other than strings?
         if preloadParams in self._dict:
             return StringData(self._dict[preloadParams])
         return StringData(self._default)
-    
+
     def handlePostProcess(self, node, params):
         return False
-    
+

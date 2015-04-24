@@ -115,7 +115,9 @@ def _init(ctx):
 
 
 
-def load_form(xform, instance=None, extensions=[], session_data={}, api_auth=None):
+def load_form(xform, instance=None, extensions=None, session_data=None, api_auth=None):
+    extensions = extensions or []
+    session_data = session_data or {}
     form = XFormParser(StringReader(xform)).parse()
     if instance != None:
         XFormParser(None).loadXmlInstance(form, StringReader(instance))
@@ -126,8 +128,10 @@ def load_form(xform, instance=None, extensions=[], session_data={}, api_auth=Non
     form.initialize(instance == None, CCInstances(session_data, api_auth))
     return form
 
+
 class SequencingException(Exception):
     pass
+
 
 class XFormSession:
     def __init__(self, xform, instance=None, **params):
