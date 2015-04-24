@@ -65,3 +65,24 @@ url-root is the url you will download the java webstart package from.
 for example, if i download from http://commcarehq.org/offline-cloudcare/offline-cloudcare.jnlp, url-root is http://commcarehq.org/offline-cloudcare/
 
 the packaged result will be in dist/standalone (one jar) or dist/split (many jars). deploy the folder contents as-is to url-root
+
+Setting up Grunt
+==================
+Touchforms uses Grunt to run various tasks like compiling HTML templates for the `fullform-ui.js` to use.  First install grunt globally:
+
+```
+npm -g install grunt
+```
+
+Then install all dependencies via the package.json:
+
+```
+npm install
+```
+
+Now if you run the grunt `watch` command, grunt will make sure to update compiled versions. For example, editting anything in the `fullform-ui` directory will automatically compile a new `fullform-ui.templates.js`.
+
+```
+grunt watch
+
+```
