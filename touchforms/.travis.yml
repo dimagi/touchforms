@@ -1,0 +1,10 @@
+language: python
+python:
+  - "2.7"
+branches:
+  only:
+      - double-submit
+install:
+  - "pip install test_requirements"
+script: 
+    "jasmine-ci --browser phantomjs"
