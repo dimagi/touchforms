@@ -3,7 +3,7 @@ python:
   - "2.7"
 branches:
   only:
-      - double-submit
+      - master
 install:
   - "pip install test_requirements"
 script: 
