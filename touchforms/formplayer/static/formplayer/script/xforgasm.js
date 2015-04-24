@@ -16,6 +16,50 @@ var ERROR_MESSAGE = "Something unexpected went wrong on that request. " +
     "If you have problems filling in the rest of your form please submit an issue. " +
     "Technical Details: ";
 
+function TaskQueue() {
+    this.queue = [];
+};
+
+/*
+ * Executes the queue in a FIFO action. If name is supplied, will execute the first
+ * task for that name.
+ */
+TaskQueue.prototype.execute = function(name) {
+    var task,
+        idx;
+    if (name) {
+        idx = _.indexOf(_.pluck(this.queue, 'name'), name);
+        task = this.queue.slice(idx, idx + 1)[0];
+        this.queue = [].concat(this.queue.slice(0, idx), this.queue.slice(idx + 1));
+    } else {
+        task = this.queue.shift();
+    }
+    if (!task) {
+        return;
+    }
+    task.fn.apply(task.thisArg, task.parameters);
+};
+
+TaskQueue.prototype.addTask = function (name, fn, parameters, thisArg) {
+    var task = { name: name, fn: fn, parameters: parameters, thisArg: thisArg };
+    this.queue.push(task);
+    return task;
+};
+
+TaskQueue.prototype.clearTasks = function(name) {
+    var idx;
+    if (name) {
+        idx = _.indexOf(_.pluck(this.queue, 'name'), name);
+        while (idx !== -1) {
+            task = this.queue.slice(idx, idx + 1)[0];
+            this.queue = [].concat(this.queue.slice(0, idx), this.queue.slice(idx + 1));
+            idx = _.indexOf(_.pluck(this.queue, 'name'), name);
+        }
+    } else {
+        this.queue = []
+    }
+}
+
 function WebFormSession(params) {
     var self = this;
     self.heartbeat_has_failed = false;
