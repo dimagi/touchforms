@@ -132,7 +132,7 @@ function Form(json, adapter) {
   this.children = [];
 
   this.init_render = function() {
-    this.$container = $('<div><h1 id="title"></h1><div id="form"></div><input id="submit" type="submit" value="Submit" /></div>');
+    this.$container = $('<div><h1 id="title"></h1><div id="form"></div><input id="submit" type="submit" value="Submit" class="btn" /></div>');
     this.$title = this.$container.find('#title');
     this.$children = this.$container.find('#form');
 
