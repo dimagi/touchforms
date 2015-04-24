@@ -286,7 +286,7 @@ function Question(json, parent) {
   this.template = window.JST[JST_BASE_DIR + 'fullform-ui/question.html'];
 
   this.init_render = function() {
-    this.$container = $(this.template({ datatype: this.datetype }));
+    this.$container = $(this.template({ datatype: this.datatype }));
     this.$error = this.$container.find('#error');
     if (this.datatype !== 'info') {
       this.update(true);
