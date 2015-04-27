@@ -13,13 +13,13 @@
 
     <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/layout.js?version={{app_version}}"></script>   
     <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/touchscreen-ui.js?version={{app_version}}"></script>   
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/formnav.js?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/dates.js?version={{app_version}}"></script>
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/entrycontrols.js?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/deprecate/formnav.js?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/vendor/dates.js?version={{app_version}}"></script>
+    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/deprecate/entrycontrols.js?version={{app_version}}"></script>
     <script language="javascript" type="text/javascript;version=1.7" src="{{STATIC_URL}}formplayer/script/workflow.js?version={{app_version}}"></script>
    
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/jquery-1.4.2.min.js"></script>
-    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/shortcut.js"></script>
+    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/deprecate/jquery-1.4.2.min.js"></script>
+    <script language="javascript" type="text/javascript" src="{{STATIC_URL}}formplayer/script/vendor/shortcut.js"></script>
 
 {% for script in dynamic_scripts %}
     <script language="javascript" type="text/javascript;version=1.7" src="{{script}}?version={{app_version}}"></script>   
