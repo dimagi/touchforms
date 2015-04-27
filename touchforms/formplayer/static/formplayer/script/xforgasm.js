@@ -16,8 +16,50 @@ var ERROR_MESSAGE = "Something unexpected went wrong on that request. " +
     "If you have problems filling in the rest of your form please submit an issue. " +
     "Technical Details: ";
 
+function TaskQueue() {
+    this.queue = [];
+};
+
+/*
+ * Executes the queue in a FIFO action. If name is supplied, will execute the first
+ * task for that name.
+ */
+TaskQueue.prototype.execute = function(name) {
+    var task,
+        idx;
+    if (name) {
+        idx = _.indexOf(_.pluck(this.queue, 'name'), name);
+        if (idx === -1) { return; }
+        task = this.queue.splice(idx, 1)[0];
+    } else {
+        task = this.queue.shift();
+    }
+    if (!task) { return; }
+    task.fn.apply(task.thisArg, task.parameters);
+};
+
+TaskQueue.prototype.addTask = function (name, fn, parameters, thisArg) {
+    var task = { name: name, fn: fn, parameters: parameters, thisArg: thisArg };
+    this.queue.push(task);
+    return task;
+};
+
+TaskQueue.prototype.clearTasks = function(name) {
+    var idx;
+    if (name) {
+        idx = _.indexOf(_.pluck(this.queue, 'name'), name);
+        while (idx !== -1) {
+            this.queue.splice(idx, 1);
+            idx = _.indexOf(_.pluck(this.queue, 'name'), name);
+        }
+    } else {
+        this.queue = []
+    }
+}
+
 function WebFormSession(params) {
     var self = this;
+    self.taskQueue = new TaskQueue();
     self.heartbeat_has_failed = false;
     self.offline_mode = isOffline(params.xform_url);
     if (params.form_uid) {
@@ -119,6 +161,9 @@ function WebFormSession(params) {
     self.serverRequest = function (params, callback, blocking) {
         var that = this;
         var url = that.urls.xform;
+        if (params.action === 'submit-all' && self.NUM_PENDING_REQUESTS) {
+            self.taskQueue.addTask(params.action, self.serverRequest, arguments, self)
+        }
 
         if (this.offline_mode) {
             // give local touchforms daemon credentials to talk to HQ independently
@@ -201,7 +246,6 @@ function WebFormSession(params) {
 
         this.NUM_PENDING_REQUESTS++;
         this.onLoading();
-        $("input#submit").attr('disabled', 'disabled');
 
         if (blocking) {
             this.inputActivate(false); // sets BLOCKING_REQUEST_IN_PROGRESS
@@ -227,7 +271,9 @@ function WebFormSession(params) {
             sess.NUM_PENDING_REQUESTS--;
             if (sess.NUM_PENDING_REQUESTS == 0) {
                 sess.onLoadingComplete();
-                $("input#submit").removeAttr('disabled');
+                sess.taskQueue.execute('submit-all');
+                // Remove any submission tasks that have been queued up from spamming the submit button
+                sess.taskQueue.clearTasks('submit-all');
             }
         });
     }
