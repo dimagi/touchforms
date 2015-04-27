@@ -50,7 +50,7 @@ TaskQueue.prototype.clearTasks = function(name) {
     if (name) {
         idx = _.indexOf(_.pluck(this.queue, 'name'), name);
         while (idx !== -1) {
-            this.queue = this.queue.splice(idx, 1);
+            this.queue.splice(idx, 1);
             idx = _.indexOf(_.pluck(this.queue, 'name'), name);
         }
     } else {
