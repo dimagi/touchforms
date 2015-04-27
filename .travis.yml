@@ -6,4 +6,4 @@ branches:
       - master
 install:
   - "pip install test_requirements"
-script: "jasmine-ci --browser phantomjs"
+script: "./run_tests.sh"
