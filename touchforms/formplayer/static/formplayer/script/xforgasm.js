@@ -29,8 +29,7 @@ TaskQueue.prototype.execute = function(name) {
         idx;
     if (name) {
         idx = _.indexOf(_.pluck(this.queue, 'name'), name);
-        task = this.queue.slice(idx, idx + 1)[0];
-        this.queue = [].concat(this.queue.slice(0, idx), this.queue.slice(idx + 1));
+        task = this.queue.splice(idx, 1)[0];
     } else {
         task = this.queue.shift();
     }
@@ -51,7 +50,7 @@ TaskQueue.prototype.clearTasks = function(name) {
     if (name) {
         idx = _.indexOf(_.pluck(this.queue, 'name'), name);
         while (idx !== -1) {
-            this.queue = [].concat(this.queue.slice(0, idx), this.queue.slice(idx + 1));
+            this.queue = this.queue.splice(idx, 1);
             idx = _.indexOf(_.pluck(this.queue, 'name'), name);
         }
     } else {
