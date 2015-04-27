@@ -29,13 +29,12 @@ TaskQueue.prototype.execute = function(name) {
         idx;
     if (name) {
         idx = _.indexOf(_.pluck(this.queue, 'name'), name);
+        if (idx === -1) { return; }
         task = this.queue.splice(idx, 1)[0];
     } else {
         task = this.queue.shift();
     }
-    if (!task) {
-        return;
-    }
+    if (!task) { return; }
     task.fn.apply(task.thisArg, task.parameters);
 };
 
