@@ -162,7 +162,7 @@ function WebFormSession(params) {
     self.serverRequest = function (params, callback, blocking) {
         var that = this;
         var url = that.urls.xform;
-        if (params.action === 'submit-all' && this.NUM_PENDING_REQUESTS) {
+        if (params.action === 'submit-all' && self.NUM_PENDING_REQUESTS) {
             self.taskQueue.addTask(params.action, self.serverRequest, arguments, self)
         }
 
