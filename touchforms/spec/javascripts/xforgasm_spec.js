@@ -27,9 +27,12 @@ describe('Test xforgasm.js', function() {
         })
 
         it('Executes tasks by name', function() {
-            tq.execute('two')
+            tq.execute('two');
             expect(taskOne.calledOnce).toBe(false);
             expect(taskTwo.calledOnce).toBe(true);
+            expect(tq.queue.length).toBe(1);
+
+            tq.execute('cannot find me');
             expect(tq.queue.length).toBe(1);
 
             tq.execute()
