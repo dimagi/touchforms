@@ -1,3 +1,4 @@
+var markdowner = window.markdownit();
 
 function getForm(o) {
   var form = o.parent;
@@ -213,7 +214,11 @@ function Group(json, parent) {
   }
 
   this.update = function() {
-    this.$caption.text(this.caption);
+    if (this.hasOwnProperty("caption_markdown") && this.caption_markdown) {
+      this.$caption.html(markdowner.render(this.caption_markdown));
+    } else {
+      this.$caption.text(this.caption);
+    }
     this.$ix.text('[' + ixInfo(this) + ']');
   }
 
@@ -261,7 +266,11 @@ function Repeat(json, parent) {
   }
 
   this.update = function() {
-    this.$header.text(this['main-header']);
+    if (this.hasOwnProperty("caption_markdown") && this.caption_markdown) {
+      this.$header.html(markdowner.render(this.caption_markdown));
+    } else {
+      this.$header.text(this['main-header']);
+    }
     this.$ix.text('[' + ixInfo(this) + ']');
   }
 
@@ -340,7 +349,9 @@ function Question(json, parent) {
 
     var $capt = this.$container.find('#caption');
     $capt.empty();
-    if (caption) {
+    if (this.hasOwnProperty("caption_markdown") && this.caption_markdown) {
+      $capt.html(markdowner.render(this.caption_markdown));
+    } else if (caption) {
         if (html_content) {
           caption = caption.replace(/\n/g, '<br/>');
           $capt.html(caption);
@@ -603,4 +614,3 @@ function set_pin(pin_threshold, $container, $elem) {
   $(window).scroll(pinfunc);
   pinfunc();
 }
-
