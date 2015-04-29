@@ -290,10 +290,7 @@ class XFormSession:
         else:
             event['type'] = 'sub-group'
             prompt = self.fem.getCaptionPrompt(form_ix)
-            event['caption'] = prompt.getLongText()
-            event['caption_audio'] = prompt.getAudioText()
-            event['caption_image'] = prompt.getImageText()
-            event['caption_video'] = prompt.getSpecialFormQuestionText(FormEntryPrompt.TEXT_FORM_VIDEO)
+            event.update(get_caption(prompt))
             if status == self.fec.EVENT_GROUP:
                 event['repeatable'] = False
             elif status == self.fec.EVENT_REPEAT:
@@ -323,10 +320,7 @@ class XFormSession:
     def _parse_question (self, event):
         q = self.fem.getQuestionPrompt(event['ix'])
 
-        event['caption'] = q.getLongText()
-        event['caption_audio'] = q.getAudioText()
-        event['caption_image'] = q.getImageText()
-        event['caption_video'] = q.getSpecialFormQuestionText(FormEntryPrompt.TEXT_FORM_VIDEO)
+        event.update(get_caption(q))
         event['help'] = q.getHelpText()
         event['style'] = self._parse_style_info(q.getAppearanceHint())
         event['binding'] = q.getQuestion().getBind().getReference().toString()
@@ -380,6 +374,7 @@ class XFormSession:
         r = self.fem.getCaptionPrompt(event['ix'])
         ro = r.getRepeatOptions()
 
+        event.update(get_caption(r))
         event['main-header'] = ro.header
         event['repetitions'] = list(r.getRepetitionsText())
 
@@ -672,7 +667,15 @@ def save_form (xfsess, persist=False):
 def form_completion(xfsess):
     return dict(zip(('save-id', 'output'), save_form(xfsess)))
 
-
+def get_caption(prompt):
+    return {
+        'caption': prompt.getLongText(),
+        'caption_audio': prompt.getAudioText(),
+        'caption_image': prompt.getImageText(),
+        'caption_video': prompt.getSpecialFormQuestionText(FormEntryPrompt.TEXT_FORM_VIDEO),
+        # TODO use prompt.getMarkdownText() when commcare jars support it
+        'caption_markdown': prompt.getSpecialFormQuestionText("markdown"),
+    }
 
 def purge():
     resp = global_state.purge()
