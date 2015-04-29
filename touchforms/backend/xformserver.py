@@ -172,9 +172,6 @@ def handle_request(content, server):
                     'staleness_window': content.get('staleness_window', server.default_stale_window),
                 })
 
-        elif action == 'edit-form':
-            return {'error': 'unsupported'}
-
         elif action == 'answer':
             if 'session-id' not in content:
                 return {'error': 'session id required'}
