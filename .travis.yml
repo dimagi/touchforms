@@ -5,5 +5,5 @@ branches:
   only:
       - master
 install:
-  - "pip install test_requirements"
+  - "pip install -r touchforms/test_requirements.txt"
 script: "./run_tests.sh"

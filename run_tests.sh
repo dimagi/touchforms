@@ -1,1 +1,1 @@
-cd touchforms && jasmine-ci --browser phantomjs && ./manage.py test formplayer
+cd touchforms && jasmine-ci --browser phantomjs
