@@ -24,16 +24,19 @@ Update your settings.py::
     Add XFORMS_PLAYER_URL = "http://127.0.0.1:4444"
 
 Syncdb::
+
     python manage.py syncdb
 
 Set localsettings.py for this backend::
     add URL_ROOT = "http://your.commcarehq/a/{{DOMAIN}}"
 
 Run the backend::
+
     cd backend
     jython xformserver.py 4444
 
 Run the django frontend::
+
     python manage.py runserver
     
 Play forms!
@@ -56,7 +59,7 @@ Load ledger data     `touchforms.localsettings.URL_ROOT`       Session (cloudcar
 Offline Cloudcare
 =================
 
-To build:
+To build::
 
     cd offline/
     python build.py url-root
@@ -68,21 +71,19 @@ the packaged result will be in dist/standalone (one jar) or dist/split (many jar
 
 Setting up Grunt
 ==================
-Touchforms uses Grunt to run various tasks like compiling HTML templates for the `fullform-ui.js` to use.  First install grunt globally:
+Touchforms uses Grunt to run various tasks like compiling HTML templates for the `fullform-ui.js` to use.  First install grunt globally ::
 
-```
-npm -g install grunt
-```
+    npm -g install grunt
+    npm -g install grunt-cli
 
-Then install all dependencies via the package.json:
+Then install all dependencies via the package.json ::
 
-```
-npm install
-```
+    npm install
 
-Now if you run the grunt `watch` command, grunt will make sure to update compiled versions. For example, editting anything in the `fullform-ui` directory will automatically compile a new `fullform-ui.templates.js`.
+Finally, compile the js files with ::
 
-```
-grunt watch
+    grunt build
 
-```
+Now if you run the grunt `watch` command, grunt will make sure to update compiled versions. For example, editting anything in the `fullform-ui` directory will automatically compile a new `fullform-ui.templates.js`. ::
+
+    grunt watch
