@@ -141,14 +141,14 @@ function Form(json, adapter) {
 
   this.init_render = function() {
     this.$container = $(this.template());
-    this.$title = this.$container.find('#title');
-    this.$children = this.$container.find('#form');
+    this.$title = this.$container.find('.title');
+    this.$children = this.$container.find('.form');
 
     this.$title.text(json.title);
     render_elements(this, json.tree);
 
     var form = this;
-    this.$container.find('#submit').click(function() {
+    this.$container.find('.submit').click(function() {
         var proceed = adapter.presubmitfunc();
         if (!proceed) {
           return;
@@ -171,7 +171,7 @@ function Form(json, adapter) {
   }
 
   this.submitting = function() {
-    this.$container.find('#submit').val('Submitting...');
+    this.$container.find('.submit').val('Submitting...');
   }
 }
 
@@ -184,14 +184,14 @@ function Group(json, parent) {
 
   this.init_render = function() {
     this.$container = $(this.template());
-    this.$children = this.$container.find('#children');
-    this.$caption = this.$container.find('#caption');
-    this.$ix = this.$container.find('#ix');
+    this.$children = this.$container.find('.children');
+    this.$caption = this.$container.find('.caption');
+    this.$ix = this.$container.find('.ix');
 
     render_elements(this, json.children);
     this.update();
 
-    this.$del = this.$container.find('#del');
+    this.$del = this.$container.find('.del');
     if (!this.is_repetition) { //todo: check constraints
       this.$del.hide();
     }
@@ -243,15 +243,15 @@ function Repeat(json, parent) {
 
   this.init_render = function() {
     this.$container = $(this.template());
-    this.$children = this.$container.find('#children');
-    this.$header = this.$container.find('#caption');
-    this.$ix = this.$container.find('#ix');
-    this.$empty = this.$container.find('#empty');
+    this.$children = this.$container.find('.children');
+    this.$header = this.$container.find('.caption');
+    this.$ix = this.$container.find('.ix');
+    this.$empty = this.$container.find('.empty');
 
     render_elements(this, json.children);
     this.update();
 
-    this.$add = this.$container.find('#add');
+    this.$add = this.$container.find('.add');
     var rep = this;
     this.$add.click(function() {
         rep.newRepeat();
@@ -297,7 +297,7 @@ function Question(json, parent) {
 
   this.init_render = function() {
     this.$container = $(this.template({ datatype: this.datatype }));
-    this.$error = this.$container.find('#error');
+    this.$error = this.$container.find('.error');
     if (this.datatype !== 'info') {
       this.update(true);
     } else {
@@ -350,7 +350,7 @@ function Question(json, parent) {
     var caption = this.caption;
     var html_content = getForm(this).adapter.render_context.allow_html;
 
-    var $capt = this.$container.find('#caption');
+    var $capt = this.$container.find('.caption');
     $capt.empty();
     if (this.hasOwnProperty("caption_markdown") && this.caption_markdown) {
       $capt.html(markdowner.render(this.caption_markdown));
@@ -367,14 +367,14 @@ function Question(json, parent) {
         }
     }
 
-    this.$container.find('#req').text(this.required ? '*' : '');
-    this.$container.find('#ix').text('[' + ixInfo(this) + ']');
+    this.$container.find('.req').text(this.required ? '*' : '');
+    this.$container.find('.ix').text('[' + ixInfo(this) + ']');
 
     if (refresh_widget) {
       //var uistate = this.control.get_ui_state();
 
-      this.$container.find('#widget').empty();
-      this.control = renderQuestion(this, this.$container.find('#widget'), this.last_answer);
+      this.$container.find('.widget').empty();
+      this.control = renderQuestion(this, this.$container.find('.widget'), this.last_answer);
 
       //this.control.restore_ui_state(uistate);
     }
@@ -386,7 +386,7 @@ function Question(json, parent) {
           control.attr("src", mediaSrc);
           $mediaContainer = $('<div>');
           $mediaContainer.append(control);
-          var $widget = self.$container.find('#widget');
+          var $widget = self.$container.find('.widget');
           if ($widget.length) {
             $widget.append($mediaContainer);
           } else {
@@ -396,7 +396,7 @@ function Question(json, parent) {
       }
     }
 
-    if (refresh_widget || !self.$container.find('#widget').length) {
+    if (refresh_widget || !self.$container.find('.widget').length) {
       add_multimedia('caption_image', $('<img>'));
       add_multimedia('caption_audio', $('<audio controls>Your browser does not support audio</audio>'));
       add_multimedia('caption_video', $('<video controls>Your browser does not support video</video>'));
