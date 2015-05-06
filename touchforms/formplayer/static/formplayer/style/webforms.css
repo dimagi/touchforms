@@ -70,11 +70,11 @@ input {
   margin-left: 10px;
 }
 
-.clear_ {
+#clear_ {
   margin-top: 4px;
 }
 
-.add,.del,.clear {
+.add,.del,#clear {
   font-size: 60%;
 }
 
