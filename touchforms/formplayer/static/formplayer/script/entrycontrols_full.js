@@ -153,22 +153,6 @@ function FreeTextEntry (args) {
       $container.html('<textarea id="textarea" style="width: 33em; height: 10em; font-family: sans-serif;"></textarea>');
       var widget = $container.find('#textarea');
 
-      /*
-      var type_newline = function() {
-        //TODO: doesn't work in chrome
-        var evt = document.createEvent("KeyboardEvent");
-        evt.initKeyEvent("keypress", true, true, window,
-                         0, 0, 0, 0,
-                         13, 0); 
-        widget[0].dispatchEvent(evt);
-      }
-
-      this.add_shortcut('ctrl+enter', type_newline);
-      this.add_shortcut('shift+enter', type_newline);
-      this.add_shortcut('alt+enter', type_newline);
-      */
-    }
-    //widget.focus();
     this.inputfield = widget[0];
     widget.change(function() { q.onchange(); });
   }
@@ -319,7 +303,7 @@ function MultiSelectEntry (args) {
     this.group = 'sel-' + nonce();
 
     for (var i = 0; i < this.choices.length; i++) {
-      var label = (i < 10 ? '' + ((i + 1) % 10) : (i < 36 ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i - 10] : null));
+      var label = i < 36 ? '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i] : null;
 
       var $choice = $('<div><span id="num"></span> <input id="ch-' + i + '" type="' + (this.isMulti ? 'checkbox' : 'radio') + '" /> <span id="label"></span></div>');
       $choice.find('#num').text(label + ')');
@@ -339,15 +323,9 @@ function MultiSelectEntry (args) {
           }
         })($inp));
 
-      //this.add_shortcut(label, this.selectFunc(i));
       $container.append($choice);
     }
     $container.append('<div id="clear_"><a id="clear" href="#">clear</a></div>');
-    //$('#ch-0').focus();
-
-    //var self = this;
-    //this.add_shortcut('up', function() { self.scroll(false); });
-    //this.add_shortcut('down', function() { self.scroll(true); });
 
     this.initted = true;
 
@@ -394,9 +372,6 @@ function MultiSelectEntry (args) {
         var button = this.choiceWidget(i, true);
         var checked = (answer != null && answer.indexOf(this.valAt(i)) != -1);
         button.checked = checked;
-        if (checked) {
-          //  this.choiceWidget(i).focus();
-        }
       }
     } else {
       this.default_selections = answer;
@@ -469,20 +444,9 @@ function SingleSelectEntry (args) {
     return function () {
       var cbox = this.choiceWidget(i); //is 'this' a bug? (used for keyboard shortcuts?)
       cbox.attr('checked', true);
-      //      cbox.focus();
     }
   }
 }
-
-/*
-function clearButtons (buttons, except_for) {
-  for (var i = 0; i < buttons.length; i++) {
-    if (buttons[i] != except_for) {
-      buttons[i].resetStatus();
-    }
-  }
-}
-*/
 
 function DateEntry (args) {
   inherit(this, new SimpleEntry());
