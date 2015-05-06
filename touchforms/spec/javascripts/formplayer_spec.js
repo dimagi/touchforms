@@ -9,7 +9,7 @@ describe('Test the formplayer', function() {
             adapter = sinon.spy();
 
         beforeEach(function() {
-            affix('#form);
+            affix('#form');
             formSpec = {
                 "type": "url",
                 "val": "http://dummy/dummy.xml"
