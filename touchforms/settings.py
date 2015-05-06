@@ -9,7 +9,7 @@ ADMINS = (
 
 DATABASES = {
     'default': {
-        'ENGINE': 'sqlite3',             # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        'ENGINE': 'django.db.backends.sqlite3',             # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
         'NAME': 'xformplayer.db',             # Or path to database file if using sqlite3.
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
@@ -99,7 +99,6 @@ ROOT_DIR = os.path.normpath(os.path.dirname(__file__))
 STATIC_DOC_ROOT = os.path.join(ROOT_DIR, "formplayer", "static")
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(ROOT_DIR, 'staticroot')
-XFORMS_BOOTSTRAP_PATH = "static/demo_forms"
 XFORMS_PATH = "data/xforms"
 XFORMS_PLAYER_URL = "http://localhost:4444/"
 OFFLINE_TOUCHFORMS_PORT = 4444

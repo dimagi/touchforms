@@ -129,9 +129,6 @@ def query_factory(host='', domain='', auth=None, format="json"):
             opener = urllib2.build_opener()
             opener.addheaders.append(('Cookie', 'sessionid=%s' % auth['key']))
             req = lambda url: opener.open(url)
-        elif auth['type'] == 'oauth':
-            # auth['key'] will be the oauth access token
-            raise Exception('not supported yet')
         elif auth['type'] in ('http', 'http-digest'):
             password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
             password_mgr.add_password(None, url, auth['username'], auth['key'])

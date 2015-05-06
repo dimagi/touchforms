@@ -172,9 +172,6 @@ def handle_request(content, server):
                     'staleness_window': content.get('staleness_window', server.default_stale_window),
                 })
 
-        elif action == 'edit-form':
-            return {'error': 'unsupported'}
-
         elif action == 'answer':
             if 'session-id' not in content:
                 return {'error': 'session id required'}
@@ -327,10 +324,12 @@ def init_gui():
                 return lambda _self: None
         return GUIStub()
 
-def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, ext_mod=[], offline=False):
+def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, offline=False):
     if offline:
         settings.ALLOW_CROSS_ORIGIN = True
         settings.PERSIST_SESSIONS = False
+    ext_mod = settings.EXTENSION_MODULES
+
     xformplayer._init(init_gui())
 
     gw = XFormHTTPGateway(port, stale_window, ext_mod)
@@ -365,6 +364,5 @@ if __name__ == "__main__":
 
     main(
         port=options.port,
-        stale_window=options.stale_window,
-        ext_mod=args
+        stale_window=options.stale_window
     )

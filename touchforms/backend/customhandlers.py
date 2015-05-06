@@ -1,3 +1,7 @@
+import jarray
+import java.lang
+
+from util import to_vect
 from setup import init_classpath
 init_classpath()
 
@@ -7,7 +11,17 @@ from org.javarosa.core.model.data import StringData
 
 import logging
 
-def attach_handlers(form, extensions, preload_data={}):
+def attach_handlers(form, extensions, context, preload_data=None):
+    """
+    Attach custom function handlers to the session.
+
+    The slug of the handler must be found in the context in order for it to be used.
+
+    The context can contain a list of initialization parameters for initializing those handlers.
+
+    See StaticFunctionHandler for usage example.
+    """
+    preload_data = preload_data or {}
     # default property preloader tries to access RMS; replace with a stub so as to
     # not break touchforms
     form.getPreloader().addPreloadHandler(StaticPreloadHandler('property', {}))
@@ -17,6 +31,7 @@ def attach_handlers(form, extensions, preload_data={}):
         handler = StaticPreloadHandler(key, data_dict)
         logging.debug("Adding preloader for %s data: %s" % (key, data_dict))
         form.getPreloader().addPreloadHandler(handler)
+
 
     for ext in extensions:
         try:
@@ -30,38 +45,56 @@ def attach_handlers(form, extensions, preload_data={}):
 
         for obj, name in [(getattr(mod, o), o) for o in dir(mod) if not o.startswith('__')]:
             try:
-                is_handler = any(issubclass(obj, baseclass) and obj != baseclass for baseclass in [IPreloadHandler, IFunctionHandler])
+                is_handler = any(issubclass(obj, baseclass) and obj != baseclass for baseclass in [IPreloadHandler, TouchformsFunctionHandler])
             except TypeError:
                 is_handler = False
 
             if is_handler:
-                handler = obj()
-                logging.debug('adding handler [%s / %s] from module [%s]' % (name, handler.getName(), ext))
-                form.exprEvalContext.addFunctionHandler(handler)
+                if obj.slug() in context:
+                    for item in context[obj.slug()]:
+                        handler = obj(**item)
+                        logging.debug('adding handler [%s / %s] from module [%s]' % (name, handler.getName(), ext))
+                        form.exprEvalContext.addFunctionHandler(handler)
+
+
+class TouchformsFunctionHandler(IFunctionHandler):
+
+    @classmethod
+    def slug(self):
+        raise NotImplementedError()
+
+    def getPrototypes(self):
+        return to_vect([jarray.array([], java.lang.Class)])
+
+    def rawArgs(self):
+        return False
+
+    def realTime(self):
+        return False
+
 
 class StaticPreloadHandler(IPreloadHandler):
     """
     Statically preload things, based on an initial dictionary.
-    
+
     Currently only supports strings
     """
-    
+
     _dict = {}
-    
+
     def __init__(self, name, dict, default=""):
         self._name = name
         self._dict = dict
         self._default = default
-        
+
     def preloadHandled(self):
         return self._name
-    
+
     def handlePreload(self, preloadParams):
         # TODO: support types other than strings?
         if preloadParams in self._dict:
             return StringData(self._dict[preloadParams])
         return StringData(self._default)
-    
+
     def handlePostProcess(self, node, params):
         return False
-    

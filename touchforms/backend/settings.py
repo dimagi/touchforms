@@ -9,6 +9,7 @@ ALLOW_CROSS_ORIGIN = False
 # daemon restart
 PERSIST_SESSIONS = True
 PERSISTENCE_DIRECTORY = None  # defaults to /tmp
+EXTENSION_MODULES = []  # you can allow extensions by overriding this
 
 # postgres peristence stuff
 USES_POSTGRES = True
