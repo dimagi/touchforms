@@ -152,7 +152,7 @@ function FreeTextEntry (args) {
     } else {
       $container.html('<textarea id="textarea" style="width: 33em; height: 10em; font-family: sans-serif;"></textarea>');
       var widget = $container.find('#textarea');
-
+    }
     this.inputfield = widget[0];
     widget.change(function() { q.onchange(); });
   }
