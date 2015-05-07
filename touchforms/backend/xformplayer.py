@@ -689,6 +689,22 @@ def purge():
     return resp
 
 
+class Actions:
+    NEW_FORM = 'new-form'
+    ANSWER = 'answer'
+    ADD_REPEAT = 'add-repeat'
+    NEXT = 'next'
+    BACK = 'back'
+    CURRENT = 'current'
+    HEARTBEAT = 'heartbeat'
+    EDIT_REPEAT = 'edit-repeat'
+    NEW_REPEAT = 'new-repeat'
+    DELETE_REPEAT = 'delete-repeat'
+    SUBMIT_ALL = 'submit-all'
+    SET_LANG = 'set-lang'
+    PURGE_STALE = 'purge-stale'
+    GET_INSTANCE = 'get-instance'
+
 # debugging
 
 import pprint

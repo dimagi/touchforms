@@ -15,7 +15,7 @@ import settings
 from setup import init_classpath
 init_classpath()
 import com.xhaus.jyson.JysonCodec as json
-from xcp import TouchFormsException
+from xcp import TouchFormsException, InvalidRequestException
 
 logging.basicConfig(
     stream=sys.stderr,
@@ -43,7 +43,7 @@ class XFormHTTPGateway(threading.Thread):
         self.server.shutdown()
 
 class XFormRequestHandler(BaseHTTPRequestHandler):
-    
+
     error_content_type = "text/json"
 
     def do_POST(self):
@@ -70,22 +70,20 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             data_out = handle_request(data_in, self.server)
             reply = json.dumps(data_out)
         except (Exception, java.lang.Exception), e:
-            msg = ""
-            error_type = None
+            msg = ''
             if isinstance(e, java.lang.Exception):
                 e.printStackTrace()  # todo: log the java stacktrace
             elif isinstance(e, urllib2.HTTPError):
                 if e.headers.get("content-type", "") == "text/plain":
                     msg = e.read()
-            elif isinstance(e, TouchFormsException):
-                error_type = type(e).__name__
 
-            logging.exception('error handling request')
+            info = sys.exc_info()
+
             self.send_error(
                 500,
                 u'internal error handling request: %s: %s%s' % (
                     type(e), unicode(e), u": %s" % msg if msg else ""),
-                error_type,
+                unicode(info[0]),
                 msg if msg else None,
             )
             return
@@ -114,7 +112,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         if human_readable_message is None:
             human_readable_message = message
         explain = long
-        self.log_error("code %d, message %s", code, message.encode("ascii", "xmlcharrefreplace")) # This logs to stderr, which only takes ascii
+        logging.exception("Status Code: %d, Message %s" % (code, message))
         content = json.dumps({'status': 'error',
                               'error_type': error_type,
                               'code': code, 
@@ -141,15 +139,25 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
     def cross_origin_header(self):
         if settings.ALLOW_CROSS_ORIGIN:
             self.send_header('Access-Control-Allow-Origin', '*')
-        
+
+
+def ensure_required_params(params, action, content):
+    for param in params:
+        if param not in content:
+            raise InvalidRequestException("'%s' is required for action: %s" % (param, action))
+
+
 def handle_request(content, server):
     if 'action' not in content:
-        return {'error': 'action required'}
+        ensure_required_params(['action'], 'All actions', content)
 
     action = content['action']
     nav_mode = content.get('nav', 'prompt')
     try:
-        if action == 'new-form':
+        if action != xformplayer.Actions.NEW_FORM:
+            ensure_required_params(['session-id'], action, content)
+
+        if action == xformplayer.Actions.NEW_FORM:
             form_fields = {'form-name': 'uid', 'form-content': 'raw', 'form-url': 'url'}
             form_spec = None
             for k, v in form_fields.iteritems():
@@ -176,37 +184,21 @@ def handle_request(content, server):
                     'staleness_window': content.get('staleness_window', server.default_stale_window),
                 })
 
-        elif action == 'answer':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-            if 'answer' not in content:
-                return {'error': 'answer required'}
-
+        elif action == xformplayer.Actions.ANSWER:
+            ensure_required_params(['answer'], action, content)
             return xformplayer.answer_question(content['session-id'], content['answer'], content.get('ix'))
 
         #sequential (old-style) repeats only
-        elif action == 'add-repeat':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-
+        elif action == xformplayer.Actions.ADD_REPEAT:
             return xformplayer.new_repetition(content['session-id'])
 
-        elif action == 'next':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-
+        elif action == xformplayer.Actions.NEXT:
             return xformplayer.skip_next(content['session-id'])
 
-        elif action == 'back':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-
+        elif action == xformplayer.Actions.BACK:
             return xformplayer.go_back(content['session-id'])
 
-        elif action == 'current':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-
+        elif action == xformplayer.Actions.CURRENT:
             override_state = None
             # override api_auth with the current auth to avoid issues with expired django sessions
             # when editing saved forms
@@ -217,65 +209,33 @@ def handle_request(content, server):
                 }
             return xformplayer.current_question(content['session-id'], override_state=override_state)
 
-        elif action == 'heartbeat':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-
+        elif action == xformplayer.Actions.HEARTBEAT:
             return xformplayer.heartbeat(content['session-id'])
 
-        elif action == 'edit-repeat':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-            if 'ix' not in content:
-                return {'error': 'repeat index required'}
-
+        elif action == xformplayer.Actions.EDIT_REPEAT:
+            ensure_required_params(['ix'], action, content)
             return xformplayer.edit_repeat(content['session-id'], content['ix'])
 
-        elif action == 'new-repeat':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-
+        elif action == xformplayer.Actions.NEW_REPEAT:
             return xformplayer.new_repeat(content['session-id'], content.get('ix'))
-    
-        elif action == 'delete-repeat':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-            if 'ix' not in content:
-                return {'error': 'repeat index required'}
-
+        elif action == xformplayer.Actions.DELETE_REPEAT:
+            ensure_required_params(['ix'], action, content)
             return xformplayer.delete_repeat(content['session-id'], content['ix'], content.get('form_ix'))
-
-        elif action == 'submit-all':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-            
+        elif action == xformplayer.Actions.SUBMIT_ALL:
             return xformplayer.submit_form(content['session-id'], content.get('answers', []), content.get('prevalidated', False))
-
-        elif action == 'set-lang':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-            if 'lang' not in content:
-                return {'error': 'language required'}
-            
-            return xformplayer.set_locale(content['session-id'], content['lang'])            
-
-        elif action == 'purge-stale':
-            if 'window' not in content:
-                return {'error': 'staleness window required'}
-
+        elif action == xformplayer.Actions.SET_LANG:
+            ensure_required_params(['lang'], action, content)
+            return xformplayer.set_locale(content['session-id'], content['lang'])
+        elif action == xformplayer.Actions.PURGE_STALE:
+            ensure_required_params(['window'], action, content)
             return xformplayer.purge(content['window'])
-
         elif action in touchcare.SUPPORTED_ACTIONS:
             return touchcare.handle_request(content, server)
-            
-        elif action == 'get-instance':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
+        elif action == xformplayer.Actions.GET_INSTANCE:
             xfsess = xformplayer.global_state.get_session(content['session-id'])
             return {"output": xfsess.output()}
-
         else:
-            return {'error': 'unrecognized action'}
+            raise InvalidRequestException("Unrecognized action: %s" % action)
     
     except xformplayer.NoSuchSession:
         return {'error': 'invalid session id'}
