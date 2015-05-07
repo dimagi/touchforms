@@ -17,7 +17,11 @@ init_classpath()
 import com.xhaus.jyson.JysonCodec as json
 from xcp import TouchFormsException
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(
+    stream=sys.stderr,
+    level=logging.DEBUG,
+    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
+)
 
 DEFAULT_PORT = 4444
 DEFAULT_STALE_WINDOW = 3. #hours
