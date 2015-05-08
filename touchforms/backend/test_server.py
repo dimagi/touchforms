@@ -59,5 +59,14 @@ class XFormServerTest(unittest.TestCase):
         else:
             self.fail()
 
+    def test_no_session_id_touchare(self):
+        content = {
+            'action': 'touchcare-filter-cases',
+        }
+        try:
+            xformserver.handle_request(content, self.server)
+        except Exception:
+            self.fail()
+
 if __name__ == '__main__':
     unittest.main()

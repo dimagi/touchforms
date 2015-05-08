@@ -153,7 +153,7 @@ def handle_request(content, server):
     action = content['action']
     nav_mode = content.get('nav', 'prompt')
     try:
-        if action != xformplayer.Actions.NEW_FORM:
+        if action != xformplayer.Actions.NEW_FORM and action not in touchcare.SUPPORTED_ACTIONS:
             ensure_required_params(['session-id'], action, content)
 
         if action == xformplayer.Actions.NEW_FORM:
