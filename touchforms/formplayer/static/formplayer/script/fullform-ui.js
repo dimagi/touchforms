@@ -1,3 +1,5 @@
+var JST_BASE_DIR = 'formplayer/templates/formplayer/'
+var markdowner = window.markdownit();
 
 function getForm(o) {
   var form = o.parent;
@@ -135,9 +137,10 @@ function parse_meta(type, style) {
 function Form(json, adapter) {
   this.adapter = adapter;
   this.children = [];
+  this.template = window.JST[JST_BASE_DIR + 'fullform-ui/form.html'];
 
   this.init_render = function() {
-    this.$container = $('<div><h1 id="title"></h1><div id="form"></div><input id="submit" type="submit" value="Submit" class="btn" /></div>');
+    this.$container = $(this.template());
     this.$title = this.$container.find('#title');
     this.$children = this.$container.find('#form');
 
@@ -177,9 +180,10 @@ function Group(json, parent) {
   this.parent = parent;
   this.is_repetition = parent.is_repeat;
   this.children = [];
+  this.template = window.JST[JST_BASE_DIR + 'fullform-ui/group.html'];
 
   this.init_render = function() {
-    this.$container = $('<div class="gr"><div class="gr-header"><span id="caption"></span> <span id="ix"></span> <a id="del" href="#">delete</a></div><div id="children"></div></div>');
+    this.$container = $(this.template());
     this.$children = this.$container.find('#children');
     this.$caption = this.$container.find('#caption');
     this.$ix = this.$container.find('#ix');
@@ -213,7 +217,11 @@ function Group(json, parent) {
   }
 
   this.update = function() {
-    this.$caption.text(this.caption);
+    if (this.hasOwnProperty("caption_markdown") && this.caption_markdown) {
+      this.$caption.html(markdowner.render(this.caption_markdown));
+    } else {
+      this.$caption.text(this.caption);
+    }
     this.$ix.text('[' + ixInfo(this) + ']');
   }
 
@@ -231,9 +239,10 @@ function Repeat(json, parent) {
   this.parent = parent;
   this.children = [];
   this.is_repeat = true;
+  this.template = window.JST[JST_BASE_DIR + 'fullform-ui/repeat.html'];
 
   this.init_render = function() {
-    this.$container = $('<div class="rep"><div class="rep-header"><span id="caption"></span> <span id="ix"></span> <a id="add" href="#">add new</a></div><div id="children"></div><div id="empty">This repeatable group is empty</div></div>');
+    this.$container = $(this.template());
     this.$children = this.$container.find('#children');
     this.$header = this.$container.find('#caption');
     this.$ix = this.$container.find('#ix');
@@ -261,7 +270,11 @@ function Repeat(json, parent) {
   }
 
   this.update = function() {
-    this.$header.text(this['main-header']);
+    if (this.hasOwnProperty("caption_markdown") && this.caption_markdown) {
+      this.$header.html(markdowner.render(this.caption_markdown));
+    } else {
+      this.$header.text(this['main-header']);
+    }
     this.$ix.text('[' + ixInfo(this) + ']');
   }
 
@@ -280,15 +293,14 @@ function Question(json, parent) {
   this.children = [];
 
   this.is_select = (this.datatype == 'select' || this.datatype == 'multiselect');
+  this.template = window.JST[JST_BASE_DIR + 'fullform-ui/question.html'];
 
   this.init_render = function() {
-    if (this.datatype != 'info') {
-      this.$container = $('<div class="q"><div id="widget"></div><span id="req"></span><span id="caption"></span> <span id="ix"></span> <div id="error"></div><div class="eoq" /></div>');
-      this.$error = this.$container.find('#error');
+    this.$container = $(this.template({ datatype: this.datatype }));
+    this.$error = this.$container.find('#error');
+    if (this.datatype !== 'info') {
       this.update(true);
     } else {
-      this.$container = $('<div><span id="ix"></span><span id="caption"></span></div>');
-      this.$container.addClass('info');
       this.control = new InfoEntry();
       this.control.setAnswer("OK"); // for triggers set them answered as soon as they are rendered
       this.update(false);
@@ -340,7 +352,9 @@ function Question(json, parent) {
 
     var $capt = this.$container.find('#caption');
     $capt.empty();
-    if (caption) {
+    if (this.hasOwnProperty("caption_markdown") && this.caption_markdown) {
+      $capt.html(markdowner.render(this.caption_markdown));
+    } else if (caption) {
         if (html_content) {
           caption = caption.replace(/\n/g, '<br/>');
           $capt.html(caption);
@@ -603,4 +617,3 @@ function set_pin(pin_threshold, $container, $elem) {
   $(window).scroll(pinfunc);
   pinfunc();
 }
-
