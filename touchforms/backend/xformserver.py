@@ -148,13 +148,12 @@ def ensure_required_params(params, action, content):
 
 
 def handle_request(content, server):
-    if 'action' not in content:
-        ensure_required_params(['action'], 'All actions', content)
+    ensure_required_params(['action'], 'All actions', content)
 
     action = content['action']
     nav_mode = content.get('nav', 'prompt')
     try:
-        if action != xformplayer.Actions.NEW_FORM:
+        if action != xformplayer.Actions.NEW_FORM and action not in touchcare.SUPPORTED_ACTIONS:
             ensure_required_params(['session-id'], action, content)
 
         if action == xformplayer.Actions.NEW_FORM:
