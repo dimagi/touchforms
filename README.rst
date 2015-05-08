@@ -1,7 +1,9 @@
 ================
  A django-based web XForms Player for touchscreens
 ================
-
+.. image:: https://travis-ci.org/dimagi/touchforms.svg?branch=master
+   :target: https://travis-ci.org/dimagi/touchforms
+ 
 Prerequisites
 =============
 Python (2.6+ recommended)
