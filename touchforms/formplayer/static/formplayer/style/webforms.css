@@ -4,7 +4,7 @@
   font-family: sans-serif;
 }
 
-#ix {
+.ix {
   display: none;
 }
 
@@ -12,12 +12,12 @@ input {
   /* text-align: right; */
 }
 
-#submit {
+.submit {
   margin-top: 30px;
   font-weight: bold;
 }
 
-#error {
+.error {
   color: red;
   font-weight: bold;
   font-size: 80%;
@@ -27,18 +27,18 @@ input {
   background-color: #fcc;
 }
 
-#widget {
+.widget {
   float: right;
   width: 400px;
   text-align: left;
   padding-bottom: 3px;
 }
 
-#children {
+.children {
   margin-left: 30px;
 }
 
-#empty {
+.empty {
   color: grey;
   margin-left: 30px;
   font-size: 70%;
@@ -48,25 +48,25 @@ input {
   clear: both;
 }
 
-.q,.gr-header,.rep-header,#empty {
+.q,.gr-header,.rep-header,.empty {
   border-bottom: 1px #aaf dotted;
   padding-top: 3px;
   padding-bottom: 3px;
 }
 
-#form {
+.form {
   padding-bottom: 8px;
   border-top: 1px #aaf solid;
   border-bottom: 1px #aaf solid;
 }
 
-.gr-header #caption,
-.rep-header #caption {
+.gr-header .caption,
+.rep-header .caption {
   font-weight: bold;
   font-size: 80%;
 }
 
-#add,#del {
+.add,.del {
   margin-left: 10px;
 }
 
@@ -74,11 +74,11 @@ input {
   margin-top: 4px;
 }
 
-#add,#del,#clear {
+.add,.del,#clear {
   font-size: 60%;
 }
 
-#req {
+.req {
   color: red;
   float: right;
   font-weight: bold;
