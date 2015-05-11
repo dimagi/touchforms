@@ -34,6 +34,7 @@ from touchcare import CCInstances
 from util import query_factory
 import persistence
 import settings
+import logging
 
 DEBUG = False
 
@@ -58,16 +59,21 @@ class global_state_mgr(object):
             self.ctx.setNumSessions(len(self.session_cache))
 
     def get_session(self, session_id, override_state=None):
+        logging.debug("Getting session id: " + str(session_id))
         with self.lock:
             try:
                 return self.session_cache[session_id]
             except KeyError:
                 # see if session has been persisted
+                logging.debug("Except key error id: " + str(session_id))
                 sess = persistence.restore(session_id, XFormSession, override_state)
+                logging.debug("Restored session with id: " + str(session_id))
                 if sess:
+                    logging.debug("Returning new session")
                     self.new_session(sess) # repopulate in-memory cache
                     return sess
                 else:
+                    logging.debug("No such session")
                     raise NoSuchSession()
         
     #todo: we're not calling this currently, but should, or else xform sessions will hang around in memory forever        

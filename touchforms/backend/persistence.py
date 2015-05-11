@@ -16,6 +16,9 @@ def persist(sess):
 
 
 def restore(sess_id, factory, override_state=None):
+
+    print "restoring sess id: " + str(sess_id)
+
     try:
         state = cache_get(sess_id)
     except KeyError:
@@ -81,7 +84,8 @@ def postgres_lookup_command(cursor, key):
 
     jsonobj = json.loads(value.decode('utf8'))
 
-    print "Postgres lookup returning jsonobj: " + str(jsonobj)
+
+
 
     return jsonobj
 
