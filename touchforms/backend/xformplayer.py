@@ -62,7 +62,7 @@ class global_state_mgr(object):
         logging.debug("Getting session id: " + str(session_id))
         with self.lock:
             try:
-                logging.debug("Getting session_cache " + self.session_cache[session_id])
+                logging.debug("Getting session_cache " + str(self.session_cache[session_id]))
                 return self.session_cache[session_id]
             except KeyError:
                 # see if session has been persisted
