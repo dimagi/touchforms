@@ -6,3 +6,14 @@ PERSISTENCE_DIRECTORY = "/path/to/www/data/touchforms"
 
 # from jython_ssl import SSLContext, TRUST_ALL_CONTEXT
 # SSLContext.setDefault(TRUST_ALL_CONTEXT)
+
+USES_POSTGRES = True
+POSTGRES_TABLE = "formplayer_session"
+POSTGRES_JDBC_JAR = "{COMMCARE_HOME}/submodules/touchforms-src/touchforms/backend/jrlib/postgresql-9.0-801.jdbc3.jar"
+
+DATABASE = {
+        'serverName': 'localhost:5432',
+        'databaseName': 'commcarehq',
+        'user': 'admin',
+        'password': '123',
+}

@@ -37,20 +37,21 @@ import settings
 
 DEBUG = False
 
+
 class NoSuchSession(Exception):
     pass
+
 
 class global_state_mgr(object):
     instances = {}
     instance_id_counter = 0
-
     session_cache = {}
     
     def __init__(self, ctx):
         self.ctx = ctx
         self.lock = threading.Lock()
         self.ctx.setNumSessions(0)
-    
+
     def new_session(self, xfsess):
         with self.lock:
             self.session_cache[xfsess.uuid] = xfsess
