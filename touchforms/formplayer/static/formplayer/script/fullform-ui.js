@@ -140,16 +140,11 @@ function Form(json, adapter) {
   this.template = window.JST[JST_BASE_DIR + 'fullform-ui/form.html'];
 
   this.init_render = function() {
-    this.$container = $('<div><h1 id="title"></h1><div id="form"></div>' +
-        '<input id="submit" type="submit" value="Submit" /></div>' +
-        '<div><textarea id="instance-xml" style="min-width: 800px;" name="instance-xml"/></textarea>' +
-        '<input id="m_evaluate" type="submit" value="Evaluate" />' +
-        '<input id="xpath" name="xpath" value="XPath"/>' +
-        '<textarea id="evaluate-result" style="min-width: 800px;" name="evaluate-result"/></div>');
+    this.$container = $(this.template());
     this.$title = this.$container.find('#title');
     this.$children = this.$container.find('#form');
-    this.$instancexml = this.$container.find('#instance-xml');
-    this.$evaluateresult = this.$container.find('#evaluate-result');
+    this.$instancexml = $('#instance-xml')
+    this.$evaluateresult = $("#evaluate-result");
 
     this.$title.text(json.title);
     render_elements(this, json.tree);
@@ -164,7 +159,7 @@ function Form(json, adapter) {
         form.submit();
       });
 
-    this.$container.find('#m_evaluate').click(function() {
+    $("#evaluate-button").click(function() {
 
         var mxpath = document.getElementById("xpath").value;
         var minstance = document.getElementById("instance-xml").value;
@@ -177,10 +172,6 @@ function Form(json, adapter) {
 
     this.submit = function() {
       this.adapter.submitForm(this);
-    }
-
-    this.m_highlight = function(mxpath, instancexml) {
-
     }
 
     this.m_evaluate = function(mxpath, minstance) {
@@ -629,7 +620,7 @@ var inElementSet = function(e, set) {
   var ix = ixElementSet(e, set);
   return (ix != -1 ? set[ix] : null);
 }
-
+// mark
 function init_render(form, adapter, $div) {
   var f = new Form(form, adapter);
   f.init_render();

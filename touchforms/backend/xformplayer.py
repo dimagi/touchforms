@@ -327,8 +327,6 @@ class XFormSession:
                 form_ix = step(form_ix, False)
                 continue
 
-            update_xml()
-
             evt = self.__parse_event(form_ix)
             evt['relevant'] = relevant
             if evt['type'] == 'sub-group':
