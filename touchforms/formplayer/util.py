@@ -7,8 +7,7 @@ def get_xform_by_namespace(namespace):
     if matches.count() > 0:
         return matches[0]
     else:
-        raise Exception("No XForm found! Either the application wasn't " \
-                        "bootstrapped properly or the database entry was " \
+        raise Exception("No XForm found! The database entry was " \
                         "deleted. Please syncdb and restart the server.")
     
 def get_autocomplete_dir():

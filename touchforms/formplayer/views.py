@@ -1,4 +1,4 @@
-from django.http.response import HttpResponseServerError
+from django.http.response import HttpResponseServerError, Http404
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.views.decorators.http import require_POST
@@ -109,7 +109,8 @@ def enter_form(request, **kwargs):
 
     if not xform:
         xform = get_object_or_404(XForm, id=xform_id)
-        
+        if not os.path.exists(xform.file.path):
+            raise Http404()
     if request.method == "POST":
         if request.POST["type"] == 'form-complete':
             instance_xml = request.POST["output"]

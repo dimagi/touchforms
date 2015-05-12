@@ -132,19 +132,30 @@ def _init(ctx):
     global_state = global_state_mgr(ctx)
 
 
-def load_form(xform, instance=None, extensions=[], session_data={}, api_auth=None):
+
+
+def load_form(xform, instance=None, extensions=None, session_data=None, api_auth=None):
+    extensions = extensions or []
+    session_data = session_data or {}
     form = XFormParser(StringReader(xform)).parse()
     if instance != None:
         XFormParser(None).loadXmlInstance(form, StringReader(instance))
 
     # retrieve preloaders out of session_data (for backwards compatibility)
-    customhandlers.attach_handlers(form, extensions, session_data.get('preloaders', {}))
+    customhandlers.attach_handlers(
+        form,
+        extensions,
+        context=session_data.get('function_context', {}),
+        preload_data=session_data.get('preloaders', {})
+    )
 
     form.initialize(instance == None, CCInstances(session_data, api_auth))
     return form
 
+
 class SequencingException(Exception):
     pass
+
 
 class XFormSession:
     def __init__(self, xform, instance=None, **params):
@@ -376,10 +387,7 @@ class XFormSession:
         else:
             event['type'] = 'sub-group'
             prompt = self.fem.getCaptionPrompt(form_ix)
-            event['caption'] = prompt.getLongText()
-            event['caption_audio'] = prompt.getAudioText()
-            event['caption_image'] = prompt.getImageText()
-            event['caption_video'] = prompt.getSpecialFormQuestionText(FormEntryPrompt.TEXT_FORM_VIDEO)
+            event.update(get_caption(prompt))
             if status == self.fec.EVENT_GROUP:
                 event['repeatable'] = False
             elif status == self.fec.EVENT_REPEAT:
@@ -409,10 +417,7 @@ class XFormSession:
     def _parse_question (self, event):
         q = self.fem.getQuestionPrompt(event['ix'])
 
-        event['caption'] = q.getLongText()
-        event['caption_audio'] = q.getAudioText()
-        event['caption_image'] = q.getImageText()
-        event['caption_video'] = q.getSpecialFormQuestionText(FormEntryPrompt.TEXT_FORM_VIDEO)
+        event.update(get_caption(q))
         event['help'] = q.getHelpText()
         event['style'] = self._parse_style_info(q.getAppearanceHint())
         event['binding'] = q.getQuestion().getBind().getReference().toString()
@@ -466,6 +471,7 @@ class XFormSession:
         r = self.fem.getCaptionPrompt(event['ix'])
         ro = r.getRepeatOptions()
 
+        event.update(get_caption(r))
         event['main-header'] = ro.header
         event['repetitions'] = list(r.getRepetitionsText())
 
@@ -758,13 +764,37 @@ def save_form (xfsess, persist=False):
 def form_completion(xfsess):
     return dict(zip(('save-id', 'output'), save_form(xfsess)))
 
-
+def get_caption(prompt):
+    return {
+        'caption': prompt.getLongText(),
+        'caption_audio': prompt.getAudioText(),
+        'caption_image': prompt.getImageText(),
+        'caption_video': prompt.getSpecialFormQuestionText(FormEntryPrompt.TEXT_FORM_VIDEO),
+        # TODO use prompt.getMarkdownText() when commcare jars support it
+        'caption_markdown': prompt.getSpecialFormQuestionText("markdown"),
+    }
 
 def purge():
     resp = global_state.purge()
     resp.update({'status': 'ok'})
     return resp
 
+
+class Actions:
+    NEW_FORM = 'new-form'
+    ANSWER = 'answer'
+    ADD_REPEAT = 'add-repeat'
+    NEXT = 'next'
+    BACK = 'back'
+    CURRENT = 'current'
+    HEARTBEAT = 'heartbeat'
+    EDIT_REPEAT = 'edit-repeat'
+    NEW_REPEAT = 'new-repeat'
+    DELETE_REPEAT = 'delete-repeat'
+    SUBMIT_ALL = 'submit-all'
+    SET_LANG = 'set-lang'
+    PURGE_STALE = 'purge-stale'
+    GET_INSTANCE = 'get-instance'
 
 # debugging
 
