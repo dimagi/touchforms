@@ -111,19 +111,12 @@ def enter_form(request, **kwargs):
     return form_entry_new(request, xform, instance_xml, session_data, 
                           input_mode, offline_mode, force_template)
 
-def form_entry_new(request, xform, instance_xml, session_data, input_mode,
+def form_entry_new(request, xform, instance_xml, session_data, input_mode, 
                    offline_mode, force_template=None):
-
-    print "Form Entry New"
-
-    import pdb; pdb.set_trace()
-
     """start a new touchforms/typeforms session"""
     if force_template is not None:
-        print ("force templ " + str(force_template))
         templ = force_template
     else:
-        print ("input mode: " + str(input_mode))
         templ = {
             'touch': 'touchforms/touchscreen.html',
             'type': 'typeforms.html',
