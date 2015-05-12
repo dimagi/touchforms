@@ -164,9 +164,6 @@ function Form(json, adapter) {
         var mxpath = document.getElementById("xpath").value;
         var minstance = document.getElementById("instance-xml").value;
 
-        console.log("passing xpath: " + mxpath)
-        console.log("passing instance: " + minstance)
-
         form.m_evaluate(mxpath, minstance);
       });
 
@@ -176,21 +173,17 @@ function Form(json, adapter) {
 
     this.m_evaluate = function(mxpath, minstance) {
 
-      doc = (new DOMParser()).parseFromString(minstance, 'text/xml');
+      var doc = (new DOMParser()).parseFromString(minstance, 'text/xml');
 
       var element = document.evaluate(mxpath , doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null ).singleNodeValue;
 
-      $evaluatexml = this.evaluate_result();
+      var $evaluatexml = this.evaluate_result();
 
       if(element == null){
           $evaluatexml.text(vkbeautify.xml('Node does not exist.'));
       }
 
-      if(element.innerHTML){
-          $evaluatexml.text(vkbeautify.xml(element.innerHTML));
-      } else{
-          $evaluatexml.text(vkbeautify.xml(element.value));
-      }
+      $evaluatexml.text(vkbeautify.xml(element.innerHTML || element.value))
 
       $evaluatexml.elastic();
 
@@ -616,11 +609,11 @@ var ixElementSet = function(e, set) {
 }
 
 var inElementSet = function(e, set) {
-  //return the matching object of 'e' within 'set'; null if no match
-  var ix = ixElementSet(e, set);
-  return (ix != -1 ? set[ix] : null);
+    //return the matching object of 'e' within 'set'; null if no match
+    var ix = ixElementSet(e, set);
+    return (ix != -1 ? set[ix] : null);
 }
-// mark
+
 function init_render(form, adapter, $div) {
   var f = new Form(form, adapter);
   f.init_render();

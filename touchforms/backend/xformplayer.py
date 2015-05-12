@@ -236,38 +236,40 @@ class XFormSession:
         return tree
 
 
+    def build_element_tree(self, element_tree_node, javarosa_node):
+        """
+        :param element_tree_node: the element tree node to expand into
+        :param javarosa_node: the Javarosa tree ref to expand form
+        :return: the expanded element tree node with all children and attributes
+        from the javarosa node
+        """
+        attribute_count = element_tree_node.getAttributeCount()
+        for x in range(0, attribute_count):
 
-    def build_ref(self, node, acc, a):
-
-        attribute_count = node.getAttributeCount()
-        for x in range (0, attribute_count):
-
-            if node.getAttributeValue(x) is None:
-                a.set(node.getAttributeName(x), "none")
+            if element_tree_node.getAttributeValue(x) is None:
+                javarosa_node.set(element_tree_node.getAttributeName(x), "none")
             else:
-                a.set(node.getAttributeName(x), node.getAttributeValue(x))
+                javarosa_node.set(element_tree_node.getAttributeName(x), element_tree_node.getAttributeValue(x))
 
-        if not node.isChildable():
-            a.text = node.getValue().getDisplayText()
-            if a.text is None:
-                a.text = "none"
+        if not element_tree_node.isChildable():
+            javarosa_node.text = element_tree_node.getValue().getDisplayText()
+            if javarosa_node.text is None:
+                javarosa_node.text = "none"
 
-        for x in range(0, node.getNumChildren()):
-            child = node.getChildAt(x)
-            b = ET.SubElement(a, child.getName())
-            self.build_ref(child, acc + " : " + node.getName(), b)
+        for x in range(0, element_tree_node.getNumChildren()):
+            child = element_tree_node.getChildAt(x)
+            element_tree_node_child = ET.SubElement(javarosa_node, child.getName())
+            self.build_element_tree(child, element_tree_node_child)
 
-    def prettify1(self):
+    def prettify(self):
         """Return a pretty-printed XML string for the Element.
         """
         elem = self.fem.getForm().getMainInstance().getRoot()
         a = ET.Element(elem.getName())
 
-        self.build_ref(elem, "", a)
+        self.build_element_tree(elem, a)
 
-        rough_string = ElementTree.tostring(a, 'utf-8')
-        return rough_string
-
+        return ElementTree.tostring(a, 'utf-8')
 
     def _walk(self, parent_ix, siblings):
         def step(ix, descend):
@@ -287,7 +289,7 @@ class XFormSession:
         def print_node(node, acc, a):
 
             attribute_count = node.getAttributeCount()
-            for x in range (0, attribute_count):
+            for x in xrange(0, attribute_count):
 
                 if node.getAttributeValue(x) is None:
                     a.set(node.getAttributeName(x), "none")
@@ -779,6 +781,7 @@ class Actions:
     SET_LANG = 'set-lang'
     PURGE_STALE = 'purge-stale'
     GET_INSTANCE = 'get-instance'
+    GET_INSTANCE_XML = 'get-instance-xml'
 
 # debugging
 

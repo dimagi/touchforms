@@ -236,12 +236,9 @@ def handle_request(content, server):
         elif action == xformplayer.Actions.GET_INSTANCE:
             xfsess = xformplayer.global_state.get_session(content['session-id'])
             return {"output": xfsess.output()}
-
-        elif action == 'get-instance-xml':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
+        elif action == xformplayer.Actions.GET_INSTANCE_XML:
             xfsess = xformplayer.global_state.get_instance_xml(content['session-id'])
-            return {"output": xfsess.prettify1()}
+            return {"output": xfsess.prettify()}
 
         else:
             raise InvalidRequestException("Unrecognized action: %s" % action)

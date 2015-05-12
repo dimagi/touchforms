@@ -59,8 +59,6 @@ TaskQueue.prototype.clearTasks = function(name) {
 
 function WebFormSession(params) {
 
-    //mark
-
     var self = this;
     self.taskQueue = new TaskQueue();
     self.heartbeat_has_failed = false;
@@ -113,28 +111,6 @@ function WebFormSession(params) {
         xform: params.xform_url,
         autocomplete: params.autocomplete_url
     };
-
-    self.buildInstance = function($div){
-
-        var sess = this;
-
-        var adapter = new xformAjaxAdapter(this.form_spec, this.session_data, this.instance_xml,
-            function (p, cb, bl ) {
-                sess.serverRequest(p, cb, bl);
-            },
-            function (p) {
-                sess.submit(p);
-            },
-            this.onpresubmit,
-            {
-                allow_html: params.allow_html,
-                resourceMap: params.resourceMap
-            }
-        );
-
-        adapter.loadInstance($div, params.session_id);
-
-    }
 
     self.load = function ($div, init_lang, options) {
 
