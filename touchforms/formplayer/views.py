@@ -198,9 +198,6 @@ def get_player_dimensions(request):
 @csrf_exempt
 @require_POST
 def player_proxy(request):
-    #import pdb; pdb.set_trace()
-    print "Player Proxy"
-
     """
     Proxy to an xform player, to avoid cross-site scripting issues
     """
