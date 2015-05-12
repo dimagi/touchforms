@@ -115,7 +115,6 @@ function WebFormSession(params) {
     };
 
     self.buildInstance = function($div){
-        //window.alert("Build Instance");
 
         var sess = this;
 

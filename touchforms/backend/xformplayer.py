@@ -266,16 +266,7 @@ class XFormSession:
         self.build_ref(elem, "", a)
 
         rough_string = ElementTree.tostring(a, 'utf-8')
-        reparsed = minidom.parseString(rough_string)
         return rough_string
-
-
-    def prettify(self, elem):
-        """Return a pretty-printed XML string for the Element.
-        """
-        rough_string = ElementTree.tostring(elem, 'utf-8')
-        reparsed = minidom.parseString(rough_string)
-        return reparsed.toprettyxml(indent="  ")
 
 
     def _walk(self, parent_ix, siblings):
@@ -313,12 +304,6 @@ class XFormSession:
                 b = ET.SubElement(a, child.getName())
                 print_node(child, acc + " : " + node.getName(), b)
 
-        def update_xml():
-            root = self.fem.getForm().getMainInstance().getRoot()
-            a = ET.Element(root.getName())
-            print_node(root, "", a)
-            #print XFormSession.prettify(self, a)
-
         form_ix = step(parent_ix, True)
         while ix_in_scope(form_ix):
             relevant = self.fem.isIndexRelevant(form_ix)
@@ -326,6 +311,7 @@ class XFormSession:
             if not relevant:
                 form_ix = step(form_ix, False)
                 continue
+
 
             evt = self.__parse_event(form_ix)
             evt['relevant'] = relevant

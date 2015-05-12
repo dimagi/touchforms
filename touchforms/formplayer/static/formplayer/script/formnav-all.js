@@ -1,8 +1,6 @@
 
 HEARTBEAT_INTERVAL = 60.;
 
-//mark
-
 function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc, render_context) {
   this.formSpec = formSpec;
   this.sessionData = sessionData;
@@ -104,8 +102,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
       function (resp) {
 
        var $instancexml = getForm(q).instance_container();
-       //$instancexml.append("<textarea>" + resp.output + "</textarea>")
-        //$instancexml.height((resp.output))
+
         $instancexml.text(vkbeautify.xml(resp.output));
         $instancexml.elastic();
         if (resp["status"] == "validation-error") {
