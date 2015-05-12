@@ -241,7 +241,6 @@ def handle_request(content, server):
             if 'session-id' not in content:
                 return {'error': 'session id required'}
             xfsess = xformplayer.global_state.get_instance_xml(content['session-id'])
-            print xfsess.prettify1()
             return {"output": xfsess.prettify1()}
 
         else:
