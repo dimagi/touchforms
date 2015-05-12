@@ -310,7 +310,6 @@ SUPPORTED_ACTIONS = ["touchcare-filter-cases"]
 
 # API stuff
 def handle_request (content, server):
-    print "Handle Request"
     action = content['action']
     if action == "touchcare-filter-cases":
         return filter_cases(content)

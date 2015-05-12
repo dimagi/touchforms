@@ -261,9 +261,6 @@ def post_data(data, url, content_type, auth=None):
     conn.request('POST', up.path, data, headers)
     resp = conn.getresponse()
     results = resp.read()
-
-    print "Results: " + str(results)
-
     return results
     
 def get_response(data, url, auth=None):

@@ -21,12 +21,8 @@ from . import api
 from touchforms.formplayer.api import DjangoAuth
 from touchforms.formplayer.const import PRELOADER_TAG_UID
 from datetime import datetime
-import sys
 
 def xform_list(request):
-
-    print "Xform List"
-
     if not settings.DEBUG:
         return HttpResponseNotFound()
 
@@ -60,9 +56,6 @@ def xform_list(request):
         }, context_instance=RequestContext(request))
                               
 def download(request, xform_id):
-
-    print "Download"
-
     """
     Download an xform
     """
@@ -87,11 +80,6 @@ def coalesce(*args):
 
 @csrf_exempt
 def enter_form(request, **kwargs):
-
-    print "Enter Form"
-
-    import traceback; traceback.print_stack()
-
     xform_id = kwargs.get('xform_id')
     xform = kwargs.get('xform')
     instance_xml = kwargs.get('instance_xml')
@@ -240,17 +228,7 @@ def player_proxy(request):
         return HttpResponseServerError(json.dumps({'message': msg}))
 
 
-def load_instance(request):
-
-    print "Load Instance!"
-
-    return HttpResponse("derp")
-
-
 def track_session(request, payload, response):
-
-    print "Track Session"
-
     def _concat_name(name):
         return u'...{0}'.format(name[-96:]) if len(name) > 99 else name
 
