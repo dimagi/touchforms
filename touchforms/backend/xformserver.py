@@ -70,7 +70,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             data_out = handle_request(data_in, self.server)
             reply = json.dumps(data_out)
         except InvalidRequestException, e:
-            self.send_error(400, e)
+            self.send_error(400, str(e))
             return
         except (Exception, java.lang.Exception), e:
             msg = ''
