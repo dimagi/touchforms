@@ -1,4 +1,6 @@
 import urllib
+from setup import init_classpath
+init_classpath()
 import com.xhaus.jyson.JysonCodec as json
 import logging
 from datetime import datetime
@@ -188,10 +190,7 @@ class CaseDatabase(TouchformsStorageUtility):
         self.fully_loaded = True
 
     def load_object_ids(self):
-        if self.form_context.get('all_case_ids', None):
-            case_ids = self.form_context.get('all_case_ids')
-        else:
-            case_ids = query_case_ids(self.query_func, criteria=self.additional_filters)
+        case_ids = query_case_ids(self.query_func, criteria=self.additional_filters)
         self.ids = dict(enumerate(case_ids))
 
     def getIDsForValue(self, field_name, value):

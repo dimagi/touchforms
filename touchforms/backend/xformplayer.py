@@ -121,7 +121,7 @@ def load_form(xform, instance=None, extensions=None, session_data=None, api_auth
     xform : string
         String representation of an xform
     form_context : dictionary
-        A hash that contains optional context for the form. Supported parameters are: 'all_case_ids' and
+        A hash that contains optional context for the form. Supported parameters are:
         'case_model'. The XFormPlayer uses the context to avoid making redundant calls to CommcareHQ.
     """
     extensions = extensions or []
