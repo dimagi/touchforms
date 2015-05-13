@@ -113,8 +113,6 @@ def _init(ctx):
     global_state = global_state_mgr(ctx)
 
 
-
-
 def load_form(xform, instance=None, extensions=None, session_data=None, api_auth=None, form_context=None):
     """Returns an org.javarosa.core.model.FormDef
 
@@ -129,7 +127,7 @@ def load_form(xform, instance=None, extensions=None, session_data=None, api_auth
     extensions = extensions or []
     session_data = session_data or {}
     form = XFormParser(StringReader(xform)).parse()
-    if instance != None:
+    if instance is not None:
         XFormParser(None).loadXmlInstance(form, StringReader(instance))
 
     # retrieve preloaders out of session_data (for backwards compatibility)
@@ -140,7 +138,7 @@ def load_form(xform, instance=None, extensions=None, session_data=None, api_auth
         preload_data=session_data.get('preloaders', {})
     )
 
-    form.initialize(instance == None, CCInstances(session_data, api_auth, form_context))
+    form.initialize(instance is None, CCInstances(session_data, api_auth, form_context))
     return form
 
 
