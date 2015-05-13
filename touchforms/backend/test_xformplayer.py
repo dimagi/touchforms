@@ -1,6 +1,9 @@
+import os
 import unittest
 import xformplayer
 import touchcare
+
+CUR_DIR = os.path.dirname(__file__)
 
 
 class MockFunctionException(Exception):
@@ -12,7 +15,7 @@ class XFormPlayerTest(unittest.TestCase):
     def setUp(self):
 
         try:
-            f = open('test_files/xforms/xform_simple_cases.xml', 'r')
+            f = open(os.path.join(CUR_DIR, 'test_files/xforms/xform_simple_cases.xml'), 'r')
             self.xform = f.read()
         except IOError:
             self.fail('Could not read test form')
