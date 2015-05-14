@@ -162,16 +162,15 @@ function Form(json, adapter) {
     $("#evaluate-button").click(function() {
 
         var mxpath = document.getElementById("xpath").value;
-        var minstance = document.getElementById("instance-xml").value;
 
-        form.m_evaluate(mxpath, minstance);
+        form.m_evaluate(mxpath);
       });
 
     this.submit = function() {
       this.adapter.submitForm(this);
     }
 
-    this.m_evaluate = function(mxpath, minstance) {
+    this.m_evaluate = function(mxpath) {
 
       var doc = (new DOMParser()).parseFromString(minstance, 'text/xml');
 
