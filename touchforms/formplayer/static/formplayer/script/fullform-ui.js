@@ -180,12 +180,12 @@ function Form(json, adapter) {
       var $evaluatexml = this.evaluate_result();
 
       if(element == null){
-          $evaluatexml.text(vkbeautify.xml('Node does not exist.'));
+          //$evaluatexml.text(vkbeautify.xml('Node does not exist.'));
       }
 
-      $evaluatexml.text(vkbeautify.xml(element.innerHTML || element.value))
+      //$evaluatexml.text(vkbeautify.xml(element.innerHTML || element.value))
 
-      $evaluatexml.elastic();
+      //$evaluatexml.elastic();
 
     }
   }

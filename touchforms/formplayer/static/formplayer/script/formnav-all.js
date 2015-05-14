@@ -99,25 +99,6 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
       if(this.answerCallback !== undefined) {
           this.answerCallback(this.session_id);
       }
-
-
-      this.ajaxfunc({'action': 'get-instance-xml',
-                   'session-id': this.session_id,
-                   'ix': ix,
-                   'answer': answer},
-      function (resp) {
-
-       var $instancexml = getForm(q).instance_container();
-        $instancexml.text(vkbeautify.xml(resp.output));
-        $instancexml.elastic();
-        if (resp["status"] == "validation-error") {
-          adapter.showError(q, resp);
-        } else {
-          q.clearError();
-
-        }
-
-      });
   }
 
   this.newRepeat = function(repeat) {
