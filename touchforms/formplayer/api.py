@@ -290,7 +290,7 @@ def get_raw_instance(session_id, auth=None):
             raise InvalidSessionIdException("Invalid Touchforms Session Id")
         else:
             raise TouchformsException(error)
-    return response["output"]
+    return response
 
 def start_form_session(form_path, content=None, language="", session_data={}):
     """

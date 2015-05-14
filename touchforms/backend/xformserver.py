@@ -235,10 +235,13 @@ def handle_request(content, server):
             return touchcare.handle_request(content, server)
         elif action == xformplayer.Actions.GET_INSTANCE:
             xfsess = xformplayer.global_state.get_session(content['session-id'])
-            return {"output": xfsess.output()}
+            return {"output": xfsess.output(), "xmlns": xfsess.get_xmlns()}
         elif action == xformplayer.Actions.GET_INSTANCE_XML:
             xfsess = xformplayer.global_state.get_instance_xml(content['session-id'])
-            return {"output": xfsess.prettify()}
+
+            xml = xfsess.prettify()
+
+            return {"output": xml}
 
         else:
             raise InvalidRequestException("Unrecognized action: %s" % action)

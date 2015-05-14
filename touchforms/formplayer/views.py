@@ -18,7 +18,7 @@ from django.utils.translation import ugettext as _
 import tempfile
 import os
 from . import api
-from touchforms.formplayer.api import DjangoAuth
+from touchforms.formplayer.api import DjangoAuth, get_raw_instance
 from touchforms.formplayer.const import PRELOADER_TAG_UID
 from datetime import datetime
 
@@ -300,3 +300,13 @@ def player_abort(request):
         redirect_to = '/'
 
     return HttpResponseRedirect(redirect_to)
+
+def get_xml(request, session_id):
+    print "getting xml"
+    try:
+        session = get_raw_instance(session_id)
+        print "got response: " + str(session)
+    except EntrySession.InvalidSessionIdException:
+        session = None
+
+    return HttpResponse(json.dumps(session))

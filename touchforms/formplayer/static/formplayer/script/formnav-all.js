@@ -1,7 +1,8 @@
 
 HEARTBEAT_INTERVAL = 60.;
 
-function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc, render_context) {
+function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc,
+                           render_context, answerCallback) {
   this.formSpec = formSpec;
   this.sessionData = sessionData;
   this.session_id = null;
@@ -9,6 +10,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
   this.submitfunc = submitfunc;
   this.presubmitfunc = presubmitfunc;
   this.render_context = render_context;
+  this.answerCallback = answerCallback;
 
   this.loadForm = function ($div, init_lang, onload, onerror) {
     var args = {
@@ -94,6 +96,10 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
         }
       });
 
+      if(this.answerCallback !== undefined) {
+          this.answerCallback(this.session_id);
+      }
+
 
       this.ajaxfunc({'action': 'get-instance-xml',
                    'session-id': this.session_id,
@@ -102,7 +108,6 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
       function (resp) {
 
        var $instancexml = getForm(q).instance_container();
-
         $instancexml.text(vkbeautify.xml(resp.output));
         $instancexml.elastic();
         if (resp["status"] == "validation-error") {
@@ -111,6 +116,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
           q.clearError();
 
         }
+
       });
   }
 
