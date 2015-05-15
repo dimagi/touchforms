@@ -72,22 +72,16 @@ def download(request, xform_id):
         return response
 
 
-def coalesce(*args):
-    for arg in args:
-        if arg is not None:
-            return arg
-    return None
-
 @csrf_exempt
 def enter_form(request, **kwargs):
     xform_id = kwargs.get('xform_id')
     xform = kwargs.get('xform')
     instance_xml = kwargs.get('instance_xml')
-    session_data = coalesce(kwargs.get('session_data'), {})
-    input_mode = coalesce(kwargs.get('input_mode'), 'touch')
-    submit_callback = coalesce(kwargs.get('onsubmit'), default_submit)
-    abort_callback = coalesce(kwargs.get('onabort'), default_abort)
-    force_template = coalesce(kwargs.get('force_template'), None)
+    session_data = kwargs.get('session_data', {})
+    input_mode = kwargs.get('input_mode', 'touch')
+    submit_callback = kwargs.get('onsubmit', default_submit)
+    abort_callback = kwargs.get('onabort', default_abort)
+    force_template = kwargs.get('force_template')
     offline_mode = kwargs.get('offline', False)
 
     # support for backwards compatibility; preloaders are DEPRECATED
