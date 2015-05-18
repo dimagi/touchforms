@@ -33,6 +33,10 @@ from org.javarosa.core.model.data import IntegerData, LongData, DecimalData, Str
 from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.core.util import UnregisteredLocaleException
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
+from org.commcare.suite.model import Text as JRText
+from java.lang import String as JString
+from java.util import Hashtable as JHashtable
+from org.javarosa.xpath import XPathException
 
 from touchcare import CCInstances
 from util import query_factory
@@ -61,19 +65,6 @@ class global_state_mgr(object):
             self.ctx.setNumSessions(len(self.session_cache))
 
     def get_session(self, session_id, override_state=None):
-        with self.lock:
-            try:
-                return self.session_cache[session_id]
-            except KeyError:
-                # see if session has been persisted
-                sess = persistence.restore(session_id, XFormSession, override_state)
-                if sess:
-                    self.new_session(sess) # repopulate in-memory cache
-                    return sess
-                else:
-                    raise NoSuchSession()
-
-    def get_instance_xml(self, session_id, override_state=None):
         with self.lock:
             try:
                 return self.session_cache[session_id]
@@ -224,6 +215,16 @@ class XFormSession:
     def get_xmlns(self):
         metadata = self.fem.getForm().getMainInstance().getMetaData()
         return metadata.get("XMLNS")
+
+    def evaluate_xpath(self, xpath):
+        evaluation_context = self.fem.getForm().exprEvalContext
+        args = JHashtable()
+        try:
+            m_text = JRText.XPathText(xpath, args)
+            result = m_text.evaluate(evaluation_context)
+            return result
+        except XPathException, e:
+            return e.getMessage()
 
 
     def output(self):
@@ -788,7 +789,7 @@ class Actions:
     SET_LANG = 'set-lang'
     PURGE_STALE = 'purge-stale'
     GET_INSTANCE = 'get-instance'
-    GET_INSTANCE_XML = 'get-instance-xml'
+    EVALUATE_XPATH = 'evaluate-xpath'
 
 # debugging
 

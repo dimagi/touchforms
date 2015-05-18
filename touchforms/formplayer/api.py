@@ -292,6 +292,28 @@ def get_raw_instance(session_id, auth=None):
             raise TouchformsException(error)
     return response
 
+
+def evaluate_xpath(session_id, xpath, auth=None):
+    """
+    Gets the raw xml instance of the current session regardless of the state that we're in (used for logging partially complete
+    forms to couch when errors happen).
+    """
+    data = {
+        "action":"evaluate-xpath",
+        "session-id": session_id,
+        "xpath": xpath,
+        }
+    response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
+    response = json.loads(response)
+    if "error" in response:
+        error = response["error"]
+        if error == "invalid session id":
+            raise InvalidSessionIdException("Invalid Touchforms Session Id")
+        else:
+            raise TouchformsException(error)
+    return response
+
+
 def start_form_session(form_path, content=None, language="", session_data={}):
     """
     Start a new form session

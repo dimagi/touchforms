@@ -163,29 +163,14 @@ function Form(json, adapter) {
 
         var mxpath = document.getElementById("xpath").value;
 
-        form.m_evaluate(mxpath);
-      });
+        adapter.evaluateXPath(mxpath, function(result){
+            $(document.getElementById("evaluate-result")).val(result)
+        });
+
+    });
 
     this.submit = function() {
       this.adapter.submitForm(this);
-    }
-
-    this.m_evaluate = function(mxpath) {
-
-      var doc = (new DOMParser()).parseFromString(minstance, 'text/xml');
-
-      var element = document.evaluate(mxpath , doc, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null ).singleNodeValue;
-
-      var $evaluatexml = this.evaluate_result();
-
-      if(element == null){
-          //$evaluatexml.text(vkbeautify.xml('Node does not exist.'));
-      }
-
-      //$evaluatexml.text(vkbeautify.xml(element.innerHTML || element.value))
-
-      //$evaluatexml.elastic();
-
     }
   }
 

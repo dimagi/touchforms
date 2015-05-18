@@ -101,6 +101,15 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
       }
   }
 
+  this.evaluateXPath = function(xpath, callback) {
+    this.ajaxfunc({'action': 'evaluate-xpath',
+                   'session-id': this.session_id,
+                   'xpath': xpath},
+      function (resp) {
+        callback(resp['output']);
+      });
+  }
+
   this.newRepeat = function(repeat) {
     this.ajaxfunc({'action': 'new-repeat',
                    'session-id': this.session_id,
