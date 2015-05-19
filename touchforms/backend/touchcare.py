@@ -25,6 +25,9 @@ from org.kxml2.io import KXmlParser
 
 from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
 
+logger = logging.getLogger('formplayer.touchcare')
+
+
 def query_case_ids(q, criteria=None):
     criteria = copy(criteria) or {} # don't modify the passed in dict
     criteria["ids_only"] = 'true'
@@ -135,7 +138,7 @@ class TouchformsStorageUtility(IStorageUtilityIndexed):
         self._objects[object_id] = object
 
     def read(self, record_id):
-        logging.debug('read record %s' % record_id)
+        logger.debug('read record %s' % record_id)
         try:
             # record_id is an int, object_id is a guid
             object_id = self.ids[record_id]
@@ -144,7 +147,7 @@ class TouchformsStorageUtility(IStorageUtilityIndexed):
         return self.read_object(object_id)
 
     def read_object(self, object_id):
-        logging.debug('read object %s' % object_id)
+        logger.debug('read object %s' % object_id)
         if object_id not in self._objects:
             self.put_object(self.fetch_object(object_id))
         try:
@@ -187,7 +190,7 @@ class CaseDatabase(TouchformsStorageUtility):
         self.ids = dict(enumerate(case_ids))
 
     def getIDsForValue(self, field_name, value):
-        logging.debug('case index lookup %s %s' % (field_name, value))
+        logger.debug('case index lookup %s %s' % (field_name, value))
 
         if (field_name, value) not in self.cached_lookups:
             if field_name == 'case-id':
@@ -227,7 +230,7 @@ class LedgerDatabase(TouchformsStorageUtility):
         self.ids = dict(enumerate(case_ids))
 
     def getIDsForValue(self, field_name, value):
-        logging.debug('ledger lookup %s %s' % (field_name, value))
+        logger.debug('ledger lookup %s %s' % (field_name, value))
         if (field_name, value) not in self.cached_lookups:
             if field_name == 'entity-id':
                 ledgers = [self.read_object(value)]

@@ -17,12 +17,7 @@ init_classpath()
 import com.xhaus.jyson.JysonCodec as json
 from xcp import TouchFormsException, InvalidRequestException
 
-logging.basicConfig(
-    stream=sys.stderr,
-    level=logging.DEBUG,
-    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s'
-)
-
+logger = logging.getLogger('formplayer.xformserver')
 DEFAULT_PORT = 4444
 DEFAULT_STALE_WINDOW = 3. #hours
 
@@ -50,19 +45,19 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         if 'content-length' in self.headers.dict:
             length = int(self.headers.dict['content-length'])
         else:
-            logging.warn('content length required')
+            logger.warn('content length required')
             self.send_error(400, 'content length required for post')
             return
 
         if 'content-type' not in self.headers.dict or self.headers.dict['content-type'] != 'text/json':
-            logging.warn('content type missing or non-json')
+            logger.warn('content type missing or non-json')
 
         body = self.rfile.read(length)
         try:
-            logging.debug('received: [%s]' % body)
+            logger.debug('received: [%s]' % body)
             data_in = json.loads(body)
         except:
-            logging.warn('content does not parse')
+            logger.warn('content does not parse')
             self.send_error(400, 'content does not parse as valid json')
             return
 
@@ -91,7 +86,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             )
             return
 
-        logging.debug('returned: [%s]' % reply)
+        logger.debug('returned: [%s]' % reply)
 
         self.send_response(200)
         self.send_header('Content-Type', 'text/json; charset=utf-8')
@@ -115,7 +110,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         if human_readable_message is None:
             human_readable_message = message
         explain = long
-        logging.exception("Status Code: %d, Message %s" % (code, message))
+        logger.exception("Status Code: %d, Message %s" % (code, message))
         content = json.dumps({'status': 'error',
                               'error_type': error_type,
                               'code': code, 
@@ -154,6 +149,7 @@ def handle_request(content, server):
     ensure_required_params(['action'], 'All actions', content)
 
     action = content['action']
+    logger.info('Received action %s' % action)
     nav_mode = content.get('nav', 'prompt')
     try:
         if action != xformplayer.Actions.NEW_FORM and action not in touchcare.SUPPORTED_ACTIONS:
@@ -258,7 +254,7 @@ class Purger(threading.Thread):
             if self.purge_due():
                 self.update()
                 result = xformplayer.purge()
-                logging.info('purging sessions: ' + str(result))
+                logger.info('purging sessions: ' + str(result))
 
             time.sleep(0.1)
 
@@ -300,14 +296,14 @@ def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, offline=False):
 
     gw = XFormHTTPGateway(port, stale_window, ext_mod)
     gw.start()
-    logging.info('started server on port %d' % port)
+    logger.info('started server on port %d' % port)
 
     purger = Purger()
     purger.start()
-    logging.info('purging sessions inactive for more than %s hours' % stale_window)
+    logger.info('purging sessions inactive for more than %s hours' % stale_window)
 
     if settings.HACKS_MODE:
-        logging.info('hacks mode is enabled, and you should feel bad about that')
+        logger.info('hacks mode is enabled, and you should feel bad about that')
 
     try:
         while True:
@@ -317,7 +313,7 @@ def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, offline=False):
 
         #note: the keyboardinterrupt event doesn't seem to be triggered in
         #jython, nor does jython2.5 support the httpserver 'shutdown' method
-        logging.info('interrupted; shutting down...')
+        logger.info('interrupted; shutting down...')
         gw.terminate()
 
 if __name__ == "__main__":
