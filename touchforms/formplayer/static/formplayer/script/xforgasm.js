@@ -114,7 +114,6 @@ function WebFormSession(params) {
     };
 
     self.load = function ($div, init_lang, options) {
-
         /*
          options currently allows for two parameters:
          onLoading: a function to call when there are pending requests to the server
@@ -168,8 +167,6 @@ function WebFormSession(params) {
         if (params.action === 'submit-all' && self.NUM_PENDING_REQUESTS) {
             self.taskQueue.addTask(params.action, self.serverRequest, arguments, self)
         }
-
-        //alert("Sess server request params: " + params.keys());
 
         if (this.offline_mode) {
             // give local touchforms daemon credentials to talk to HQ independently
