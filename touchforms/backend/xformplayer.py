@@ -20,8 +20,8 @@ import logging
 init_classpath()
 init_jr_engine()
 
-import redis
 import com.xhaus.jyson.JysonCodec as json
+from redis.clients.jedis import Jedis
 
 from org.javarosa.xform.parse import XFormParser
 from org.javarosa.form.api import FormEntryModel, FormEntryController, FormEntryPrompt
@@ -50,17 +50,12 @@ class GlobalStateManager(object):
         self.ctx = ctx
         self.lock = threading.Lock()
         self.ctx.setNumSessions(0)
-        self.redis = redis.StrictRedis(
-            host=settings.REDIS_HOST,
-            port=settings.REDIS_PORT,
-            db=settings.REDIS_DB,
-        )
+        self.redis = Jedis(settings.REDIS_HOST, settings.REDIS_PORT)
 
     def new_session(self, xform_session):
         with self.lock:
             state = xform_session.session_state()
             self.redis.set(xform_session.uuid, json.dumps(state))
-            #self.ctx.setNumSessions(len(self.session_cache))
 
     def get_session(self, session_id, override_state=None):
         with self.lock:
