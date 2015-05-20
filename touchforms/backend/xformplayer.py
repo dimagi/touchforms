@@ -52,7 +52,7 @@ class GlobalStateManager(object):
         self.ctx.setNumSessions(0)
         self.redis = Jedis(settings.REDIS_HOST, settings.REDIS_PORT)
 
-    def new_session(self, xform_session):
+    def cache_session(self, xform_session):
         with self.lock:
             state = xform_session.session_state()
             self.redis.set(xform_session.uuid, json.dumps(state))
@@ -68,7 +68,7 @@ class GlobalStateManager(object):
             # see if session has been persisted
             xform_session = persistence.restore(session_id, XFormSession, override_state)
             if xform_session:
-                self.new_session(xform_session)  # repopulate in-memory cache
+                self.cache_session(xform_session)  # repopulate in-memory cache
                 return xform_session
             else:
                 raise NoSuchSession()
@@ -125,13 +125,15 @@ class XFormSession:
         self.nav_mode = params.get('nav_mode', 'prompt')
         self.seq_id = params.get('seq_id', 0)
 
+        form_context = params.get('form_context', None)
+
         self.form = load_form(
             xform,
             instance,
             params.get('extensions', []),
             params.get('session_data', {}),
             params.get('api_auth'),
-            params.get('form_context', None),
+            form_context,
         )
         self.fem = FormEntryModel(self.form, FormEntryModel.REPEAT_STRUCTURE_NON_LINEAR)
         self.fec = FormEntryController(self.fem)
@@ -151,6 +153,7 @@ class XFormSession:
         self.persist = params.get('persist', settings.PERSIST_SESSIONS)
         self.orig_params = {
             'xform': xform,
+            'form_context': form_context,
             'nav_mode': params.get('nav_mode'),
             'session_data': params.get('session_data'),
             'api_auth': params.get('api_auth'),
@@ -558,7 +561,7 @@ def open_form(form_spec, inst_spec=None, **kwargs):
         return {'error': str(e)}
 
     xfsess = XFormSession(xform_xml, instance_xml, **kwargs)
-    global_state.new_session(xfsess)
+    global_state.cache_session(xfsess)
     with xfsess: # triggers persisting of the fresh session
         extra = {'session_id': xfsess.uuid}
         extra.update(init_context(xfsess))
