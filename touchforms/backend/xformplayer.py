@@ -85,13 +85,21 @@ def _init(ctx):
     global_state = GlobalStateManager(ctx)
 
 
+def load_form(xform, instance=None, extensions=None, session_data=None, api_auth=None, form_context=None):
+    """Returns an org.javarosa.core.model.FormDef
 
-
-def load_form(xform, instance=None, extensions=None, session_data=None, api_auth=None):
+    Parameters
+    ----------
+    xform : string
+        String representation of an xform
+    form_context : dictionary
+        A hash that contains optional context for the form. Supported parameters are: 'all_case_ids' and
+        'case_model'. The XFormPlayer uses the context to avoid making redundant calls to CommcareHQ.
+    """
     extensions = extensions or []
     session_data = session_data or {}
     form = XFormParser(StringReader(xform)).parse()
-    if instance != None:
+    if instance is not None:
         XFormParser(None).loadXmlInstance(form, StringReader(instance))
 
     # retrieve preloaders out of session_data (for backwards compatibility)
@@ -102,7 +110,7 @@ def load_form(xform, instance=None, extensions=None, session_data=None, api_auth
         preload_data=session_data.get('preloaders', {})
     )
 
-    form.initialize(instance == None, CCInstances(session_data, api_auth))
+    form.initialize(instance is None, CCInstances(session_data, api_auth, form_context))
     return form
 
 
@@ -117,7 +125,14 @@ class XFormSession:
         self.nav_mode = params.get('nav_mode', 'prompt')
         self.seq_id = params.get('seq_id', 0)
 
-        self.form = load_form(xform, instance, params.get('extensions', []), params.get('session_data', {}), params.get('api_auth'))
+        self.form = load_form(
+            xform,
+            instance,
+            params.get('extensions', []),
+            params.get('session_data', {}),
+            params.get('api_auth'),
+            params.get('form_context', None),
+        )
         self.fem = FormEntryModel(self.form, FormEntryModel.REPEAT_STRUCTURE_NON_LINEAR)
         self.fec = FormEntryController(self.fem)
 

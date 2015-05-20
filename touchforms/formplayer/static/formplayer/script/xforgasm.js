@@ -62,6 +62,7 @@ function WebFormSession(params) {
     self.taskQueue = new TaskQueue();
     self.heartbeat_has_failed = false;
     self.offline_mode = isOffline(params.xform_url);
+    self.formContext = params.formContext;
     if (params.form_uid) {
         if (self.offline_mode) {
             throw "load form by UID is not possible for offline mode";
@@ -172,6 +173,7 @@ function WebFormSession(params) {
         var _errMsg = function (msg) {
             return "".concat(ERROR_MESSAGE, msg);
         };
+        params.form_context = self.formContext;
 
         this._serverRequest(
             function (cb) {
