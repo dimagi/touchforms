@@ -1,7 +1,6 @@
 import os
 import unittest
 import xformplayer
-import touchcare
 
 CUR_DIR = os.path.dirname(__file__)
 
