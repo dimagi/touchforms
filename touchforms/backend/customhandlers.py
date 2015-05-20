@@ -1,3 +1,4 @@
+import logging
 import jarray
 import java.lang
 
@@ -9,7 +10,8 @@ from org.javarosa.core.model.utils import IPreloadHandler
 from org.javarosa.core.model.condition import IFunctionHandler
 from org.javarosa.core.model.data import StringData
 
-import logging
+logger = logging.getLogger('formplayer.customhandlers')
+
 
 def attach_handlers(form, extensions, context, preload_data=None):
     """
@@ -29,7 +31,7 @@ def attach_handlers(form, extensions, context, preload_data=None):
     # NOTE: PRELOADERS ARE DEPRECATED
     for key, data_dict in preload_data.iteritems():
         handler = StaticPreloadHandler(key, data_dict)
-        logging.debug("Adding preloader for %s data: %s" % (key, data_dict))
+        logger.info("Adding preloader for %s data: %s" % (key, data_dict))
         form.getPreloader().addPreloadHandler(handler)
 
 
@@ -40,7 +42,7 @@ def attach_handlers(form, extensions, context, preload_data=None):
             #if this fails, make sure sys.path is correct, and that no intervening
             #__init__.py's do weird stuff (like reference django packages -- the
             #django context probably won't be set up)
-            logging.error('unable to import xforms extension module [%s]' % ext)
+            logger.error('unable to import xforms extension module [%s]' % ext)
             continue
 
         for obj, name in [(getattr(mod, o), o) for o in dir(mod) if not o.startswith('__')]:
@@ -53,7 +55,7 @@ def attach_handlers(form, extensions, context, preload_data=None):
                 if obj.slug() in context:
                     for item in context[obj.slug()]:
                         handler = obj(**item)
-                        logging.debug('adding handler [%s / %s] from module [%s]' % (name, handler.getName(), ext))
+                        logger.info('adding handler [%s / %s] from module [%s]' % (name, handler.getName(), ext))
                         form.exprEvalContext.addFunctionHandler(handler)
 
 

@@ -36,7 +36,8 @@ import persistence
 import settings
 import logging
 
-DEBUG = False
+logger = logging.getLogger('formplayer.xformplayer')
+
 
 
 class NoSuchSession(Exception):
@@ -514,11 +515,6 @@ class XFormSession:
             navinfo = {'event': ev_next}
         elif self.nav_mode == 'fao':
             navinfo = {'tree': self.walk()}
-
-        if DEBUG:
-            print '=== walking ==='
-            print_tree(self.walk())
-            print '==============='
 
         resp.update(navinfo)
         resp.update({'seq_id': self.seq_id})
