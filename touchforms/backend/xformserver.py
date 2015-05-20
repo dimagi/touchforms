@@ -228,9 +228,6 @@ def handle_request(content, server):
         elif action == xformplayer.Actions.SET_LANG:
             ensure_required_params(['lang'], action, content)
             return xformplayer.set_locale(content['session-id'], content['lang'])
-        elif action == xformplayer.Actions.PURGE_STALE:
-            ensure_required_params(['window'], action, content)
-            return xformplayer.purge(content['window'])
         elif action in touchcare.SUPPORTED_ACTIONS:
             return touchcare.handle_request(content, server)
         elif action == xformplayer.Actions.GET_INSTANCE:
@@ -277,8 +274,6 @@ def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, offline=False):
         while True:
             time.sleep(.01) #yield thread
     except KeyboardInterrupt:
-        purger.terminate()
-
         #note: the keyboardinterrupt event doesn't seem to be triggered in
         #jython, nor does jython2.5 support the httpserver 'shutdown' method
         logging.info('interrupted; shutting down...')

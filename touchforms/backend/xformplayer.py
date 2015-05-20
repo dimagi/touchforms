@@ -660,11 +660,6 @@ def get_caption(prompt):
         'caption_markdown': prompt.getSpecialFormQuestionText("markdown"),
     }
 
-def purge():
-    resp = global_state.purge()
-    resp.update({'status': 'ok'})
-    return resp
-
 
 class Actions:
     NEW_FORM = 'new-form'
@@ -679,5 +674,4 @@ class Actions:
     DELETE_REPEAT = 'delete-repeat'
     SUBMIT_ALL = 'submit-all'
     SET_LANG = 'set-lang'
-    PURGE_STALE = 'purge-stale'
     GET_INSTANCE = 'get-instance'
