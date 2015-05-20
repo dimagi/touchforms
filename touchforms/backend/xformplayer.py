@@ -20,7 +20,6 @@ init_classpath()
 init_jr_engine()
 
 import com.xhaus.jyson.JysonCodec as json
-import xml.etree.ElementTree as ET
 from org.javarosa.xform.parse import XFormParser
 from org.javarosa.form.api import FormEntryModel, FormEntryController, FormEntryPrompt
 from org.javarosa.core.model import Constants, FormIndex

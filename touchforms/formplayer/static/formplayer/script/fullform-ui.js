@@ -162,7 +162,7 @@ function Form(json, adapter) {
         var mxpath = document.getElementById("xpath").value;
 
         adapter.evaluateXPath(mxpath, function(result, status){
-            $(document.getElementById("evaluate-result")).val(result)
+            $(document.getElementById("evaluate-result")).val(result);
             if(status === "success") {
                 $(document.getElementById("evaluate-result")).removeClass('text-error');
             } else{
