@@ -21,6 +21,7 @@ from . import api
 from touchforms.formplayer.api import DjangoAuth, get_raw_instance
 from touchforms.formplayer.const import PRELOADER_TAG_UID
 from datetime import datetime
+from dimagi.utils.web import json_response
 
 def xform_list(request):
     if not settings.DEBUG:
@@ -302,11 +303,9 @@ def player_abort(request):
     return HttpResponseRedirect(redirect_to)
 
 def get_xml(request, session_id):
-    print "getting xml"
     try:
         session = get_raw_instance(session_id)
-        print "got response: " + str(session)
     except EntrySession.InvalidSessionIdException:
         session = None
 
-    return HttpResponse(json.dumps(session))
+    return json_response(session)

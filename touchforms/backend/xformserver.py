@@ -239,7 +239,7 @@ def handle_request(content, server):
         elif action == xformplayer.Actions.EVALUATE_XPATH:
             xfsess = xformplayer.global_state.get_session(content['session-id'])
             result = xfsess.evaluate_xpath(content['xpath'])
-            return {"output": result}
+            return {"output": result['output'], "status": result['status']}
 
         else:
             raise InvalidRequestException("Unrecognized action: %s" % action)

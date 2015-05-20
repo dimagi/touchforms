@@ -106,7 +106,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
                    'session-id': this.session_id,
                    'xpath': xpath},
       function (resp) {
-        callback(resp['output']);
+        callback(resp['output'], resp['status']);
       });
   }
 

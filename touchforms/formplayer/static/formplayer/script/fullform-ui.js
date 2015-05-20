@@ -102,7 +102,7 @@ function loadFromJSON(o, json) {
 
 function parse_meta(type, style) {
   var meta = {};
-  
+
   if (type == "date") {
     meta.mindiff = style.before != null ? +style.before : null;
     meta.maxdiff = style.after != null ? +style.after : null;
@@ -126,7 +126,7 @@ function parse_meta(type, style) {
       }
     }
   }
-  
+
   if (type == "select" || type == "multiselect") {
     meta.appearance = style.raw;
   }
@@ -143,8 +143,6 @@ function Form(json, adapter) {
     this.$container = $(this.template());
     this.$title = this.$container.find('#title');
     this.$children = this.$container.find('#form');
-    this.$instancexml = $('#instance-xml')
-    this.$evaluateresult = $("#evaluate-result");
 
     this.$title.text(json.title);
     render_elements(this, json.tree);
@@ -155,7 +153,7 @@ function Form(json, adapter) {
         if (!proceed) {
           return;
         }
-        
+
         form.submit();
       });
 
@@ -163,8 +161,13 @@ function Form(json, adapter) {
 
         var mxpath = document.getElementById("xpath").value;
 
-        adapter.evaluateXPath(mxpath, function(result){
+        adapter.evaluateXPath(mxpath, function(result, status){
             $(document.getElementById("evaluate-result")).val(result)
+            if(status === "success") {
+                $(document.getElementById("evaluate-result")).removeClass('text-error');
+            } else{
+                $(document.getElementById("evaluate-result")).addClass('text-error');
+            }
         });
 
     });
@@ -182,16 +185,8 @@ function Form(json, adapter) {
     return this.$children;
   }
 
-  this.instance_container = function() {
-      return this.$instancexml
-  }
-
   this.submitting = function() {
     this.$container.find('#submit').val('Submitting...');
-  }
-
-  this.evaluate_result = function() {
-      return this.$evaluateresult
   }
 }
 
@@ -232,7 +227,7 @@ function Group(json, parent) {
     if (this.is_repetition) {
       this.rel_ix = relativeIndex(new_json.ix);
     }
-    reconcile_elements(this, new_json.children);    
+    reconcile_elements(this, new_json.children);
     this.update();
   }
 
@@ -631,7 +626,7 @@ function scroll_pin(pin_threshold, $container, $elem) {
     $elem.css('top', pinned ? pin_threshold + 'px' : base_offset);
   };
 }
-  
+
 function set_pin(pin_threshold, $container, $elem) {
   var pinfunc = scroll_pin(pin_threshold, $container, $elem);
   $(window).scroll(pinfunc);

@@ -213,18 +213,31 @@ class XFormSession:
         return state
 
     def get_xmlns(self):
+        """
+        :return: the xmlns header for the instance of the current session
+        """
         metadata = self.fem.getForm().getMainInstance().getMetaData()
         return metadata.get("XMLNS")
 
     def evaluate_xpath(self, xpath):
+        """
+        :param xpath: the xpath expression to be evaluated EG "/data/question1"
+        :return: the value stored in the referenced path
+        at the moment only supports single values IE won't return nodesets
+        We use the JavaRosa "Text" type as a factory to turn our String into and XPath
+        """
         evaluation_context = self.fem.getForm().exprEvalContext
         args = JHashtable()
+        result = {}
         try:
             m_text = JRText.XPathText(xpath, args)
-            result = m_text.evaluate(evaluation_context)
-            return result
+            result['status'] = 'success'
+            result['output'] = m_text.evaluate(evaluation_context)
         except XPathException, e:
-            return e.getMessage()
+            result['status'] = 'failure'
+            result['output'] = e.getMessage()
+
+        return result
 
 
     def output(self):
@@ -241,43 +254,6 @@ class XFormSession:
         self._walk(form_ix, tree)
         return tree
 
-
-    def build_element_tree(self, javarosa_node, element_tree_node):
-        """
-        :param javarosa_node: the element tree node to expand into
-        :param element_tree_node: the Javarosa tree ref to expand form
-        :return: the expanded element tree node with all children and attributes
-        from the javarosa node
-        """
-        attribute_count = javarosa_node.getAttributeCount()
-
-        for x in range(0, attribute_count):
-
-            if javarosa_node.getAttributeValue(x) is None:
-                element_tree_node.set(javarosa_node.getAttributeName(x), "none")
-            else:
-                element_tree_node.set(javarosa_node.getAttributeName(x), javarosa_node.getAttributeValue(x))
-
-        if not javarosa_node.isChildable():
-            element_tree_node.text = javarosa_node.getValue().getDisplayText()
-            if element_tree_node.text is None:
-                element_tree_node.text = "none"
-
-        for x in range(0, javarosa_node.getNumChildren()):
-            child = javarosa_node.getChildAt(x)
-            element_tree_node_child = ET.SubElement(element_tree_node, child.getName())
-            self.build_element_tree(child, element_tree_node_child)
-
-    def prettify(self):
-        """Return a pretty-printed XML string for the Element.
-        """
-        jr_root = self.fem.getForm().getMainInstance().getRoot()
-
-        et_root = ET.Element(jr_root.getName())
-
-        self.build_element_tree(jr_root, et_root)
-
-        return ElementTree.tostring(et_root, 'utf-8')
 
     def _walk(self, parent_ix, siblings):
         def step(ix, descend):
