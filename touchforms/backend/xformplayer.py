@@ -41,6 +41,7 @@ DEBUG = False
 class NoSuchSession(Exception):
     pass
 
+
 class GlobalStateManager(object):
     instances = {}
     instance_id_counter = 0
@@ -72,7 +73,7 @@ class GlobalStateManager(object):
             # see if session has been persisted
             xform_session = persistence.restore(session_id, XFormSession, override_state)
             if xform_session:
-                self.new_session(xform_session) # repopulate in-memory cache
+                self.new_session(xform_session)  # repopulate in-memory cache
                 return xform_session
             else:
                 raise NoSuchSession()
