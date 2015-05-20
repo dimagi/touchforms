@@ -286,6 +286,7 @@ def api_autocomplete(request):
 
     return response
 
+
 def player_abort(request):
     class TimeoutException(Exception):
         pass
@@ -301,6 +302,7 @@ def player_abort(request):
         redirect_to = '/'
 
     return HttpResponseRedirect(redirect_to)
+
 
 def get_xml(request, session_id):
     try:

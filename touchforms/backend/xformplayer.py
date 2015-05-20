@@ -12,20 +12,15 @@ from java.util import Date
 from java.util import Vector
 from java.io import StringReader
 
-from xml.etree import ElementTree
-from xml.dom import minidom
-
 import customhandlers
 from util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect, to_arr, index_from_str
     
 from setup import init_classpath, init_jr_engine
-import logging
 init_classpath()
 init_jr_engine()
 
 import com.xhaus.jyson.JysonCodec as json
 import xml.etree.ElementTree as ET
-
 from org.javarosa.xform.parse import XFormParser
 from org.javarosa.form.api import FormEntryModel, FormEntryController, FormEntryPrompt
 from org.javarosa.core.model import Constants, FormIndex
@@ -34,7 +29,6 @@ from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.core.util import UnregisteredLocaleException
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
 from org.commcare.suite.model import Text as JRText
-from java.lang import String as JString
 from java.util import Hashtable as JHashtable
 from org.javarosa.xpath import XPathException
 
@@ -239,7 +233,6 @@ class XFormSession:
 
         return result
 
-
     def output(self):
         if self.cur_event['type'] != 'form-complete':
             #warn that not at end of form
@@ -253,7 +246,6 @@ class XFormSession:
         tree = []
         self._walk(form_ix, tree)
         return tree
-
 
     def _walk(self, parent_ix, siblings):
         def step(ix, descend):
@@ -269,27 +261,6 @@ class XFormSession:
             else:
                 return FormIndex.isSubElement(parent_ix, form_ix)
 
-
-        def print_node(node, acc, a):
-
-            attribute_count = node.getAttributeCount()
-            for x in xrange(0, attribute_count):
-
-                if node.getAttributeValue(x) is None:
-                    a.set(node.getAttributeName(x), "none")
-                else:
-                    a.set(node.getAttributeName(x), node.getAttributeValue(x))
-
-            if not node.isChildable():
-                a.text = node.getValue().getDisplayText()
-                if a.text is None:
-                    a.text = "none"
-
-            for x in range(0, node.getNumChildren()):
-                child = node.getChildAt(x)
-                b = ET.SubElement(a, child.getName())
-                print_node(child, acc + " : " + node.getName(), b)
-
         form_ix = step(parent_ix, True)
         while ix_in_scope(form_ix):
             relevant = self.fem.isIndexRelevant(form_ix)
@@ -297,7 +268,6 @@ class XFormSession:
             if not relevant:
                 form_ix = step(form_ix, False)
                 continue
-
 
             evt = self.__parse_event(form_ix)
             evt['relevant'] = relevant

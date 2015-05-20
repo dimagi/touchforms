@@ -99,16 +99,16 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
       if(this.answerCallback !== undefined) {
           this.answerCallback(this.session_id);
       }
-  }
+  };
 
   this.evaluateXPath = function(xpath, callback) {
     this.ajaxfunc({'action': 'evaluate-xpath',
                    'session-id': this.session_id,
                    'xpath': xpath},
       function (resp) {
-        callback(resp['output'], resp['status']);
+        callback(resp.output, resp.status);
       });
-  }
+  };
 
   this.newRepeat = function(repeat) {
     this.ajaxfunc({'action': 'new-repeat',
