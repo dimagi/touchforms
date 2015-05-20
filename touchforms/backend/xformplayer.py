@@ -20,6 +20,7 @@ import logging
 init_classpath()
 init_jr_engine()
 
+import redis
 import com.xhaus.jyson.JysonCodec as json
 
 from org.javarosa.xform.parse import XFormParser
@@ -40,77 +41,52 @@ DEBUG = False
 class NoSuchSession(Exception):
     pass
 
-class global_state_mgr(object):
+class GlobalStateManager(object):
     instances = {}
     instance_id_counter = 0
 
-    session_cache = {}
-    
     def __init__(self, ctx):
         self.ctx = ctx
         self.lock = threading.Lock()
         self.ctx.setNumSessions(0)
-    
-    def new_session(self, xfsess):
+        self.redis = redis.StrictRedis(
+            host=settings.REDIS_HOST,
+            port=settings.REDIS_PORT,
+            db=settings.REDIS_DB,
+        )
+
+    def new_session(self, xform_session):
         with self.lock:
-            self.session_cache[xfsess.uuid] = xfsess
-            self.ctx.setNumSessions(len(self.session_cache))
+            state = xform_session.session_state()
+            self.redis.set(xform_session.uuid, json.dumps(state))
+            #self.ctx.setNumSessions(len(self.session_cache))
 
     def get_session(self, session_id, override_state=None):
         with self.lock:
-            try:
-                return self.session_cache[session_id]
-            except KeyError:
-                # see if session has been persisted
-                sess = persistence.restore(session_id, XFormSession, override_state)
-                if sess:
-                    self.new_session(sess) # repopulate in-memory cache
-                    return sess
-                else:
-                    raise NoSuchSession()
-        
-    #todo: we're not calling this currently, but should, or else xform sessions will hang around in memory forever        
-    def destroy_session(self, session_id):
-        # todo: should purge from cache too
-        with self.lock:
-            try:
-                del self.session_cache[session_id]
-            except KeyError:
+            xform_state_raw = self.redis.get(session_id)
+            if xform_state_raw:
+                xform_state = json.loads(xform_state_raw)
+                xform_state.update({'uuid': session_id})
+                return XFormSession(**xform_state)
+
+            # see if session has been persisted
+            xform_session = persistence.restore(session_id, XFormSession, override_state)
+            if xform_session:
+                self.new_session(xform_session) # repopulate in-memory cache
+                return xform_session
+            else:
                 raise NoSuchSession()
-        
-    def save_instance(self, data):                
+
+    def save_instance(self, data):
         with self.lock:
             self.instance_id_counter += 1
             self.instances[self.instance_id_counter] = data
         return self.instance_id_counter
 
-    #todo: add ways to get xml, delete xml, and option not to save xml at all
-
-    def purge(self):
-        num_sess_purged = 0
-        num_sess_active = 0
-
-        with self.lock:
-            now = time.time()
-            for sess_id, sess in self.session_cache.items():
-                if now - sess.last_activity > sess.staleness_window:
-                    del self.session_cache[sess_id]
-                    num_sess_purged += 1
-                else:
-                    num_sess_active += 1
-            #what about saved instances? we don't track when they were saved
-            #for now will just assume instances are not saved
-
-        # note that persisted entries use the timeout functionality provided by the caching framework
-
-        self.ctx.setNumSessions(num_sess_active)
-
-        return {'purged': num_sess_purged, 'active': num_sess_active}
-
 global_state = None
 def _init(ctx):
     global global_state
-    global_state = global_state_mgr(ctx)
+    global_state = GlobalStateManager(ctx)
 
 
 
@@ -704,13 +680,3 @@ class Actions:
     SET_LANG = 'set-lang'
     PURGE_STALE = 'purge-stale'
     GET_INSTANCE = 'get-instance'
-
-# debugging
-
-import pprint
-pp = pprint.PrettyPrinter(indent=2)
-def print_tree(tree):
-    try:
-        pp.pprint(tree)
-    except UnicodeEncodeError:
-        print 'sorry, can\'t pretty-print unicode'

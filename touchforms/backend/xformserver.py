@@ -244,39 +244,6 @@ def handle_request(content, server):
     except xformplayer.SequencingException:
         return {'error': 'session is locked by another request'}
 
-class Purger(threading.Thread):
-    def __init__(self, purge_freq=1.):
-        threading.Thread.__init__(self)
-        self.purge_freq = timedelta(minutes=purge_freq)
-
-        self.last_purge = None
-        self.up = True
-
-    def run(self):
-        self.update()
-        while self.up:
-            if self.purge_due():
-                self.update()
-                result = xformplayer.purge()
-                logging.info('purging sessions: ' + str(result))
-
-            time.sleep(0.1)
-
-    def purge_due(self):
-        if self.last_purge == None:
-            return True
-        elif datetime.utcnow() - self.last_purge > self.purge_freq:
-            return True
-        elif datetime.utcnow() < self.last_purge:
-            return True
-        return False
-
-    def update(self):
-        self.last_purge = datetime.utcnow()
-
-    def terminate(self):
-        self.up = False
-
 def init_gui():
     try:
         import GUI
@@ -300,11 +267,8 @@ def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, offline=False):
 
     gw = XFormHTTPGateway(port, stale_window, ext_mod)
     gw.start()
-    logging.info('started server on port %d' % port)
 
-    purger = Purger()
-    purger.start()
-    logging.info('purging sessions inactive for more than %s hours' % stale_window)
+    logging.info('started server on port %d' % port)
 
     if settings.HACKS_MODE:
         logging.info('hacks mode is enabled, and you should feel bad about that')

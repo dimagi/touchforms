@@ -6,3 +6,8 @@ PERSISTENCE_DIRECTORY = "/path/to/www/data/touchforms"
 
 # from jython_ssl import SSLContext, TRUST_ALL_CONTEXT
 # SSLContext.setDefault(TRUST_ALL_CONTEXT)
+
+### REDIS CONFIG ###
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6376
+REDIS_DB = 0

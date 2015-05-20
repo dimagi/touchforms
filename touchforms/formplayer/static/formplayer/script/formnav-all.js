@@ -1,6 +1,4 @@
 
-HEARTBEAT_INTERVAL = 60.;
-
 function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc, render_context) {
   this.formSpec = formSpec;
   this.sessionData = sessionData;
@@ -64,16 +62,6 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
         onload(adapter, resp);
       }
     });
-        
-    if (HEARTBEAT_INTERVAL > 0) {
-      var adapter = this;
-      setInterval(function() {
-        adapter.ajaxfunc({
-          'action': 'heartbeat',
-          'session-id': adapter.session_id
-        }, function(resp) { /* do nothing */ });
-      }, HEARTBEAT_INTERVAL * 1000);
-    }
   }
 
   this.answerQuestion = function (q) {

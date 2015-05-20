@@ -15,6 +15,7 @@ def init_classpath():
 
     jardir = os.path.join(CUR_DIR, 'jrlib')
     jars = [k for k in os.listdir(jardir) if k.endswith('.jar')]
+    sys.path.append('/Users/benrudolph/.virtualenvs/commcare-hq/lib/python2.7/site-packages')
 
     if not initialized:
         for jar in jars:
