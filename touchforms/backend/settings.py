@@ -1,6 +1,5 @@
 import logging.handlers
 import sys
-import os
 
 # TODO how to harmonize this with django settings?
 
