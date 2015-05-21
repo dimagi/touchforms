@@ -80,6 +80,15 @@ class XFormPlayerTest(unittest.TestCase):
             }
         )
 
+    def test_heartbeat(self):
+        """
+        Trivial test, but if this fails, then our cron job restarter on hqtouch1 will fail
+        and that is important to know.
+        """
+        result = xformplayer.heartbeat()
+        self.assertEqual(result['status'], 'success')
+        self.assertEqual(result['message'], 'Thump thump')
+
 
 if __name__ == '__main__':
     unittest.main()

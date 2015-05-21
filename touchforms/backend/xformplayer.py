@@ -677,10 +677,8 @@ def current_question(xform_session, override_state=None):
     extra.update(init_context(xform_session))
     return xform_session.response(extra, xform_session.cur_event)
 
-def heartbeat(session_id):
-    # just touch the session
-    with global_state.get_session(session_id) as xfsess:
-        return {}
+def heartbeat():
+    return {'status': 'success', 'message': 'Thump thump'}
 
 def next_event (xfsess):
     ev = xfsess.next_event()
