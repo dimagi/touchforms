@@ -677,6 +677,7 @@ def current_question(xform_session, override_state=None):
     extra.update(init_context(xform_session))
     return xform_session.response(extra, xform_session.cur_event)
 
+
 def heartbeat():
     return {'status': 'success', 'message': 'Thump thump'}
 
