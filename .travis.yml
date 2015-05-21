@@ -10,5 +10,6 @@ branches:
   only:
       - master
 install:
+  - "cp touchforms/backend/localsettings.example.py touchforms/backend/localsettings.py"
   - "pip install -r touchforms/test_requirements.txt"
 script: "./run_tests.sh"
