@@ -15,10 +15,9 @@ import settings
 from setup import init_classpath
 init_classpath()
 import com.xhaus.jyson.JysonCodec as json
-from xcp import TouchFormsException
+from xcp import TouchFormsException, InvalidRequestException
 
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-
+logger = logging.getLogger('formplayer.xformserver')
 DEFAULT_PORT = 4444
 DEFAULT_STALE_WINDOW = 3. #hours
 
@@ -39,54 +38,55 @@ class XFormHTTPGateway(threading.Thread):
         self.server.shutdown()
 
 class XFormRequestHandler(BaseHTTPRequestHandler):
-    
+
     error_content_type = "text/json"
 
     def do_POST(self):
         if 'content-length' in self.headers.dict:
             length = int(self.headers.dict['content-length'])
         else:
-            logging.warn('content length required')
+            logger.warn('content length required')
             self.send_error(400, 'content length required for post')
             return
 
         if 'content-type' not in self.headers.dict or self.headers.dict['content-type'] != 'text/json':
-            logging.warn('content type missing or non-json')
+            logger.warn('content type missing or non-json')
 
         body = self.rfile.read(length)
         try:
-            logging.debug('received: [%s]' % body)
+            logger.debug('received: [%s]' % body)
             data_in = json.loads(body)
         except:
-            logging.warn('content does not parse')
+            logger.warn('content does not parse')
             self.send_error(400, 'content does not parse as valid json')
             return
 
         try:
             data_out = handle_request(data_in, self.server)
             reply = json.dumps(data_out)
+        except InvalidRequestException, e:
+            self.send_error(400, str(e))
+            return
         except (Exception, java.lang.Exception), e:
-            msg = ""
-            error_type = None
+            msg = ''
             if isinstance(e, java.lang.Exception):
                 e.printStackTrace()  # todo: log the java stacktrace
             elif isinstance(e, urllib2.HTTPError):
                 if e.headers.get("content-type", "") == "text/plain":
                     msg = e.read()
-            elif isinstance(e, TouchFormsException):
-                error_type = type(e).__name__
 
-            logging.exception('error handling request')
+            info = sys.exc_info()
+
             self.send_error(
                 500,
                 u'internal error handling request: %s: %s%s' % (
                     type(e), unicode(e), u": %s" % msg if msg else ""),
-                error_type,
+                unicode(info[0]),
                 msg if msg else None,
             )
             return
 
-        logging.debug('returned: [%s]' % reply)
+        logger.debug('returned: [%s]' % reply)
 
         self.send_response(200)
         self.send_header('Content-Type', 'text/json; charset=utf-8')
@@ -110,7 +110,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         if human_readable_message is None:
             human_readable_message = message
         explain = long
-        self.log_error("code %d, message %s", code, message.encode("ascii", "xmlcharrefreplace")) # This logs to stderr, which only takes ascii
+        logger.exception("Status Code: %d, Message %s" % (code, message))
         content = json.dumps({'status': 'error',
                               'error_type': error_type,
                               'code': code, 
@@ -137,15 +137,25 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
     def cross_origin_header(self):
         if settings.ALLOW_CROSS_ORIGIN:
             self.send_header('Access-Control-Allow-Origin', '*')
-        
+
+
+def ensure_required_params(params, action, content):
+    for param in params:
+        if param not in content:
+            raise InvalidRequestException("'%s' is required for action: %s" % (param, action))
+
+
 def handle_request(content, server):
-    if 'action' not in content:
-        return {'error': 'action required'}
+    ensure_required_params(['action'], 'All actions', content)
 
     action = content['action']
+    logger.info('Received action %s' % action)
     nav_mode = content.get('nav', 'prompt')
     try:
-        if action == 'new-form':
+        if action != xformplayer.Actions.NEW_FORM and action not in touchcare.SUPPORTED_ACTIONS:
+            ensure_required_params(['session-id'], action, content)
+
+        if action == xformplayer.Actions.NEW_FORM:
             form_fields = {'form-name': 'uid', 'form-content': 'raw', 'form-url': 'url'}
             form_spec = None
             for k, v in form_fields.iteritems():
@@ -172,37 +182,21 @@ def handle_request(content, server):
                     'staleness_window': content.get('staleness_window', server.default_stale_window),
                 })
 
-        elif action == 'answer':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-            if 'answer' not in content:
-                return {'error': 'answer required'}
-
+        elif action == xformplayer.Actions.ANSWER:
+            ensure_required_params(['answer'], action, content)
             return xformplayer.answer_question(content['session-id'], content['answer'], content.get('ix'))
 
         #sequential (old-style) repeats only
-        elif action == 'add-repeat':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-
+        elif action == xformplayer.Actions.ADD_REPEAT:
             return xformplayer.new_repetition(content['session-id'])
 
-        elif action == 'next':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-
+        elif action == xformplayer.Actions.NEXT:
             return xformplayer.skip_next(content['session-id'])
 
-        elif action == 'back':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-
+        elif action == xformplayer.Actions.BACK:
             return xformplayer.go_back(content['session-id'])
 
-        elif action == 'current':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-
+        elif action == xformplayer.Actions.CURRENT:
             override_state = None
             # override api_auth with the current auth to avoid issues with expired django sessions
             # when editing saved forms
@@ -213,65 +207,38 @@ def handle_request(content, server):
                 }
             return xformplayer.current_question(content['session-id'], override_state=override_state)
 
-        elif action == 'heartbeat':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-
+        elif action == xformplayer.Actions.HEARTBEAT:
             return xformplayer.heartbeat(content['session-id'])
 
-        elif action == 'edit-repeat':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-            if 'ix' not in content:
-                return {'error': 'repeat index required'}
-
+        elif action == xformplayer.Actions.EDIT_REPEAT:
+            ensure_required_params(['ix'], action, content)
             return xformplayer.edit_repeat(content['session-id'], content['ix'])
 
-        elif action == 'new-repeat':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-
+        elif action == xformplayer.Actions.NEW_REPEAT:
             return xformplayer.new_repeat(content['session-id'], content.get('ix'))
-    
-        elif action == 'delete-repeat':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-            if 'ix' not in content:
-                return {'error': 'repeat index required'}
-
+        elif action == xformplayer.Actions.DELETE_REPEAT:
+            ensure_required_params(['ix'], action, content)
             return xformplayer.delete_repeat(content['session-id'], content['ix'], content.get('form_ix'))
-
-        elif action == 'submit-all':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-            
+        elif action == xformplayer.Actions.SUBMIT_ALL:
             return xformplayer.submit_form(content['session-id'], content.get('answers', []), content.get('prevalidated', False))
-
-        elif action == 'set-lang':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
-            if 'lang' not in content:
-                return {'error': 'language required'}
-            
-            return xformplayer.set_locale(content['session-id'], content['lang'])            
-
-        elif action == 'purge-stale':
-            if 'window' not in content:
-                return {'error': 'staleness window required'}
-
+        elif action == xformplayer.Actions.SET_LANG:
+            ensure_required_params(['lang'], action, content)
+            return xformplayer.set_locale(content['session-id'], content['lang'])
+        elif action == xformplayer.Actions.PURGE_STALE:
+            ensure_required_params(['window'], action, content)
             return xformplayer.purge(content['window'])
-
         elif action in touchcare.SUPPORTED_ACTIONS:
             return touchcare.handle_request(content, server)
-            
-        elif action == 'get-instance':
-            if 'session-id' not in content:
-                return {'error': 'session id required'}
+        elif action == xformplayer.Actions.GET_INSTANCE:
             xfsess = xformplayer.global_state.get_session(content['session-id'])
-            return {"output": xfsess.output()}
+            return {"output": xfsess.output(), "xmlns": xfsess.get_xmlns()}
+        elif action == xformplayer.Actions.EVALUATE_XPATH:
+            xfsess = xformplayer.global_state.get_session(content['session-id'])
+            result = xfsess.evaluate_xpath(content['xpath'])
+            return {"output": result['output'], "status": result['status']}
 
         else:
-            return {'error': 'unrecognized action'}
+            raise InvalidRequestException("Unrecognized action: %s" % action)
     
     except xformplayer.NoSuchSession:
         return {'error': 'invalid session id'}
@@ -292,7 +259,7 @@ class Purger(threading.Thread):
             if self.purge_due():
                 self.update()
                 result = xformplayer.purge()
-                logging.info('purging sessions: ' + str(result))
+                logger.info('purging sessions: ' + str(result))
 
             time.sleep(0.1)
 
@@ -334,14 +301,14 @@ def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, offline=False):
 
     gw = XFormHTTPGateway(port, stale_window, ext_mod)
     gw.start()
-    logging.info('started server on port %d' % port)
+    logger.info('started server on port %d' % port)
 
     purger = Purger()
     purger.start()
-    logging.info('purging sessions inactive for more than %s hours' % stale_window)
+    logger.info('purging sessions inactive for more than %s hours' % stale_window)
 
     if settings.HACKS_MODE:
-        logging.info('hacks mode is enabled, and you should feel bad about that')
+        logger.info('hacks mode is enabled, and you should feel bad about that')
 
     try:
         while True:
@@ -351,7 +318,7 @@ def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, offline=False):
 
         #note: the keyboardinterrupt event doesn't seem to be triggered in
         #jython, nor does jython2.5 support the httpserver 'shutdown' method
-        logging.info('interrupted; shutting down...')
+        logger.info('interrupted; shutting down...')
         gw.terminate()
 
 if __name__ == "__main__":

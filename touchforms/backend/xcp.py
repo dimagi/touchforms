@@ -15,3 +15,7 @@ class TouchFormsException(Exception):
 
 class EmptyCacheFileException(TouchFormsException):
     pass
+
+
+class InvalidRequestException(TouchFormsException):
+    pass
