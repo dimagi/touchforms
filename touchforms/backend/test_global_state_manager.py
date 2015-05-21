@@ -75,6 +75,10 @@ class GlobalStateManagerTest(unittest.TestCase):
         self.assertEqual(cached.uuid, xform_session.uuid)
 
     def test_instance_state(self):
+        """
+        This test ensures that the xform state properly gets updated after answering a question and adding a
+        repeat group
+        """
         name = 'Harry Potter'
         xform_session = xformplayer.XFormSession(
             self.xform,
@@ -92,7 +96,7 @@ class GlobalStateManagerTest(unittest.TestCase):
         self.assertEqual(tree['tree'][0]['answer'], name)
 
         cached = self.manager.get_session(xform_session.uuid)
-        cached_tree = xform_session.response({
+        cached_tree = cached.response({
             'session_id': xform_session.uuid,
         })
         self.assertEqual(cached_tree['tree'][0]['answer'], name)
