@@ -16,6 +16,7 @@ import customhandlers
 from util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect, to_arr, index_from_str
     
 from setup import init_classpath, init_jr_engine
+import logging
 init_classpath()
 init_jr_engine()
 
