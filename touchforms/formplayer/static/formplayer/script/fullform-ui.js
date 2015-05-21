@@ -102,7 +102,7 @@ function loadFromJSON(o, json) {
 
 function parse_meta(type, style) {
   var meta = {};
-  
+
   if (type == "date") {
     meta.mindiff = style.before != null ? +style.before : null;
     meta.maxdiff = style.after != null ? +style.after : null;
@@ -126,7 +126,7 @@ function parse_meta(type, style) {
       }
     }
   }
-  
+
   if (type == "select" || type == "multiselect") {
     meta.appearance = style.raw;
   }
@@ -153,9 +153,24 @@ function Form(json, adapter) {
         if (!proceed) {
           return;
         }
-        
+
         form.submit();
       });
+
+    $("#evaluate-button").click(function() {
+
+        var mxpath = document.getElementById("xpath").value;
+
+        adapter.evaluateXPath(mxpath, function(result, status){
+            $(document.getElementById("evaluate-result")).val(result);
+            if(status === "success") {
+                $(document.getElementById("evaluate-result")).removeClass('text-error');
+            } else{
+                $(document.getElementById("evaluate-result")).addClass('text-error');
+            }
+        });
+
+    });
 
     this.submit = function() {
       this.adapter.submitForm(this);
@@ -212,7 +227,7 @@ function Group(json, parent) {
     if (this.is_repetition) {
       this.rel_ix = relativeIndex(new_json.ix);
     }
-    reconcile_elements(this, new_json.children);    
+    reconcile_elements(this, new_json.children);
     this.update();
   }
 
@@ -573,9 +588,9 @@ var ixElementSet = function(e, set) {
 }
 
 var inElementSet = function(e, set) {
-  //return the matching object of 'e' within 'set'; null if no match
-  var ix = ixElementSet(e, set);
-  return (ix != -1 ? set[ix] : null);
+    //return the matching object of 'e' within 'set'; null if no match
+    var ix = ixElementSet(e, set);
+    return (ix != -1 ? set[ix] : null);
 }
 
 function init_render(form, adapter, $div) {
@@ -611,7 +626,7 @@ function scroll_pin(pin_threshold, $container, $elem) {
     $elem.css('top', pinned ? pin_threshold + 'px' : base_offset);
   };
 }
-  
+
 function set_pin(pin_threshold, $container, $elem) {
   var pinfunc = scroll_pin(pin_threshold, $container, $elem);
   $(window).scroll(pinfunc);

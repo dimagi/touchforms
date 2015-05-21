@@ -272,7 +272,8 @@ def get_response(data, url, auth=None):
         return XformsResponse(json.loads(response))
     except Exception, e:
         raise e
-                                                                               
+
+
 def get_raw_instance(session_id, auth=None):
     """
     Gets the raw xml instance of the current session regardless of the state that we're in (used for logging partially complete
@@ -290,7 +291,8 @@ def get_raw_instance(session_id, auth=None):
             raise InvalidSessionIdException("Invalid Touchforms Session Id")
         else:
             raise TouchformsException(error)
-    return response["output"]
+    return response
+
 
 def start_form_session(form_path, content=None, language="", session_data={}):
     """
@@ -327,4 +329,3 @@ def next(session_id, auth=None):
     data = {"action": "next",
             "session-id": session_id}
     return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
-
