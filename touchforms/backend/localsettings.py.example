@@ -10,3 +10,17 @@ PERSISTENCE_DIRECTORY = "/path/to/www/data/touchforms"
 ### REDIS CONFIG ###
 REDIS_HOST = 'localhost'
 REDIS_PORT = 6376
+### END REDIS CONFIG ###
+
+### POSTGRES CONFIG ###
+USES_POSTGRES = True
+POSTGRES_TABLE = "formplayer_session"
+POSTGRES_JDBC_JAR = "{COMMCARE_HOME}/submodules/touchforms-src/touchforms/backend/jrlib/postgresql-9.0-801.jdbc3.jar"
+
+DATABASE = {
+        'serverName': 'localhost:5432',
+        'databaseName': 'commcarehq',
+        'user': 'admin',
+        'password': '123',
+}
+### END POSTGRES CONFIG ###

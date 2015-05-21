@@ -39,8 +39,10 @@ from touchcare import CCInstances
 from util import query_factory
 import persistence
 import settings
+import logging
 
 logger = logging.getLogger('formplayer.xformplayer')
+
 
 
 class NoSuchSession(Exception):
@@ -50,7 +52,7 @@ class NoSuchSession(Exception):
 class GlobalStateManager(object):
     instances = {}
     instance_id_counter = 0
-
+    
     def __init__(self, ctx):
         self.ctx = ctx
         self.lock = threading.Lock()
@@ -63,6 +65,7 @@ class GlobalStateManager(object):
             self.redis.set(xform_session.uuid, json.dumps(state))
 
     def get_session(self, session_id, override_state=None):
+        logging.debug("Getting session id: " + str(session_id))
         with self.lock:
             xform_state_raw = self.redis.get(session_id)
             if xform_state_raw:
@@ -76,7 +79,17 @@ class GlobalStateManager(object):
                 self.cache_session(xform_session)  # repopulate in-memory cache
                 return xform_session
             else:
-                raise NoSuchSession()
+                # see if session has been persisted
+                logging.debug("Except key error id: " + str(session_id))
+                sess = persistence.restore(session_id, XFormSession, override_state)
+                logging.debug("Restored session with id: " + str(session_id))
+                if sess:
+                    logging.debug("Returning new session")
+                    self.cache_session(sess)  # repopulate in-memory cache
+                    return sess
+                else:
+                    logging.debug("No such session")
+                    raise NoSuchSession()
 
     def save_instance(self, data):
         with self.lock:
