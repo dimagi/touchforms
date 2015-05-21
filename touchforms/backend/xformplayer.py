@@ -30,6 +30,9 @@ from org.javarosa.core.model.data import IntegerData, LongData, DecimalData, Str
 from org.javarosa.core.model.data.helper import Selection
 from org.javarosa.core.util import UnregisteredLocaleException
 from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
+from org.commcare.suite.model import Text as JRText
+from java.util import Hashtable as JHashtable
+from org.javarosa.xpath import XPathException
 
 from touchcare import CCInstances
 from util import query_factory
@@ -81,6 +84,8 @@ class GlobalStateManager(object):
         return self.instance_id_counter
 
 global_state = None
+
+
 def _init(ctx):
     global global_state
     global_state = GlobalStateManager(ctx)
@@ -192,6 +197,33 @@ class XFormSession:
         # prune entries with null value, so that defaults will take effect when the session is re-created
         state = dict((k, v) for k, v in state.iteritems() if v is not None)
         return state
+
+    def get_xmlns(self):
+        """
+        :return: the xmlns header for the instance of the current session
+        """
+        metadata = self.fem.getForm().getMainInstance().getMetaData()
+        return metadata.get("XMLNS")
+
+    def evaluate_xpath(self, xpath):
+        """
+        :param xpath: the xpath expression to be evaluated EG "/data/question1"
+        :return: the value stored in the referenced path
+        at the moment only supports single values IE won't return nodesets
+        We use the JavaRosa "Text" type as a factory to turn our String into and XPath
+        """
+        evaluation_context = self.fem.getForm().exprEvalContext
+        args = JHashtable()
+        result = {}
+        try:
+            m_text = JRText.XPathText(xpath, args)
+            result['status'] = 'success'
+            result['output'] = m_text.evaluate(evaluation_context)
+        except XPathException, e:
+            result['status'] = 'failure'
+            result['output'] = e.getMessage()
+
+        return result
 
     def output(self):
         if self.cur_event['type'] != 'form-complete':
@@ -684,3 +716,4 @@ class Actions:
     SUBMIT_ALL = 'submit-all'
     SET_LANG = 'set-lang'
     GET_INSTANCE = 'get-instance'
+    EVALUATE_XPATH = 'evaluate-xpath'

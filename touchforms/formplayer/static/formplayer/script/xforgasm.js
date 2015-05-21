@@ -58,6 +58,7 @@ TaskQueue.prototype.clearTasks = function(name) {
 }
 
 function WebFormSession(params) {
+
     var self = this;
     self.taskQueue = new TaskQueue();
     self.heartbeat_has_failed = false;
@@ -79,6 +80,7 @@ function WebFormSession(params) {
 
     self.instance_xml = params.instance_xml;
     self.session_data = params.session_data || {};
+    self.answerCallback = params.answerCallback;
     if (!self.session_data.host) {
         self.session_data.host = window.location.protocol + '//' + window.location.host;
     }
@@ -142,7 +144,8 @@ function WebFormSession(params) {
             {
                 allow_html: params.allow_html,
                 resourceMap: params.resourceMap
-            }
+            },
+            this.answerCallback
         );
         if (params.session_id) {
             adapter.resumeForm(params.session_id, $div, this.onload, this.onerror);

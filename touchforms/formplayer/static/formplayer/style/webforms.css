@@ -4,6 +4,20 @@
   font-family: sans-serif;
 }
 
+#instance-xml {
+  min-width: 800px;
+  font-family: sans-serif;
+}
+
+#evaluate-result {
+  min-width: 800px;
+  font-family: sans-serif;
+}
+
+#instance-xml-home {
+  min-width: 800px;
+}
+
 #ix {
   display: none;
 }
