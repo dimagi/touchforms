@@ -179,6 +179,7 @@ def handle_request(content, server):
                     'session_data': session_data,
                     'nav_mode': nav_mode,
                     'api_auth': content.get('hq_auth'),
+                    'form_context': content.get('form_context', {}),
                     'staleness_window': content.get('staleness_window', server.default_stale_window),
                 })
 

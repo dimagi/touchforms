@@ -101,8 +101,14 @@ class StaticIterator(IStorageIterator):
 
 class TouchformsStorageUtility(IStorageUtilityIndexed):
 
-    def __init__(self, host, domain, auth, additional_filters=None, preload=False):
+    def __init__(self, host, domain, auth, additional_filters=None, preload=False, form_context=None):
         self.cached_lookups = {}
+        self.form_context = form_context or {}
+
+        if self.form_context.get('case_model', None):
+            case_model = self.form_context['case_model']
+            self.cached_lookups[('case-id', case_model['case_id'])] = [case_from_json(case_model)]
+
         self._objects = {}
         self.ids = {}
         self.fully_loaded = False  # when we've loaded every possible object
@@ -167,14 +173,13 @@ class TouchformsStorageUtility(IStorageUtilityIndexed):
 
 
 class CaseDatabase(TouchformsStorageUtility):
-    def __init__(self, host, domain, user, auth, additional_filters=None,
-                 preload=False):
-        super(CaseDatabase, self).__init__(host, domain, auth, additional_filters, preload)
 
     def get_object_id(self, case):
         return case.getCaseId()
 
     def fetch_object(self, case_id):
+        if ('case-id', case_id) in self.cached_lookups:
+            return self.cached_lookups[('case-id', case_id)][0]
         return query_case(self.query_func, case_id)
 
     def load_all_objects(self):
@@ -186,7 +191,10 @@ class CaseDatabase(TouchformsStorageUtility):
         self.fully_loaded = True
 
     def load_object_ids(self):
-        case_ids = query_case_ids(self.query_func, criteria=self.additional_filters)
+        if self.form_context.get('all_case_ids', None):
+            case_ids = self.form_context.get('all_case_ids')
+        else:
+            case_ids = query_case_ids(self.query_func, criteria=self.additional_filters)
         self.ids = dict(enumerate(case_ids))
 
     def getIDsForValue(self, field_name, value):
@@ -248,25 +256,32 @@ class LedgerDatabase(TouchformsStorageUtility):
 
 class CCInstances(InstanceInitializationFactory):
 
-    def __init__(self, sessionvars, api_auth):
+    def __init__(self, sessionvars, api_auth, form_context):
         self.vars = sessionvars
         self.auth = api_auth
         self.fixtures = {}
+        self.form_context = form_context or {}
 
     def generateRoot(self, instance):
         ref = instance.getReference()
-    
         def from_bundle(inst):
             root = inst.getRoot()
             root.setParent(instance.getBase())
             return root
 
         if 'casedb' in ref:
-            return CaseInstanceTreeElement(instance.getBase(), 
-                        CaseDatabase(self.vars.get('host'), self.vars['domain'], self.vars['user_id'], 
-                                     self.auth, self.vars.get("additional_filters", {}),
-                                     self.vars.get("preload_cases", False)),
-                        False)
+            return CaseInstanceTreeElement(
+                instance.getBase(),
+                CaseDatabase(
+                    self.vars.get('host'),
+                    self.vars['domain'],
+                    self.auth,
+                    self.vars.get("additional_filters", {}),
+                    self.vars.get("preload_cases", False),
+                    self.form_context,
+                ),
+                False
+            )
         elif 'fixture' in ref:
             fixture_id = ref.split('/')[-1]
             user_id = self.vars['user_id']
