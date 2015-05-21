@@ -651,8 +651,10 @@ def go_back(xform_session):
 # fao mode only
 @modify_xform_session
 def submit_form(xform_session, answers, prevalidated):
-    errors = dict(filter(lambda resp: resp[1]['status'] != 'success',
-                         ((_ix, xform_session.answer_question(answer, _ix)) for _ix, answer in answers.iteritems())))
+    errors = dict(
+        filter(lambda resp: resp[1]['status'] != 'success',
+            ((_ix, xform_session.answer_question(answer, _ix)) for _ix, answer in answers.iteritems()))
+    )
 
     if errors or not prevalidated:
         resp = {'status': 'validation-error', 'errors': errors}
