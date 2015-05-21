@@ -18,9 +18,10 @@ from django.utils.translation import ugettext as _
 import tempfile
 import os
 from . import api
-from touchforms.formplayer.api import DjangoAuth
+from touchforms.formplayer.api import DjangoAuth, get_raw_instance
 from touchforms.formplayer.const import PRELOADER_TAG_UID
 from datetime import datetime
+from dimagi.utils.web import json_response
 
 def xform_list(request):
     if not settings.DEBUG:
@@ -285,6 +286,7 @@ def api_autocomplete(request):
 
     return response
 
+
 def player_abort(request):
     class TimeoutException(Exception):
         pass
@@ -300,3 +302,12 @@ def player_abort(request):
         redirect_to = '/'
 
     return HttpResponseRedirect(redirect_to)
+
+
+def get_xml(request, session_id):
+    try:
+        session = get_raw_instance(session_id)
+    except EntrySession.InvalidSessionIdException:
+        session = None
+
+    return json_response(session)
