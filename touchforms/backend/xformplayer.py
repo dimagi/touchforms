@@ -668,6 +668,7 @@ def set_locale(xform_session, lang):
     ev = xform_session.set_locale(lang)
     return xform_session.response({}, ev)
 
+
 @modify_xform_session
 def current_question(xform_session, override_state=None):
     extra = {'lang': xform_session.get_lang()}
