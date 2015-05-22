@@ -152,9 +152,6 @@ def handle_request(content, server):
     logger.info('Received action %s' % action)
     nav_mode = content.get('nav', 'prompt')
     try:
-        if action != xformplayer.Actions.NEW_FORM and action not in touchcare.SUPPORTED_ACTIONS:
-            ensure_required_params(['session-id'], action, content)
-
         if action == xformplayer.Actions.NEW_FORM:
             form_fields = {'form-name': 'uid', 'form-content': 'raw', 'form-url': 'url'}
             form_spec = None
@@ -184,20 +181,24 @@ def handle_request(content, server):
                 })
 
         elif action == xformplayer.Actions.ANSWER:
-            ensure_required_params(['answer'], action, content)
+            ensure_required_params(['session-id', 'answer'], action, content)
             return xformplayer.answer_question(content['session-id'], content['answer'], content.get('ix'))
 
         #sequential (old-style) repeats only
         elif action == xformplayer.Actions.ADD_REPEAT:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.new_repetition(content['session-id'])
 
         elif action == xformplayer.Actions.NEXT:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.skip_next(content['session-id'])
 
         elif action == xformplayer.Actions.BACK:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.go_back(content['session-id'])
 
         elif action == xformplayer.Actions.CURRENT:
+            ensure_required_params(['session-id'], action, content)
             override_state = None
             # override api_auth with the current auth to avoid issues with expired django sessions
             # when editing saved forms
@@ -209,31 +210,32 @@ def handle_request(content, server):
             return xformplayer.current_question(content['session-id'], override_state=override_state)
 
         elif action == xformplayer.Actions.HEARTBEAT:
-            return xformplayer.heartbeat(content['session-id'])
+            return xformplayer.heartbeat()
 
         elif action == xformplayer.Actions.EDIT_REPEAT:
-            ensure_required_params(['ix'], action, content)
+            ensure_required_params(['session-id', 'ix'], action, content)
             return xformplayer.edit_repeat(content['session-id'], content['ix'])
 
         elif action == xformplayer.Actions.NEW_REPEAT:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.new_repeat(content['session-id'], content.get('ix'))
         elif action == xformplayer.Actions.DELETE_REPEAT:
-            ensure_required_params(['ix'], action, content)
+            ensure_required_params(['session-id', 'ix'], action, content)
             return xformplayer.delete_repeat(content['session-id'], content['ix'], content.get('form_ix'))
         elif action == xformplayer.Actions.SUBMIT_ALL:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.submit_form(content['session-id'], content.get('answers', []), content.get('prevalidated', False))
         elif action == xformplayer.Actions.SET_LANG:
-            ensure_required_params(['lang'], action, content)
+            ensure_required_params(['session-id', 'lang'], action, content)
             return xformplayer.set_locale(content['session-id'], content['lang'])
-        elif action == xformplayer.Actions.PURGE_STALE:
-            ensure_required_params(['window'], action, content)
-            return xformplayer.purge(content['window'])
         elif action in touchcare.SUPPORTED_ACTIONS:
             return touchcare.handle_request(content, server)
         elif action == xformplayer.Actions.GET_INSTANCE:
+            ensure_required_params(['session-id'], action, content)
             xfsess = xformplayer.global_state.get_session(content['session-id'])
             return {"output": xfsess.output(), "xmlns": xfsess.get_xmlns()}
         elif action == xformplayer.Actions.EVALUATE_XPATH:
+            ensure_required_params(['session-id'], action, content)
             xfsess = xformplayer.global_state.get_session(content['session-id'])
             result = xfsess.evaluate_xpath(content['xpath'])
             return {"output": result['output'], "status": result['status']}
@@ -246,38 +248,6 @@ def handle_request(content, server):
     except xformplayer.SequencingException:
         return {'error': 'session is locked by another request'}
 
-class Purger(threading.Thread):
-    def __init__(self, purge_freq=1.):
-        threading.Thread.__init__(self)
-        self.purge_freq = timedelta(minutes=purge_freq)
-
-        self.last_purge = None
-        self.up = True
-
-    def run(self):
-        self.update()
-        while self.up:
-            if self.purge_due():
-                self.update()
-                result = xformplayer.purge()
-                logger.info('purging sessions: ' + str(result))
-
-            time.sleep(0.1)
-
-    def purge_due(self):
-        if self.last_purge == None:
-            return True
-        elif datetime.utcnow() - self.last_purge > self.purge_freq:
-            return True
-        elif datetime.utcnow() < self.last_purge:
-            return True
-        return False
-
-    def update(self):
-        self.last_purge = datetime.utcnow()
-
-    def terminate(self):
-        self.up = False
 
 def init_gui():
     try:
@@ -292,6 +262,7 @@ def init_gui():
                 return lambda _self: None
         return GUIStub()
 
+
 def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, offline=False):
     if offline:
         settings.ALLOW_CROSS_ORIGIN = True
@@ -304,10 +275,6 @@ def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, offline=False):
     gw.start()
     logger.info('started server on port %d' % port)
 
-    purger = Purger()
-    purger.start()
-    logger.info('purging sessions inactive for more than %s hours' % stale_window)
-
     if settings.HACKS_MODE:
         logger.info('hacks mode is enabled, and you should feel bad about that')
 
@@ -315,8 +282,6 @@ def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, offline=False):
         while True:
             time.sleep(.01) #yield thread
     except KeyboardInterrupt:
-        purger.terminate()
-
         #note: the keyboardinterrupt event doesn't seem to be triggered in
         #jython, nor does jython2.5 support the httpserver 'shutdown' method
         logger.info('interrupted; shutting down...')

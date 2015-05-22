@@ -21,6 +21,8 @@ init_classpath()
 init_jr_engine()
 
 import com.xhaus.jyson.JysonCodec as json
+from redis.clients.jedis import Jedis
+
 from org.javarosa.xform.parse import XFormParser
 from org.javarosa.form.api import FormEntryModel, FormEntryController, FormEntryPrompt
 from org.javarosa.core.model import Constants, FormIndex
@@ -32,6 +34,7 @@ from org.commcare.suite.model import Text as JRText
 from java.util import Hashtable as JHashtable
 from org.javarosa.xpath import XPathException
 
+from decorators import require_xform_session
 from touchcare import CCInstances
 from util import query_factory
 import persistence
@@ -43,79 +46,54 @@ logger = logging.getLogger('formplayer.xformplayer')
 class NoSuchSession(Exception):
     pass
 
-class global_state_mgr(object):
+
+class GlobalStateManager(object):
     instances = {}
     instance_id_counter = 0
 
-    session_cache = {}
-    
     def __init__(self, ctx):
         self.ctx = ctx
         self.lock = threading.Lock()
         self.ctx.setNumSessions(0)
-    
-    def new_session(self, xfsess):
+        self.redis = Jedis(settings.REDIS_HOST, settings.REDIS_PORT)
+
+    def cache_session(self, xform_session):
         with self.lock:
-            self.session_cache[xfsess.uuid] = xfsess
-            self.ctx.setNumSessions(len(self.session_cache))
+            state = xform_session.session_state()
+            self.redis.set(xform_session.uuid, json.dumps(state))
 
     def get_session(self, session_id, override_state=None):
         with self.lock:
-            try:
-                return self.session_cache[session_id]
-            except KeyError:
-                # see if session has been persisted
-                sess = persistence.restore(session_id, XFormSession, override_state)
-                if sess:
-                    self.new_session(sess) # repopulate in-memory cache
-                    return sess
-                else:
-                    raise NoSuchSession()
-        
-    #todo: we're not calling this currently, but should, or else xform sessions will hang around in memory forever        
-    def destroy_session(self, session_id):
-        # todo: should purge from cache too
-        with self.lock:
-            try:
-                del self.session_cache[session_id]
-            except KeyError:
+            xform_state_raw = self.redis.get(session_id)
+            if xform_state_raw:
+                xform_state = json.loads(xform_state_raw)
+                xform_state.update({'uuid': session_id})
+                return XFormSession(**xform_state)
+
+            # see if session has been persisted
+            xform_session = persistence.restore(session_id, XFormSession, override_state)
+            if xform_session:
+                self.cache_session(xform_session)  # repopulate in-memory cache
+                return xform_session
+            else:
                 raise NoSuchSession()
-        
-    def save_instance(self, data):                
+
+    def save_instance(self, data):
         with self.lock:
             self.instance_id_counter += 1
             self.instances[self.instance_id_counter] = data
         return self.instance_id_counter
 
-    #todo: add ways to get xml, delete xml, and option not to save xml at all
-
-    def purge(self):
-        num_sess_purged = 0
-        num_sess_active = 0
-
-        with self.lock:
-            now = time.time()
-            for sess_id, sess in self.session_cache.items():
-                if now - sess.last_activity > sess.staleness_window:
-                    del self.session_cache[sess_id]
-                    num_sess_purged += 1
-                else:
-                    num_sess_active += 1
-            #what about saved instances? we don't track when they were saved
-            #for now will just assume instances are not saved
-
-        # note that persisted entries use the timeout functionality provided by the caching framework
-
-        self.ctx.setNumSessions(num_sess_active)
-
-        return {'purged': num_sess_purged, 'active': num_sess_active}
+    @classmethod
+    def get_globalstate(cls):
+        return global_state
 
 global_state = None
 
 
 def _init(ctx):
     global global_state
-    global_state = global_state_mgr(ctx)
+    global_state = GlobalStateManager(ctx)
 
 
 def load_form(xform, instance=None, extensions=None, session_data=None, api_auth=None, form_context=None):
@@ -158,13 +136,15 @@ class XFormSession:
         self.nav_mode = params.get('nav_mode', 'prompt')
         self.seq_id = params.get('seq_id', 0)
 
+        form_context = params.get('form_context', None)
+
         self.form = load_form(
             xform,
             instance,
             params.get('extensions', []),
             params.get('session_data', {}),
             params.get('api_auth'),
-            params.get('form_context', None),
+            form_context,
         )
         self.fem = FormEntryModel(self.form, FormEntryModel.REPEAT_STRUCTURE_NON_LINEAR)
         self.fec = FormEntryController(self.fem)
@@ -184,6 +164,7 @@ class XFormSession:
         self.persist = params.get('persist', settings.PERSIST_SESSIONS)
         self.orig_params = {
             'xform': xform,
+            'form_context': form_context,
             'nav_mode': params.get('nav_mode'),
             'session_data': params.get('session_data'),
             'api_auth': params.get('api_auth'),
@@ -613,81 +594,92 @@ def open_form(form_spec, inst_spec=None, **kwargs):
         return {'error': str(e)}
 
     xfsess = XFormSession(xform_xml, instance_xml, **kwargs)
-    global_state.new_session(xfsess)
+    global_state.cache_session(xfsess)
     with xfsess: # triggers persisting of the fresh session
         extra = {'session_id': xfsess.uuid}
         extra.update(init_context(xfsess))
         return xfsess.response(extra)
 
-def answer_question (session_id, answer, ix):
-    with global_state.get_session(session_id) as xfsess:
-        result = xfsess.answer_question(answer, ix)
-        if result['status'] == 'success':
-            return xfsess.response({'status': 'accepted'})
-        else:
-            result['status'] = 'validation-error'
-            return xfsess.response(result, no_next=True)
 
-def edit_repeat (session_id, ix):
-    with global_state.get_session(session_id) as xfsess:
-        ev = xfsess.descend_repeat(ix)
-        return {'event': ev}
+@require_xform_session
+def answer_question(xform_session, answer, ix):
+    result = xform_session.answer_question(answer, ix)
+    if result['status'] == 'success':
+        return xform_session.response({'status': 'accepted'})
+    else:
+        result['status'] = 'validation-error'
+        return xform_session.response(result, no_next=True)
 
-def new_repeat (session_id, form_ix):
-    with global_state.get_session(session_id) as xfsess:
-        ev = xfsess.descend_repeat(_junc_ix=form_ix)
-        return xfsess.response({}, ev)
 
-def delete_repeat (session_id, rep_ix, form_ix):
-    with global_state.get_session(session_id) as xfsess:
-        ev = xfsess.delete_repeat(rep_ix, form_ix)
-        return xfsess.response({}, ev)
+@require_xform_session
+def edit_repeat(xform_session, ix):
+    ev = xform_session.descend_repeat(ix)
+    return {'event': ev}
 
-#sequential (old-style) repeats only
-def new_repetition (session_id):
-    with global_state.get_session(session_id) as xfsess:
-        #new repeat creation currently cannot fail, so just blindly proceed to the next event
-        xfsess.new_repetition()
-        return {'event': next_event(xfsess)}
 
-def skip_next (session_id):
-    with global_state.get_session(session_id) as xfsess:
-        return {'event': next_event(xfsess)}
+@require_xform_session
+def new_repeat(xform_session, form_ix):
+    ev = xform_session.descend_repeat(_junc_ix=form_ix)
+    return xform_session.response({}, ev)
 
-def go_back (session_id):
-    with global_state.get_session(session_id) as xfsess:
-        (at_start, event) = prev_event(xfsess)
-        return {'event': event, 'at-start': at_start}
+
+@require_xform_session
+def delete_repeat(xform_session, rep_ix, form_ix):
+    ev = xform_session.delete_repeat(rep_ix, form_ix)
+    return xform_session.response({}, ev)
+
+
+#  sequential (old-style) repeats only
+@require_xform_session
+def new_repetition(xform_session):
+    #  new repeat creation currently cannot fail, so just blindly proceed to the next event
+    xform_session.new_repetition()
+    return {'event': next_event(xform_session)}
+
+
+@require_xform_session
+def skip_next(xfrom_session):
+    return {'event': next_event(xfrom_session)}
+
+
+@require_xform_session
+def go_back(xform_session):
+    (at_start, event) = prev_event(xform_session)
+    return {'event': event, 'at-start': at_start}
+
 
 # fao mode only
-def submit_form(session_id, answers, prevalidated):
-    with global_state.get_session(session_id) as xfsess:
-        errors = dict(filter(lambda resp: resp[1]['status'] != 'success',
-                             ((_ix, xfsess.answer_question(answer, _ix)) for _ix, answer in answers.iteritems())))
+@require_xform_session
+def submit_form(xform_session, answers, prevalidated):
+    errors = dict(
+        filter(lambda resp: resp[1]['status'] != 'success',
+            ((_ix, xform_session.answer_question(answer, _ix)) for _ix, answer in answers.iteritems()))
+    )
 
-        if errors or not prevalidated:
-            resp = {'status': 'validation-error', 'errors': errors}
-        else:
-            resp = form_completion(xfsess)
-            resp['status'] = 'success'
+    if errors or not prevalidated:
+        resp = {'status': 'validation-error', 'errors': errors}
+    else:
+        resp = form_completion(xform_session)
+        resp['status'] = 'success'
 
-        return xfsess.response(resp, no_next=True)
+    return xform_session.response(resp, no_next=True)
 
-def set_locale(session_id, lang):
-    with global_state.get_session(session_id) as xfsess:
-        ev = xfsess.set_locale(lang)
-        return xfsess.response({}, ev)
 
-def current_question(session_id, override_state=None):
-    with global_state.get_session(session_id, override_state) as xfsess:
-        extra = {'lang': xfsess.get_lang()}
-        extra.update(init_context(xfsess))
-        return xfsess.response(extra, xfsess.cur_event)
+@require_xform_session
+def set_locale(xform_session, lang):
+    ev = xform_session.set_locale(lang)
+    return xform_session.response({}, ev)
 
-def heartbeat(session_id):
-    # just touch the session
-    with global_state.get_session(session_id) as xfsess:
-        return {}
+
+@require_xform_session
+def current_question(xform_session, override_state=None):
+    extra = {'lang': xform_session.get_lang()}
+    extra.update(init_context(xform_session))
+    return xform_session.response(extra, xform_session.cur_event)
+
+
+def heartbeat():
+    return {'status': 'success', 'message': 'Thump thump'}
 
 def next_event (xfsess):
     ev = xfsess.next_event()
@@ -725,11 +717,6 @@ def get_caption(prompt):
         'caption_markdown': prompt.getSpecialFormQuestionText("markdown"),
     }
 
-def purge():
-    resp = global_state.purge()
-    resp.update({'status': 'ok'})
-    return resp
-
 
 class Actions:
     NEW_FORM = 'new-form'
@@ -744,16 +731,5 @@ class Actions:
     DELETE_REPEAT = 'delete-repeat'
     SUBMIT_ALL = 'submit-all'
     SET_LANG = 'set-lang'
-    PURGE_STALE = 'purge-stale'
     GET_INSTANCE = 'get-instance'
     EVALUATE_XPATH = 'evaluate-xpath'
-
-# debugging
-
-import pprint
-pp = pprint.PrettyPrinter(indent=2)
-def print_tree(tree):
-    try:
-        pp.pprint(tree)
-    except UnicodeEncodeError:
-        print 'sorry, can\'t pretty-print unicode'
