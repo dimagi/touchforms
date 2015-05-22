@@ -1,1 +1,1 @@
-cd touchforms && jasmine-ci --browser phantomjs && jython backend/test_server.py && jython backend/test_xformplayer.py
+cd touchforms && jasmine-ci --browser phantomjs && jython backend/test_server.py && jython backend/test_touchcare.py
