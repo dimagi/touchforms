@@ -256,7 +256,7 @@ class LedgerDatabase(TouchformsStorageUtility):
 
 class CCInstances(InstanceInitializationFactory):
 
-    def __init__(self, sessionvars, api_auth, form_context):
+    def __init__(self, sessionvars, api_auth, form_context=None):
         self.vars = sessionvars
         self.auth = api_auth
         self.fixtures = {}
