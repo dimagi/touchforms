@@ -9,7 +9,7 @@ PERSISTENCE_DIRECTORY = "/path/to/www/data/touchforms"
 
 ### REDIS CONFIG ###
 REDIS_HOST = 'localhost'
-REDIS_PORT = 6376
+REDIS_PORT = 6379
 ### END REDIS CONFIG ###
 
 ### POSTGRES CONFIG ###
