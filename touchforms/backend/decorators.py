@@ -2,7 +2,7 @@ from __future__ import with_statement
 from functools import wraps
 
 
-def modify_xform_session(fn):
+def require_xform_session(fn):
     from xformplayer import GlobalStateManager
 
     @wraps(fn)

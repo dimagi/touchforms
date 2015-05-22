@@ -34,7 +34,7 @@ from org.commcare.suite.model import Text as JRText
 from java.util import Hashtable as JHashtable
 from org.javarosa.xpath import XPathException
 
-from decorators import modify_xform_session
+from decorators import require_xform_session
 from touchcare import CCInstances
 from util import query_factory
 import persistence
@@ -601,7 +601,7 @@ def open_form(form_spec, inst_spec=None, **kwargs):
         return xfsess.response(extra)
 
 
-@modify_xform_session
+@require_xform_session
 def answer_question(xform_session, answer, ix):
     result = xform_session.answer_question(answer, ix)
     if result['status'] == 'success':
@@ -611,45 +611,45 @@ def answer_question(xform_session, answer, ix):
         return xform_session.response(result, no_next=True)
 
 
-@modify_xform_session
+@require_xform_session
 def edit_repeat(xform_session, ix):
     ev = xform_session.descend_repeat(ix)
     return {'event': ev}
 
 
-@modify_xform_session
+@require_xform_session
 def new_repeat(xform_session, form_ix):
     ev = xform_session.descend_repeat(_junc_ix=form_ix)
     return xform_session.response({}, ev)
 
 
-@modify_xform_session
+@require_xform_session
 def delete_repeat(xform_session, rep_ix, form_ix):
     ev = xform_session.delete_repeat(rep_ix, form_ix)
     return xform_session.response({}, ev)
 
 
 #  sequential (old-style) repeats only
-@modify_xform_session
+@require_xform_session
 def new_repetition(xform_session):
     #  new repeat creation currently cannot fail, so just blindly proceed to the next event
     xform_session.new_repetition()
     return {'event': next_event(xform_session)}
 
 
-@modify_xform_session
+@require_xform_session
 def skip_next(xfrom_session):
     return {'event': next_event(xfrom_session)}
 
 
-@modify_xform_session
+@require_xform_session
 def go_back(xform_session):
     (at_start, event) = prev_event(xform_session)
     return {'event': event, 'at-start': at_start}
 
 
 # fao mode only
-@modify_xform_session
+@require_xform_session
 def submit_form(xform_session, answers, prevalidated):
     errors = dict(
         filter(lambda resp: resp[1]['status'] != 'success',
@@ -665,13 +665,13 @@ def submit_form(xform_session, answers, prevalidated):
     return xform_session.response(resp, no_next=True)
 
 
-@modify_xform_session
+@require_xform_session
 def set_locale(xform_session, lang):
     ev = xform_session.set_locale(lang)
     return xform_session.response({}, ev)
 
 
-@modify_xform_session
+@require_xform_session
 def current_question(xform_session, override_state=None):
     extra = {'lang': xform_session.get_lang()}
     extra.update(init_context(xform_session))
