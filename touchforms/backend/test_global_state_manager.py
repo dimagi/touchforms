@@ -59,7 +59,8 @@ class GlobalStateManagerTest(unittest.TestCase):
             }
         }
 
-        self.manager = xformplayer.GlobalStateManager(GUIStub())
+        xformplayer._init(GUIStub())
+        self.manager = xformplayer.GlobalStateManager.get_globalstate()
 
     def test_basic_sessions(self):
 
@@ -80,6 +81,7 @@ class GlobalStateManagerTest(unittest.TestCase):
         repeat group
         """
         name = 'Harry Potter'
+        original_name = 'rocky'
         xform_session = xformplayer.XFormSession(
             self.xform,
             instance=None,
@@ -87,13 +89,13 @@ class GlobalStateManagerTest(unittest.TestCase):
         )
         self.manager.cache_session(xform_session)
 
-        # Answer first question which is a text question
-        xform_session.answer_question(name, _ix='0')
-
         tree = xform_session.response({
             'session_id': xform_session.uuid,
         })
-        self.assertEqual(tree['tree'][0]['answer'], name)
+        self.assertEqual(tree['tree'][0]['answer'], original_name)
+
+        # Answer first question which is a text question
+        xformplayer.answer_question(xform_session.uuid, name, '0')
 
         cached = self.manager.get_session(xform_session.uuid)
         cached_tree = cached.response({
