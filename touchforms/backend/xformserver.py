@@ -15,7 +15,11 @@ import settings
 from setup import init_classpath
 init_classpath()
 import com.xhaus.jyson.JysonCodec as json
-from xcp import TouchFormsException, InvalidRequestException
+from xcp import (
+    InvalidRequestException,
+    TouchFormsUnauthorized,
+    TouchFormsBadRequest
+)
 
 logger = logging.getLogger('formplayer.xformserver')
 DEFAULT_PORT = 4444
@@ -64,8 +68,11 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         try:
             data_out = handle_request(data_in, self.server)
             reply = json.dumps(data_out)
-        except InvalidRequestException, e:
+        except TouchFormsBadRequest, e:
             self.send_error(400, str(e))
+            return
+        except TouchFormsUnauthorized, e:
+            self.send_error(401, str(e))
             return
         except (Exception, java.lang.Exception), e:
             msg = ''
@@ -113,7 +120,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         logger.exception("Status Code: %d, Message %s" % (code, message))
         content = json.dumps({'status': 'error',
                               'error_type': error_type,
-                              'code': code, 
+                              'code': code,
                               'message': message,
                               'human_readable_message': human_readable_message,
                               'explain': explain})
@@ -155,6 +162,7 @@ def handle_request(content, server):
         if action != xformplayer.Actions.NEW_FORM and action not in touchcare.SUPPORTED_ACTIONS:
             ensure_required_params(['session-id'], action, content)
 
+        # Formplayer routes
         if action == xformplayer.Actions.NEW_FORM:
             form_fields = {'form-name': 'uid', 'form-content': 'raw', 'form-url': 'url'}
             form_spec = None
@@ -228,8 +236,6 @@ def handle_request(content, server):
         elif action == xformplayer.Actions.PURGE_STALE:
             ensure_required_params(['window'], action, content)
             return xformplayer.purge(content['window'])
-        elif action in touchcare.SUPPORTED_ACTIONS:
-            return touchcare.handle_request(content, server)
         elif action == xformplayer.Actions.GET_INSTANCE:
             xfsess = xformplayer.global_state.get_session(content['session-id'])
             return {"output": xfsess.output(), "xmlns": xfsess.get_xmlns()}
@@ -237,6 +243,16 @@ def handle_request(content, server):
             xfsess = xformplayer.global_state.get_session(content['session-id'])
             result = xfsess.evaluate_xpath(content['xpath'])
             return {"output": result['output'], "status": result['status']}
+        # Touchcare routes
+        elif action == touchcare.Actions.FILTER_CASES:
+            ensure_required_params(['hq_auth', 'filter_expr'], action, content)
+            result = touchcare.filter_cases(
+                content.get('filter_expr'),
+                content.get('hq_auth'),
+                content.get('session_data', {}),
+                content.get('form_context', {}),
+            )
+            return result
 
         else:
             raise InvalidRequestException("Unrecognized action: %s" % action)
