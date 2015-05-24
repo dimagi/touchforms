@@ -159,9 +159,6 @@ def handle_request(content, server):
     logger.info('Received action %s' % action)
     nav_mode = content.get('nav', 'prompt')
     try:
-        if action != xformplayer.Actions.NEW_FORM and action not in touchcare.SUPPORTED_ACTIONS:
-            ensure_required_params(['session-id'], action, content)
-
         # Formplayer routes
         if action == xformplayer.Actions.NEW_FORM:
             form_fields = {'form-name': 'uid', 'form-content': 'raw', 'form-url': 'url'}
@@ -192,20 +189,24 @@ def handle_request(content, server):
                 })
 
         elif action == xformplayer.Actions.ANSWER:
-            ensure_required_params(['answer'], action, content)
+            ensure_required_params(['session-id', 'answer'], action, content)
             return xformplayer.answer_question(content['session-id'], content['answer'], content.get('ix'))
 
         #sequential (old-style) repeats only
         elif action == xformplayer.Actions.ADD_REPEAT:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.new_repetition(content['session-id'])
 
         elif action == xformplayer.Actions.NEXT:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.skip_next(content['session-id'])
 
         elif action == xformplayer.Actions.BACK:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.go_back(content['session-id'])
 
         elif action == xformplayer.Actions.CURRENT:
+            ensure_required_params(['session-id'], action, content)
             override_state = None
             # override api_auth with the current auth to avoid issues with expired django sessions
             # when editing saved forms
@@ -217,29 +218,34 @@ def handle_request(content, server):
             return xformplayer.current_question(content['session-id'], override_state=override_state)
 
         elif action == xformplayer.Actions.HEARTBEAT:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.heartbeat(content['session-id'])
 
         elif action == xformplayer.Actions.EDIT_REPEAT:
-            ensure_required_params(['ix'], action, content)
+            ensure_required_params(['session-id', 'ix'], action, content)
             return xformplayer.edit_repeat(content['session-id'], content['ix'])
 
         elif action == xformplayer.Actions.NEW_REPEAT:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.new_repeat(content['session-id'], content.get('ix'))
         elif action == xformplayer.Actions.DELETE_REPEAT:
-            ensure_required_params(['ix'], action, content)
+            ensure_required_params(['session-id', 'ix'], action, content)
             return xformplayer.delete_repeat(content['session-id'], content['ix'], content.get('form_ix'))
         elif action == xformplayer.Actions.SUBMIT_ALL:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.submit_form(content['session-id'], content.get('answers', []), content.get('prevalidated', False))
         elif action == xformplayer.Actions.SET_LANG:
-            ensure_required_params(['lang'], action, content)
+            ensure_required_params(['session-id', 'lang'], action, content)
             return xformplayer.set_locale(content['session-id'], content['lang'])
         elif action == xformplayer.Actions.PURGE_STALE:
             ensure_required_params(['window'], action, content)
             return xformplayer.purge(content['window'])
         elif action == xformplayer.Actions.GET_INSTANCE:
+            ensure_required_params(['session-id'], action, content)
             xfsess = xformplayer.global_state.get_session(content['session-id'])
             return {"output": xfsess.output(), "xmlns": xfsess.get_xmlns()}
         elif action == xformplayer.Actions.EVALUATE_XPATH:
+            ensure_required_params(['session-id'], action, content)
             xfsess = xformplayer.global_state.get_session(content['session-id'])
             result = xfsess.evaluate_xpath(content['xpath'])
             return {"output": result['output'], "status": result['status']}
