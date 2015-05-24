@@ -59,14 +59,28 @@ class XFormServerTest(unittest.TestCase):
         else:
             self.fail()
 
-    def test_no_session_id_touchare(self):
+    def test_touchcare_filter_params(self):
         content = {
             'action': 'touchcare-filter-cases',
+            'filter_expr': 'something',
         }
         try:
             xformserver.handle_request(content, self.server)
-        except Exception:
-            self.fail()
+        except InvalidRequestException, e:
+            self.assertTrue('hq_auth' in e.message)
+        else:
+            self.fail(str(e))
+
+        content = {
+            'action': 'touchcare-filter-cases',
+            'hq_auth': {},
+        }
+        try:
+            xformserver.handle_request(content, self.server)
+        except InvalidRequestException, e:
+            self.assertTrue('filter_expr' in e.message)
+        else:
+            self.fail(str(e))
 
 if __name__ == '__main__':
     unittest.main()
