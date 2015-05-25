@@ -19,6 +19,7 @@ from org.commcare.xml import TreeElementParser
 
 from org.javarosa.xpath.expr import XPathFuncExpr
 from org.javarosa.xpath import XPathParseTool, XPathException
+from org.javarosa.xpath.parser import XPathSyntaxException
 from org.javarosa.core.model.condition import EvaluationContext
 from org.javarosa.core.model.instance import ExternalDataInstance
 
@@ -361,7 +362,7 @@ def filter_cases(filter_expr, api_auth, session_data=None, form_context=None):
             XPathParseTool.parseXPath(modified_xpath).eval(
                 EvaluationContext(None, instances)))
         return {'cases': filter(lambda x: x, case_list.split(","))}
-    except XPathException, e:
+    except (XPathException, XPathSyntaxException), e:
         raise TouchcareInvalidXPath('Error querying cases with xpath %s: %s' % (filter_expr, str(e)))
 
 
