@@ -78,7 +78,7 @@ class TouchcareTest(unittest.TestCase):
         else:
             self.fail()
 
-    def test_unauthenticated_query(self):
+    def test_unable_to_access_hq(self):
         try:
             touchcare.filter_cases(
                 '',

@@ -1,5 +1,5 @@
 import urllib
-from urllib2 import HTTPError
+from urllib2 import HTTPError, URLError
 import com.xhaus.jyson.JysonCodec as json
 import logging
 from datetime import datetime
@@ -348,7 +348,7 @@ def filter_cases(filter_expr, api_auth, session_data=None, form_context=None):
 
     try:
         caseInstance.initialize(ccInstances, "casedb")
-    except HTTPError, e:
+    except (HTTPError, URLError), e:
         raise TouchFormsUnauthorized('Unable to connect to HQ: %s' % str(e))
 
     instances = to_hashtable({"casedb": caseInstance})
