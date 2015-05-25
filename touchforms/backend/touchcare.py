@@ -327,9 +327,6 @@ class CCInstances(InstanceInitializationFactory):
         parser.setFeature(KXmlParser.FEATURE_PROCESS_NAMESPACES, True)
         parser.next()
         return TreeElementParser(parser, 0, fixture_id).parse()
-        
-
-SUPPORTED_ACTIONS = ["touchcare-filter-cases"]
 
 
 def filter_cases(filter_expr, api_auth, session_data=None, form_context=None):
