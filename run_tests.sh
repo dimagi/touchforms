@@ -1,1 +1,5 @@
-cd touchforms && jasmine-ci --browser phantomjs && jython backend/test_server.py && jython backend/test_xformplayer.py
+# Run frontend tests
+cd touchforms && jasmine-ci --browser phantomjs
+
+# Run backend tests
+cd backend && jython -m unittest tests
