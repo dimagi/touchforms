@@ -43,6 +43,18 @@ class TouchcareTest(unittest.TestCase):
             'indices': {},
             'attachments': {},
         }
+        self.case_two = {
+            'case_id': 'aragorn',
+            'properties': {
+                'case_type': 'dragon',
+                'case_name': 'smooth_operator',
+                'date_opened': None,
+                'owner_id': 'ben-123',
+            },
+            'closed': False,
+            'indices': {},
+            'attachments': {},
+        }
 
     def test_filter_cases(self):
         filter_expr = "[case_name = 'rocky']"
@@ -52,7 +64,7 @@ class TouchcareTest(unittest.TestCase):
             {},
             self.session_data,
             form_context={
-                'cases': [self.case],
+                'cases': [self.case, self.case_two],
                 'all_case_ids': ['legolas', 'gimli'],
                 'case_model': self.case
             }
