@@ -145,7 +145,7 @@ def get_conn():
 
         print "Trying to get connection.:"
 
-        conn = apply(zxJDBC.connectx, ("org.postgresql.jdbc3.Jdbc3PoolingDataSource",), params)
+        conn = zxJDBC.connectx("org.postgresql.ds.PGPoolingDataSource", **params)
 
         print "Connection gotten on first try: " + str(conn)
 
@@ -156,7 +156,7 @@ def get_conn():
 
         jarloader = classPathHacker.classPathHacker()
         a = jarloader.addFile(settings.POSTGRES_JDBC_JAR)
-        conn = apply(zxJDBC.connectx, ("org.postgresql.jdbc3.Jdbc3PoolingDataSource",), params)
+        conn = zxJDBC.connectx("org.postgresql.ds.PGPoolingDataSource", **params)
 
         print "Connection gotten on second try: " + str(conn)
 

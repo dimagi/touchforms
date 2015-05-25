@@ -9,7 +9,7 @@ PERSISTENCE_DIRECTORY = "/path/to/www/data/touchforms"
 
 USES_POSTGRES = True
 POSTGRES_TABLE = "formplayer_session"
-POSTGRES_JDBC_JAR = "{COMMCARE_HOME}/submodules/touchforms-src/touchforms/backend/jrlib/postgresql-9.0-801.jdbc3.jar"
+POSTGRES_JDBC_JAR = "{COMMCARE_HOME}/submodules/touchforms-src/touchforms/backend/jrlib/postgresql-9.4-1201.jdbc41.jar"
 
 DATABASE = {
         'serverName': 'localhost:5432',
