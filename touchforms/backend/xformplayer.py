@@ -44,6 +44,7 @@ logger = logging.getLogger('formplayer.xformplayer')
 class NoSuchSession(Exception):
     pass
 
+
 class GlobalStateManager(object):
     instances = {}
     instance_id_counter = 0
@@ -68,7 +69,7 @@ class GlobalStateManager(object):
                 # see if session has been persisted
                 sess = persistence.restore(session_id, XFormSession, override_state)
                 if sess:
-                    self.cache_session(sess) # repopulate in-memory cache
+                    self.cache_session(sess)  # repopulate in-memory cache
                     return sess
                 else:
                     raise NoSuchSession()
@@ -623,6 +624,7 @@ def open_form(form_spec, inst_spec=None, **kwargs):
         extra = {'session_id': xfsess.uuid}
         extra.update(init_context(xfsess))
         return xfsess.response(extra)
+
 
 @require_xform_session
 def answer_question(xform_session, answer, ix):
