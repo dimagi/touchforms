@@ -60,7 +60,7 @@ logger = logging.getLogger('formplayer')
 
 rotatingHandler = logging.handlers.RotatingFileHandler(
     FORMPLAYER_LOG_FILE,
-    maxBytes=10 * 1024 * 1024,
+    maxBytes=50 * 1024 * 1024,
     backupCount=20,
 )
 rotatingHandler.setFormatter(formatter)

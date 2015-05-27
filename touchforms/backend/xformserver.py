@@ -15,7 +15,11 @@ import settings
 from setup import init_classpath
 init_classpath()
 import com.xhaus.jyson.JysonCodec as json
-from xcp import TouchFormsException, InvalidRequestException
+from xcp import (
+    InvalidRequestException,
+    TouchFormsUnauthorized,
+    TouchFormsBadRequest
+)
 
 logger = logging.getLogger('formplayer.xformserver')
 DEFAULT_PORT = 4444
@@ -64,8 +68,11 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         try:
             data_out = handle_request(data_in, self.server)
             reply = json.dumps(data_out)
-        except InvalidRequestException, e:
+        except TouchFormsBadRequest, e:
             self.send_error(400, str(e))
+            return
+        except TouchFormsUnauthorized, e:
+            self.send_error(401, str(e))
             return
         except (Exception, java.lang.Exception), e:
             msg = ''
@@ -113,7 +120,7 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         logger.exception("Status Code: %d, Message %s" % (code, message))
         content = json.dumps({'status': 'error',
                               'error_type': error_type,
-                              'code': code, 
+                              'code': code,
                               'message': message,
                               'human_readable_message': human_readable_message,
                               'explain': explain})
@@ -152,9 +159,7 @@ def handle_request(content, server):
     logger.info('Received action %s' % action)
     nav_mode = content.get('nav', 'prompt')
     try:
-        if action != xformplayer.Actions.NEW_FORM and action not in touchcare.SUPPORTED_ACTIONS:
-            ensure_required_params(['session-id'], action, content)
-
+        # Formplayer routes
         if action == xformplayer.Actions.NEW_FORM:
             form_fields = {'form-name': 'uid', 'form-content': 'raw', 'form-url': 'url'}
             form_spec = None
@@ -179,24 +184,29 @@ def handle_request(content, server):
                     'session_data': session_data,
                     'nav_mode': nav_mode,
                     'api_auth': content.get('hq_auth'),
+                    'form_context': content.get('form_context', {}),
                     'staleness_window': content.get('staleness_window', server.default_stale_window),
                 })
 
         elif action == xformplayer.Actions.ANSWER:
-            ensure_required_params(['answer'], action, content)
+            ensure_required_params(['session-id', 'answer'], action, content)
             return xformplayer.answer_question(content['session-id'], content['answer'], content.get('ix'))
 
         #sequential (old-style) repeats only
         elif action == xformplayer.Actions.ADD_REPEAT:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.new_repetition(content['session-id'])
 
         elif action == xformplayer.Actions.NEXT:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.skip_next(content['session-id'])
 
         elif action == xformplayer.Actions.BACK:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.go_back(content['session-id'])
 
         elif action == xformplayer.Actions.CURRENT:
+            ensure_required_params(['session-id'], action, content)
             override_state = None
             # override api_auth with the current auth to avoid issues with expired django sessions
             # when editing saved forms
@@ -208,34 +218,47 @@ def handle_request(content, server):
             return xformplayer.current_question(content['session-id'], override_state=override_state)
 
         elif action == xformplayer.Actions.HEARTBEAT:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.heartbeat(content['session-id'])
 
         elif action == xformplayer.Actions.EDIT_REPEAT:
-            ensure_required_params(['ix'], action, content)
+            ensure_required_params(['session-id', 'ix'], action, content)
             return xformplayer.edit_repeat(content['session-id'], content['ix'])
 
         elif action == xformplayer.Actions.NEW_REPEAT:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.new_repeat(content['session-id'], content.get('ix'))
         elif action == xformplayer.Actions.DELETE_REPEAT:
-            ensure_required_params(['ix'], action, content)
+            ensure_required_params(['session-id', 'ix'], action, content)
             return xformplayer.delete_repeat(content['session-id'], content['ix'], content.get('form_ix'))
         elif action == xformplayer.Actions.SUBMIT_ALL:
+            ensure_required_params(['session-id'], action, content)
             return xformplayer.submit_form(content['session-id'], content.get('answers', []), content.get('prevalidated', False))
         elif action == xformplayer.Actions.SET_LANG:
-            ensure_required_params(['lang'], action, content)
+            ensure_required_params(['session-id', 'lang'], action, content)
             return xformplayer.set_locale(content['session-id'], content['lang'])
         elif action == xformplayer.Actions.PURGE_STALE:
             ensure_required_params(['window'], action, content)
             return xformplayer.purge(content['window'])
-        elif action in touchcare.SUPPORTED_ACTIONS:
-            return touchcare.handle_request(content, server)
         elif action == xformplayer.Actions.GET_INSTANCE:
+            ensure_required_params(['session-id'], action, content)
             xfsess = xformplayer.global_state.get_session(content['session-id'])
             return {"output": xfsess.output(), "xmlns": xfsess.get_xmlns()}
         elif action == xformplayer.Actions.EVALUATE_XPATH:
+            ensure_required_params(['session-id'], action, content)
             xfsess = xformplayer.global_state.get_session(content['session-id'])
             result = xfsess.evaluate_xpath(content['xpath'])
             return {"output": result['output'], "status": result['status']}
+        # Touchcare routes
+        elif action == touchcare.Actions.FILTER_CASES:
+            ensure_required_params(['hq_auth', 'filter_expr'], action, content)
+            result = touchcare.filter_cases(
+                content.get('filter_expr'),
+                content.get('hq_auth'),
+                content.get('session_data', {}),
+                content.get('form_context', {}),
+            )
+            return result
 
         else:
             raise InvalidRequestException("Unrecognized action: %s" % action)
