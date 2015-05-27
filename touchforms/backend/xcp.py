@@ -17,5 +17,23 @@ class EmptyCacheFileException(TouchFormsException):
     pass
 
 
-class InvalidRequestException(TouchFormsException):
+class TouchFormsBadRequest(TouchFormsException):
+    """
+    Raise a subclass of this to return a 400 bad request error code
+    """
+    pass
+
+
+class TouchFormsUnauthorized(TouchFormsException):
+    """
+    Raise a subclass of this to return a 401 unauthorized request error code
+    """
+    pass
+
+
+class InvalidRequestException(TouchFormsBadRequest):
+    pass
+
+
+class TouchcareInvalidXPath(TouchFormsBadRequest):
     pass
