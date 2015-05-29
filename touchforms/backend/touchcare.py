@@ -314,8 +314,13 @@ class CCInstances(InstanceInitializationFactory):
                     # com.xhaus.jyson.JysonCodec returns data as byte strings
                     # in unknown encoding (possibly ISO-8859-1)
                     sess.setDatum(k, unicode(v, errors='replace'))
+
+            clean_user_data = {}
+            for k, v in self.vars.get('user_data', {}).iteritems():
+                clean_user_data[k] = unicode(v if v is not None else '', errors='replace')
+
             return from_bundle(sess.getSessionInstance(*([self.vars.get(k, '') for k in meta_keys] + \
-                                                         [to_hashtable(self.vars.get('user_data', {}))])))
+                                                         [to_hashtable(clean_user_data)])))
     
     def _get_fixture(self, user_id, fixture_id):
         query_url = '%(base)s/%(user)s/%(fixture)s' % { "base": settings.FIXTURE_API_URL, 
