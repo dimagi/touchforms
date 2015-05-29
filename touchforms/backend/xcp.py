@@ -37,3 +37,7 @@ class InvalidRequestException(TouchFormsBadRequest):
 
 class TouchcareInvalidXPath(TouchFormsBadRequest):
     pass
+
+
+class FormplayerSubmissionError(TouchFormsBadRequest):
+    pass
