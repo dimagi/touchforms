@@ -1,6 +1,7 @@
 import os
 import unittest
 import xformplayer
+from xcp import FormplayerSubmissionError
 
 CUR_DIR = os.path.dirname(__file__)
 
@@ -103,6 +104,35 @@ class GlobalStateManagerTest(unittest.TestCase):
         })
         self.assertEqual(cached_tree['tree'][0]['answer'], name)
         self.assertEqual(cached.uuid, xform_session.uuid)
+
+    def test_empty_form_submission(self):
+        xform_session = xformplayer.XFormSession(
+            self.xform,
+            instance=None,
+            **self.session_metadata
+        )
+        self.manager.cache_session(xform_session)
+
+        try:
+            xformplayer.submit_form(xform_session.uuid, {'0': None}, False)
+        except FormplayerSubmissionError, e:
+            pass
+        else:
+            self.fail()
+
+    def test_form_submission(self):
+        xform_session = xformplayer.XFormSession(
+            self.xform,
+            instance=None,
+            **self.session_metadata
+        )
+        self.manager.cache_session(xform_session)
+        try:
+            xformplayer.submit_form(xform_session.uuid, {'0': 'Benjamin'}, False)
+        except FormplayerSubmissionError, e:
+            self.fail()
+        else:
+            pass
 
 if __name__ == '__main__':
     unittest.main()

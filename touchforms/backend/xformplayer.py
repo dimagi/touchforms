@@ -35,6 +35,7 @@ from org.javarosa.xpath import XPathException
 from touchcare import CCInstances
 from util import query_factory
 from decorators import require_xform_session
+from xcp import FormplayerSubmissionError
 import persistence
 import settings
 
@@ -676,6 +677,8 @@ def go_back(xform_session):
 # fao mode only
 @require_xform_session
 def submit_form(xform_session, answers, prevalidated):
+    if not filter(lambda a: a is not None, answers.values()):
+        raise FormplayerSubmissionError('A form submission is required to have at least one submission')
     errors = dict(
         filter(lambda resp: resp[1]['status'] != 'success',
             ((_ix, xform_session.answer_question(answer, _ix)) for _ix, answer in answers.iteritems()))
