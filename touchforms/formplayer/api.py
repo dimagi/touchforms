@@ -41,15 +41,21 @@ class DigestAuth(TouchformsAuth):
     def to_dict(self):
         return {'type': self.type, 'key': self.key, 'username': self.username}
 
-            
-class TouchformsException(Exception):
+
+class TouchformsError(ValueError):
+
+    def __init__(self, *args, **kwargs):
+        self.response_data = kwargs.pop('response_data', {})
+        super(TouchformsError, self).__init__(*args, **kwargs)
+
+
+class InvalidSessionIdException(TouchformsError):
     pass
 
-class InvalidSessionIdException(TouchformsException):
-    pass
 
 class XFormsConfigException(ValueError):
     pass
+
 
 class XFormsConfig(object):
     
@@ -234,8 +240,9 @@ class XformsResponse(object):
             self.args = datadict.get("args")
             self.url = datadict.get("url")
         elif self.event is None:
-            raise ValueError("unhandleable response: %s" % json.dumps(datadict))
-    
+            raise TouchformsError("unhandleable response: %s" % json.dumps(datadict),
+                response_data=datadict)
+
     @classmethod
     def server_down(cls):
         # TODO: this should probably be configurable
@@ -290,7 +297,7 @@ def get_raw_instance(session_id, auth=None):
         if error == "invalid session id":
             raise InvalidSessionIdException("Invalid Touchforms Session Id")
         else:
-            raise TouchformsException(error)
+            raise TouchformsError(error)
     return response
 
 
