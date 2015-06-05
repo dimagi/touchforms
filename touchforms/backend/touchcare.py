@@ -37,10 +37,12 @@ def query_case_ids(q, criteria=None):
     query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria))
     return [id for id in q(query_url)]
 
+
 def query_cases(q, criteria=None):
     query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria)) \
                     if criteria else settings.CASE_API_URL
     return [case_from_json(cj) for cj in q(query_url)]
+
 
 def query_case(q, case_id):
     cases = query_cases(q, {'case_id': case_id})
@@ -193,7 +195,11 @@ class CaseDatabase(TouchformsStorageUtility):
                                 criteria=self.additional_filters)
         for c in cases:
             self.put_object(c)
-        self.ids = dict(enumerate(self._objects.keys()))
+        # todo: the sorted() call is a hack to try and preserve order between bootstrapping
+        # this with IDs versus full values. Really we should store a _next_id integer and then
+        # update things as they go into self._objects inside the put_object() function.
+        # http://manage.dimagi.com/default.asp?169413
+        self.ids = dict(enumerate(sorted(self._objects.keys())))
         self.fully_loaded = True
 
     def load_object_ids(self):
@@ -201,7 +207,8 @@ class CaseDatabase(TouchformsStorageUtility):
             case_ids = self.form_context.get('all_case_ids')
         else:
             case_ids = query_case_ids(self.query_func, criteria=self.additional_filters)
-        self.ids = dict(enumerate(case_ids))
+        # todo: see note above about why sorting is necessary
+        self.ids = dict(enumerate(sorted(case_ids)))
 
     def getIDsForValue(self, field_name, value):
         logger.debug('case index lookup %s %s' % (field_name, value))
