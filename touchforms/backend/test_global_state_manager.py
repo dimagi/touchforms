@@ -54,7 +54,7 @@ class GlobalStateManagerTest(unittest.TestCase):
             'api_auth': {},
             'staleness_window': 1,
             'form_context': {
-                'all_case_ids': ['legolas', 'gimli'],
+                'all_case_ids': ['legolas', 'sauron'],
                 'case_model': self.case
             }
         }
