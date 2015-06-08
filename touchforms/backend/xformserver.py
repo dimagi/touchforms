@@ -271,7 +271,7 @@ def handle_request(content, server):
     finally:
         delta = (time.time() - start) * 1000
         domain = '<unknown>'
-        if content.get('session-id', None):
+        if content.get('session-id', None) and xformplayer.global_state:
             xfsess = xformplayer.global_state.get_session(content['session-id'])
             domain = xfsess.orig_params['session_data'].get('domain', '<unknown>')
         elif content.get('session-data', None):
