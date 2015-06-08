@@ -273,7 +273,7 @@ def handle_request(content, server):
         domain = '<unknown>'
         if content.get('session-id', None):
             xfsess = xformplayer.global_state.get_session(content['session-id'])
-            domain = xfsess.orig_params['session_data']['domain']
+            domain = xfsess.orig_params['session_data'].get('domain', '<unknown>')
         elif content.get('session-data', None):
             domain = content['session-data'].get('domain', '<unknown>')
 
