@@ -35,6 +35,7 @@ from org.javarosa.xpath import XPathException
 from touchcare import CCInstances
 from util import query_factory
 from decorators import require_xform_session
+from xcp import CaseNotFound
 import persistence
 import settings
 
@@ -149,7 +150,13 @@ def load_form(xform, instance=None, extensions=None, session_data=None, api_auth
         preload_data=session_data.get('preloaders', {})
     )
 
-    form.initialize(instance is None, CCInstances(session_data, api_auth, form_context))
+    try:
+        session_data.get('additional_filters', {}).update({'cache_bust': 'false'})
+        form.initialize(instance is None, CCInstances(session_data, api_auth, form_context))
+    except CaseNotFound:
+        session_data.get('additional_filters', {}).update({'cache_bust': 'true'})
+        form.initialize(instance is None, CCInstances(session_data, api_auth, form_context))
+
     return form
 
 
