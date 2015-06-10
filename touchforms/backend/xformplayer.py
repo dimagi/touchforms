@@ -151,10 +151,10 @@ def load_form(xform, instance=None, extensions=None, session_data=None, api_auth
     )
 
     try:
-        session_data.get('additional_filters', {}).update({'cache_bust': 'false'})
+        session_data.get('additional_filters', {}).update({'use_cache': 'true'})
         form.initialize(instance is None, CCInstances(session_data, api_auth, form_context))
     except CaseNotFound:
-        session_data.get('additional_filters', {}).update({'cache_bust': 'true'})
+        session_data.get('additional_filters', {}).update({'use_cache': 'false'})
         form.initialize(instance is None, CCInstances(session_data, api_auth, form_context))
 
     return form
