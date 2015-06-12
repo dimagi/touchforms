@@ -75,7 +75,7 @@ class XFormPlayerTest(unittest.TestCase):
             self.xform,
             session_data=self.session_data,
             form_context={
-                'all_case_ids': ['legolas', 'gimli'],
+                'all_case_ids': ['legolas', 'sauron'],
                 'case_model': self.case
             }
         )
