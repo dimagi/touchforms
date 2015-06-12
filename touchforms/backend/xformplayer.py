@@ -154,6 +154,10 @@ def load_form(xform, instance=None, extensions=None, session_data=None, api_auth
         session_data.get('additional_filters', {}).update({'use_cache': 'true'})
         form.initialize(instance is None, CCInstances(session_data, api_auth, form_context))
     except CaseNotFound:
+        # Touchforms repeatedly makes a call to HQ to get all the case ids in its universe. We can optimize
+        # this by caching that call to HQ. However, when someone adds a case to that case list, we want to make sure
+        # that that case appears in the universe of cases. Therefore we first attempt to use the cached version
+        # of the case id list, and in the event that we cannot find a case, we try again, but do not use the cache.
         session_data.get('additional_filters', {}).update({'use_cache': 'false'})
         form.initialize(instance is None, CCInstances(session_data, api_auth, form_context))
 
