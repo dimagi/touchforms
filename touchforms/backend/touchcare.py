@@ -106,7 +106,7 @@ class StaticIterator(IStorageIterator):
 
 class TouchformsStorageUtility(IStorageUtilityIndexed):
     """
-    The TouchformsStorageUtility provides an interface for working with the case database. The mobile phone 
+    The TouchformsStorageUtility provides an interface for working with the case database. The mobile phone
     uses this to populate and reference cases in the SQLite database on the Android phone. Touchforms uses HQ
     as its "mobile database" so when populating the case universe, it calls HQ to get the case universe for
     that particular user.
