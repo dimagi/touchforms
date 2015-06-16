@@ -17,6 +17,13 @@ class EmptyCacheFileException(TouchFormsException):
     pass
 
 
+class CaseNotFound(TouchFormsException):
+    """
+    Raise this exception when you expect for a case to present in the touchforms storage and it is not found
+    """
+    pass
+
+
 class TouchFormsBadRequest(TouchFormsException):
     """
     Raise a subclass of this to return a 400 bad request error code

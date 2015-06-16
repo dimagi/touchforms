@@ -26,7 +26,7 @@ from org.javarosa.core.model.instance import ExternalDataInstance
 from org.kxml2.io import KXmlParser
 
 from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
-from xcp import TouchFormsUnauthorized, TouchcareInvalidXPath
+from xcp import TouchFormsUnauthorized, TouchcareInvalidXPath, CaseNotFound
 
 logger = logging.getLogger('formplayer.touchcare')
 
@@ -243,7 +243,11 @@ class CaseDatabase(TouchformsStorageUtility):
 
         cases = self.cached_lookups[(field_name, value)]
         id_map = dict((v, k) for k, v in self.ids.iteritems())
-        return to_vect(id_map[c.getCaseId()] for c in cases)
+        try:
+            return to_vect(id_map[c.getCaseId()] for c in cases)
+        except KeyError:
+            # Case was not found in id_map
+            raise CaseNotFound
 
 
 class LedgerDatabase(TouchformsStorageUtility):
