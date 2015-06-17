@@ -89,3 +89,18 @@ Finally, compile the js files with ::
 Now if you run the grunt `watch` command, grunt will make sure to update compiled versions. For example, editting anything in the `fullform-ui` directory will automatically compile a new `fullform-ui.templates.js`. ::
 
     grunt watch
+
+
+Running Tests
+=============
+
+To run the backend tests you can just run the following ::
+
+     jython backend/test_server.py && jython backend/test_xformplayer.py && jython backend/test_touchcare.py && jython backend/test_global_state_manager.py
+
+To run tests you need to have Jython and `PhantomJS <http://phantomjs.org/>`_ installed.
+On linux PhantomJS needss to be installed from source.
+Then run the following commands ::
+
+    pip install -r touchforms/test_requirements.txt
+    ./run_tests.sh
