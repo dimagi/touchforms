@@ -17,8 +17,6 @@ def persist(sess):
 
 def restore(sess_id, factory, override_state=None):
 
-    print "restoring sess id: " + str(sess_id)
-
     try:
         state = cache_get(sess_id)
     except KeyError:
@@ -31,7 +29,7 @@ def restore(sess_id, factory, override_state=None):
 
 
 def cache_set(key, value):
-    print "cache setting: " + str(key) + " + value: " + str(value)
+
     if key is None:
         raise KeyError
     if settings.USES_POSTGRES:
@@ -42,8 +40,6 @@ def cache_set(key, value):
 
 
 def cache_get(key):
-
-    print "cache getting: " + str(key)
 
     if key is None:
         raise KeyError
@@ -117,12 +113,10 @@ def postgres_set_command(cursor, key, value):
 
 
 def postgres_helper(method, *kwargs):
-    conn = get_conn()
-    cursor = conn.cursor()
-    ret = method(cursor, *kwargs)
-    conn.commit()
-    conn.close()
-    return ret
+    with get_conn() as conn:
+        with conn.cursor() as cursor:
+            ret = method(cursor, *kwargs)
+            return ret
 
 
 def get_conn():
@@ -131,23 +125,14 @@ def get_conn():
 
     try:
         # try to connect regularly
-
-        print "Trying to get connection.:"
-
         conn = zxJDBC.connectx("org.postgresql.ds.PGPoolingDataSource", **params)
-
-        print "Connection gotten on first try: " + str(conn)
 
     except:
         # else fall back to this workaround (we expect to do this)
 
-        print "Except trying to get connection.:"
-
         jarloader = classPathHacker.classPathHacker()
         a = jarloader.addFile(settings.POSTGRES_JDBC_JAR)
         conn = zxJDBC.connectx("org.postgresql.ds.PGPoolingDataSource", **params)
-
-        print "Connection gotten on second try: " + str(conn)
 
     return conn
 
