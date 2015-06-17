@@ -45,10 +45,7 @@ def query_cases(q, criteria=None):
 
 
 def query_cases_fast(q, case_ids):
-    query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode({
-        'ids_only': 'true',
-        'case_ids': case_ids
-    }))
+    query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode({'case_ids': case_ids}))
     return [case_from_json(cj) for cj in q(query_url)]
 
 
