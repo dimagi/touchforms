@@ -17,7 +17,7 @@ EXTENSION_MODULES = []  # you can allow extensions by overriding this
 # postgres peristence stuff
 USES_POSTGRES = True
 POSTGRES_TABLE = "formplayer_session"
-POSTGRES_JDBC_JAR = "%s/jrlib/postgresql-9.0-801.jdbc3.jar"%os.path.dirname(os.path.abspath(__file__))
+POSTGRES_JDBC_JAR = "%s/jrlib/postgresql-9.4-1201.jdbc41.jar"%os.path.dirname(os.path.abspath(__file__))
 
 # be more forgiving about data types in api
 HACKS_MODE = True
@@ -30,6 +30,7 @@ DATABASE = {
     'databaseName': 'hqdev',
     'user': 'django',
     'password': 'django',
+    'prepareThreshold': 0
 }
 
 ### LOGGING VARIABLES ###
@@ -59,7 +60,7 @@ logger = logging.getLogger('formplayer')
 
 rotatingHandler = logging.handlers.RotatingFileHandler(
     FORMPLAYER_LOG_FILE,
-    maxBytes=10 * 1024 * 1024,
+    maxBytes=50 * 1024 * 1024,
     backupCount=20,
 )
 rotatingHandler.setFormatter(formatter)

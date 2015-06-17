@@ -1,4 +1,5 @@
 import urllib
+from urllib2 import HTTPError, URLError
 import com.xhaus.jyson.JysonCodec as json
 import logging
 from datetime import datetime
@@ -14,16 +15,18 @@ from org.commcare.cases.ledger.instance import LedgerInstanceTreeElement
 from org.commcare.cases.model import Case
 from org.commcare.cases.ledger import Ledger
 from org.commcare.util import CommCareSession
-from org.commcare.xml import TreeElementParser
+from org.javarosa.xml import TreeElementParser
 
 from org.javarosa.xpath.expr import XPathFuncExpr
-from org.javarosa.xpath import XPathParseTool
+from org.javarosa.xpath import XPathParseTool, XPathException
+from org.javarosa.xpath.parser import XPathSyntaxException
 from org.javarosa.core.model.condition import EvaluationContext
 from org.javarosa.core.model.instance import ExternalDataInstance
 
 from org.kxml2.io import KXmlParser
 
 from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
+from xcp import TouchFormsUnauthorized, TouchcareInvalidXPath
 
 logger = logging.getLogger('formplayer.touchcare')
 
@@ -101,8 +104,14 @@ class StaticIterator(IStorageIterator):
 
 class TouchformsStorageUtility(IStorageUtilityIndexed):
 
-    def __init__(self, host, domain, auth, additional_filters=None, preload=False):
+    def __init__(self, host, domain, auth, additional_filters=None, preload=False, form_context=None):
         self.cached_lookups = {}
+        self.form_context = form_context or {}
+
+        if self.form_context.get('case_model', None):
+            case_model = self.form_context['case_model']
+            self.cached_lookups[('case-id', case_model['case_id'])] = [case_from_json(case_model)]
+
         self._objects = {}
         self.ids = {}
         self.fully_loaded = False  # when we've loaded every possible object
@@ -167,26 +176,31 @@ class TouchformsStorageUtility(IStorageUtilityIndexed):
 
 
 class CaseDatabase(TouchformsStorageUtility):
-    def __init__(self, host, domain, user, auth, additional_filters=None,
-                 preload=False):
-        super(CaseDatabase, self).__init__(host, domain, auth, additional_filters, preload)
 
     def get_object_id(self, case):
         return case.getCaseId()
 
     def fetch_object(self, case_id):
+        if ('case-id', case_id) in self.cached_lookups:
+            return self.cached_lookups[('case-id', case_id)][0]
         return query_case(self.query_func, case_id)
 
     def load_all_objects(self):
-        cases = query_cases(self.query_func,
-                            criteria=self.additional_filters)
+        if self.form_context.get('cases', None):
+            cases = map(lambda c: case_from_json(c), self.form_context.get('cases'))
+        else:
+            cases = query_cases(self.query_func,
+                                criteria=self.additional_filters)
         for c in cases:
             self.put_object(c)
         self.ids = dict(enumerate(self._objects.keys()))
         self.fully_loaded = True
 
     def load_object_ids(self):
-        case_ids = query_case_ids(self.query_func, criteria=self.additional_filters)
+        if self.form_context.get('all_case_ids', None):
+            case_ids = self.form_context.get('all_case_ids')
+        else:
+            case_ids = query_case_ids(self.query_func, criteria=self.additional_filters)
         self.ids = dict(enumerate(case_ids))
 
     def getIDsForValue(self, field_name, value):
@@ -248,25 +262,32 @@ class LedgerDatabase(TouchformsStorageUtility):
 
 class CCInstances(InstanceInitializationFactory):
 
-    def __init__(self, sessionvars, api_auth):
+    def __init__(self, sessionvars, api_auth, form_context=None):
         self.vars = sessionvars
         self.auth = api_auth
         self.fixtures = {}
+        self.form_context = form_context or {}
 
     def generateRoot(self, instance):
         ref = instance.getReference()
-    
         def from_bundle(inst):
             root = inst.getRoot()
             root.setParent(instance.getBase())
             return root
 
         if 'casedb' in ref:
-            return CaseInstanceTreeElement(instance.getBase(), 
-                        CaseDatabase(self.vars.get('host'), self.vars['domain'], self.vars['user_id'], 
-                                     self.auth, self.vars.get("additional_filters", {}),
-                                     self.vars.get("preload_cases", False)),
-                        False)
+            return CaseInstanceTreeElement(
+                instance.getBase(),
+                CaseDatabase(
+                    self.vars.get('host'),
+                    self.vars['domain'],
+                    self.auth,
+                    self.vars.get("additional_filters", {}),
+                    self.vars.get("preload_cases", False),
+                    self.form_context,
+                ),
+                False
+            )
         elif 'fixture' in ref:
             fixture_id = ref.split('/')[-1]
             user_id = self.vars['user_id']
@@ -307,44 +328,43 @@ class CCInstances(InstanceInitializationFactory):
         parser.setFeature(KXmlParser.FEATURE_PROCESS_NAMESPACES, True)
         parser.next()
         return TreeElementParser(parser, 0, fixture_id).parse()
-        
-
-SUPPORTED_ACTIONS = ["touchcare-filter-cases"]
-
-# API stuff
-def handle_request (content, server):
-    action = content['action']
-    if action == "touchcare-filter-cases":
-        return filter_cases(content)
-    else:
-        return {'error': 'unrecognized action'}
 
 
-def filter_cases(content):
+def filter_cases(filter_expr, api_auth, session_data=None, form_context=None):
+    session_data = session_data or {}
+    form_context = form_context or {}
+    modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
+        {"filters": filter_expr}
+
+    # whenever we do a filter case operation we need to load all
+    # the cases, so force this unless manually specified
+    if 'preload_cases' not in session_data:
+        session_data['preload_cases'] = True
+
+    ccInstances = CCInstances(session_data, api_auth, form_context)
+    caseInstance = ExternalDataInstance("jr://instance/casedb", "casedb")
+
     try:
-        modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
-                         {"filters": content["filter_expr"]}
-
-        api_auth = content.get('hq_auth')
-        session_data = content.get("session_data", {})
-        # whenever we do a filter case operation we need to load all
-        # the cases, so force this unless manually specified
-        if 'preload_cases' not in session_data:
-            session_data['preload_cases'] = True
-        ccInstances = CCInstances(session_data, api_auth)
-        caseInstance = ExternalDataInstance("jr://instance/casedb", "casedb")
         caseInstance.initialize(ccInstances, "casedb")
-        instances = to_hashtable({"casedb": caseInstance})
+    except (HTTPError, URLError), e:
+        raise TouchFormsUnauthorized('Unable to connect to HQ: %s' % str(e))
 
-        # load any additional instances needed
-        for extra_instance_config in session_data.get('extra_instances', []):
-            data_instance = ExternalDataInstance(extra_instance_config['src'], extra_instance_config['id'])
-            data_instance.initialize(ccInstances, extra_instance_config['id'])
-            instances[extra_instance_config['id']] = data_instance
+    instances = to_hashtable({"casedb": caseInstance})
 
+    # load any additional instances needed
+    for extra_instance_config in session_data.get('extra_instances', []):
+        data_instance = ExternalDataInstance(extra_instance_config['src'], extra_instance_config['id'])
+        data_instance.initialize(ccInstances, extra_instance_config['id'])
+        instances[extra_instance_config['id']] = data_instance
+
+    try:
         case_list = XPathFuncExpr.toString(
             XPathParseTool.parseXPath(modified_xpath).eval(
                 EvaluationContext(None, instances)))
-        return {'cases': filter(lambda x: x,case_list.split(","))}
-    except Exception, e:
-        return {'status': 'error', 'message': str(e)}
+        return {'cases': filter(lambda x: x, case_list.split(","))}
+    except (XPathException, XPathSyntaxException), e:
+        raise TouchcareInvalidXPath('Error querying cases with xpath %s: %s' % (filter_expr, str(e)))
+
+
+class Actions:
+    FILTER_CASES = 'touchcare-filter-cases'
