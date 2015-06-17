@@ -91,18 +91,12 @@ def postgres_lookup_command(cursor, key):
 
 
 def postgres_update_command(cursor, key, value):
-
-    print "Postgres update key: " + str(key) + " value: " + str(value)
-
     upd_sql = replace_table("UPDATE %(kwarg)s SET sess_json = ?  WHERE sess_id = ?")
     upd_params = [json.dumps(value).encode('utf8'), str(key)]
     cursor.execute(upd_sql, upd_params)
 
 
 def postgres_insert_command(cursor, key, value):
-
-    print "Postgres insert key: " + str(key) + " value: " + str(value)
-
     ins_sql = replace_table("INSERT INTO %(kwarg)s (sess_id, sess_json) VALUES (?, ?)")
     ins_params = [str(key), json.dumps(value).encode('utf8')]
     cursor.execute(ins_sql, ins_params)
@@ -123,16 +117,11 @@ def postgres_set_command(cursor, key, value):
 
 
 def postgres_helper(method, *kwargs):
-    print "Postgres helper method: " + str(method) + " kwargs: " + str(kwargs)
     conn = get_conn()
-    print "Postgres helper got conn: " + str(conn)
     cursor = conn.cursor()
-    print "Postgres helper got cursor: " + str(cursor)
     ret = method(cursor, *kwargs)
-    print "Postgres helper got ret: " + str(ret)
     conn.commit()
     conn.close()
-    print "Postgres helper conn committed and closed, returning: " + str(ret)
     return ret
 
 
