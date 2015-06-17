@@ -44,6 +44,14 @@ def query_cases(q, criteria=None):
     return [case_from_json(cj) for cj in q(query_url)]
 
 
+def query_cases_fast(q, case_ids):
+    query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode({
+        'ids_only': 'true',
+        'case_ids': case_ids
+    }))
+    return [case_from_json(cj) for cj in q(query_url)]
+
+
 def query_case(q, case_id):
     cases = query_cases(q, {'case_id': case_id})
     try:
@@ -191,8 +199,9 @@ class CaseDatabase(TouchformsStorageUtility):
         if self.form_context.get('cases', None):
             cases = map(lambda c: case_from_json(c), self.form_context.get('cases'))
         else:
-            cases = query_cases(self.query_func,
-                                criteria=self.additional_filters)
+            case_ids = query_case_ids(self.query_func, criteria=self.additional_filters)
+            cases = query_cases_fast(self.query_func, case_ids)
+
         for c in cases:
             self.put_object(c)
         # todo: the sorted() call is a hack to try and preserve order between bootstrapping
