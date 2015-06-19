@@ -7,6 +7,7 @@ import com.xhaus.jyson.JysonCodec as json
 from com.ziclix.python.sql import zxJDBC
 import classPathHacker
 import os
+from datetime import datetime
 
 
 def persist(sess):
@@ -75,14 +76,14 @@ def postgres_lookup_command(cursor, key):
 
 
 def postgres_update_command(cursor, key, value):
-    upd_sql = replace_table("UPDATE %(kwarg)s SET sess_json = ?  WHERE sess_id = ?")
-    upd_params = [json.dumps(value).encode('utf8'), str(key)]
+    upd_sql = replace_table("UPDATE %(kwarg)s SET sess_json = ? , last_modified =?  WHERE sess_id = ?")
+    upd_params = [json.dumps(value).encode('utf8'), datetime.utcnow(), str(key)]
     cursor.execute(upd_sql, upd_params)
 
 
 def postgres_insert_command(cursor, key, value):
-    ins_sql = replace_table("INSERT INTO %(kwarg)s (sess_id, sess_json) VALUES (?, ?)")
-    ins_params = [str(key), json.dumps(value).encode('utf8')]
+    ins_sql = replace_table("INSERT INTO %(kwarg)s (sess_id, sess_json, last_modified, date_created) VALUES (?, ?, ?, ?)")
+    ins_params = [str(key), json.dumps(value).encode('utf8'), datetime.utcnow(), datetime.utcnow()]
     cursor.execute(ins_sql, ins_params)
 
 
@@ -111,11 +112,11 @@ def get_conn():
     # map django formatted variable names to names required by JDBC
     django_params = settings.POSTGRES_DATABASE
     jdbc_params = {
-        'serverName': django_params.pop('HOST') + ':' + django_params.pop('PORT'),
-        'databaseName': django_params.pop('NAME'),
-        'user': django_params.pop('USER'),
-        'password' : django_params.pop('PASSWORD'),
-        'ssl': django_params.pop('SSL'),
+        'serverName': django_params['HOST'] + ':' + django_params['PORT'],
+        'databaseName': django_params['NAME'],
+        'user': django_params['USER'],
+        'password' : django_params['PASSWORD'],
+        'ssl': django_params['SSL'],
     }
 
     try:

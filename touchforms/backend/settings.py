@@ -26,12 +26,12 @@ HACKS_MODE = True
 URL_ROOT = "{{HOST}}/a/{{DOMAIN}}"
 
 POSTGRES_DATABASE = {
-        'HOST': 'localhost',
-        'PORT': '5432',
-        'NAME': 'hqdev',
-        'USER': 'django',
-        'PASSWORD': 'django',
-        'SSL': True,
+    'HOST': 'localhost',
+    'PORT': '5432',
+    'NAME': 'hqdev',
+    'USER': 'django',
+    'PASSWORD': 'django',
+    'SSL': True,
 }
 
 ### LOGGING VARIABLES ###
