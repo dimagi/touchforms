@@ -120,19 +120,26 @@ def postgres_helper(method, *kwargs):
 
 
 def get_conn():
-
-    params = settings.DATABASE
+    # map django formatted variable names to names required by JDBC
+    django_params = settings.POSTGRES_DATABASE
+    jdbc_params = {
+        'serverName': django_params.pop('HOST') + ':' + django_params.pop('PORT'),
+        'databaseName': django_params.pop('NAME'),
+        'user': django_params.pop('USER'),
+        'password' : django_params.pop('PASSWORD'),
+        'ssl': django_params.pop('SSL'),
+    }
 
     try:
         # try to connect regularly
-        conn = zxJDBC.connectx("org.postgresql.ds.PGPoolingDataSource", **params)
+        conn = zxJDBC.connectx("org.postgresql.ds.PGPoolingDataSource", **jdbc_params)
 
     except:
         # else fall back to this workaround (we expect to do this)
 
         jarloader = classPathHacker.classPathHacker()
         a = jarloader.addFile(settings.POSTGRES_JDBC_JAR)
-        conn = zxJDBC.connectx("org.postgresql.ds.PGPoolingDataSource", **params)
+        conn = zxJDBC.connectx("org.postgresql.ds.PGPoolingDataSource", **jdbc_params)
 
     return conn
 

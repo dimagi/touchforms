@@ -11,9 +11,11 @@ USES_POSTGRES = True
 POSTGRES_TABLE = "formplayer_session"
 POSTGRES_JDBC_JAR = "{COMMCARE_HOME}/submodules/touchforms-src/touchforms/backend/jrlib/postgresql-9.4-1201.jdbc41.jar"
 
-DATABASE = {
-        'serverName': 'localhost:5432',
-        'databaseName': 'commcarehq',
-        'user': 'admin',
-        'password': '123',
+POSTGRES_DATABASE = {
+        'HOST': 'localhost',
+        'PORT': '5432',
+        'NAME': 'hqdev',
+        'USER': 'django',
+        'PASSWORD': 'django',
+        'SSL': True,
 }

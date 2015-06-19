@@ -25,12 +25,13 @@ HACKS_MODE = True
 # base url for touchcare api queries
 URL_ROOT = "{{HOST}}/a/{{DOMAIN}}"
 
-DATABASE = {
-    'serverName': 'localhost:5432',
-    'databaseName': 'hqdev',
-    'user': 'django',
-    'password': 'django',
-    'prepareThreshold': 0
+POSTGRES_DATABASE = {
+        'HOST': 'localhost',
+        'PORT': '5432',
+        'NAME': 'hqdev',
+        'USER': 'django',
+        'PASSWORD': 'django',
+        'SSL': True,
 }
 
 ### LOGGING VARIABLES ###
