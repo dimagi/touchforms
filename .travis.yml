@@ -9,5 +9,4 @@ branches:
       - master
 install:
   - "pip install -r touchforms/test_requirements.txt"
-  - "./install_dependencies.sh"
 script: "./run_tests.sh"
