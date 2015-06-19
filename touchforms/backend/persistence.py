@@ -58,14 +58,6 @@ def postgres_select(cursor, key):
     cursor.execute(sel_sql, sel_params)
 
 
-def postgres_delete(cursor, key):
-    postgres_select(cursor, key)
-    if cursor.rowcount is not 0:
-        del_sql = replace_table("DELETE FROM %(kwarg)s WHERE sess_id=?")
-        del_params = [str(key)]
-        cursor.execute(del_sql, del_params)
-
-
 def postgres_lookup(key):
     return postgres_helper(postgres_lookup_command, key)
 
@@ -79,10 +71,6 @@ def postgres_lookup_command(cursor, key):
     value = cursor.fetchone()[1]
 
     jsonobj = json.loads(value.decode('utf8'))
-
-
-
-
     return jsonobj
 
 
