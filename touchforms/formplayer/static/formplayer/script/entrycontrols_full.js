@@ -6,6 +6,7 @@
 function Entry(question, options) {
     var self = this;
     self.question = question
+    self.answer = question.answer
     self.datatype = question.datatype();
     self.entryId = this.datatype + nonce();
 
@@ -18,7 +19,9 @@ function Entry(question, options) {
     self.afterRender = function() {
       // Override with any logic that comes after rendering the Entry
     };
+    self.answer.subscribe(self.onAnswerChange.bind(self));
 }
+Entry.prototype.onAnswerChange = function(newValue) {};
 
 /**
  * An entry that represent a question label.
@@ -55,12 +58,7 @@ function FreeTextEntry(question, options) {
     self.lengthLimit = options.lengthLimit || 10000;
     self.prose = question.domain_meta ? question.domain_meta().longtext : false;
 
-    self.answer = question.answer;
-    self.answer.subscribe(function(newValue) {
-        self.question.onchange()
-    });
-
-    this.prevalidate = function() {
+    self.prevalidate = function() {
         var errmsg = this._prevalidate(self.answer());
         if (errmsg) {
             self.question.showError(errmsg);
@@ -69,16 +67,21 @@ function FreeTextEntry(question, options) {
         return true;
     }
 
-    this._prevalidate = function(raw) {
+    self._prevalidate = function(raw) {
         return null;
     }
 
-    this.domainText = function() {
+    self.domainText = function() {
         return '(free-text)';
     }
 }
 FreeTextEntry.prototype = Object.create(Entry.prototype);
 FreeTextEntry.prototype.constructor = Entry;
+
+FreeTextEntry.prototype.onAnswerChange = function(newValue) {
+    var self = this;
+    self.question.onchange();
+};
 
 function PasswordEntry(question, options) {
     options.lengthLimit = options.lengthLimit || 9;
@@ -154,7 +157,6 @@ function MultiSelectEntry(question, options) {
     self.templateType = 'select';
     self.choices = question.choices;
     self.choicevals = question.choicevals ? question.choicevals() : null;
-    self.answer = question.answer;
 
     self.group = nonce();
 
@@ -181,23 +183,23 @@ function MultiSelectEntry(question, options) {
     self.answer.subscribe(function(oldValue) {
         if (_.isArray(oldValue)) {
             // Need to make copy since oldValue gets mutated
-            previousAnswer = oldValue.slice();
+            self.previousAnswer = oldValue.slice();
         } else {
-            previousAnswer = oldValue;
+            self.previousAnswer = oldValue;
         }
     }, self, 'beforeChange');
-
-    self.answer.subscribe(function(newValue) {
-      if (Formplayer.Utils.answersEqual(previousAnswer, newValue)) {
-          return;
-      }
-      // delay change when there are multiple values, could be doing a lot of checks
-      self.pendchange(_.isArray(newValue) ? !newValue.length : true);
-    });
-
-}
+};
 MultiSelectEntry.prototype = Object.create(Entry.prototype);
 MultiSelectEntry.prototype.constructor = Entry;
+
+MultiSelectEntry.prototype.onAnswerChange = function(newValue) {
+    var self = this;
+    if (Formplayer.Utils.answersEqual(self.previousAnswer, newValue)) {
+        return;
+    }
+    // delay change when there are multiple values, could be doing a lot of checks
+    self.pendchange(_.isArray(newValue) ? !newValue.length : true);
+};
 
 /**
  * Represents multiple radio button entries
@@ -206,12 +208,8 @@ function SingleSelectEntry(question, options) {
     var self = this;
     MultiSelectEntry.call(this, question, options);
     self.templateType = 'select';
-
     self.isMulti = false;
-
-    self.onClear = function() {
-        self.answer(null)
-    };
+    self.onClear = function() { self.answer(null) };
 }
 SingleSelectEntry.prototype = Object.create(MultiSelectEntry.prototype);
 SingleSelectEntry.prototype.constructor = MultiSelectEntry;
@@ -221,7 +219,6 @@ function DateEntry(question, options) {
     Entry.call(self, question, options);
     var thisYear = new Date().getFullYear() + 1;
     self.templateType = 'date';
-
     self.format = 'mm/dd/yy';
 
     self.afterRender = function() {
@@ -237,6 +234,7 @@ function DateEntry(question, options) {
             self.answer(raw ? $.datepicker.formatDate('yy-mm-dd', raw) : null);
         });
     }
+
     self.answer = question.answer;
     self.answer.subscribe(function(newValue) {
         self.question.onchange()
@@ -246,50 +244,51 @@ function DateEntry(question, options) {
 DateEntry.prototype = Object.create(Entry.prototype);
 DateEntry.prototype.constructor = Entry;
 
-function TimeOfDayEntry(question, options) {
-    FreeTextEntry.call(question, options);
+function TimeEntry(question, options) {
+    var self = this;
+    FreeTextEntry.call(self, question, options);
 
-    this.getAnswer = function() {
-        var val = this.parent('getAnswer')();
-        var t = this.parseAnswer(val);
-        if (t != null) {
-            return intpad(t.h, 2) + ':' + intpad(t.m, 2);
-        } else {
-            return null;
+    self._prevalidate = function(raw) {
+        var timeParts = self.parseAnswer(raw);
+        if (timeParts == null ||
+                timeParts.hour < 0 || timeParts.hour >= 24 ||
+                timeParts.min < 0 || timeParts.min >= 60) {
+            return "Not a valid time (00:00 - 23:59)";
         }
-    }
+        return null;
+    };
 
-    this._prevalidate = function(raw) {
-        var t = this.parseAnswer($.trim(raw));
-        if (t == null || t.h < 0 || t.h >= 24 || t.m < 0 || t.m >= 60) {
-            return "Not a valid time (00:00\u201423:59)";
-        } else {
-            return null;
-        }
-    }
+    self.parseAnswer = function(answer) {
+        var match = /^([0-9]{1,2})\:([0-9]{2})$/.exec($.trim(answer));
+        if (!match) { return null; }
+        return {
+            hour: +match[1],
+            min: +match[2]
+        };
+    };
 
-    this.parseAnswer = function(answer) {
-        var match = /^([0-9]{1,2})\:([0-9]{2})$/.exec(answer);
-        if (!match) {
-            return null;
-        } else {
-            return {
-                h: +match[1],
-                m: +match[2]
-            };
-        }
-    }
-
-    this.domainText = function() {
+    self.domainText = function() {
         return 'hh:mm, 24-hour clock';
-    }
+    };
+};
+TimeEntry.prototype = Object.create(FreeTextEntry.prototype);
+TimeEntry.prototype.constructor = FreeTextEntry;
 
-    this.widgetWidth = function() {
-        return '5em';
+TimeEntry.prototype.onAnswerChange = function(newValue) {
+    var self = this,
+        timeParts = self.parseAnswer(self.answer()),
+        formatted;
+    if (timeParts) {
+        formatted = intpad(timeParts.hour, 2) + ':' + intpad(timeParts.min, 2)
+        if (formatted !== self.answer()) {
+            self.answer(formatted);
+            return;
+        }
     }
-}
-TimeOfDayEntry.prototype = Object.create(FreeTextEntry.prototype);
-TimeOfDayEntry.prototype.constructor = FreeTextEntry;
+    console.log('time change')
+    console.log(self.answer());
+    self.question.onchange()
+};
 
 function GeoPointEntry(question, options) {
     Entry.call(question, options);
@@ -534,7 +533,7 @@ function getEntry(question) {
             entry = new DateEntry(question, {})
             break;
         case Formplayer.Const.TIME:
-            entry = new TimeOfDayEntry(question, {});
+            entry = new TimeEntry(question, {});
             break;
         case Formplayer.Const.GEO:
             entry = new GeoPointEntry(question, {});

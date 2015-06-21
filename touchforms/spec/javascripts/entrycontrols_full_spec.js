@@ -24,6 +24,10 @@ describe('Entries', function() {
         $.subscribe('formplayer.answer-question', spy);
     });
 
+    afterEach(function() {
+        $.unsubscribe('formplayer.answer-question');
+    });
+
     it('Should return the IntEntry', function() {
         entry = (new Question(questionJSON)).entry
         expect(entry instanceof IntEntry).toBe(true);
@@ -111,6 +115,21 @@ describe('Entries', function() {
         expect(entry.templateType).toBe('date');
 
         entry.answer('87-11-19')
+        expect(spy.calledOnce).toBe(true);
+    });
+
+    it('Should return TimeEntry', function() {
+        questionJSON.datatype = Formplayer.Const.TIME;
+        questionJSON.answer = '12:30';
+
+        entry = (new Question(questionJSON)).entry
+        expect(entry instanceof TimeEntry).toBe(true);
+        expect(entry.templateType).toBe('str');
+
+        entry.answer('12:45')
+        expect(spy.calledOnce).toBe(true);
+
+        entry.answer('12:451')  // Invalid time
         expect(spy.calledOnce).toBe(true);
     });
 });
