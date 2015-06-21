@@ -1,5 +1,6 @@
 function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc,
                            render_context, answerCallback) {
+  var self = this;
   this.formSpec = formSpec;
   this.sessionData = sessionData;
   this.session_id = null;
@@ -8,6 +9,20 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
   this.presubmitfunc = presubmitfunc;
   this.render_context = render_context;
   this.answerCallback = answerCallback;
+
+  $.subscribe('formplayer.submit-form', function(e, form) {
+      if (!self.presubmitfunc()) { return; }
+      self.submitForm(form);
+  })
+  $.subscribe('formplayer.delete-repeat', function(e, group) {
+      self.deleteRepeat(group);
+  });
+  $.subscribe('formplayer.new-repeat', function(e, repeat) {
+      self.newRepeat(repeat);
+  });
+  $.subscribe('formplayer.answer-question', function(e, question) {
+      self.answerQuestion(question);
+  });
 
   this.loadForm = function ($div, init_lang, onload, onerror) {
     var args = {
@@ -58,7 +73,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
         adapter.session_id = resp["session_id"];
         console.log('session id: ' + adapter.session_id);
       }
-      adapter.form = init_render(resp, adapter, $div);
+      adapter.form = Formplayer.Utils.initialRender(resp, $div);
       if (onload) {
         onload(adapter, resp);
       }
@@ -67,7 +82,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
 
   this.answerQuestion = function (q) {
     var ix = getIx(q);
-    var answer = q.getAnswer();
+    var answer = q.answer();
 
     var adapter = this;
     this.ajaxfunc({'action': 'answer',
@@ -124,13 +139,13 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
     var answers = {};
     var prevalidated = true;
     var accumulate_answers = function(o) {
-      if (o.type != 'question') {
-        $.each(o.children, function(i, val) {
+      if (ko.utils.unwrapObservable(o.type) !== 'question') {
+        $.each(o.children(), function(i, val) {
             accumulate_answers(val);
           });
       } else {
         if (o.prevalidate()) {
-          answers[getIx(o)] = o.getAnswer();
+          answers[getIx(o)] = o.answer();
         } else {
           prevalidated = false;
         }

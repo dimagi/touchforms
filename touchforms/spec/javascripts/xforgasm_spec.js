@@ -1,4 +1,4 @@
-describe('Test xforgasm.js', function() {
+describe('Xforgasm', function() {
 
     describe('TaskQueue', function() {
         var tq,
@@ -84,10 +84,12 @@ describe('Test xforgasm.js', function() {
 
             // Setup stubs
             $.cookie = sinon.stub()
+            sinon.stub(Formplayer.Utils, 'initialRender');
         });
         afterEach(function() {
             $('#submit').remove();
             server.restore();
+            Formplayer.Utils.initialRender.restore();
         })
 
         it('Test request queuing', function() {

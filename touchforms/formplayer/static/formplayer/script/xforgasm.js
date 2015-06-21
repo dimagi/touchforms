@@ -263,11 +263,12 @@ function WebFormSession(params) {
             }
             sess.LAST_REQUEST_HANDLED = resp.seq_id;
 
+            callback(resp);
             try {
-                callback(resp);
             } catch (err) {
                 var msg = "".concat(ERROR_MESSAGE, err.message);
                 sess.onerror({message: msg});
+                console.error(err);
             }
             if (blocking) {
                 sess.inputActivate(true); // clears BLOCKING_REQUEST_IN_PROGRESS

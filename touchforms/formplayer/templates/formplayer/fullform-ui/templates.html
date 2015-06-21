@@ -1,0 +1,137 @@
+<script type="text/html" id="sub-group-fullform-ko-template">
+    <div class="gr">
+        <div class="gr-header">
+            <span class="caption"></span>
+            <span class="ix"></span>
+            <a class="del" href="#" data-bind="
+                visible: isRepetition,
+                click: deleteRepeat
+            ">delete</a>
+        </div>
+        <div class="children" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+    </div>
+</script>
+
+<script type="text/html" id="form-fullform-ko-template">
+    <div>
+        <h1 class="title" data-bind="text: title"></h1>
+        <div class="form">
+            <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+        </div>
+        <input class="submit"
+            type="submit"
+            value="Submit"
+            data-bind="
+                click: submitForm,
+                attr: {
+                    value: submitText
+                }
+                "
+            />
+    </div>
+</script>
+
+<script type="text/html" id="question-fullform-ko-template">
+    <!-- ko if: datatype() !== 'info' -->
+    <div class="q" data-bind="css: { qerr: error }">
+        <div class="widget" data-bind="
+            template: { name: entryTemplate, data: entry }
+        "></div>
+        <span class="req" data-bind="visible: $data.required ? required : false">*</span>
+        <span class="caption" data-bind="html: caption_markdown || caption"></span>
+        <span class="ix" data-bind="text: ixInfo($data)"></span>
+        <div class="error" data-bind="
+            visible: error,
+            text: error
+        "></div>
+        <div class="eoq"></div/>
+    </div>
+    <!-- /ko -->
+    <!-- ko if: datatype() === 'info' -->
+    <div class="info">
+        <span class="ix" data-bind="text: ixInfo($data)">></span>
+        <span class="caption" data-bind="html: caption"></span>
+    </div>
+    <!-- /ko -->
+</script>
+
+<script type="text/html" id="repeat-juncture-fullform-ko-template">
+    <div class="rep">
+        <div class="rep-header">
+            <span class="caption" data-bind="html: header"></span>
+            <span class="ix" data-bind="text: ixInfo($data)"></span>
+        </div>
+        <div class="children" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
+        <div class="empty" data-bind="visible: !children().length">This repeatable group is empty</div>
+        <div class="rep-footer">
+            <a class="add" href="#" data-bind="click: newRepeat">add new</a>
+        </div>
+    </div>
+</script>
+
+<script type="text/html" id="str-entry-ko-template">
+    <textarea class="textfield" data-bind="
+        value: $data.answer,
+        attr: {
+            maxlength: lengthLimit,
+        }
+    "></textarea>
+    <span class="type" data-bind="
+        text: domainText()
+    "></span>
+</script>
+<script type="text/html" id="int-entry-ko-template">
+    <input type="number" data-bind="
+        value: $data.answer,
+        attr: { maxlength: lengthLimit }
+    "/>
+    <span class="type" data-bind="
+        text: domainText()
+    "></span>
+</script>
+<script type="text/html" id="float-entry-ko-template">
+    <input type="number" step="any" data-bind="
+        value: $data.answer,
+        attr: { maxlength: lengthLimit }
+    "/>
+    <span class="type" data-bind="
+        text: domainText()
+    "></span>
+</script>
+<script type="text/html" id="unsupported-entry-ko-template">
+    <div class="unsupported" data-bind="
+        text: "Sorry, web entry cannot support this type of question" + datatype
+    "></div>
+        
+</script>
+<script type="text/html" id="blank-entry-ko-template"></script>
+<script type="text/html" id="select-entry-ko-template">
+    <div class="sel" data-bind="foreach: choices, as: 'choice'">
+        <input data-bind="
+            checked: $parent.answer,
+            value: $index() + 1,
+            attr: {
+                id: 'group-' + $parent.group + '-choice-' + $index(),
+                type: $parent.isMulti ? 'checkbox' : 'radio',
+                name: $parent.group,
+                class: 'group-' + $parent.group
+            }
+        "/>
+        <label class="fp-label" data-bind="
+            text: $data,
+            attr: {
+                for: 'group-' + $parent.group + '-choice-' + $index()
+            }
+        "></label>
+    </div>
+    <div class="clear-container">
+        <a class="clear" href="#" data-bind="
+            click: onClear
+        ">clear</a>
+    </div>
+</script>
+<script type="text/html" id="date-entry-ko-template">
+    <input type="text" data-bind="attr: { id: widgetId } "/>
+    <span>mm/dd/yy</span>
+
+</script>

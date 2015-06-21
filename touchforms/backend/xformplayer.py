@@ -445,7 +445,7 @@ class XFormSession:
         ro = r.getRepeatOptions()
 
         event.update(get_caption(r))
-        event['main-header'] = ro.header
+        event['header'] = ro.header
         event['repetitions'] = list(r.getRepetitionsText())
 
         event['add-choice'] = ro.add

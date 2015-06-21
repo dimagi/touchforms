@@ -13,7 +13,11 @@
 #
 src_files:
   - script/test_vendor/*.js
-  - script/vendor/*.js
+  - script/vendor/jquery-*.min.js
+  - script/vendor/ba*.js
+  - script/vendor/purify.js
+  - script/vendor/dates.js
+  - script/vendor/markdown*.js
   - script/test_helpers/*.js
   - script/shortcut.js
   - script/xforgasm.js

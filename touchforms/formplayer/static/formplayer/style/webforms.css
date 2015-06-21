@@ -18,20 +18,16 @@
   min-width: 800px;
 }
 
-#ix {
+.ix {
   display: none;
 }
 
-input {
-  /* text-align: right; */
-}
-
-#submit {
+.submit {
   margin-top: 30px;
   font-weight: bold;
 }
 
-#error {
+.error {
   color: red;
   font-weight: bold;
   font-size: 80%;
@@ -41,18 +37,18 @@ input {
   background-color: #fcc;
 }
 
-#widget {
+.widget {
   float: right;
   width: 400px;
   text-align: left;
   padding-bottom: 3px;
 }
 
-#children {
+.children {
   margin-left: 30px;
 }
 
-#empty {
+.empty {
   color: grey;
   margin-left: 30px;
   font-size: 70%;
@@ -68,7 +64,7 @@ input {
   padding-bottom: 3px;
 }
 
-#form {
+.form {
   padding-bottom: 8px;
   border-top: 1px #aaf solid;
   border-bottom: 1px #aaf solid;
@@ -97,10 +93,6 @@ input {
   float: right;
   font-weight: bold;
   margin-right: 5px;
-}
-
-.sel:hover {
-  background-color: #ddf;
 }
 
 .info {

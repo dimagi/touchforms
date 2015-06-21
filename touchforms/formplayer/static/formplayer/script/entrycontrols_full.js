@@ -1,465 +1,225 @@
-/* === INHERITANCE PATTERN === */
-
-function inherit (subclass, parentclass) {
-  subclass._parent = parentclass._parent || {};
-  for (var e in parentclass) {
-    if (e != '_parent' && e != 'parent') {
-      if (typeof(parentclass[e]) != 'function') {
-        subclass[e] = parentclass[e];
-      } else {
-        if (subclass._parent[e] == null) {
-          subclass._parent[e] = [];
-        }
-        subclass._parent[e].push(parentclass[e]);
-        subclass[e] = passToParent(e);
-      }
-    }
-  }
-  subclass.parent = function (funcName) {
-    return invokeParent(this, funcName);
-  }
-}
-
-function passToParent (funcName) {
-  return function () {
-    return this.parent(funcName).apply(null, arguments);
-  }
-}
-
-function invokeParent (self, funcName) {
-  return function () {
-    var basefunc = self._parent[funcName].pop();
-    if (!basefunc) {
-      throw new Error('function ' + funcName + ' not defined in parentclass');
-    }
-    var retval = basefunc.apply(self, arguments);
-    self._parent[funcName].push(basefunc);
-    return retval;
-  }
-}
-
-/* TO USE:
- *
- * early in the constructor of the child class, call:
- *   inherit(this, new ParentClass(...));
- * this is akin to calling parent(...); inside a java constructor
- *
- * this call will load all variables and functions from the parent class
- * into this class.
- *
- * add additional variables and methods after the inherit() call. to
- * overload a method in the parent class, simply redefine the function
- * in this class
- *
- * to call a parent method explicitly, do:
- *   this.parent('someMethod')(args);
- * this is akin to calling parent.someMethod(args); in java
+/**
+ * The base Object for all entries. Each entry takes a question object and options
+ * @param {Object} question - A question object
+ * @param {Object} object - A hash of different options
  */
+function Entry(question, options) {
+    this.question = question
+    this.datatype = question.datatype();
+    this.entryId = this.datatype + nonce();
 
-/* ============================= */
-
-
-function Entry () {
-  this.help = function () {
-    showError(activeQuestion["help"] || "There is no help text for this question.");
-  }
-
-  this.clear = function () {
-    this.setAnswer(null, true);
-  }
-
-  this.onShow = function() { }
+    this.prevalidate = function(q) {
+        return true;
+    }
+    this.clear = function() {
+        this.answer(null);
+    }
 }
 
-function SimpleEntry () {
-  inherit(this, new Entry());
+/**
+ * An entry that represent a question label.
+ */
+function InfoEntry(question, options) {
+    Entry.call(self, question, options);
+    this.answer = question.answer;
+    this.templateType = 'blank'
+};
 
-  this.shortcuts = [];
+InfoEntry.prototype = Object.create(Entry.prototype);
+InfoEntry.prototype.constructor = Entry;
 
-  this.prevalidate = function (q) {
-    return true;
-  }
-
-  this.destroy = function () {
-    for (var i = 0; i < this.shortcuts.length; i++) {
-      shortcut.remove(this.shortcuts[i]);
-    }
-  }
-
-  this.add_shortcut = function (hotkey, func) {
-    set_shortcut(hotkey, func);
-    this.shortcuts.push(hotkey);
-  }
+/**
+ * The entry used when we have an unidentified entry
+ */
+function UnsupportedEntry(question, options) {
+    Entry.call(self, question, options);
+    this.templateType = 'unsupported'
+    this.answer = null;
 }
+UnsupportedEntry.prototype = Object.create(Entry.prototype);
+UnsupportedEntry.prototype.constructor = Entry;
 
-function InfoEntry () {
-  inherit(this, new SimpleEntry());
-  this.answer = null;
-
-  this.setAnswer = function (val) {
-    this.answer = val;
-  };
-
-  this.getAnswer = function () {
-    return this.answer;
-  };
-
-  this.load = function (q, $container) {
-    //not needed
-  };
-}
-
-function UnsupportedEntry (datatype) {
-  inherit(this, new SimpleEntry());
-
-  this.answer = null;
-
-  this.getAnswer = function () {
-    return this.answer;
-  }
-
-  //just spit back the answer that was originally set
-  this.setAnswer = function (ans) {
-    this.answer = ans;
-  }
-
-  this.load = function (q, $container) {
-    $container.html('<div class="unsupported">Sorry, web entry cannot support this type of question <nobr>(' + (datatype == 'unrecognized' ? 'unknown type' : datatype) + ')</nobr></div>');
-  }
-}
-
-function FreeTextEntry (args) {
-  inherit(this, new SimpleEntry());
-
-  args = args || {};
-  this.domain = args.domain || 'full';
-  this.length_limit = args.length_limit || 10000;
-  this.textarea = args.prose;
-
-  this.inputfield = null;
-  this.default_answer = null;
-
-  this.load = function (q, $container) {
-    this.mkWidget(q, $container);
-
-    this.setAnswer(this.default_answer);
-  }
-
-  this.mkWidget = function (q, $container) {
-    if (!this.textarea) {
-      $container.html('<textarea id="textfield" maxlength="' + this.length_limit + '" type="text" style="width: ' + this.widgetWidth() + '; height: 1.2em" /><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.domainText() + ')</span>');
-      var widget = $container.find('#textfield');
-    } else {
-      $container.html('<textarea id="textarea" style="width: 33em; height: 10em; font-family: sans-serif;"></textarea>');
-      var widget = $container.find('#textarea');
-    }
-    this.inputfield = widget[0];
-    widget.change(function() { q.onchange(); });
-  }
-
-  this.getControl = function () {
-    return this.inputfield;
-  }
-
-  this.getRaw = function () {
-    var control = this.getControl();
-    return (control != null ? control.value : null);
-  }
-
-  this.getAnswer = function () {
-    var raw = $.trim(this.getRaw());
-    return (raw == '' ? null : raw);
-  }
-
-  this.setAnswer = function (answer, postLoad) {
-    var control = this.getControl();
-    if (control) {
-      control.value = (answer != null ? answer : '');
-    } else {
-      this.default_answer = answer;
-    }
-  }
-
-  this.prevalidate = function (q) {
-    var raw = this.getRaw();
-    if (raw) {
-      var errmsg = this._prevalidate(raw);
-      if (errmsg) {
-        q.showError(errmsg);
-        return false;
-      }
-    }
-    return true;
-  }
-
-  this._prevalidate = function (raw) {
-    return null;
-  }
-
-  this.domainText = function() {
-    return 'free-text';
-  }
-
-  this.widgetWidth = function() {
-    return '20em';
-  }
-}
-
-function PasswordEntry (args) {
-  args.length_limit = args.length_limit || 9;
-  inherit(this, new FreeTextEntry(args));
-
-  this.mkWidget = function () {
-    $('#answer')[0].innerHTML = '<input id="textfield" maxlength="' + this.length_limit + '" type="passwd"/>';
-    this.inputfield = $('#textfield')[0];
-  }
-}
-
-function IntEntry (parent, length_limit) {
-  inherit(this, new FreeTextEntry({parent: parent, domain: 'numeric', length_limit: length_limit || 9}));
-
-  this.getAnswer = function () {
-    var val = this.parent('getAnswer')();
-    return (val != null ? +val : val);
-  }
-
-  this._prevalidate = function(raw) {
-    return (isNaN(+raw) || +raw != Math.floor(+raw) ? "Not a valid whole number" : null);
-  }
-
-  this.domainText = function() {
-    return 'numeric';
-  }
-
-  this.widgetWidth = function() {
-    return '8em';
-  }
-}
-
-function PhoneEntry (parent, length_limit) {
-  inherit(this, new FreeTextEntry({parent: parent, domain: 'numeric', length_limit: length_limit || 15}));
-
-  this._prevalidate = function (raw) {
-    return (!(/^\+?[0-9]+$/.test(raw)) ? "This does not appear to be a valid phone/numeric number" : null);
-  }
-
-  this.domainText = function() {
-    return 'phone/numeric';
-  }
-
-}
-
-
-function FloatEntry (parent) {
-  inherit(this, new FreeTextEntry({parent: parent}));
-
-  this.getAnswer = function () {
-    var val = this.parent('getAnswer')();
-    return (val != null ? +val : val);
-  }
-
-  this._prevalidate = function (raw) {
-    return (isNaN(+raw) ? "Not a valid number" : null);
-  }
-
-  this.domainText = function() {
-    return 'decimal';
-  }
-
-  this.widgetWidth = function() {
-    return '8em';
-  }
-}
-
-function MultiSelectEntry (args) {
-  inherit(this, new SimpleEntry());
-
-  this.choices = args.choices;
-  this.choicevals = args.choicevals;
-  this.layout_override = args.layout_override;
-  this.as_single = (args.meta || {}).as_single;
-  this.appearance = args.meta.appearance;
-
-  this.isMulti = true;
-  //this.buttons = null;
-  this.default_selections = null;
-
-  this.$container = null;
-
-  this.init_vals = function () {
-    if (this.choicevals == null && typeof this.choices[0] == 'object') {
-      this.choicevals = [];
-      for (var i = 0; i < this.choices.length; i++) {
-        var choice = this.choices[i];
-        this.choices[i] = choice.lab;
-        this.choicevals.push(choice.val);
-      }
-    }
-  }
-  this.init_vals();
-
-  this.load = function (q, $container) {
-    this.$container = $container;
-    this.group = 'sel-' + nonce();
-
-    for (var i = 0; i < this.choices.length; i++) {
-      var label = i < 36 ? '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i] : null;
-
-      var $choice = $('<div><span id="num"></span> <input id="ch-' + i + '" type="' + (this.isMulti ? 'checkbox' : 'radio') + '" /> <span id="label"></span></div>');
-      $choice.find('#num').text(label + ')');
-      $choice.find('#num').hide();
-      $choice.find('#label').text(this.choices[i]);
-      var $inp = $choice.find('input');
-      $inp.attr('name', this.group);
-      $inp.attr('value', i);
-      $choice.addClass('sel');
-
-      $choice.click((function($inp) {
-          return function(ev) {
-            if (ev.target != $inp[0]) {
-              $inp.click();
-              $inp.change(); //appears the simulated click() doesn't trigger this?
-            }
-          }
-        })($inp));
-
-      $container.append($choice);
-    }
-    $container.append('<div id="clear_"><a id="clear" href="#">clear</a></div>');
-
-    this.initted = true;
-
-    this.setAnswer(this.default_selections);
-
-    var ctrl = this;
-    $container.find('input').change(function() {
-        ctrl.pendchange(q, !ctrl.isMulti);
-      });
-
-    $container.find('#clear').click(function () {
-        $container.find('input').removeAttr('checked');
-        ctrl.pendchange(q, true);
-        return false;
-      });
-  }
-
-  this.COMMIT_DELAY = 300; //ms
-  this.pendchange = function(q, immed) {
-    if (this.timer) {
-      clearTimeout(this.timer);
-    }
-    this.timer = setTimeout(function() { q.onchange(); }, immed ? 0 : this.COMMIT_DELAY);
-  }
-
-  this.getAnswer = function () {
-    var selected = [];
-    for (i = 0; i < this.choices.length; i++) {
-      if (this.choiceWidget(i, true).checked) {
-        selected.push(this.valAt(i));
-      }
-    }
-    return selected;
-  }
-
-  this.valAt = function (i) {
-    return (this.choicevals != null ? this.choicevals[i] : i + 1);
-  }
-
-  //answer is null or list
-  this.setAnswer = function (answer, postLoad) {
-    if (this.initted) {
-      for (var i = 0; i < this.choices.length; i++) {
-        var button = this.choiceWidget(i, true);
-        var checked = (answer != null && answer.indexOf(this.valAt(i)) != -1);
-        button.checked = checked;
-      }
-    } else {
-      this.default_selections = answer;
-    }
-  }
-
-  this.selectFunc = function (i) {
+/**
+ * The entry that represents a free text input
+ * TODO: Handle prose option
+ */
+function FreeTextEntry(question, options) {
     var self = this;
-    return function () {
-      var cbox = this.choiceWidget(i); //is 'this' a bug? (used for keyboard shortcuts?)
-      if (cbox.is(':checked')) {
-        cbox.removeAttr('checked');
-      } else {
-        cbox.attr('checked', true);
-      }
-      cbox.focus();
-    }
-  }
+    Entry.call(self, question, options);
+    self.templateType = 'str';
+    self.domain = question.domain ? question.domain() : 'full';
+    self.lengthLimit = options.lengthLimit || 10000;
+    self.prose = question.domain_meta ? question.domain_meta().longtext : false;
 
-  this.scroll = function (dir) {
-    var checkboxes = [];
-    for (var i = 0; i < this.choices.length; i++) {
-      checkboxes.push(this.choiceWidget(i, true));
-    }
-    var focussed = $(':focus');
-    var activeIx = -1;
-    for (var i = 0; i < focussed.length; i++) {
-      var ix = checkboxes.indexOf(focussed[i]);
-      if (ix != -1) {
-        activeIx = ix;
-        break;
-      }
-    }
-    if (activeIx >= 0) {
-      var newIx = (activeIx + this.choices.length + (dir ? 1 : -1)) % this.choices.length;
-      this.focus(newIx);
-    }
-  }
+    self.answer = question.answer;
+    self.answer.subscribe(function(newValue) {
+        self.question.onchange()
+    });
 
-  this.focus = function(i) {
-    this.choiceWidget(i).focus();
-  }
+    this.prevalidate = function() {
+        var errmsg = this._prevalidate(self.answer());
+        if (errmsg) {
+            self.question.showError(errmsg);
+            return false;
+        }
+        return true;
+    }
 
-  this.choiceWidget = function(i, dom) {
-    var elem = this.$container.find('#ch-' + i);
-    return (dom ? elem[0] : elem);
-  }
+    this._prevalidate = function(raw) {
+        return null;
+    }
+
+    this.domainText = function() {
+        return '(free-text)';
+    }
 }
+FreeTextEntry.prototype = Object.create(Entry.prototype);
+FreeTextEntry.prototype.constructor = Entry;
 
-function SingleSelectEntry (args) {
-  inherit(this, new MultiSelectEntry(args));
+function PasswordEntry(question, options) {
+    options.lengthLimit = options.lengthLimit || 9;
 
-  this.isMulti = false;
-
-  this.getAnswer = function () {
-    var selected = this.parent('getAnswer')();
-    return selected.length > 0 ? selected[0] : null;
-  }
-
-  this.setAnswer = function (answer, postLoad) {
-    if (this.initted) {
-      this.parent('setAnswer')(answer != null ? [answer] : null, postLoad);
-    } else {
-      this.default_selections = answer;
+    this.mkWidget = function() {
+        $('#answer')[0].innerHTML = '<input id="textfield" maxlength="' + this.lengthLimit + '" type="passwd"/>';
+        this.inputfield = $('#textfield')[0];
     }
-  }
+}
+PasswordEntry.prototype = Object.create(FreeTextEntry.prototype);
+PasswordEntry.prototype.constructor = FreeTextEntry;
 
-  this.selectFunc = function (i) {
+/**
+ * The entry that defines an integer input. Only accepts whole numbers
+ */
+function IntEntry(question, options) {
+    FreeTextEntry.call(this, question, options);
+    this.templateType = 'int';
+    this.lengthLimit = options.lengthLimit;
+
+    this._prevalidate = function(raw) {
+        return (isNaN(+raw) || +raw != Math.floor(+raw) ? "Not a valid whole number" : null);
+    }
+
+    this.domainText = function() {
+        return 'numeric';
+    }
+
+}
+IntEntry.prototype = Object.create(FreeTextEntry.prototype);
+IntEntry.prototype.constructor = FreeTextEntry;
+
+function PhoneEntry(question, options) {
+    IntEntry.call(this, question, options);
+
+    this._prevalidate = function(raw) {
+        return (!(/^\+?[0-9]+$/.test(raw)) ? "This does not appear to be a valid phone/numeric number" : null);
+    }
+
+    this.domainText = function() {
+        return 'phone/numeric';
+    }
+
+}
+PhoneEntry.prototype = Object.create(IntEntry.prototype);
+PhoneEntry.prototype.constructor = IntEntry;
+
+
+/**
+ * The entry that defines an float input. Only accepts real numbers
+ */
+function FloatEntry(question, options) {
+    FreeTextEntry.call(this, question, options);
+    this.templateType = 'float';
+
+    this._prevalidate = function(raw) {
+        return (isNaN(+raw) ? "Not a valid number" : null);
+    }
+
+    this.domainText = function() {
+        return 'decimal';
+    }
+}
+FloatEntry.prototype = Object.create(IntEntry.prototype);
+FloatEntry.prototype.constructor = IntEntry;
+
+/**
+ * Represents a checked box entry.
+ */
+function MultiSelectEntry(question, options) {
     var self = this;
-    return function () {
-      var cbox = this.choiceWidget(i); //is 'this' a bug? (used for keyboard shortcuts?)
-      cbox.attr('checked', true);
-    }
-  }
+    Entry.call(this, question, options);
+    self.templateType = 'select';
+    self.choices = question.choices;
+    self.choicevals = question.choicevals ? question.choicevals() : null;
+    self.answer = question.answer;
+
+    self.group = nonce();
+
+    self.isMulti = true;
+    self.default_selections = null;
+
+    self.onClear = function() {
+        self.answer([]);
+    };
+
+    self.COMMIT_DELAY = 300; //ms
+    self.pendchange = function(immed) {
+        if (self.timer) {
+            clearTimeout(self.timer);
+        }
+        if (immed) {
+          self.question.onchange();
+        } else {
+          self.timer = setTimeout(self.question.onchange, self.COMMIT_DELAY);
+        }
+    };
+
+    var previousAnswer = null;
+    self.answer.subscribe(function(oldValue) {
+        if (_.isArray(oldValue)) {
+            // Need to make copy since oldValue gets mutated
+            previousAnswer = oldValue.slice();
+        } else {
+            previousAnswer = oldValue;
+        }
+    }, self, 'beforeChange');
+
+    self.answer.subscribe(function(newValue) {
+      if (Formplayer.Utils.answersEqual(previousAnswer, newValue)) {
+          return;
+      }
+      // delay change when there are multiple values, could be doing a lot of checks
+      self.pendchange(_.isArray(newValue) ? !newValue.length : true);
+    });
+
 }
+MultiSelectEntry.prototype = Object.create(Entry.prototype);
+MultiSelectEntry.prototype.constructor = Entry;
 
-function DateEntry (args) {
-  inherit(this, new SimpleEntry());
+/**
+ * Represents multiple radio button entries
+ */
+function SingleSelectEntry(question, options) {
+    var self = this;
+    MultiSelectEntry.call(this, question, options);
+    self.templateType = 'select';
 
-  this.format = 'mm/dd/yy';
+    self.isMulti = false;
 
-  this.$picker = null;
+    self.onClear = function() {
+        self.answer(null)
+    };
+}
+SingleSelectEntry.prototype = Object.create(MultiSelectEntry.prototype);
+SingleSelectEntry.prototype.constructor = MultiSelectEntry;
 
-  this.load = function (q, $container) {
-    this.widget_id = 'datepicker-' + nonce();
-    $container.html('<input id="' + this.widget_id + '" type="text"><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.format.replace('yy', 'yyyy') + ')</span>');
-    this.$picker = $container.find('#' + this.widget_id);
+function DateEntry(question, options) {
+    var self = this;
+    Entry.call(self, question, options);
     var thisYear = new Date().getFullYear() + 1;
+
+    this.format = 'mm/dd/yy';
+
+    this.$picker = $('#' + this.entryId);
     this.$picker.datepicker({
         changeMonth: true,
         changeYear: true,
@@ -467,319 +227,358 @@ function DateEntry (args) {
         yearRange: "" + (thisYear - 100) + ":" + (thisYear + 10),
     });
 
-    this.initted = true;
 
     this.setAnswer(this.def_ans);
 
-    this.$picker.change(function() { q.onchange(); });
-  }
+    this.$picker.change(function() {
+        q.onchange();
+    });
 
-  this.setAnswer = function (answer, postLoad) {
-    if (this.initted) {
-      this.$picker.datepicker('setDate', answer ? $.datepicker.parseDate('yy-mm-dd', answer) : null);
-      this.ans = answer;
-    } else {
-      this.def_ans = answer;
+    this.load = function(q, $container) {
+        this.widget_id = 'datepicker-' + nonce();
+        $container.html('<input id="' + this.widget_id + '" type="text"><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.format.replace('yy', 'yyyy') + ')</span>');
+        this.$picker = $container.find('#' + this.widget_id);
+        var thisYear = new Date().getFullYear() + 1;
+        this.$picker.datepicker({
+            changeMonth: true,
+            changeYear: true,
+            dateFormat: this.format,
+            yearRange: "" + (thisYear - 100) + ":" + (thisYear + 10),
+        });
+
+
+        this.setAnswer(this.def_ans);
+
+        this.$picker.change(function() {
+            q.onchange();
+        });
     }
 
-  }
+    this.setAnswer = function(answer, postLoad) {
+        this.$picker.datepicker('setDate', answer ? $.datepicker.parseDate('yy-mm-dd', answer) : null);
+        this.ans = answer;
+    }
 
-  this.getAnswer = function () {
-    var raw = this.$picker.datepicker('getDate');
-    return (raw != null ? $.datepicker.formatDate('yy-mm-dd', raw) : null);
-  }
+    this.getAnswer = function() {
+        var raw = this.$picker.datepicker('getDate');
+        return (raw != null ? $.datepicker.formatDate('yy-mm-dd', raw) : null);
+    }
 
 }
+DateEntry.prototype = Object.create(Entry.prototype);
+DateEntry.prototype.constructor = Entry;
 
-function TimeOfDayEntry (parent) {
-  inherit(this, new FreeTextEntry({parent: parent, length_limit: 5}));
+function TimeOfDayEntry(question, options) {
+    FreeTextEntry.call(question, options);
 
-  this.getAnswer = function () {
-    var val = this.parent('getAnswer')();
-    var t = this.parseAnswer(val);
-    if (t != null) {
-      return intpad(t.h, 2) + ':' + intpad(t.m, 2);
-    } else {
-      return null;
-    }
-  }
-
-  this._prevalidate = function (raw) {
-    var t = this.parseAnswer($.trim(raw));
-    if (t == null || t.h < 0 || t.h >= 24 || t.m < 0 || t.m >= 60) {
-      return "Not a valid time (00:00\u201423:59)";
-    } else {
-      return null;
-    }
-  }
-
-  this.parseAnswer = function (answer) {
-    var match = /^([0-9]{1,2})\:([0-9]{2})$/.exec(answer);
-    if (!match) {
-      return null;
-    } else {
-      return {h: +match[1], m: +match[2]};
-    }
-  }
-
-  this.domainText = function() {
-    return 'hh:mm, 24-hour clock';
-  }
-
-  this.widgetWidth = function() {
-    return '5em';
-  }
-}
-
-function GeoPointEntry () {
-  inherit(this, new SimpleEntry());
-
-  this.timers = {};
-  this.DEFAULT = {lat: 30., lon: 0., zoom: 1, anszoom: 6};
-
-  this.load = function (q, $container) {
-    this.mkWidget(q, $container);
-    this.setAnswer(this.default_answer, true);
-
-    this.commit = function() {
-      q.onchange();
-    }
-  }
-
-  this.mkWidget = function (q, $container) {
-    var crosshairs = 'iVBORw0KGgoAAAANSUhEUgAAABMAAAATCAQAAADYWf5HAAAACXZwQWcAAAATAAAAEwDxf4yuAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAAAySURBVCjPY2hgIAZiCPwHAyKUMQxbZf9RAHKwIMSg+hEQqhtJBK6MKNNGTvCSld6wQwBd8RoA55WDIgAAAABJRU5ErkJggg==';
-    var crosshair_size = 19;
-    $container.html('<style>#map img { max-width: none !important; }</style><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td id="lat"></td><td id="lon"></td><td align="right" valign="bottom"><a id="clear" href="#">clear</a></td></tr></table><div id="map"></div><div><form><input id="query"><input type="submit" id="search" value="Search"></form></div>');
-    var $map = $container.find('#map');
-    // TODO: dynamic sizing
-    var W = 400; 
-    var H = 250;
-    $map.css('width', W+'px');
-    $map.css('height', H+'px');
-
-    $map.css('background', '#eee');
-
-    var $wait = $('<div />');
-    $wait.css('margin', 'auto');
-    $wait.css('padding-top', '60px');
-    $wait.css('max-width', '200px');
-    $wait.css('color', '#bbb');
-    $wait.css('font-size', '24pt');
-    $wait.css('line-height', '28pt');
-    $wait.text('please wait while the map loads...');
-    $map.append($wait);
-
-    this.lat = null;
-    this.lon = null;
-    this.$lat = $container.find('#lat');
-    this.$lon = $container.find('#lon');
-    $.each([this.$lat, this.$lon], function(i, $e) {
-        $e.css('font-weight', 'bold');
-        $e.css('width', '8em');
-      });
-
-    var widget = this;
-    $container.find('#clear').click(function () {
-	widget.set_latlon(null, null);
-	widget.commit();
-        return false;
-      });
-
-    this.$query = $container.find('#query');
-    this.$query.css('width', '80%');
-    this.$search = $container.find('#search');
-    this.$search.css('width', '15%');
-    this.$search.click(function() {
-        q = widget.$query.val().trim();
-	if (q) {
-          widget.search(q);
+    this.getAnswer = function() {
+        var val = this.parent('getAnswer')();
+        var t = this.parseAnswer(val);
+        if (t != null) {
+            return intpad(t.h, 2) + ':' + intpad(t.m, 2);
+        } else {
+            return null;
         }
-	return false;
-      });
+    }
 
-    var on_gmap_load = function() {
-	if (!$container.is(':visible')) {
-	    // google maps gets unhappy if you initialize the map when its <div> is hidden
-	    widget.delayed_init_reqd = true;
-	}
+    this._prevalidate = function(raw) {
+        var t = this.parseAnswer($.trim(raw));
+        if (t == null || t.h < 0 || t.h >= 24 || t.m < 0 || t.m >= 60) {
+            return "Not a valid time (00:00\u201423:59)";
+        } else {
+            return null;
+        }
+    }
 
-	$map.empty();
-	widget.map = new google.maps.Map($map[0], {
-		mapTypeId: google.maps.MapTypeId.ROADMAP,
-		center: new google.maps.LatLng(widget.DEFAULT.lat, widget.DEFAULT.lon),
-		zoom: widget.DEFAULT.zoom
-	    });
+    this.parseAnswer = function(answer) {
+        var match = /^([0-9]{1,2})\:([0-9]{2})$/.exec(answer);
+        if (!match) {
+            return null;
+        } else {
+            return {
+                h: +match[1],
+                m: +match[2]
+            };
+        }
+    }
 
-	widget.geocoder = new google.maps.Geocoder();
+    this.domainText = function() {
+        return 'hh:mm, 24-hour clock';
+    }
 
-	if (!widget.delayed_init_reqd) {
-	    widget.bindListener();
-	}
+    this.widgetWidth = function() {
+        return '5em';
+    }
+}
+TimeOfDayEntry.prototype = Object.create(FreeTextEntry.prototype);
+TimeOfDayEntry.prototype.constructor = FreeTextEntry;
 
-	$ch = $('<img src="data:image/png;base64,' + crosshairs + '">');
-	$ch.css('position', 'relative')
-	$ch.css('top', ((H/*$map.height()*/ - crosshair_size) / 2) + 'px');
-	$ch.css('left', ((W/*$map.width()*/ - crosshair_size) / 2) + 'px');
-	$ch.css('z-index', '500');
-	$map.append($ch);
+function GeoPointEntry(question, options) {
+    Entry.call(question, options);
+
+    this.timers = {};
+    this.DEFAULT = {
+        lat: 30.,
+        lon: 0.,
+        zoom: 1,
+        anszoom: 6
     };
 
-    var GMAPS_API = 'https://maps.googleapis.com/maps/api/js?key=' + GMAPS_API_KEY + '&sensor=false';
-    if (typeof google == "undefined") {
-	_GMAPS_INIT = on_gmap_load
-        $.getScript(GMAPS_API + '&callback=_GMAPS_INIT');
-    } else {
-	on_gmap_load();
-    }
+    this.load = function(q, $container) {
+        this.mkWidget(q, $container);
+        this.setAnswer(this.default_answer, true);
 
-  }
-
-  this.bindListener = function() {
-      var widget = this;
-      google.maps.event.addListener(widget.map, "center_changed", function() { widget.update_center(); });
-  }
-
-  this.onShow = function() {
-      if (!this.delayed_init_reqd) {
-	  return;
-      }
-
-      // if the google map is initialized while the container div is hidden
-      // we need to do a little cleanup
-      var center = this.map.getCenter();
-      google.maps.event.trigger(this.map, 'resize');
-      this.map.setCenter(center);
-      // only set this now so the re-centering doesn't trigger an 'answering' of the question
-      this.bindListener();
-  }
-
-  this.getAnswer = function () {
-    return (this.lat != null ? [this.lat, this.lon] : null);
-  }
-
-  this.setAnswer = function (answer, postLoad) {
-    if (postLoad) {
-      if (answer) {
-        this.set_latlon(answer[0], answer[1]);
-        if (this.map) {
-          this.map.setCenter(new google.maps.LatLng(answer[0], answer[1]));
-          this.map.setZoom(this.DEFAULT.anszoom);
+        this.commit = function() {
+            q.onchange();
         }
-      } else {
-        this.set_latlon(null, null);
-      }
-    } else {
-      this.default_answer = answer;
-    }
-  }
-
-  this.update_center = function() {
-    var center = this.map.getCenter();
-    var lat = center.lat();
-    var lon = center.lng();
-
-    if (this.set_latlon(lat, lon)) {
-      var widget = this;
-      this.delay_action('move', function() { widget.commit(); }, 1.);
-    }
-  }
-
-  this.set_latlon = function(lat, lon) {
-    lon = lon % 360.;
-    if (lon < 0) {
-      lon += 360.
-    }
-    lon = lon % 360.;
-    if (lon >= 180.) {
-      lon -= 360.;
     }
 
-    if (lat == this.lat && lon == this.lon) {
-      return false;
+    this.mkWidget = function(q, $container) {
+        var crosshairs = 'iVBORw0KGgoAAAANSUhEUgAAABMAAAATCAQAAADYWf5HAAAACXZwQWcAAAATAAAAEwDxf4yuAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAAAySURBVCjPY2hgIAZiCPwHAyKUMQxbZf9RAHKwIMSg+hEQqhtJBK6MKNNGTvCSld6wQwBd8RoA55WDIgAAAABJRU5ErkJggg==';
+        var crosshair_size = 19;
+        $container.html('<style>#map img { max-width: none !important; }</style><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td id="lat"></td><td id="lon"></td><td align="right" valign="bottom"><a id="clear" href="#">clear</a></td></tr></table><div id="map"></div><div><form><input id="query"><input type="submit" id="search" value="Search"></form></div>');
+        var $map = $container.find('#map');
+        // TODO: dynamic sizing
+        var W = 400;
+        var H = 250;
+        $map.css('width', W + 'px');
+        $map.css('height', H + 'px');
+
+        $map.css('background', '#eee');
+
+        var $wait = $('<div />');
+        $wait.css('margin', 'auto');
+        $wait.css('padding-top', '60px');
+        $wait.css('max-width', '200px');
+        $wait.css('color', '#bbb');
+        $wait.css('font-size', '24pt');
+        $wait.css('line-height', '28pt');
+        $wait.text('please wait while the map loads...');
+        $map.append($wait);
+
+        this.lat = null;
+        this.lon = null;
+        this.$lat = $container.find('#lat');
+        this.$lon = $container.find('#lon');
+        $.each([this.$lat, this.$lon], function(i, $e) {
+            $e.css('font-weight', 'bold');
+            $e.css('width', '8em');
+        });
+
+        var widget = this;
+        $container.find('#clear').click(function() {
+            widget.set_latlon(null, null);
+            widget.commit();
+            return false;
+        });
+
+        this.$query = $container.find('#query');
+        this.$query.css('width', '80%');
+        this.$search = $container.find('#search');
+        this.$search.css('width', '15%');
+        this.$search.click(function() {
+            q = widget.$query.val().trim();
+            if (q) {
+                widget.search(q);
+            }
+            return false;
+        });
+
+        var on_gmap_load = function() {
+            if (!$container.is(':visible')) {
+                // google maps gets unhappy if you initialize the map when its <div> is hidden
+                widget.delayed_init_reqd = true;
+            }
+
+            $map.empty();
+            widget.map = new google.maps.Map($map[0], {
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                center: new google.maps.LatLng(widget.DEFAULT.lat, widget.DEFAULT.lon),
+                zoom: widget.DEFAULT.zoom
+            });
+
+            widget.geocoder = new google.maps.Geocoder();
+
+            if (!widget.delayed_init_reqd) {
+                widget.bindListener();
+            }
+
+            $ch = $('<img src="data:image/png;base64,' + crosshairs + '">');
+            $ch.css('position', 'relative')
+            $ch.css('top', ((H /*$map.height()*/ - crosshair_size) / 2) + 'px');
+            $ch.css('left', ((W /*$map.width()*/ - crosshair_size) / 2) + 'px');
+            $ch.css('z-index', '500');
+            $map.append($ch);
+        };
+
+        var GMAPS_API = 'https://maps.googleapis.com/maps/api/js?key=' + GMAPS_API_KEY + '&sensor=false';
+        if (typeof google == "undefined") {
+            _GMAPS_INIT = on_gmap_load
+            $.getScript(GMAPS_API + '&callback=_GMAPS_INIT');
+        } else {
+            on_gmap_load();
+        }
+
     }
 
-    this.lat = lat;
-    this.lon = lon;
-
-    this.$lat.text(lat != null ? (lat >= 0. ? 'N' : 'S') + intpad(Math.abs(lat).toFixed(5), 8) : '??.?????');
-    this.$lon.text(lat != null ? (lon >= 0. ? 'E' : 'W') + intpad(Math.abs(lon).toFixed(5), 9) : '???.?????');
-
-    return true;
-  }
-
-  this.delay_action = function(tag, dofunc, delay) {
-    var timer = this.timers[tag];
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
+    this.bindListener = function() {
+        var widget = this;
+        google.maps.event.addListener(widget.map, "center_changed", function() {
+            widget.update_center();
+        });
     }
-    this.timers[tag] = setTimeout(dofunc, 1000 * delay);
-  }
 
-  this.search = function(query) {
-    var map = this.map;
-    this.geocoder.geocode({'address': query}, function(results, status) {
-      if (status == google.maps.GeocoderStatus.OK) {
-        map.fitBounds(results[0].geometry.viewport);
-        map.setCenter(results[0].geometry.location);
-      }
-    });
-  }
+    this.onShow = function() {
+        if (!this.delayed_init_reqd) {
+            return;
+        }
+
+        // if the google map is initialized while the container div is hidden
+        // we need to do a little cleanup
+        var center = this.map.getCenter();
+        google.maps.event.trigger(this.map, 'resize');
+        this.map.setCenter(center);
+        // only set this now so the re-centering doesn't trigger an 'answering' of the question
+        this.bindListener();
+    }
+
+    this.getAnswer = function() {
+        return (this.lat != null ? [this.lat, this.lon] : null);
+    }
+
+    this.setAnswer = function(answer, postLoad) {
+        if (postLoad) {
+            if (answer) {
+                this.set_latlon(answer[0], answer[1]);
+                if (this.map) {
+                    this.map.setCenter(new google.maps.LatLng(answer[0], answer[1]));
+                    this.map.setZoom(this.DEFAULT.anszoom);
+                }
+            } else {
+                this.set_latlon(null, null);
+            }
+        } else {
+            this.default_answer = answer;
+        }
+    }
+
+    this.update_center = function() {
+        var center = this.map.getCenter();
+        var lat = center.lat();
+        var lon = center.lng();
+
+        if (this.set_latlon(lat, lon)) {
+            var widget = this;
+            this.delay_action('move', function() {
+                widget.commit();
+            }, 1.);
+        }
+    }
+
+    this.set_latlon = function(lat, lon) {
+        lon = lon % 360.;
+        if (lon < 0) {
+            lon += 360.
+        }
+        lon = lon % 360.;
+        if (lon >= 180.) {
+            lon -= 360.;
+        }
+
+        if (lat == this.lat && lon == this.lon) {
+            return false;
+        }
+
+        this.lat = lat;
+        this.lon = lon;
+
+        this.$lat.text(lat != null ? (lat >= 0. ? 'N' : 'S') + intpad(Math.abs(lat).toFixed(5), 8) : '??.?????');
+        this.$lon.text(lat != null ? (lon >= 0. ? 'E' : 'W') + intpad(Math.abs(lon).toFixed(5), 9) : '???.?????');
+
+        return true;
+    }
+
+    this.delay_action = function(tag, dofunc, delay) {
+        var timer = this.timers[tag];
+        if (timer) {
+            clearTimeout(timer);
+            timer = null;
+        }
+        this.timers[tag] = setTimeout(dofunc, 1000 * delay);
+    }
+
+    this.search = function(query) {
+        var map = this.map;
+        this.geocoder.geocode({
+            'address': query
+        }, function(results, status) {
+            if (status == google.maps.GeocoderStatus.OK) {
+                map.fitBounds(results[0].geometry.viewport);
+                map.setCenter(results[0].geometry.location);
+            }
+        });
+    }
 }
+GeoPointEntry.prototype = Object.create(Entry.prototype);
+GeoPointEntry.prototype.constructor = Entry;
 
-function renderQuestion (q, $container, init_answer) {
-  var control = null;
+/**
+ * Gets the entry based on the datatype of the Question
+ * @param {Object} question - A Question object
+ */
+function getEntry(question) {
+    var entry = null;
+    var options = {};
 
-  q.domain_meta = q.domain_meta || {};
-
-  if (q.customlayout != null) {
-    control = q.customlayout();
-  } else if (q.datatype == "str") {
-    if (q.style["raw"] == 'numeric') {
-      control = new PhoneEntry();
-    } else {
-      control = new FreeTextEntry({domain: q.domain, prose: q.domain_meta.longtext});
+    switch (question.datatype()) {
+        case Formplayer.Const.STRING:
+            entry = new FreeTextEntry(question, {})
+            break;
+        case Formplayer.Const.INT:
+            entry = new IntEntry(question, {});
+            break;
+        case Formplayer.Const.LONGINT:
+            entry = new IntEntry(question, { lengthLimit: 15 });
+            break;
+        case Formplayer.Const.FLOAT:
+            entry = new FloatEntry(question, {});
+            break;
+        case Formplayer.Const.PASSWORD:
+            entry = new PasswordEntry(question, {});
+            break;
+        case Formplayer.Const.SELECT:
+            entry = new SingleSelectEntry(question, {});
+            break;
+        case Formplayer.Const.MULTI_SELECT:
+            entry = new MultiSelectEntry(question, {});
+            break;
+        case Formplayer.Const.DATE:
+            entry = new DateEntry(question, {})
+            break;
+        case Formplayer.Const.TIME:
+            entry = new TimeOfDayEntry(question, {});
+            break;
+        case Formplayer.Const.GEO:
+            entry = new GeoPointEntry(question, {});
+            break;
+        case Formplayer.Const.INFO:
+            entry = new InfoEntry(question, {});
+            break;
+        default:
+            console.warn('No active entry for: ' + question.datatype());
+            entry = new UnsupportedEntry(question, options);
     }
-  } else if (q.datatype == "int") {
-    control = new IntEntry();
-  } else if (q.datatype == "longint") {
-    control = new IntEntry(null, 15);
-  } else if (q.datatype == "float") {
-    control = new FloatEntry();
-  //  } else if (q.datatype == "passwd") {
-  //control = new PasswordEntry({domain: q.domain});
-  } else if (q.datatype == "select") {
-      control = new SingleSelectEntry({choices: q.choices, choicevals: q.choicevals, meta: q.domain_meta});
-  } else if (q.datatype == "multiselect") {
-    control = new MultiSelectEntry({choices: q.choices, choicevals: q.choicevals, meta: q.domain_meta});
-  } else if (q.datatype == "date") {
-    control = new DateEntry(q.domain_meta);
-  } else if (q.datatype == "time") {
-    control = new TimeOfDayEntry();
-  } else if (q.datatype == "geo") {
-    control = new GeoPointEntry();
-  } else {
-    control = new UnsupportedEntry(q.datatype);
-  }
-
-  if (control == null) {
-    console.log('no active control');
-    return null;
-  }
-
-  control.setAnswer(init_answer);
-  control.load(q, $container);
-  return control;
-}
+    return entry;
+};
 
 function nonce() {
-  return Math.floor(Math.random()*1e9);
+    return Math.floor(Math.random() * 1e9);
 }
 
-function intpad (x, n) {
-  var s = x + '';
-  while (s.length < n) {
-    s = '0' + s;
-  }
-  return s;
+function intpad(x, n) {
+    var s = x + '';
+    while (s.length < n) {
+        s = '0' + s;
+    }
+    return s;
 }

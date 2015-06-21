@@ -1,634 +1,459 @@
-var JST_BASE_DIR = 'formplayer/templates/formplayer/'
 var markdowner = window.markdownit();
-
-function getForm(o) {
-  var form = o.parent;
-  while (form.parent) {
-    form = form.parent;
-  }
-  return form;
-}
 
 //if index is part of a repeat, return only the part beyond the deepest repeat
 function relativeIndex(ix) {
-  var steps = ix.split(',');
-  var deepest_repeat = -1;
-  for (var i = steps.length - 2; i >= 0; i--) {
-    if (steps[i].indexOf(':') != -1) {
-      deepest_repeat = i;
-      break;
+    var steps = ix.split(',');
+    var deepest_repeat = -1;
+    for (var i = steps.length - 2; i >= 0; i--) {
+        if (steps[i].indexOf(':') != -1) {
+            deepest_repeat = i;
+            break;
+        }
     }
-  }
-  if (deepest_repeat == -1) {
-    return ix;
-  } else {
-    var rel_ix = '-';
-    for (var i = deepest_repeat + 1; i < steps.length; i++) {
-      rel_ix += steps[i] + (i < steps.length - 1 ? ',' : '');
+    if (deepest_repeat == -1) {
+        return ix;
+    } else {
+        var rel_ix = '-';
+        for (var i = deepest_repeat + 1; i < steps.length; i++) {
+            rel_ix += steps[i] + (i < steps.length - 1 ? ',' : '');
+        }
+        return rel_ix;
     }
-    return rel_ix;
-  }
 }
 
 function getIx(o) {
-  var ix = o.rel_ix;
-  while (ix[0] == '-') {
-    o = o.parent;
-    if (!o) {
-      break;
+    var ix = ko.utils.unwrapObservable(o.rel_ix);
+    while (ix[0] == '-') {
+        o = o.parent;
+        if (!o) {
+            break;
+        }
+        if (ix.split(',').slice(-1)[0].indexOf(':') != -1) {
+            ix += ',' + ix.substring(1);
+        }
     }
-    if (o.rel_ix.split(',').slice(-1)[0].indexOf(':') != -1) {
-      ix = o.rel_ix + ',' + ix.substring(1);
-    }
-  }
-  return ix;
+    return ix;
 }
 
 function getForIx(o, ix) {
-  if (o.type == 'question') {
-    return (getIx(o) == ix ? o : null);
-  } else {
-    for (var i = 0; i < o.children.length; i++) {
-      var result = getForIx(o.children[i], ix);
-      if (result) {
-        return result;
-      }
+    if (o.type == 'question') {
+        return (getIx(o) == ix ? o : null);
+    } else {
+        for (var i = 0; i < o.children.length; i++) {
+            var result = getForIx(o.children[i], ix);
+            if (result) {
+                return result;
+            }
+        }
     }
-  }
 }
 
 function ixInfo(o) {
-  var full_ix = getIx(o);
-  return o.rel_ix + (o.is_repetition ? '(' + o.uuid + ')' : '') + (o.rel_ix != full_ix ? ' :: ' + full_ix : '');
-}
-
-function empty_check(o, anim_speed) {
-  if (o.type === 'repeat-juncture') {
-    if (anim_speed) {
-      o.$empty[o.children.length ? 'slideUp' : 'slideDown'](anim_speed);
-    } else {
-      o.$empty[o.children.length ? 'hide' : 'show']();
-    }
-  } else if (o.type === 'sub-group') {
-    if (anim_speed) {
-      o.$container[o.children.length ? 'slideDown' : 'slideUp'](anim_speed);
-    } else {
-      o.$container[o.children.length ? 'show' : 'hide']();
-    }
-  }
-}
-
-function loadFromJSON(o, json) {
-  $.each(json, function(key, val) {
-      if (key == 'children') {
-        return;
-      } else if (key == 'ix') {
-        key = 'rel_ix';
-        val = relativeIndex(val);
-      } else if (key == 'answer') {
-        key = 'last_answer';
-      } else if (key == 'style') {
-        if ('domain_meta' in json) {
-          key = 'domain_meta';
-          val = parse_meta(json.datatype, val);
-        } else {
-          key = 'style';
-        }
-      }
-
-      o[key] = val;
-    });
+    var full_ix = getIx(o);
+    return o.rel_ix + (o.isRepetition ? '(' + o.uuid + ')' : '') + (o.rel_ix != full_ix ? ' :: ' + full_ix : '');
 }
 
 function parse_meta(type, style) {
-  var meta = {};
+    var meta = {};
 
-  if (type == "date") {
-    meta.mindiff = style.before != null ? +style.before : null;
-    meta.maxdiff = style.after != null ? +style.after : null;
-  } else if (type == "int" || type == "float") {
-    meta.unit = style.unit;
-  } else if (type == 'str') {
-    meta.autocomplete = (style.mode == 'autocomplete');
-    meta.autocomplete_key = style["autocomplete-key"];
-    meta.mask = style.mask;
-    meta.prefix = style.prefix;
-    meta.longtext = (style.raw == 'full');
-  } else if (type == "multiselect") {
-    if (style["as-select1"] != null) {
-      meta.as_single = [];
-      var vs = style["as-select1"].split(',');
-      for (var i = 0; i < vs.length; i++) {
-        var k = +vs[i];
-        if (k != 0) {
-          meta.as_single.push(k);
-        }
-      }
-    }
-  }
-
-  if (type == "select" || type == "multiselect") {
-    meta.appearance = style.raw;
-  }
-
-  return meta;
-}
-
-function Form(json, adapter) {
-  this.adapter = adapter;
-  this.children = [];
-  this.template = window.JST[JST_BASE_DIR + 'fullform-ui/form.html'];
-
-  this.init_render = function() {
-    this.$container = $(this.template());
-    this.$title = this.$container.find('#title');
-    this.$children = this.$container.find('#form');
-
-    this.$title.text(json.title);
-    render_elements(this, json.tree);
-
-    var form = this;
-    this.$container.find('#submit').click(function() {
-        var proceed = adapter.presubmitfunc();
-        if (!proceed) {
-          return;
-        }
-
-        form.submit();
-      });
-
-    $("#evaluate-button").click(function() {
-
-        var mxpath = document.getElementById("xpath").value;
-
-        adapter.evaluateXPath(mxpath, function(result, status){
-            $(document.getElementById("evaluate-result")).val(result);
-            if(status === "success") {
-                $(document.getElementById("evaluate-result")).removeClass('text-error');
-            } else{
-                $(document.getElementById("evaluate-result")).addClass('text-error');
+    if (type == "date") {
+        meta.mindiff = style.before != null ? +style.before : null;
+        meta.maxdiff = style.after != null ? +style.after : null;
+    } else if (type == "int" || type == "float") {
+        meta.unit = style.unit;
+    } else if (type == 'str') {
+        meta.autocomplete = (style.mode == 'autocomplete');
+        meta.autocomplete_key = style["autocomplete-key"];
+        meta.mask = style.mask;
+        meta.prefix = style.prefix;
+        meta.longtext = (style.raw == 'full');
+    } else if (type == "multiselect") {
+        if (style["as-select1"] != null) {
+            meta.as_single = [];
+            var vs = style["as-select1"].split(',');
+            for (var i = 0; i < vs.length; i++) {
+                var k = +vs[i];
+                if (k != 0) {
+                    meta.as_single.push(k);
+                }
             }
-        });
-
-    });
-
-    this.submit = function() {
-      this.adapter.submitForm(this);
+        }
     }
-  }
 
-  this.reconcile = function(new_json) {
-    reconcile_elements(this, new_json);
-  }
+    if (type == "select" || type == "multiselect") {
+        meta.appearance = style.raw;
+    }
 
-  this.child_container = function() {
-    return this.$children;
-  }
-
-  this.submitting = function() {
-    this.$container.find('#submit').val('Submitting...');
-  }
+    return meta;
 }
 
-function Group(json, parent) {
-  loadFromJSON(this, json);
-  this.parent = parent;
-  this.is_repetition = parent.is_repeat;
-  this.children = [];
-  this.template = window.JST[JST_BASE_DIR + 'fullform-ui/group.html'];
-
-  this.init_render = function() {
-    this.$container = $(this.template());
-    this.$children = this.$container.find('#children');
-    this.$caption = this.$container.find('#caption');
-    this.$ix = this.$container.find('#ix');
-
-    render_elements(this, json.children);
-    this.update();
-
-    this.$del = this.$container.find('#del');
-    if (!this.is_repetition) { //todo: check constraints
-      this.$del.hide();
-    }
-
-    var g = this;
-    this.$del.click(function() {
-        g.deleteRepeat();
-        return false;
-      });
-  }
-
-  this.deleteRepeat = function() {
-    getForm(this).adapter.deleteRepeat(this);
-  }
-
-  this.reconcile = function(new_json) {
-    this.caption = new_json.caption;
-    if (this.is_repetition) {
-      this.rel_ix = relativeIndex(new_json.ix);
-    }
-    reconcile_elements(this, new_json.children);
-    this.update();
-  }
-
-  this.update = function() {
-    if (this.hasOwnProperty("caption_markdown") && this.caption_markdown) {
-      this.$caption.html(markdowner.render(this.caption_markdown));
-    } else {
-      this.$caption.text(this.caption);
-    }
-    this.$ix.text('[' + ixInfo(this) + ']');
-  }
-
-  this.destroy = function() {
-
-  }
-
-  this.child_container = function() {
-    return this.$children;
-  }
-}
-
-function Repeat(json, parent) {
-  loadFromJSON(this, json);
-  this.parent = parent;
-  this.children = [];
-  this.is_repeat = true;
-  this.template = window.JST[JST_BASE_DIR + 'fullform-ui/repeat.html'];
-
-  this.init_render = function() {
-    this.$container = $(this.template());
-    this.$children = this.$container.find('#children');
-    this.$header = this.$container.find('#caption');
-    this.$ix = this.$container.find('#ix');
-    this.$empty = this.$container.find('#empty');
-
-    render_elements(this, json.children);
-    this.update();
-
-    this.$add = this.$container.find('#add');
-    var rep = this;
-    this.$add.click(function() {
-        rep.newRepeat();
-        return false;
-      });
-  }
-
-  this.newRepeat = function() {
-    getForm(this).adapter.newRepeat(this);
-  }
-
-  this.reconcile = function(new_json) {
-    this['main-header'] = new_json['main-header'];
-    reconcile_elements(this, new_json.children);
-    this.update();
-  }
-
-  this.update = function() {
-    if (this.hasOwnProperty("caption_markdown") && this.caption_markdown) {
-      this.$header.html(markdowner.render(this.caption_markdown));
-    } else {
-      this.$header.text(this['main-header']);
-    }
-    this.$ix.text('[' + ixInfo(this) + ']');
-  }
-
-  this.destroy = function() {
-
-  }
-
-  this.child_container = function() {
-    return this.$children;
-  }
-}
-
-function Question(json, parent) {
-  loadFromJSON(this, json);
-  this.parent = parent;
-  this.children = [];
-
-  this.is_select = (this.datatype == 'select' || this.datatype == 'multiselect');
-  this.template = window.JST[JST_BASE_DIR + 'fullform-ui/question.html'];
-
-  this.init_render = function() {
-    this.$container = $(this.template({ datatype: this.datatype }));
-    this.$error = this.$container.find('#error');
-    if (this.datatype !== 'info') {
-      this.update(true);
-    } else {
-      this.control = new InfoEntry();
-      this.control.setAnswer("OK"); // for triggers set them answered as soon as they are rendered
-      this.update(false);
-    }
-  }
-
-  this.reconcile = function(new_json) {
-    this.caption = new_json.caption;
-    this.required = new_json.required;
-
-    var refresh_widget = false;
-    if (this.is_select) {
-      var different = false;
-      if (this.choices.length != new_json.choices.length) {
-        different = true;
-      } else {
-        $.each(this.choices, function(i, e) {
-            if (e != new_json.choices[i]) {
-              different = true;
-              return false;
-            }
-          });
-      }
-
-      if (different) {
-        this.choices = new_json.choices;
-        this.last_answer = new_json.answer;
-        refresh_widget = true;
-      }
-    }
-
-    this.update(refresh_widget);
-  }
-
-  // this is kind of hacked up how we update select questions. generally input widgets
-  // themselves aren't altered as the rest of the form changes, but select choices can
-  // change due to locale switches or itemsets. ideally we should create the widget once
-  // and call a reconcile() function on it, but: the select widget is currently pretty
-  // complicated due to vestigial code, and the ajax api doesn't provide the select
-  // values, so we can't accurately map which old choices correspond to which new
-  // choices. so instead we destroy and recreate the control here, and it's messy.
-  // it also screws up the focus, which we'd have to take extra steps to preserve, but
-  // don't currently.
-
-  this.update = function(refresh_widget) {
+/**
+ * Base abstract prototype for Repeat, Group and Form. Adds methods to
+ * objects that contain a children array for rendering nested questions.
+ * @param {Object} json - The JSON returned from touchforms to represent the container
+ */
+function Container(json) {
     var self = this;
-    var caption = this.caption;
-    var html_content = getForm(this).adapter.render_context.allow_html;
+    self.fromJS(json);
 
-    var $capt = this.$container.find('#caption');
-    $capt.empty();
-    if (this.hasOwnProperty("caption_markdown") && this.caption_markdown) {
-      $capt.html(markdowner.render(this.caption_markdown));
-    } else if (caption) {
-        if (html_content) {
-          caption = caption.replace(/\n/g, '<br/>');
-          $capt.html(caption);
-        } else {
-          $.each(caption.split('\n'), function(i, e) {
-            var $ln = $('<div>');
-            $ln.text(e + '\ufeff'); // add zero-width space to make empty lines show up
-            $capt.append($ln);
-          });
+    /**
+     * Used in KO template to determine what template to use for a child
+     * @param {Object} child - The child object to be rendered, either Group, Repeat, or Question
+     */
+    self.childTemplate = function(child) {
+        return ko.utils.unwrapObservable(child.type) + '-fullform-ko-template';
+    }
+}
+
+/**
+ * Reconciles the JSON representation of a Container (Group, Repeat, Form) and renders it into
+ * a knockout representation.
+ * @param {Object} json - The JSON returned from touchforms to represent a Container
+ */
+Container.prototype.fromJS = function(json) {
+    var self = this;
+    var mapping = {
+        caption: {
+            update: function(options) {
+                return options.data ? DOMPurify.sanitize(options.data.replace(/\n/g, '<br/>')) : null;
+            }
+        },
+        caption_markdown: {
+            update: function(options) {
+                return options.data ? markdowner.render(options.data) : null;
+            }
+        },
+        children: {
+            create: function(options) {
+                console.log('creating');
+                console.log(cmpkey(options.data));
+                if (options.data.type === Formplayer.Const.QUESTION_TYPE) {
+                    return new Question(options.data, self);
+                } else if (options.data.type === Formplayer.Const.GROUP_TYPE) {
+                    return new Group(options.data, self);
+                } else if (options.data.type === Formplayer.Const.REPEAT_TYPE) {
+                    return new Repeat(options.data, self);
+                } else {
+                    console.error('Could not find question type of ' + options.data.type);
+                }
+            },
+            update: function(options) {
+                if (options.data.datatype === Formplayer.Const.MULTI_SELECT) {
+                    // Need to default to an array of strings instead of integers
+                    options.data.answer = _.map(options.data.answer, function(d) { return '' + d });
+                }
+                return options.target
+            },
+            key: function(data) {
+                return cmpkey(data);
+            }
+        }
+    }
+    ko.mapping.fromJS(json, mapping, self);
+};
+
+/**
+ * Represents the entire form. There is only one of these on a page.
+ * @param {Object} json - The JSON returned from touchforms to represent a Form
+ * TODO: Evaluate XPath
+ * TODO: Fix multimedia
+ */
+function Form(json) {
+    var self = this;
+    json.children = json.tree;
+    delete json.tree
+    Container.call(self, json);
+    self.submitText = ko.observable('Submit');
+
+    self.submitForm = function(form) {
+        $.publish('formplayer.submit-form', self);
+    };
+
+    //$("#evaluate-button").click(function() {
+
+    //    var mxpath = document.getElementById("xpath").value;
+
+    //    adapter.evaluateXPath(mxpath, function(result, status){
+    //        $(document.getElementById("evaluate-result")).val(result);
+    //        if(status === "success") {
+    //            $(document.getElementById("evaluate-result")).removeClass('text-error');
+    //        } else{
+    //            $(document.getElementById("evaluate-result")).addClass('text-error');
+    //        }
+    //    });
+
+    //});
+
+    this.reconcile = function(new_json) {
+        reconcileElements(this, new_json);
+    };
+
+    this.submitting = function() {
+        this.submitText('Submitting...');
+    };
+}
+Form.prototype = Object.create(Container.prototype);
+Form.prototype.constructor = Container;
+
+/**
+ * Represents a group of questions.
+ * @param {Object} json - The JSON returned from touchforms to represent a Form
+ * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
+ */
+function Group(json, parent) {
+    var self = this;
+    Container.call(self, json);
+
+    self.parent = parent;
+    self.rel_ix = ko.observable(relativeIndex(self.ix()));
+    self.isRepetition = parent.isRepeat; // The Group belongs to a Repeat
+    if (json.hasOwnProperty('domain_meta') && json.hasOwnProperty('style')) {
+        self.domain_meta = parse_meta(json.datatype, val);
+    }
+
+    if (self.isRepetition) {
+        self.rel_ix = relativeIndex(self.ix());
+    }
+
+    self.deleteRepeat = function() {
+        $.publish('formplayer.delete-repeat', self);
+    };
+
+}
+Group.prototype = Object.create(Container.prototype);
+Group.prototype.constructor = Container;
+
+/**
+ * Represents a repeat group. A repeat only has Group objects as children. Each child Group contains the
+ * child questions to be rendered
+ * @param {Object} json - The JSON returned from touchforms to represent a Form
+ * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
+ */
+function Repeat(json, parent) {
+    var self = this;
+    Container.call(self, json);
+
+    self.parent = parent;
+    self.rel_ix = ko.observable(relativeIndex(self.ix()));
+    if (json.hasOwnProperty('domain_meta') && json.hasOwnProperty('style')) {
+        self.domain_meta = parse_meta(json.datatype, val);
+    }
+    self.isRepeat = true;
+    self.templateType = 'repeat';
+
+    self.newRepeat = function() {
+        $.publish('formplayer.new-repeat', self);
+    };
+
+}
+Repeat.prototype = Object.create(Container.prototype);
+Repeat.prototype.constructor = Container;
+
+/**
+ * Represents a Question. A Question contains an Entry which is the widget that is displayed for that question
+ * type.
+ * child questions to be rendered
+ * @param {Object} json - The JSON returned from touchforms to represent a Form
+ * @param {Object} parent - The object's parent. Either a Form, Group, or Repeat.
+ */
+function Question(json, parent) {
+    var self = this;
+
+    self.fromJS(json);
+    self.parent = parent;
+    self.error = ko.observable('');
+    self.rel_ix = ko.observable(relativeIndex(self.ix()));
+    if (json.hasOwnProperty('domain_meta') && json.hasOwnProperty('style')) {
+        self.domain_meta = parse_meta(json.datatype, val);
+    }
+
+    self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
+    self.entry = getEntry(self);
+    //self.entry.setAnswer(self.answer ? self.answer() : null);
+    self.entryTemplate = function() {
+        return self.entry.templateType + '-entry-ko-template';
+    };
+
+        //var add_multimedia = function(attrib, control) {
+        //  if (self.hasOwnProperty(attrib) && self[attrib]) {
+        //    var mediaSrc = getForm(self).adapter.render_context.resourceMap(self[attrib]);
+        //    if (mediaSrc) {
+        //      control.attr("src", mediaSrc);
+        //      $mediaContainer = $('<div>');
+        //      $mediaContainer.append(control);
+        //      var $widget = self.$container.find('.widget');
+        //      if ($widget.length) {
+        //        $widget.append($mediaContainer);
+        //      } else {
+        //        self.caption(self.caption() + $mediaContainer.html());
+        //      }
+        //    }
+        //  }
+        //}
+
+        //if (refresh_widget || !self.$container.find('#widget').length) {
+        //  add_multimedia('caption_image', $('<img>'));
+        //  add_multimedia('caption_audio', $('<audio controls>Your browser does not support audio</audio>'));
+        //  add_multimedia('caption_video', $('<video controls>Your browser does not support video</video>'));
+        //}
+
+    this.getAnswer = function() {
+        return this.entry.getAnswer();
+    }
+
+    this.prevalidate = function() {
+        return this.entry.prevalidate(this);
+    }
+
+    this.onchange = function() {
+        // TODO: Make subscriber in apps.js
+        $.publish('formplayer.dirty', true);
+        if (this.prevalidate()) {
+            $.publish('formplayer.answer-question', self);
         }
     }
 
-    this.$container.find('#req').text(this.required ? '*' : '');
-    this.$container.find('#ix').text('[' + ixInfo(this) + ']');
+    self.showError = function(content) {
+        self.error(content);
+    };
 
-    if (refresh_widget) {
-      //var uistate = this.control.get_ui_state();
+    self.clearError = function() {
+        self.error(null);
+    };
 
-      this.$container.find('#widget').empty();
-      this.control = renderQuestion(this, this.$container.find('#widget'), this.last_answer);
-
-      //this.control.restore_ui_state(uistate);
-    }
-
-    var add_multimedia = function(attrib, control) {
-      if (self.hasOwnProperty(attrib) && self[attrib]) {
-        var mediaSrc = getForm(self).adapter.render_context.resourceMap(self[attrib]);
-        if (mediaSrc) {
-          control.attr("src", mediaSrc);
-          $mediaContainer = $('<div>');
-          $mediaContainer.append(control);
-          var $widget = self.$container.find('#widget');
-          if ($widget.length) {
-            $widget.append($mediaContainer);
-          } else {
-            $capt.append($mediaContainer);
-          }
-        }
-      }
-    }
-
-    if (refresh_widget || !self.$container.find('#widget').length) {
-      add_multimedia('caption_image', $('<img>'));
-      add_multimedia('caption_audio', $('<audio controls>Your browser does not support audio</audio>'));
-      add_multimedia('caption_video', $('<video controls>Your browser does not support video</video>'));
-    }
-  }
-
-  this.getAnswer = function() {
-    return this.control.getAnswer();
-  }
-
-  this.prevalidate = function() {
-    return this.control.prevalidate(this);
-  }
-
-  this.onchange = function() {
-    if (window.mainView && !answer_eq(this.last_answer, this.getAnswer())) {
-        window.mainView.router.view.dirty = true
-    }
-    if (this.prevalidate()) {
-      //check if answer has actually changed
-      if (['select', 'multiselect', 'date'].indexOf(this.datatype) != -1) {
-        //free-entry datatypes are suitably handled by the 'onchange' event
-        var new_answer = this.getAnswer();
-        if (answer_eq(this.last_answer, new_answer)) {
-          return;
-        }
-      }
-
-      this.last_answer = this.getAnswer();
-      this.commitAnswer();
-    }
-  }
-
-  this.commitAnswer = function() {
-    getForm(this).adapter.answerQuestion(this);
-  }
-
-  this.showError = function(content) {
-    if (this.$error) {
-        this.$error.text(content ? content : '');
-    }
-    this.$container[content ? 'addClass' : 'removeClass']('qerr');
-  }
-
-  this.clearError = function() {
-    this.showError(null);
-  }
-
-
-  this.destroy = function() {
-    this.control.destroy();
-  }
 }
 
-function make_element(e, parent) {
-  if (e.type == 'question') {
-    var o = new Question(e, parent);
-  } else if (e.type == 'sub-group') {
-    var o = new Group(e, parent);
-  } else if (e.type == 'repeat-juncture') {
-    var o = new Repeat(e, parent);
-  }
-  o.init_render();
-  return o;
-}
-
-function render_elements(parent, elems) {
-  for (var i = 0; i < elems.length; i++) {
-    var o = make_element(elems[i], parent);
-    parent.children.push(o);
-    parent.child_container().append(o.$container);
-  }
-  empty_check(parent);
-}
-
-function reconcile_elements(parent, new_elems) {
-  var mapping = [];
-  for (var i = 0; i < parent.children.length; i++) {
-    var child = parent.children[i];
-    mapping.push([child, inElementSet(child, new_elems)]);
-  }
-  for (var i = 0; i < new_elems.length; i++) {
-    var new_elem = new_elems[i];
-    if (inElementSet(new_elem, parent.children) == null) {
-      mapping.push([null, new_elem]);
+/**
+ * Reconciles the JSON representation of a Question and renders it into
+ * a knockout representation.
+ * @param {Object} json - The JSON returned from touchforms to represent a Question
+ */
+Question.prototype.fromJS = function(json) {
+    var self = this;
+    var mapping = {
+        caption: {
+            update: function(options) {
+                return options.data ? DOMPurify.sanitize(options.data.replace(/\n/g, '<br/>')) : null;
+            }
+        },
+        caption_markdown: {
+            update: function(options) {
+                return options.data ? markdowner.render(options.data) : null;
+            }
+        },
     }
-  }
 
-  $.each(mapping, function(i, val) {
-      var e_old = val[0];
-      var e_new = val[1];
+    if (json.datatype === Formplayer.Const.MULTI_SELECT) {
+        json.answer = _.map(json.answer, function(d) { return '' + d });
+    }
+    ko.mapping.fromJS(json, mapping, self);
+}
 
-      if (e_old == null) {
-        var o = make_element(e_new, parent);
-        addChild(parent, o, new_elems);
-      } else if (e_new == null) {
-        deleteChild(parent, e_old);
-      } else {
-        e_old.reconcile(e_new);
-      }
+function reconcileElements(parent, new_elems) {
+    parent.fromJS({
+        children: new_elems
     });
 }
 
-function deleteChild(parent, child) {
-  child.$container.slideUp('slow', function() {
-      child.$container.remove();
-      child.destroy();
-      arrayDelItem(parent.children, child);
-      if (window.mainView) {
-        window.mainView.router.view.dirty = true
-      }
-      empty_check(parent, 'fast');
-    });
-}
-
-function addChild(parent, child, final_ordering) {
-  var newIx = ixElementSet(child, final_ordering);
-  var insertionIx = 0;
-  for (var k = newIx - 1; k >= 0; k--) {
-    var precedingIx = ixElementSet(final_ordering[k], parent.children);
-    if (precedingIx != -1) {
-      insertionIx = precedingIx + 1;
-      break;
+/**
+ * Used to compare if questions are equal to each other by looking at their index
+ * @param {Object} e - Either the javascript object Question, Group, Repeat or the JSON representation
+ */
+var cmpkey = function(e) {
+    var ix = ko.utils.unwrapObservable(e.ix);
+    if (e.uuid) {
+        return 'uuid-' + ko.utils.unwrapObservable(e.uuid);
+    } else {
+        return 'ix-' + (ix ? ix : getIx(e));
     }
-  }
-
-  var domInsert = function(insert) {
-    child.$container.hide();
-    insert(child.$container);
-    child.$container.slideDown();
-    if (child.control) {
-        child.control.onShow();
-    }
-  }
-
-  if (insertionIx < parent.children.length) {
-    domInsert(function(e) { parent.children[insertionIx].$container.before(e); });
-  } else {
-    domInsert(function(e) { parent.child_container().append(e); });
-  }
-  arrayInsertAt(parent.children, insertionIx, child);
-  if (window.mainView) {
-    window.mainView.router.view.dirty = true
-  }
-  empty_check(parent, 'slow');
 }
 
-function arrayDel(arr, i) {
-  return arr.splice(i, 1)[0];
-}
-
-function arrayDelItem(arr, o) {
-  var ix = arr.indexOf(o);
-  if (ix != -1) {
-    arrayDel(arr, ix);
-  }
-}
-
-function arrayInsertAt(arr, i, o) {
-  arr.splice(i, 0, o);
-}
-
-var cmpkey = function (e) {
-  if (e.uuid) {
-    return 'uuid-' + e.uuid;
-  } else {
-    return 'ix-' + (e.ix ? e.ix : getIx(e));
-  }
-}
-
+/**
+ * Given an element Question, Group, or Repeat, this will determine the index of the element in the set of
+ * elements passed in. Returns -1 if not found
+ * @param {Object} e - Either the javascript object Question, Group, Repeat or the JSON representation
+ * @param {Object} set - The set of objects, either Question, Group, or Repeat to search in
+ */
 var ixElementSet = function(e, set) {
-  //return the index of the matching element of 'e' within 'set'; -1 if no match
-  return $.map(set, function(val) { return cmpkey(val); }).indexOf(cmpkey(e));
+    return $.map(set, function(val) {
+        return cmpkey(val);
+    }).indexOf(cmpkey(e));
 }
 
+/**
+ * Given an element Question, Group, or Repeat, this will return the element in the set of
+ * elements passed in. Returns null if not found
+ * @param {Object} e - Either the javascript object Question, Group, Repeat or the JSON representation
+ * @param {Object} set - The set of objects, either Question, Group, or Repeat to search in
+ */
 var inElementSet = function(e, set) {
-    //return the matching object of 'e' within 'set'; null if no match
     var ix = ixElementSet(e, set);
-    return (ix != -1 ? set[ix] : null);
-}
-
-function init_render(form, adapter, $div) {
-  var f = new Form(form, adapter);
-  f.init_render();
-  $div.append(f.$container);
-  return f;
-}
-
-var answer_eq = function(ans1, ans2) {
-  if (ans1 === ans2) {
-    return true;
-  } else if (ans1 instanceof Array && ans2 instanceof Array) {
-    if (ans1.length == ans2.length) {
-      for (var i = 0; i < ans1.length; i++) {
-        if (ans1[i] != ans2[i]) {
-          return false;
-        }
-      }
-      return true;
-    }
-  }
-  return false;
+    return (ix !== -1 ? set[ix] : null);
 }
 
 function scroll_pin(pin_threshold, $container, $elem) {
-  return function() {
-    var base_offset = $container.offset().top;
-    var scroll_pos = $(window).scrollTop();
-    var elem_pos = base_offset - scroll_pos;
-    var pinned = (elem_pos < pin_threshold);
+    return function() {
+        var base_offset = $container.offset().top;
+        var scroll_pos = $(window).scrollTop();
+        var elem_pos = base_offset - scroll_pos;
+        var pinned = (elem_pos < pin_threshold);
 
-    $elem.css('top', pinned ? pin_threshold + 'px' : base_offset);
-  };
+        $elem.css('top', pinned ? pin_threshold + 'px' : base_offset);
+    };
 }
 
 function set_pin(pin_threshold, $container, $elem) {
-  var pinfunc = scroll_pin(pin_threshold, $container, $elem);
-  $(window).scroll(pinfunc);
-  pinfunc();
+    var pinfunc = scroll_pin(pin_threshold, $container, $elem);
+    $(window).scroll(pinfunc);
+    pinfunc();
+}
+
+var Formplayer = {
+    Utils: {},
+    Const: {},
+};
+
+/**
+ * Compares the equality of two answer sets.
+ * @param {(string|string[])} answer1 - A string of answers or a single answer
+ * @param {(string|string[])} answer2 - A string of answers or a single answer
+ */
+Formplayer.Utils.answersEqual = function(answer1, answer2) {
+    if (answer1 === answer2) {
+        return true;
+    } else if (answer1 instanceof Array && answer2 instanceof Array) {
+        return _.isEqual(answer1, answer2);
+    }
+    return false;
+}
+
+/**
+ * Initializes a new form to be used by the formplayer.
+ * @param {Object} formJSON - The json representation of the form
+ * @param {Object} $div - The jquery element that the form will be rendered in.
+ */
+Formplayer.Utils.initialRender = function(formJSON, $div) {
+    var form = new Form(formJSON);
+    ko.cleanNode($div[0]);
+    ko.applyBindings(form, $div[0]);
+    return form;
+  }
+
+Formplayer.Const = {
+    GROUP_TYPE: 'sub-group',
+    REPEAT_TYPE: 'repeat-juncture',
+    QUESTION_TYPE: 'question',
+
+    // Entry types
+    STRING: 'str',
+    INT: 'int',
+    LONG_INT: 'longint',
+    FLOAT: 'float',
+    PASSWORD: 'passwd',
+    SELECT: 'select',
+    MULTI_SELECT: 'multiselect',
+    DATE: 'date',
+    TIME: 'time',
+    GEO: 'geo',
+    INFO: 'info',
 }
