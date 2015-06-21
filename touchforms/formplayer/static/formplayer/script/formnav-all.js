@@ -94,7 +94,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
           adapter.showError(q, resp);
         } else {
           q.clearError();
-          getForm(q).reconcile(resp["tree"]);
+          $.publish('adapter.reconcile', resp.tree);
         }
       });
 
@@ -117,7 +117,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
                    'session-id': this.session_id,
                    'ix': getIx(repeat)},
       function (resp) {
-        getForm(repeat).reconcile(resp["tree"]);
+          $.publish('adapter.reconcile', resp.tree);
       },
       true);
   }
@@ -178,7 +178,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
                    'session-id': this.session_id,
                    'lang': lang},
       function (resp) {
-        adapter.form.reconcile(resp["tree"]);
+          $.publish('adapter.reconcile', resp.tree);
       });
   }
 

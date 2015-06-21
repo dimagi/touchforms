@@ -35,7 +35,7 @@
     <!-- ko if: datatype() !== 'info' -->
     <div class="q" data-bind="css: { qerr: error }">
         <div class="widget" data-bind="
-            template: { name: entryTemplate, data: entry }
+            template: { name: entryTemplate, data: entry, afterRender: afterRender }
         "></div>
         <span class="req" data-bind="visible: $data.required ? required : false">*</span>
         <span class="caption" data-bind="html: caption_markdown || caption"></span>
@@ -131,7 +131,6 @@
     </div>
 </script>
 <script type="text/html" id="date-entry-ko-template">
-    <input type="text" data-bind="attr: { id: widgetId } "/>
+    <input type="text" data-bind="attr: { id: entryId } "/>
     <span>mm/dd/yy</span>
-
 </script>

@@ -101,4 +101,16 @@ describe('Entries', function() {
         entry.answer('b')
         expect(spy.calledOnce).toBe(true);
     });
+
+    it('Should return DateEntry', function() {
+        questionJSON.datatype = Formplayer.Const.DATE;
+        questionJSON.answer = '90-09-26';
+
+        entry = (new Question(questionJSON)).entry
+        expect(entry instanceof DateEntry).toBe(true);
+        expect(entry.templateType).toBe('date');
+
+        entry.answer('87-11-19')
+        expect(spy.calledOnce).toBe(true);
+    });
 });

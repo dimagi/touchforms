@@ -4,16 +4,20 @@
  * @param {Object} object - A hash of different options
  */
 function Entry(question, options) {
-    this.question = question
-    this.datatype = question.datatype();
-    this.entryId = this.datatype + nonce();
+    var self = this;
+    self.question = question
+    self.datatype = question.datatype();
+    self.entryId = this.datatype + nonce();
 
-    this.prevalidate = function(q) {
+    self.prevalidate = function(q) {
         return true;
     }
-    this.clear = function() {
+    self.clear = function() {
         this.answer(null);
     }
+    self.afterRender = function() {
+      // Override with any logic that comes after rendering the Entry
+    };
 }
 
 /**
@@ -216,55 +220,29 @@ function DateEntry(question, options) {
     var self = this;
     Entry.call(self, question, options);
     var thisYear = new Date().getFullYear() + 1;
+    self.templateType = 'date';
 
-    this.format = 'mm/dd/yy';
+    self.format = 'mm/dd/yy';
 
-    this.$picker = $('#' + this.entryId);
-    this.$picker.datepicker({
-        changeMonth: true,
-        changeYear: true,
-        dateFormat: this.format,
-        yearRange: "" + (thisYear - 100) + ":" + (thisYear + 10),
-    });
-
-
-    this.setAnswer(this.def_ans);
-
-    this.$picker.change(function() {
-        q.onchange();
-    });
-
-    this.load = function(q, $container) {
-        this.widget_id = 'datepicker-' + nonce();
-        $container.html('<input id="' + this.widget_id + '" type="text"><span id="type" style="margin-left: 15px; font-size: x-small; font-style: italic; color: grey;">(' + this.format.replace('yy', 'yyyy') + ')</span>');
-        this.$picker = $container.find('#' + this.widget_id);
-        var thisYear = new Date().getFullYear() + 1;
-        this.$picker.datepicker({
+    self.afterRender = function() {
+        self.$picker = $('#' + self.entryId);
+        self.$picker.datepicker({
             changeMonth: true,
             changeYear: true,
             dateFormat: this.format,
             yearRange: "" + (thisYear - 100) + ":" + (thisYear + 10),
         });
-
-
-        this.setAnswer(this.def_ans);
-
-        this.$picker.change(function() {
-            q.onchange();
+        self.$picker.change(function() {
+            var raw = self.$picker.datepicker('getDate');
+            self.answer(raw ? $.datepicker.formatDate('yy-mm-dd', raw) : null);
         });
     }
+    self.answer = question.answer;
+    self.answer.subscribe(function(newValue) {
+        self.question.onchange()
+    });
 
-    this.setAnswer = function(answer, postLoad) {
-        this.$picker.datepicker('setDate', answer ? $.datepicker.parseDate('yy-mm-dd', answer) : null);
-        this.ans = answer;
-    }
-
-    this.getAnswer = function() {
-        var raw = this.$picker.datepicker('getDate');
-        return (raw != null ? $.datepicker.formatDate('yy-mm-dd', raw) : null);
-    }
-
-}
+};
 DateEntry.prototype = Object.create(Entry.prototype);
 DateEntry.prototype.constructor = Entry;
 

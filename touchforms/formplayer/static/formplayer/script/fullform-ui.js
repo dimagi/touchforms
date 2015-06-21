@@ -184,8 +184,11 @@ function Form(json) {
 
     //});
 
-    this.reconcile = function(new_json) {
-        reconcileElements(this, new_json);
+    $.subscribe('adapter.reconcile', function(e, tree) {
+        self.reconcile(tree);
+    });
+    self.reconcile = function(tree) {
+        self.fromJS({ children: tree });
     };
 
     this.submitting = function() {
@@ -273,6 +276,7 @@ function Question(json, parent) {
     self.entryTemplate = function() {
         return self.entry.templateType + '-entry-ko-template';
     };
+    self.afterRender = function() { self.entry.afterRender() };
 
         //var add_multimedia = function(attrib, control) {
         //  if (self.hasOwnProperty(attrib) && self[attrib]) {
@@ -350,9 +354,6 @@ Question.prototype.fromJS = function(json) {
 }
 
 function reconcileElements(parent, new_elems) {
-    parent.fromJS({
-        children: new_elems
-    });
 }
 
 /**
