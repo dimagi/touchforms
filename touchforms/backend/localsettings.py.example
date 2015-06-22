@@ -17,5 +17,5 @@ POSTGRES_DATABASE = {
         'NAME': 'hqdev',
         'USER': 'django',
         'PASSWORD': 'django',
-        'SSL': True,
+        #'SSL': True  //only uncomment if your Postgres DB requires SSL connection
 }

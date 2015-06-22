@@ -115,9 +115,11 @@ def get_conn():
         'serverName': django_params['HOST'] + ':' + django_params['PORT'],
         'databaseName': django_params['NAME'],
         'user': django_params['USER'],
-        'password' : django_params['PASSWORD'],
-        'ssl': django_params['SSL'],
+        'password': django_params['PASSWORD'],
     }
+
+    if "SSL" in django_params:
+        jdbc_params['ssl'] = django_params['SSL'],
 
     try:
         # try to connect regularly
