@@ -15,8 +15,8 @@ UIVERSION_KEY = "uiVersion"
 class Session(models.Model):
     sess_id = models.CharField(max_length=100, primary_key=True)
     sess_json = models.TextField()
-    last_modified = models.DateTimeField(auto_now_add=True, auto_now=True, null=True)
-    date_created = models.DateTimeField(auto_now_add=True, null=True)
+    last_modified = models.DateTimeField(null=True)
+    date_created = models.DateTimeField(null=True)
 
 
 class EntrySession(models.Model):
