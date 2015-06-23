@@ -17,5 +17,6 @@ POSTGRES_DATABASE = {
         'NAME': 'hqdev',
         'USER': 'django',
         'PASSWORD': 'django',
-        #'SSL': True  //only uncomment if your Postgres DB requires SSL connection
+        #'SSL': True,  //only uncomment if your Postgres DB requires SSL connection
+        'PREPARE_THRESHOLD': 0, # only used for postgres bouncer
 }
