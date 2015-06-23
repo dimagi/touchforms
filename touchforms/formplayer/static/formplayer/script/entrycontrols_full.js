@@ -91,18 +91,6 @@ FreeTextEntry.prototype.onAnswerChange = function(newValue) {
 };
 
 
-function PasswordEntry(question, options) {
-    options.lengthLimit = options.lengthLimit || 9;
-
-    this.mkWidget = function() {
-        $('#answer')[0].innerHTML = '<input id="textfield" maxlength="' + this.lengthLimit + '" type="passwd"/>';
-        this.inputfield = $('#textfield')[0];
-    };
-}
-PasswordEntry.prototype = Object.create(FreeTextEntry.prototype);
-PasswordEntry.prototype.constructor = FreeTextEntry;
-
-
 /**
  * The entry that defines an integer input. Only accepts whole numbers
  */
@@ -416,9 +404,6 @@ function getEntry(question) {
             break;
         case Formplayer.Const.FLOAT:
             entry = new FloatEntry(question, {});
-            break;
-        case Formplayer.Const.PASSWORD:
-            entry = new PasswordEntry(question, {});
             break;
         case Formplayer.Const.SELECT:
             entry = new SingleSelectEntry(question, {});

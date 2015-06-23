@@ -429,7 +429,6 @@ Formplayer.Const = {
     INT: 'int',
     LONG_INT: 'longint',
     FLOAT: 'float',
-    PASSWORD: 'passwd',
     SELECT: 'select',
     MULTI_SELECT: 'multiselect',
     DATE: 'date',
