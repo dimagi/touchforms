@@ -3,8 +3,9 @@ var markdowner = window.markdownit();
 //if index is part of a repeat, return only the part beyond the deepest repeat
 function relativeIndex(ix) {
     var steps = ix.split(',');
-    var deepest_repeat = -1;
-    for (var i = steps.length - 2; i >= 0; i--) {
+    var deepest_repeat = -1,
+        i;
+    for (i = steps.length - 2; i >= 0; i--) {
         if (steps[i].indexOf(':') != -1) {
             deepest_repeat = i;
             break;
@@ -14,7 +15,7 @@ function relativeIndex(ix) {
         return ix;
     } else {
         var rel_ix = '-';
-        for (var i = deepest_repeat + 1; i < steps.length; i++) {
+        for (i = deepest_repeat + 1; i < steps.length; i++) {
             rel_ix += steps[i] + (i < steps.length - 1 ? ',' : '');
         }
         return rel_ix;
@@ -57,8 +58,8 @@ function parse_meta(type, style) {
     var meta = {};
 
     if (type == "date") {
-        meta.mindiff = style.before != null ? +style.before : null;
-        meta.maxdiff = style.after != null ? +style.after : null;
+        meta.mindiff = style.before !== null ? +style.before : null;
+        meta.maxdiff = style.after !== null ? +style.after : null;
     } else if (type == "int" || type == "float") {
         meta.unit = style.unit;
     } else if (type == 'str') {
@@ -68,7 +69,7 @@ function parse_meta(type, style) {
         meta.prefix = style.prefix;
         meta.longtext = (style.raw == 'full');
     } else if (type == "multiselect") {
-        if (style["as-select1"] != null) {
+        if (style["as-select1"]) {
             meta.as_single = [];
             var vs = style["as-select1"].split(',');
             for (var i = 0; i < vs.length; i++) {
@@ -322,7 +323,7 @@ Question.prototype.fromJS = function(json) {
                 return options.data ? markdowner.render(options.data) : null;
             }
         },
-    }
+    };
 
     if (json.datatype === Formplayer.Const.MULTI_SELECT) {
         json.answer = _.map(json.answer, function(d) { return '' + d });

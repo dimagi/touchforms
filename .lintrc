@@ -2,6 +2,8 @@
 [files]
 ignore = */build/*
          *.min.js
+         */vendor/*
+         */test_vendor/*
          localsettings.py
 
 [tools]

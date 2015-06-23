@@ -5,17 +5,17 @@
  */
 function Entry(question, options) {
     var self = this;
-    self.question = question
-    self.answer = question.answer
+    self.question = question;
+    self.answer = question.answer;
     self.datatype = question.datatype();
     self.entryId = _.uniqueId(this.datatype);
 
     self.prevalidate = function(q) {
         return true;
-    }
+    };
     self.clear = function() {
         this.answer(null);
-    }
+    };
     self.afterRender = function() {
       // Override with any logic that comes after rendering the Entry
     };
@@ -33,7 +33,7 @@ function InfoEntry(question, options) {
     var self = this;
     Entry.call(self, question, options);
     self.answer = question.answer;
-    self.templateType = 'blank'
+    self.templateType = 'blank';
 };
 
 InfoEntry.prototype = Object.create(Entry.prototype);
@@ -46,7 +46,7 @@ InfoEntry.prototype.constructor = Entry;
 function UnsupportedEntry(question, options) {
     var self = this;
     Entry.call(self, question, options);
-    self.templateType = 'unsupported'
+    self.templateType = 'unsupported';
     self.answer = null;
 }
 UnsupportedEntry.prototype = Object.create(Entry.prototype);
@@ -76,11 +76,11 @@ function FreeTextEntry(question, options) {
 
     self._prevalidate = function(raw) {
         return null;
-    }
+    };
 
     self.domainText = function() {
         return '(free-text)';
-    }
+    };
 }
 FreeTextEntry.prototype = Object.create(Entry.prototype);
 FreeTextEntry.prototype.constructor = Entry;
@@ -97,7 +97,7 @@ function PasswordEntry(question, options) {
     this.mkWidget = function() {
         $('#answer')[0].innerHTML = '<input id="textfield" maxlength="' + this.lengthLimit + '" type="passwd"/>';
         this.inputfield = $('#textfield')[0];
-    }
+    };
 }
 PasswordEntry.prototype = Object.create(FreeTextEntry.prototype);
 PasswordEntry.prototype.constructor = FreeTextEntry;
@@ -117,7 +117,7 @@ function IntEntry(question, options) {
 
     this.domainText = function() {
         return 'numeric';
-    }
+    };
 
 }
 IntEntry.prototype = Object.create(FreeTextEntry.prototype);
@@ -129,11 +129,11 @@ function PhoneEntry(question, options) {
 
     this._prevalidate = function(raw) {
         return (!(/^\+?[0-9]+$/.test(raw)) ? "This does not appear to be a valid phone/numeric number" : null);
-    }
+    };
 
     this.domainText = function() {
         return 'phone/numeric';
-    }
+    };
 
 }
 PhoneEntry.prototype = Object.create(IntEntry.prototype);
@@ -195,7 +195,7 @@ function MultiSelectEntry(question, options) {
             self.previousAnswer = oldValue;
         }
     }, self, 'beforeChange');
-};
+}
 MultiSelectEntry.prototype = Object.create(Entry.prototype);
 MultiSelectEntry.prototype.constructor = Entry;
 
@@ -217,7 +217,7 @@ function SingleSelectEntry(question, options) {
     MultiSelectEntry.call(this, question, options);
     self.templateType = 'select';
     self.isMulti = false;
-    self.onClear = function() { self.answer(null) };
+    self.onClear = function() { self.answer(null); };
 }
 SingleSelectEntry.prototype = Object.create(MultiSelectEntry.prototype);
 SingleSelectEntry.prototype.constructor = MultiSelectEntry;
@@ -246,7 +246,7 @@ function DateEntry(question, options) {
 
     self.answer = question.answer;
     self.answer.subscribe(function(newValue) {
-        self.question.onchange()
+        self.question.onchange();
     });
 
 };
@@ -260,7 +260,7 @@ function TimeEntry(question, options) {
 
     self._prevalidate = function(raw) {
         var timeParts = self.parseAnswer(raw);
-        if (timeParts == null ||
+        if (timeParts === null ||
                 timeParts.hour < 0 || timeParts.hour >= 24 ||
                 timeParts.min < 0 || timeParts.min >= 60) {
             return "Not a valid time (00:00 - 23:59)";
@@ -280,7 +280,7 @@ function TimeEntry(question, options) {
     self.domainText = function() {
         return 'hh:mm, 24-hour clock';
     };
-};
+}
 TimeEntry.prototype = Object.create(FreeTextEntry.prototype);
 TimeEntry.prototype.constructor = FreeTextEntry;
 
@@ -289,15 +289,13 @@ TimeEntry.prototype.onAnswerChange = function(newValue) {
         timeParts = self.parseAnswer(self.answer()),
         formatted;
     if (timeParts) {
-        formatted = intpad(timeParts.hour, 2) + ':' + intpad(timeParts.min, 2)
+        formatted = intpad(timeParts.hour, 2) + ':' + intpad(timeParts.min, 2);
         if (formatted !== self.answer()) {
             self.answer(formatted);
             return;
         }
     }
-    console.log('time change')
-    console.log(self.answer());
-    self.question.onchange()
+    self.question.onchange();
 };
 
 
@@ -340,7 +338,7 @@ function GeoPointEntry(question, options) {
             self.map.setCenter(new google.maps.LatLng(self.lat(), self.lon()));
             self.map.setZoom(self.DEFAULT.anszoom);
         }
-        google.maps.event.addListener(self.map, "center_changed", self.updateCenter.bind(self))
+        google.maps.event.addListener(self.map, "center_changed", self.updateCenter.bind(self));
     }
     self.afterRender = function() {
         if (typeof google === "undefined") {
@@ -357,7 +355,7 @@ function GeoPointEntry(question, options) {
     self.formatLat = function(coordinate) { return self.formatCoordinate(coordinate, ['N', 'S']); };
     self.formatLon = function(coordinate) { return self.formatCoordinate(coordinate, ['E', 'W']); };
     self.formatCoordinate = function(coordinate, cardinalities) {
-        var cardinality = coordinate >= 0 ? cardinalities[0] : cardinalities [1]
+        var cardinality = coordinate >= 0 ? cardinalities[0] : cardinalities [1];
         if (coordinate !== null) {
             return cardinality + intpad(intpad(Math.abs(coordinate).toFixed(5), 8));
         }
@@ -408,7 +406,7 @@ function getEntry(question) {
 
     switch (question.datatype()) {
         case Formplayer.Const.STRING:
-            entry = new FreeTextEntry(question, {})
+            entry = new FreeTextEntry(question, {});
             break;
         case Formplayer.Const.INT:
             entry = new IntEntry(question, {});
@@ -429,7 +427,7 @@ function getEntry(question) {
             entry = new MultiSelectEntry(question, {});
             break;
         case Formplayer.Const.DATE:
-            entry = new DateEntry(question, {})
+            entry = new DateEntry(question, {});
             break;
         case Formplayer.Const.TIME:
             entry = new TimeEntry(question, {});
@@ -445,7 +443,7 @@ function getEntry(question) {
             entry = new UnsupportedEntry(question, options);
     }
     return entry;
-};
+}
 
 function intpad(x, n) {
     var s = x + '';

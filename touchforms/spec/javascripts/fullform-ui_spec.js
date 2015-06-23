@@ -80,7 +80,7 @@ describe('Fullform UI', function() {
             "add-choice": "Add another Repeat Simple",
             "header": "Repeat Simple",
             "caption_video": null
-        }
+        };
 
         formJSON = {
             tree: [questionJSON, repeatJSON],
@@ -144,7 +144,7 @@ describe('Fullform UI', function() {
         expect(question.choices().length).toBe(2);
 
         questionJSON.choices = ['A new choice'];
-        formJSON.tree = [questionJSON]
+        formJSON.tree = [questionJSON];
         form.fromJS(formJSON);
         expect(form.children().length).toBe(1);
         expect(question.choices().length).toBe(1);
@@ -158,7 +158,7 @@ describe('Fullform UI', function() {
         $.extend(formJSON2, formJSON);
         var form = new Form(formJSON),
             form2 = new Form(formJSON2),
-            spy = sinon.spy()
+            spy = sinon.spy();
             spy2 = sinon.spy();
 
         sinon.stub(form, 'fromJS', spy);

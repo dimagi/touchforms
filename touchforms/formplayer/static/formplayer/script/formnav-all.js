@@ -14,7 +14,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
   $.subscribe('formplayer.submit-form', function(e, form) {
       if (!self.presubmitfunc()) { return; }
       self.submitForm(form);
-  })
+  });
   $.subscribe('formplayer.delete-repeat', function(e, group) {
       self.deleteRepeat(group);
   });
