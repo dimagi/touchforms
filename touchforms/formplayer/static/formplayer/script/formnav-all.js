@@ -24,6 +24,9 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
   $.subscribe('formplayer.answer-question', function(e, question) {
       self.answerQuestion(question);
   });
+  $.subscribe('formplayer.evaluate-xpath', function(e, xpath, callback) {
+      self.evaluateXPath(xpath, callback);
+  });
 
   this.loadForm = function ($div, init_lang, onload, onerror) {
     var args = {

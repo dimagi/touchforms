@@ -1,4 +1,10 @@
+var Formplayer = {
+    Utils: {},
+    Const: {},
+    ViewModels: {},
+};
 var markdowner = window.markdownit();
+
 
 //if index is part of a repeat, return only the part beyond the deepest repeat
 function relativeIndex(ix) {
@@ -156,8 +162,6 @@ Container.prototype.fromJS = function(json) {
 /**
  * Represents the entire form. There is only one of these on a page.
  * @param {Object} json - The JSON returned from touchforms to represent a Form
- * TODO: Evaluate XPath
- * TODO: Fix multimedia
  */
 function Form(json) {
     var self = this;
@@ -165,25 +169,11 @@ function Form(json) {
     delete json.tree
     Container.call(self, json);
     self.submitText = ko.observable('Submit');
+    self.evalXPath = new Formplayer.ViewModels.EvaluateXPath();
 
     self.submitForm = function(form) {
         $.publish('formplayer.submit-form', self);
     };
-
-    //$("#evaluate-button").click(function() {
-
-    //    var mxpath = document.getElementById("xpath").value;
-
-    //    adapter.evaluateXPath(mxpath, function(result, status){
-    //        $(document.getElementById("evaluate-result")).val(result);
-    //        if(status === "success") {
-    //            $(document.getElementById("evaluate-result")).removeClass('text-error');
-    //        } else{
-    //            $(document.getElementById("evaluate-result")).addClass('text-error');
-    //        }
-    //    });
-
-    //});
 
     $.unsubscribe('adapter');
     $.subscribe('adapter.reconcile', function(e, response) {
@@ -285,7 +275,7 @@ function Question(json, parent) {
     self.onchange = function() {
         // TODO: Make subscriber in apps.js
         $.publish('formplayer.dirty', true);
-        if (this.prevalidate()) {
+        if (self.prevalidate()) {
             $.publish('formplayer.answer-question', self);
         }
     }
@@ -331,6 +321,21 @@ Question.prototype.fromJS = function(json) {
     ko.mapping.fromJS(json, mapping, self);
 }
 
+
+Formplayer.ViewModels.EvaluateXPath = function() {
+    var self = this;
+    self.xpath = ko.observable('');
+    self.result = ko.observable('');
+    self.success = ko.observable(true);
+    self.evaluate = function(form) {
+        var callback = function(result, status) {
+            self.result(result);
+            self.success(status === "success");
+        };
+        $.publish('formplayer.evaluate-xpath', [self.xpath(), callback]);
+    };
+}
+
 /**
  * Used to compare if questions are equal to each other by looking at their index
  * @param {Object} e - Either the javascript object Question, Group, Repeat or the JSON representation
@@ -367,6 +372,7 @@ var inElementSet = function(e, set) {
     return (ix !== -1 ? set[ix] : null);
 }
 
+
 function scroll_pin(pin_threshold, $container, $elem) {
     return function() {
         var base_offset = $container.offset().top;
@@ -384,10 +390,6 @@ function set_pin(pin_threshold, $container, $elem) {
     pinfunc();
 }
 
-var Formplayer = {
-    Utils: {},
-    Const: {},
-};
 
 /**
  * Compares the equality of two answer sets.

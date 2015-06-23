@@ -1,3 +1,5 @@
+{% load hq_shared_tags %}
+
 <script type="text/html" id="sub-group-fullform-ko-template">
     <div class="gr">
         <div class="gr-header">
@@ -28,7 +30,36 @@
                 }
                 "
             />
+        <div data-bind="template: { name: 'instance-viewer-ko-template', data: evalXPath }"></div>
     </div>
+</script>
+
+<script type="text/html" id="instance-viewer-ko-template">
+    {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
+        <hr/>
+        <div id="instance-xml-home" name="instance-xml-home">
+            <div id="question-viewer-pretty"></div>
+            <div id="xml-viewer-pretty"></div>
+            <textarea
+                id="evaluate-result"
+                type="text"
+                style="display: block;"
+                data-bind="
+                    value: result,
+                    css: { 'text-error': !success() }
+            "></textarea>
+            <section>
+                <form data-bind="submit: evaluate">
+                <input
+                    id="xpath"
+                    name="xpath"
+                    placeholder="/data/[your path here]"
+                    style="min-width: 300px;"
+                    data-bind="value: xpath" />
+                <input id="evaluate-button" type="submit" value="Evaluate" />
+            </section>
+        </div>
+    {% endif %}
 </script>
 
 <script type="text/html" id="question-fullform-ko-template">
