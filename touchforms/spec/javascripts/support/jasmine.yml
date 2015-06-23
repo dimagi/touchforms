@@ -12,14 +12,16 @@
 #   - dist/**/*.js
 #
 src_files:
-  - script/test_vendor/*.js
-  - script/vendor/jquery-*.min.js
-  - script/vendor/ba*.js
+  - script/test_vendor/knockout-3.1.0.min.js
+  - script/test_vendor/knockout_mapping.ko.min.js
+  - script/test_vendor/underscore.js
+  - script/vendor/jquery-1.8.3.min.js
+  - script/vendor/jquery-ui.min.js
+  - script/vendor/ba-tiny-pubsub.min.js
   - script/vendor/purify.js
   - script/vendor/dates.js
-  - script/vendor/markdown*.js
+  - script/vendor/markdown-it-4.2.0.min.js
   - script/test_helpers/*.js
-  - script/shortcut.js
   - script/xforgasm.js
   - script/formnav-all.js
   - script/entrycontrols_full.js
