@@ -29,14 +29,14 @@ function relativeIndex(ix) {
 }
 
 function getIx(o) {
-    var ix = ko.utils.unwrapObservable(o.rel_ix);
+    var ix = o.rel_ix();
     while (ix[0] == '-') {
         o = o.parent;
         if (!o) {
             break;
         }
-        if (ix.split(',').slice(-1)[0].indexOf(':') != -1) {
-            ix += ',' + ix.substring(1);
+        if (o.rel_ix().split(',').slice(-1)[0].indexOf(':') != -1) {
+            ix = o.rel_ix() + ',' + ix.substring(1);
         }
     }
     return ix;
@@ -206,7 +206,7 @@ function Group(json, parent) {
     }
 
     if (self.isRepetition) {
-        self.rel_ix = relativeIndex(self.ix());
+        self.rel_ix = ko.observable(relativeIndex(self.ix()));
     }
 
     self.deleteRepeat = function() {
