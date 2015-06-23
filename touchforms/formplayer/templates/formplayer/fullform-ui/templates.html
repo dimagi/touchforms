@@ -34,9 +34,16 @@
 <script type="text/html" id="question-fullform-ko-template">
     <!-- ko if: datatype() !== 'info' -->
     <div class="q" data-bind="css: { qerr: error }">
-        <div class="widget" data-bind="
-            template: { name: entryTemplate, data: entry, afterRender: afterRender }
-        "></div>
+        <div class="widget-container">
+            <div class="widget" data-bind="
+                template: { name: entryTemplate, data: entry, afterRender: afterRender }
+            ">
+            </div>
+            <div class="widget-multimedia" data-bind="
+                template: { name: 'widget-multimedia-ko-template', data: $data }"
+                >
+            </div>
+        </div>
         <span class="req" data-bind="visible: $data.required ? required : false">*</span>
         <span class="caption" data-bind="html: caption_markdown || caption"></span>
         <span class="ix" data-bind="text: ixInfo($data)"></span>
@@ -51,6 +58,10 @@
     <div class="info">
         <span class="ix" data-bind="text: ixInfo($data)">></span>
         <span class="caption" data-bind="html: caption"></span>
+        <div class="widget-multimedia" data-bind="
+            template: { name: 'widget-multimedia-ko-template', data: $data }"
+            >
+        </div>
     </div>
     <!-- /ko -->
 </script>
@@ -67,6 +78,16 @@
             <a class="add" href="#" data-bind="click: newRepeat">add new</a>
         </div>
     </div>
+</script>
+
+<script type="text/html" id="widget-multimedia-ko-template">
+    <img data-bind="attr: { src: mediaSrc($data.caption_image()) }" />
+    <audio data-bind="visible: caption_audio, attr: { src: mediaSrc($data.caption_audio()) }">
+        Your browser does not support audio
+    </audio>
+    <video data-bind="visible: caption_video, attr: { src: mediaSrc($data.caption_video()) }">
+        Your browser does not support video
+    </video>
 </script>
 
 <script type="text/html" id="str-entry-ko-template">
@@ -102,19 +123,41 @@
     <div class="unsupported" data-bind="
         text: "Sorry, web entry cannot support this type of question" + datatype
     "></div>
-        
 </script>
-<script type="text/html" id="blank-entry-ko-template"></script>
+<script type="text/html" id="geo-entry-ko-template">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tbody>
+            <tr>
+                <td class="lat coordinate" data-bind="text: formatLat(lat())"></td>
+                <td class="lon coordinate" data-bind="text: formatLon(lon())"></td>
+                <td align="right" valign="bottom">
+                    <a class="clear" href="#" data-bind="
+                        click: onClear
+                    ">clear</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="map" data-bind="attr: { id: entryId }">
+        <div class="wait" data-bind="visible: !map">Please wait while the map loads</div>
+    </div>
+    <div>
+        <form data-bind="submit: search">
+            <input class="query" />
+            <input type="submit" class="search" value="Search">
+        </form>
+    </div>
+</script>
 <script type="text/html" id="select-entry-ko-template">
     <div class="sel" data-bind="foreach: choices, as: 'choice'">
         <input data-bind="
             checked: $parent.answer,
             value: $index() + 1,
             attr: {
-                id: 'group-' + $parent.group + '-choice-' + $index(),
+                id: 'group-' + $parent.entryId + '-choice-' + $index(),
                 type: $parent.isMulti ? 'checkbox' : 'radio',
                 name: $parent.group,
-                class: 'group-' + $parent.group
+                class: 'group-' + $parent.entryId
             }
         "/>
         <label class="fp-label" data-bind="
@@ -134,3 +177,4 @@
     <input type="text" data-bind="attr: { id: entryId } "/>
     <span>mm/dd/yy</span>
 </script>
+<script type="text/html" id="blank-entry-ko-template"></script>

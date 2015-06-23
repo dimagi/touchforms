@@ -95,6 +95,27 @@
   margin-right: 5px;
 }
 
+.map {
+  width: 400px;
+  height: 250px;
+  background: #eee;
+  max-width: none !important;
+}
+
+.coordinate {
+  font-weight: bold;
+  width: 8em;
+}
+
+.wait {
+  margin: auto;
+  padding-top: 60px;
+  max-width: 200px;
+  color: #bbb;
+  font-size: 24pt;
+  line-height: 28pt;
+}
+
 .info {
   background-color: #ffa;
   margin: 7px;

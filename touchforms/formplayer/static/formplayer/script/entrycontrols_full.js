@@ -8,7 +8,7 @@ function Entry(question, options) {
     self.question = question
     self.answer = question.answer
     self.datatype = question.datatype();
-    self.entryId = this.datatype + nonce();
+    self.entryId = _.uniqueId(this.datatype);
 
     self.prevalidate = function(q) {
         return true;
@@ -19,32 +19,39 @@ function Entry(question, options) {
     self.afterRender = function() {
       // Override with any logic that comes after rendering the Entry
     };
-    self.answer.subscribe(self.onAnswerChange.bind(self));
+    if (self.answer) {
+        self.answer.subscribe(self.onAnswerChange.bind(self));
+    }
 }
 Entry.prototype.onAnswerChange = function(newValue) {};
+
 
 /**
  * An entry that represent a question label.
  */
 function InfoEntry(question, options) {
+    var self = this;
     Entry.call(self, question, options);
-    this.answer = question.answer;
-    this.templateType = 'blank'
+    self.answer = question.answer;
+    self.templateType = 'blank'
 };
 
 InfoEntry.prototype = Object.create(Entry.prototype);
 InfoEntry.prototype.constructor = Entry;
 
+
 /**
  * The entry used when we have an unidentified entry
  */
 function UnsupportedEntry(question, options) {
+    var self = this;
     Entry.call(self, question, options);
-    this.templateType = 'unsupported'
-    this.answer = null;
+    self.templateType = 'unsupported'
+    self.answer = null;
 }
 UnsupportedEntry.prototype = Object.create(Entry.prototype);
 UnsupportedEntry.prototype.constructor = Entry;
+
 
 /**
  * The entry that represents a free text input
@@ -83,6 +90,7 @@ FreeTextEntry.prototype.onAnswerChange = function(newValue) {
     self.question.onchange();
 };
 
+
 function PasswordEntry(question, options) {
     options.lengthLimit = options.lengthLimit || 9;
 
@@ -93,6 +101,7 @@ function PasswordEntry(question, options) {
 }
 PasswordEntry.prototype = Object.create(FreeTextEntry.prototype);
 PasswordEntry.prototype.constructor = FreeTextEntry;
+
 
 /**
  * The entry that defines an integer input. Only accepts whole numbers
@@ -113,6 +122,7 @@ function IntEntry(question, options) {
 }
 IntEntry.prototype = Object.create(FreeTextEntry.prototype);
 IntEntry.prototype.constructor = FreeTextEntry;
+
 
 function PhoneEntry(question, options) {
     IntEntry.call(this, question, options);
@@ -148,6 +158,7 @@ function FloatEntry(question, options) {
 FloatEntry.prototype = Object.create(IntEntry.prototype);
 FloatEntry.prototype.constructor = IntEntry;
 
+
 /**
  * Represents a checked box entry.
  */
@@ -157,11 +168,7 @@ function MultiSelectEntry(question, options) {
     self.templateType = 'select';
     self.choices = question.choices;
     self.choicevals = question.choicevals ? question.choicevals() : null;
-
-    self.group = nonce();
-
     self.isMulti = true;
-    self.default_selections = null;
 
     self.onClear = function() {
         self.answer([]);
@@ -201,6 +208,7 @@ MultiSelectEntry.prototype.onAnswerChange = function(newValue) {
     self.pendchange(_.isArray(newValue) ? !newValue.length : true);
 };
 
+
 /**
  * Represents multiple radio button entries
  */
@@ -213,6 +221,7 @@ function SingleSelectEntry(question, options) {
 }
 SingleSelectEntry.prototype = Object.create(MultiSelectEntry.prototype);
 SingleSelectEntry.prototype.constructor = MultiSelectEntry;
+
 
 function DateEntry(question, options) {
     var self = this;
@@ -243,6 +252,7 @@ function DateEntry(question, options) {
 };
 DateEntry.prototype = Object.create(Entry.prototype);
 DateEntry.prototype.constructor = Entry;
+
 
 function TimeEntry(question, options) {
     var self = this;
@@ -290,214 +300,103 @@ TimeEntry.prototype.onAnswerChange = function(newValue) {
     self.question.onchange()
 };
 
-function GeoPointEntry(question, options) {
-    Entry.call(question, options);
 
-    this.timers = {};
-    this.DEFAULT = {
-        lat: 30.,
-        lon: 0.,
+function GeoPointEntry(question, options) {
+    var self = this;
+    Entry.call(self, question, options);
+    self.templateType = 'geo';
+    self.apiKey = 'https://maps.googleapis.com/maps/api/js?key=' + window.GMAPS_API_KEY + '&sensor=false';
+    self.map = null;
+    self.lat = ko.observable(self.answer() ? self.answer()[0] : null);
+    self.lon = ko.observable(self.answer() ? self.answer()[1] : null);
+
+    self.lat.subscribe(function(newValue) {
+        self.answer([newValue, self.answer() ? self.answer()[1] : null]);
+    });
+    self.lon.subscribe(function(newValue) {
+        self.answer([self.answer() ? self.answer()[0] : null, newValue]);
+    });
+
+    self.DEFAULT = {
+        lat: 30,
+        lon: 0,
         zoom: 1,
         anszoom: 6
     };
 
-    this.load = function(q, $container) {
-        this.mkWidget(q, $container);
-        this.setAnswer(this.default_answer, true);
+    self.onClear = function() {
+        self.lat(null);
+        self.lon(null);
+    };
 
-        this.commit = function() {
-            q.onchange();
-        }
-    }
-
-    this.mkWidget = function(q, $container) {
-        var crosshairs = 'iVBORw0KGgoAAAANSUhEUgAAABMAAAATCAQAAADYWf5HAAAACXZwQWcAAAATAAAAEwDxf4yuAAAAAmJLR0QAAKqNIzIAAAAJcEhZcwAAAEgAAABIAEbJaz4AAAAySURBVCjPY2hgIAZiCPwHAyKUMQxbZf9RAHKwIMSg+hEQqhtJBK6MKNNGTvCSld6wQwBd8RoA55WDIgAAAABJRU5ErkJggg==';
-        var crosshair_size = 19;
-        $container.html('<style>#map img { max-width: none !important; }</style><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td id="lat"></td><td id="lon"></td><td align="right" valign="bottom"><a id="clear" href="#">clear</a></td></tr></table><div id="map"></div><div><form><input id="query"><input type="submit" id="search" value="Search"></form></div>');
-        var $map = $container.find('#map');
-        // TODO: dynamic sizing
-        var W = 400;
-        var H = 250;
-        $map.css('width', W + 'px');
-        $map.css('height', H + 'px');
-
-        $map.css('background', '#eee');
-
-        var $wait = $('<div />');
-        $wait.css('margin', 'auto');
-        $wait.css('padding-top', '60px');
-        $wait.css('max-width', '200px');
-        $wait.css('color', '#bbb');
-        $wait.css('font-size', '24pt');
-        $wait.css('line-height', '28pt');
-        $wait.text('please wait while the map loads...');
-        $map.append($wait);
-
-        this.lat = null;
-        this.lon = null;
-        this.$lat = $container.find('#lat');
-        this.$lon = $container.find('#lon');
-        $.each([this.$lat, this.$lon], function(i, $e) {
-            $e.css('font-weight', 'bold');
-            $e.css('width', '8em');
+    window.gMapsCallback = function() {
+        self.geocoder = new google.maps.Geocoder();
+        self.map = new google.maps.Map($('#' + self.entryId)[0], {
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            center: new google.maps.LatLng(self.DEFAULT.lat, self.DEFAULT.lon),
+            zoom: self.DEFAULT.zoom
         });
-
-        var widget = this;
-        $container.find('#clear').click(function() {
-            widget.set_latlon(null, null);
-            widget.commit();
-            return false;
-        });
-
-        this.$query = $container.find('#query');
-        this.$query.css('width', '80%');
-        this.$search = $container.find('#search');
-        this.$search.css('width', '15%');
-        this.$search.click(function() {
-            q = widget.$query.val().trim();
-            if (q) {
-                widget.search(q);
-            }
-            return false;
-        });
-
-        var on_gmap_load = function() {
-            if (!$container.is(':visible')) {
-                // google maps gets unhappy if you initialize the map when its <div> is hidden
-                widget.delayed_init_reqd = true;
-            }
-
-            $map.empty();
-            widget.map = new google.maps.Map($map[0], {
-                mapTypeId: google.maps.MapTypeId.ROADMAP,
-                center: new google.maps.LatLng(widget.DEFAULT.lat, widget.DEFAULT.lon),
-                zoom: widget.DEFAULT.zoom
-            });
-
-            widget.geocoder = new google.maps.Geocoder();
-
-            if (!widget.delayed_init_reqd) {
-                widget.bindListener();
-            }
-
-            $ch = $('<img src="data:image/png;base64,' + crosshairs + '">');
-            $ch.css('position', 'relative')
-            $ch.css('top', ((H /*$map.height()*/ - crosshair_size) / 2) + 'px');
-            $ch.css('left', ((W /*$map.width()*/ - crosshair_size) / 2) + 'px');
-            $ch.css('z-index', '500');
-            $map.append($ch);
-        };
-
-        var GMAPS_API = 'https://maps.googleapis.com/maps/api/js?key=' + GMAPS_API_KEY + '&sensor=false';
-        if (typeof google == "undefined") {
-            _GMAPS_INIT = on_gmap_load
-            $.getScript(GMAPS_API + '&callback=_GMAPS_INIT');
-        } else {
-            on_gmap_load();
+        if (self.answer()) {
+            self.map.setCenter(new google.maps.LatLng(self.lat(), self.lon()));
+            self.map.setZoom(self.DEFAULT.anszoom);
         }
-
+        google.maps.event.addListener(self.map, "center_changed", self.updateCenter.bind(self))
     }
-
-    this.bindListener = function() {
-        var widget = this;
-        google.maps.event.addListener(widget.map, "center_changed", function() {
-            widget.update_center();
-        });
-    }
-
-    this.onShow = function() {
-        if (!this.delayed_init_reqd) {
-            return;
+    self.afterRender = function() {
+        if (typeof google === "undefined") {
+            $.getScript(self.apiKey + '&callback=gMapsCallback');
         }
+    };
 
-        // if the google map is initialized while the container div is hidden
-        // we need to do a little cleanup
-        var center = this.map.getCenter();
-        google.maps.event.trigger(this.map, 'resize');
-        this.map.setCenter(center);
-        // only set this now so the re-centering doesn't trigger an 'answering' of the question
-        this.bindListener();
-    }
+    self.updateCenter = function() {
+        var center = self.map.getCenter();
+        self.lat(center.lat());
+        self.lon(center.lng());
+    };
 
-    this.getAnswer = function() {
-        return (this.lat != null ? [this.lat, this.lon] : null);
-    }
-
-    this.setAnswer = function(answer, postLoad) {
-        if (postLoad) {
-            if (answer) {
-                this.set_latlon(answer[0], answer[1]);
-                if (this.map) {
-                    this.map.setCenter(new google.maps.LatLng(answer[0], answer[1]));
-                    this.map.setZoom(this.DEFAULT.anszoom);
-                }
-            } else {
-                this.set_latlon(null, null);
-            }
-        } else {
-            this.default_answer = answer;
+    self.formatLat = function(coordinate) { return self.formatCoordinate(coordinate, ['N', 'S']); };
+    self.formatLon = function(coordinate) { return self.formatCoordinate(coordinate, ['E', 'W']); };
+    self.formatCoordinate = function(coordinate, cardinalities) {
+        var cardinality = coordinate >= 0 ? cardinalities[0] : cardinalities [1]
+        if (coordinate !== null) {
+            return cardinality + intpad(intpad(Math.abs(coordinate).toFixed(5), 8));
         }
-    }
+        return '??.?????';
+    };
 
-    this.update_center = function() {
-        var center = this.map.getCenter();
-        var lat = center.lat();
-        var lon = center.lng();
-
-        if (this.set_latlon(lat, lon)) {
-            var widget = this;
-            this.delay_action('move', function() {
-                widget.commit();
-            }, 1.);
-        }
-    }
-
-    this.set_latlon = function(lat, lon) {
-        lon = lon % 360.;
-        if (lon < 0) {
-            lon += 360.
-        }
-        lon = lon % 360.;
-        if (lon >= 180.) {
-            lon -= 360.;
-        }
-
-        if (lat == this.lat && lon == this.lon) {
-            return false;
-        }
-
-        this.lat = lat;
-        this.lon = lon;
-
-        this.$lat.text(lat != null ? (lat >= 0. ? 'N' : 'S') + intpad(Math.abs(lat).toFixed(5), 8) : '??.?????');
-        this.$lon.text(lat != null ? (lon >= 0. ? 'E' : 'W') + intpad(Math.abs(lon).toFixed(5), 9) : '???.?????');
-
-        return true;
-    }
-
-    this.delay_action = function(tag, dofunc, delay) {
-        var timer = this.timers[tag];
-        if (timer) {
-            clearTimeout(timer);
-            timer = null;
-        }
-        this.timers[tag] = setTimeout(dofunc, 1000 * delay);
-    }
-
-    this.search = function(query) {
-        var map = this.map;
-        this.geocoder.geocode({
+    self.search = function(form) {
+        var query = $(form).find('.query').val();
+        self.geocoder.geocode({
             'address': query
         }, function(results, status) {
-            if (status == google.maps.GeocoderStatus.OK) {
-                map.fitBounds(results[0].geometry.viewport);
-                map.setCenter(results[0].geometry.location);
+            if (status === google.maps.GeocoderStatus.OK) {
+                self.map.fitBounds(results[0].geometry.viewport);
+                self.map.setCenter(results[0].geometry.location);
             }
         });
-    }
-}
+    };
+
+    var previousAnswer = null;
+    self.answer.subscribe(function(oldValue) {
+        if (_.isArray(oldValue)) {
+            // Need to make copy since oldValue gets mutated
+            self.previousAnswer = oldValue.slice();
+        } else {
+            self.previousAnswer = oldValue;
+        }
+    }, self, 'beforeChange')
+};
 GeoPointEntry.prototype = Object.create(Entry.prototype);
 GeoPointEntry.prototype.constructor = Entry;
+
+GeoPointEntry.prototype.onAnswerChange = _.debounce(function(newValue) {
+    var self = this;
+    if (Formplayer.Utils.answersEqual(self.previousAnswer, newValue)) {
+        return;
+    }
+    self.question.onchange();
+}, 200);
+
 
 /**
  * Gets the entry based on the datatype of the Question
@@ -548,14 +447,10 @@ function getEntry(question) {
     return entry;
 };
 
-function nonce() {
-    return Math.floor(Math.random() * 1e9);
-}
-
 function intpad(x, n) {
     var s = x + '';
     while (s.length < n) {
         s = '0' + s;
     }
     return s;
-}
+};

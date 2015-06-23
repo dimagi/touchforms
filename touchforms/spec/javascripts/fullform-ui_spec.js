@@ -3,7 +3,8 @@ describe('Fullform UI', function() {
         formSpec,
         formJSON,
         sessionData,
-        repeatJSON;
+        repeatJSON,
+        repeatNestJSON;
 
     beforeEach(function() {
         formSpec = {
@@ -37,13 +38,49 @@ describe('Fullform UI', function() {
             "caption_image": null,
             "type": "repeat-juncture",
             "caption_markdown": null,
-            "ix": "4J",
+            "ix": "0J",
             "relevant": 1,
             "main-header": "Repeater",
             "children": [],
             "add-choice": "None - Add Repeater",
             "caption_video": null
         };
+
+        repeatNestJSON = {
+            "caption_audio": null,
+            "caption": "Repeat Simple",
+            "caption_image": null,
+            "type": "repeat-juncture",
+            "caption_markdown": null,
+            "ix": "0J",
+            "relevant": 1,
+            "children": [{
+                "caption": "Repeat Simple 1/1",
+                "type": "sub-group",
+                "uuid": "ed3f01b37034",
+                "ix": "0:0",
+                "children": [{
+                    "caption_audio": null,
+                    "caption": "Text_Question",
+                    "binding": "/data/repeat/Text_Question",
+                    "caption_image": null,
+                    "type": "question",
+                    "caption_markdown": null,
+                    "required": 0,
+                    "ix": "0:0,0",
+                    "relevant": 1,
+                    "help": null,
+                    "answer": null,
+                    "datatype": "str",
+                    "style": {},
+                    "caption_video": null
+                }],
+                "repeatable": 1
+            }],
+            "add-choice": "Add another Repeat Simple",
+            "header": "Repeat Simple",
+            "caption_video": null
+        }
 
         formJSON = {
             tree: [questionJSON, repeatJSON],
@@ -76,55 +113,25 @@ describe('Fullform UI', function() {
 
         expect(form.children().length).toBe(2);
 
-        form.reconcile(newJson);
+        form.fromJS({ children: newJson });
         expect(form.children().length).toBe(1);
     });
 
     it('Should render a repeater question', function() {
-        var repeatChild = {
-            "caption": "Repeater 1/2",
-            "type": "sub-group",
-            "uuid": "77ff006407f5",
-            "ix": "0:0",
-            "children": [{
-                "caption_audio": null,
-                "caption": "Single Answer",
-                "binding": "/data/repeat/single_answer",
-                "caption_image": null,
-                "type": "question",
-                "caption_markdown": null,
-                "required": 0,
-                "ix": "0:0,0",
-                "relevant": 1,
-                "help": null,
-                "answer": null,
-                "datatype": "select",
-                "style": {},
-                "caption_video": null,
-                "choices": [
-                 "item1",
-                 "item2"
-                ]
-            }],
-            "repeatable": 1
-        }
-
         formJSON.tree = [repeatJSON];
         var form = new Form(formJSON);
         expect(form.children().length).toBe(1);
-        //expect(form.children()[0].length).toBe(0);
+        expect(form.children()[0].children().length).toBe(0);
 
         // Add new repeat
-        repeatJSON.children = [repeatChild]
-        formJSON.tree = [repeatJSON];
-        form.reconcile(formJSON.tree)
+        form.fromJS({ children: [repeatNestJSON] });
         expect(form.children().length).toBe(1);
         // Each repeat is a group with questions
         expect(form.children()[0].type()).toBe(Formplayer.Const.REPEAT_TYPE);
-        //expect(form.children()[0].isRepeat).toBe(true);
+        expect(form.children()[0].isRepeat).toBe(true);
         expect(form.children()[0].children().length).toBe(1);
         expect(form.children()[0].children()[0].type()).toBe(Formplayer.Const.GROUP_TYPE);
-        //expect(form.children()[0].children()[0].isRepetition).toBe(true);
+        expect(form.children()[0].children()[0].isRepetition).toBe(true);
         expect(form.children()[0].children()[0].children()[0].type())
             .toBe(Formplayer.Const.QUESTION_TYPE);
     });
@@ -138,8 +145,27 @@ describe('Fullform UI', function() {
 
         questionJSON.choices = ['A new choice'];
         formJSON.tree = [questionJSON]
-        form.reconcile(formJSON.tree);
+        form.fromJS(formJSON);
         expect(form.children().length).toBe(1);
         expect(question.choices().length).toBe(1);
+    });
+
+    it('Should only subscribe once', function() {
+        /**
+         * This specifically ensures that we unsubscribe from events when we change forms
+         */
+        var formJSON2 = {};
+        $.extend(formJSON2, formJSON);
+        var form = new Form(formJSON),
+            form2 = new Form(formJSON2),
+            spy = sinon.spy()
+            spy2 = sinon.spy();
+
+        sinon.stub(form, 'fromJS', spy);
+        sinon.stub(form2, 'fromJS', spy2);
+
+        $.publish('adapter.reconcile', {});
+        expect(spy.calledOnce).toBe(false);
+        expect(spy2.calledOnce).toBe(true);
     });
 });

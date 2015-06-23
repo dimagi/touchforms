@@ -184,12 +184,12 @@ function Form(json) {
 
     //});
 
-    $.subscribe('adapter.reconcile', function(e, tree) {
-        self.reconcile(tree);
+    $.unsubscribe('adapter');
+    $.subscribe('adapter.reconcile', function(e, response) {
+        response.children = response.tree;
+        delete response.tree
+        self.fromJS(response);
     });
-    self.reconcile = function(tree) {
-        self.fromJS({ children: tree });
-    };
 
     this.submitting = function() {
         this.submitText('Submitting...');
@@ -272,49 +272,26 @@ function Question(json, parent) {
 
     self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
     self.entry = getEntry(self);
-    //self.entry.setAnswer(self.answer ? self.answer() : null);
     self.entryTemplate = function() {
         return self.entry.templateType + '-entry-ko-template';
     };
     self.afterRender = function() { self.entry.afterRender() };
 
-        //var add_multimedia = function(attrib, control) {
-        //  if (self.hasOwnProperty(attrib) && self[attrib]) {
-        //    var mediaSrc = getForm(self).adapter.render_context.resourceMap(self[attrib]);
-        //    if (mediaSrc) {
-        //      control.attr("src", mediaSrc);
-        //      $mediaContainer = $('<div>');
-        //      $mediaContainer.append(control);
-        //      var $widget = self.$container.find('.widget');
-        //      if ($widget.length) {
-        //        $widget.append($mediaContainer);
-        //      } else {
-        //        self.caption(self.caption() + $mediaContainer.html());
-        //      }
-        //    }
-        //  }
-        //}
-
-        //if (refresh_widget || !self.$container.find('#widget').length) {
-        //  add_multimedia('caption_image', $('<img>'));
-        //  add_multimedia('caption_audio', $('<audio controls>Your browser does not support audio</audio>'));
-        //  add_multimedia('caption_video', $('<video controls>Your browser does not support video</video>'));
-        //}
-
-    this.getAnswer = function() {
-        return this.entry.getAnswer();
-    }
-
-    this.prevalidate = function() {
+    self.prevalidate = function() {
         return this.entry.prevalidate(this);
     }
 
-    this.onchange = function() {
+    self.onchange = function() {
         // TODO: Make subscriber in apps.js
         $.publish('formplayer.dirty', true);
         if (this.prevalidate()) {
             $.publish('formplayer.answer-question', self);
         }
+    }
+
+    self.mediaSrc = function(resourceType) {
+        if (!resourceType) { return ''; }
+        return Formplayer.resourceMap(resourceType);
     }
 
     self.showError = function(content) {
@@ -351,9 +328,6 @@ Question.prototype.fromJS = function(json) {
         json.answer = _.map(json.answer, function(d) { return '' + d });
     }
     ko.mapping.fromJS(json, mapping, self);
-}
-
-function reconcileElements(parent, new_elems) {
 }
 
 /**
@@ -431,14 +405,16 @@ Formplayer.Utils.answersEqual = function(answer1, answer2) {
 /**
  * Initializes a new form to be used by the formplayer.
  * @param {Object} formJSON - The json representation of the form
+ * @param {Object} resourceMap - Function for resolving multimedia paths
  * @param {Object} $div - The jquery element that the form will be rendered in.
  */
-Formplayer.Utils.initialRender = function(formJSON, $div) {
+Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
     var form = new Form(formJSON);
+    Formplayer.resourceMap = resourceMap;
     ko.cleanNode($div[0]);
     ko.applyBindings(form, $div[0]);
     return form;
-  }
+};
 
 Formplayer.Const = {
     GROUP_TYPE: 'sub-group',
@@ -457,4 +433,4 @@ Formplayer.Const = {
     TIME: 'time',
     GEO: 'geo',
     INFO: 'info',
-}
+};

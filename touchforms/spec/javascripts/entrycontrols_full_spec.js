@@ -4,6 +4,7 @@ describe('Entries', function() {
 
 
     beforeEach(function() {
+        window.GMAPS_API_KEY = 'xxx';
         questionJSON = {
             "caption_audio": null,
             "caption": "Do you want to modify the visit number?",
@@ -25,7 +26,7 @@ describe('Entries', function() {
     });
 
     afterEach(function() {
-        $.unsubscribe('formplayer.answer-question');
+        $.unsubscribe();
     });
 
     it('Should return the IntEntry', function() {
@@ -131,5 +132,26 @@ describe('Entries', function() {
 
         entry.answer('12:451')  // Invalid time
         expect(spy.calledOnce).toBe(true);
+    });
+
+    it('Should return InfoEntry', function() {
+        questionJSON.datatype = Formplayer.Const.INFO;
+        entry = (new Question(questionJSON)).entry
+
+        expect(entry instanceof InfoEntry).toBe(true);
+    });
+
+    it('Should return a GeoPointEntry', function() {
+        questionJSON.datatype = Formplayer.Const.GEO;
+        questionJSON.answer = [1.2, 3.4];
+
+        entry = (new Question(questionJSON)).entry
+        expect(entry.answer()[0]).toBe(1.2);
+        expect(entry.lat()).toBe(1.2);
+        expect(entry.answer()[1]).toBe(3.4);
+        expect(entry.lon()).toBe(3.4);
+
+        entry.lat(3);
+        expect(entry.answer()[0]).toBe(3);
     });
 });

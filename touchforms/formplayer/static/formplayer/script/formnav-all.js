@@ -10,6 +10,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
   this.render_context = render_context;
   this.answerCallback = answerCallback;
 
+  $.unsubscribe('formplayer');
   $.subscribe('formplayer.submit-form', function(e, form) {
       if (!self.presubmitfunc()) { return; }
       self.submitForm(form);
@@ -73,7 +74,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
         adapter.session_id = resp["session_id"];
         console.log('session id: ' + adapter.session_id);
       }
-      adapter.form = Formplayer.Utils.initialRender(resp, $div);
+      adapter.form = Formplayer.Utils.initialRender(resp, self.render_context.resourceMap, $div);
       if (onload) {
         onload(adapter, resp);
       }
@@ -94,7 +95,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
           adapter.showError(q, resp);
         } else {
           q.clearError();
-          $.publish('adapter.reconcile', resp.tree);
+          $.publish('adapter.reconcile', resp);
         }
       });
 
@@ -117,7 +118,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
                    'session-id': this.session_id,
                    'ix': getIx(repeat)},
       function (resp) {
-          $.publish('adapter.reconcile', resp.tree);
+          $.publish('adapter.reconcile', resp);
       },
       true);
   }
@@ -130,7 +131,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
                    'ix': rep_ix,
                    'form_ix': juncture},
       function (resp) {
-        getForm(repetition).reconcile(resp["tree"]);
+        getForm(repetition).reconcile(resp);
       },
       true);
   }
@@ -178,7 +179,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
                    'session-id': this.session_id,
                    'lang': lang},
       function (resp) {
-          $.publish('adapter.reconcile', resp.tree);
+          $.publish('adapter.reconcile', resp);
       });
   }
 
