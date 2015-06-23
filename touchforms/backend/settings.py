@@ -32,6 +32,7 @@ POSTGRES_DATABASE = {
     'USER': 'django',
     'PASSWORD': 'django',
     'SSL': True,
+    'PREPARE_THRESHOLD': 0
 }
 
 ### LOGGING VARIABLES ###
