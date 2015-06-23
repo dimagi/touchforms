@@ -211,6 +211,7 @@ function Group(json, parent) {
 
     self.deleteRepeat = function() {
         $.publish('formplayer.delete-repeat', self);
+        $.publish('formplayer.dirty');
     };
 
 }
@@ -237,6 +238,7 @@ function Repeat(json, parent) {
 
     self.newRepeat = function() {
         $.publish('formplayer.new-repeat', self);
+        $.publish('formplayer.dirty');
     };
 
 }
@@ -273,7 +275,6 @@ function Question(json, parent) {
     }
 
     self.onchange = function() {
-        // TODO: Make subscriber in apps.js
         $.publish('formplayer.dirty', true);
         if (self.prevalidate()) {
             $.publish('formplayer.answer-question', self);

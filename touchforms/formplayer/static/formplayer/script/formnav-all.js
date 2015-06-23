@@ -134,7 +134,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
                    'ix': rep_ix,
                    'form_ix': juncture},
       function (resp) {
-        getForm(repetition).reconcile(resp);
+          $.publish('adapter.reconcile', resp);
       },
       true);
   }
