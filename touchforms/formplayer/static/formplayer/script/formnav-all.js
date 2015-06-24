@@ -98,7 +98,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
           adapter.showError(q, resp);
         } else {
           q.clearError();
-          $.publish('adapter.reconcile', resp);
+          $.publish('adapter.reconcile', [resp, q]);
         }
       });
 
@@ -121,7 +121,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
                    'session-id': this.session_id,
                    'ix': getIx(repeat)},
       function (resp) {
-          $.publish('adapter.reconcile', resp);
+          $.publish('adapter.reconcile', [resp, repeat]);
       },
       true);
   }
@@ -134,7 +134,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
                    'ix': rep_ix,
                    'form_ix': juncture},
       function (resp) {
-          $.publish('adapter.reconcile', resp);
+          $.publish('adapter.reconcile', [resp, repetition]);
       },
       true);
   }
@@ -149,7 +149,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
           });
       } else {
         if (o.prevalidate()) {
-          answers[getIx(o)] = o.answer();
+          answers[getIx(o)] = ko.utils.unwrapObservable(o.answer);
         } else {
           prevalidated = false;
         }
@@ -182,7 +182,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
                    'session-id': this.session_id,
                    'lang': lang},
       function (resp) {
-          $.publish('adapter.reconcile', resp);
+          $.publish('adapter.reconcile', [resp, lang]);
       });
   }
 
