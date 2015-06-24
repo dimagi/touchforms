@@ -34,7 +34,7 @@ function InfoEntry(question, options) {
     Entry.call(self, question, options);
     self.answer = question.answer;
     self.templateType = 'blank';
-};
+}
 
 InfoEntry.prototype = Object.create(Entry.prototype);
 InfoEntry.prototype.constructor = Entry;
@@ -237,7 +237,7 @@ function DateEntry(question, options) {
         self.question.onchange();
     });
 
-};
+}
 DateEntry.prototype = Object.create(Entry.prototype);
 DateEntry.prototype.constructor = Entry;
 
@@ -370,7 +370,7 @@ function GeoPointEntry(question, options) {
         } else {
             self.previousAnswer = oldValue;
         }
-    }, self, 'beforeChange')
+    }, self, 'beforeChange');
 };
 GeoPointEntry.prototype = Object.create(Entry.prototype);
 GeoPointEntry.prototype.constructor = Entry;
@@ -436,4 +436,4 @@ function intpad(x, n) {
         s = '0' + s;
     }
     return s;
-};
+}

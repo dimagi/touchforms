@@ -62,7 +62,7 @@ describe('Entries', function() {
         expect(spy.calledTwice).toBe(true);
 
         entry.answer('mouse');
-        valid = entry.prevalidate()
+        valid = entry.prevalidate();
         expect(valid).toBe(false);
         expect(spy.calledTwice).toBe(true);
     });

@@ -109,7 +109,7 @@ function Container(json) {
      */
     self.childTemplate = function(child) {
         return ko.utils.unwrapObservable(child.type) + '-fullform-ko-template';
-    }
+    };
 }
 
 /**
@@ -147,9 +147,9 @@ Container.prototype.fromJS = function(json) {
             update: function(options) {
                 if (options.data.datatype === Formplayer.Const.MULTI_SELECT) {
                     // Need to default to an array of strings instead of integers
-                    options.data.answer = _.map(options.data.answer, function(d) { return '' + d });
+                    options.data.answer = _.map(options.data.answer, function(d) { return '' + d; });
                 }
-                return options.target
+                return options.target;
             },
             key: function(data) {
                 return cmpkey(data);
@@ -166,7 +166,7 @@ Container.prototype.fromJS = function(json) {
 function Form(json) {
     var self = this;
     json.children = json.tree;
-    delete json.tree
+    delete json.tree;
     Container.call(self, json);
     self.submitText = ko.observable('Submit');
     self.evalXPath = new Formplayer.ViewModels.EvaluateXPath();
@@ -178,7 +178,7 @@ function Form(json) {
     $.unsubscribe('adapter');
     $.subscribe('adapter.reconcile', function(e, response) {
         response.children = response.tree;
-        delete response.tree
+        delete response.tree;
         self.fromJS(response);
     });
 
@@ -270,7 +270,7 @@ function Question(json, parent) {
     self.entryTemplate = function() {
         return self.entry.templateType + '-entry-ko-template';
     };
-    self.afterRender = function() { self.entry.afterRender() };
+    self.afterRender = function() { self.entry.afterRender(); };
 
     self.prevalidate = function() {
         return this.entry.prevalidate(this);
@@ -319,7 +319,7 @@ Question.prototype.fromJS = function(json) {
     };
 
     if (json.datatype === Formplayer.Const.MULTI_SELECT) {
-        json.answer = _.map(json.answer, function(d) { return '' + d });
+        json.answer = _.map(json.answer, function(d) { return '' + d; });
     }
     ko.mapping.fromJS(json, mapping, self);
 }
