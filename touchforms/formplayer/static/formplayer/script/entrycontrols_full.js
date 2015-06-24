@@ -10,7 +10,7 @@ function Entry(question, options) {
     self.datatype = question.datatype();
     self.entryId = _.uniqueId(this.datatype);
 
-    self.prevalidate = function(q) {
+    self.prevalidate = function() {
         return true;
     };
     self.clear = function() {
@@ -66,6 +66,7 @@ function FreeTextEntry(question, options) {
     self.prose = question.domain_meta ? question.domain_meta().longtext : false;
 
     self.prevalidate = function() {
+        if (!self.answer()) { return true; }
         var errmsg = this._prevalidate(self.answer());
         if (errmsg) {
             self.question.showError(errmsg);
@@ -78,8 +79,8 @@ function FreeTextEntry(question, options) {
         return null;
     };
 
-    self.domainText = function() {
-        return '(free-text)';
+    self.helpText = function() {
+        return 'Free response';
     };
 }
 FreeTextEntry.prototype = Object.create(Entry.prototype);
@@ -103,8 +104,8 @@ function IntEntry(question, options) {
         return (isNaN(+raw) || +raw != Math.floor(+raw) ? "Not a valid whole number" : null);
     }
 
-    this.domainText = function() {
-        return 'numeric';
+    this.helpText = function() {
+        return 'Number';
     };
 
 }
@@ -114,13 +115,14 @@ IntEntry.prototype.constructor = FreeTextEntry;
 
 function PhoneEntry(question, options) {
     IntEntry.call(this, question, options);
+    this.templateType = 'phone';
 
     this._prevalidate = function(raw) {
         return (!(/^\+?[0-9]+$/.test(raw)) ? "This does not appear to be a valid phone/numeric number" : null);
     };
 
-    this.domainText = function() {
-        return 'phone/numeric';
+    this.helpText = function() {
+        return 'Phone number or Numeric ID';
     };
 
 }
@@ -139,8 +141,8 @@ function FloatEntry(question, options) {
         return (isNaN(+raw) ? "Not a valid number" : null);
     }
 
-    this.domainText = function() {
-        return 'decimal';
+    this.helpText = function() {
+        return 'Decimal';
     }
 }
 FloatEntry.prototype = Object.create(IntEntry.prototype);
@@ -155,23 +157,10 @@ function MultiSelectEntry(question, options) {
     Entry.call(this, question, options);
     self.templateType = 'select';
     self.choices = question.choices;
-    self.choicevals = question.choicevals ? question.choicevals() : null;
     self.isMulti = true;
 
     self.onClear = function() {
         self.answer([]);
-    };
-
-    self.COMMIT_DELAY = 300; //ms
-    self.pendchange = function(immed) {
-        if (self.timer) {
-            clearTimeout(self.timer);
-        }
-        if (immed) {
-          self.question.onchange();
-        } else {
-          self.timer = setTimeout(self.question.onchange, self.COMMIT_DELAY);
-        }
     };
 
     var previousAnswer = null;
@@ -192,8 +181,7 @@ MultiSelectEntry.prototype.onAnswerChange = function(newValue) {
     if (Formplayer.Utils.answersEqual(self.previousAnswer, newValue)) {
         return;
     }
-    // delay change when there are multiple values, could be doing a lot of checks
-    self.pendchange(_.isArray(newValue) ? !newValue.length : true);
+    self.question.onchange();
 };
 
 
@@ -245,6 +233,7 @@ DateEntry.prototype.constructor = Entry;
 function TimeEntry(question, options) {
     var self = this;
     FreeTextEntry.call(self, question, options);
+    self.templateType = 'time';
 
     self._prevalidate = function(raw) {
         var timeParts = self.parseAnswer(raw);
@@ -265,8 +254,8 @@ function TimeEntry(question, options) {
         };
     };
 
-    self.domainText = function() {
-        return 'hh:mm, 24-hour clock';
+    self.helpText = function() {
+        return 'hh:mm';
     };
 }
 TimeEntry.prototype = Object.create(FreeTextEntry.prototype);
@@ -297,10 +286,18 @@ function GeoPointEntry(question, options) {
     self.lon = ko.observable(self.answer() ? self.answer()[1] : null);
 
     self.lat.subscribe(function(newValue) {
-        self.answer([newValue, self.answer() ? self.answer()[1] : null]);
+        var newAnswer = [newValue, self.answer() ? self.answer()[1] : null]
+        if (newAnswer[0] === null || newAnswer[1] === null) {
+            newAnswer = null;
+        }
+        self.answer(newAnswer);
     });
     self.lon.subscribe(function(newValue) {
-        self.answer([self.answer() ? self.answer()[0] : null, newValue]);
+        var newAnswer = [self.answer() ? self.answer()[0] : null, newValue];
+        if (newAnswer[0] === null || newAnswer[1] === null) {
+            newAnswer = null;
+        }
+        self.answer(newAnswer);
     });
 
     self.DEFAULT = {
@@ -391,10 +388,16 @@ GeoPointEntry.prototype.onAnswerChange = _.debounce(function(newValue) {
 function getEntry(question) {
     var entry = null;
     var options = {};
+    var rawStyle;
 
     switch (question.datatype()) {
         case Formplayer.Const.STRING:
-            entry = new FreeTextEntry(question, {});
+            rawStyle = question.style ? ko.utils.unwrapObservable(question.style.raw) === 'numeric' : false;
+            if (rawStyle) {
+                entry = new PhoneEntry(question, {});
+            } else {
+                entry = new FreeTextEntry(question, {});
+            }
             break;
         case Formplayer.Const.INT:
             entry = new IntEntry(question, {});
