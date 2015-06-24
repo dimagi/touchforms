@@ -27,21 +27,23 @@
   font-weight: bold;
 }
 
-.error {
+.error-message {
   color: red;
   font-weight: bold;
   font-size: 80%;
 }
 
-.qerr {
-  background-color: #fcc;
+input:invalid {
+  color: #b94a48;
+  border-color: #b94a48;
 }
 
-.widget {
-  float: right;
-  width: 400px;
-  text-align: left;
-  padding-bottom: 3px;
+
+.required .caption:before {
+  content: '*';
+  font-weight: bold;
+  color: #c0392b;
+  margin: 0 3px;
 }
 
 .children {

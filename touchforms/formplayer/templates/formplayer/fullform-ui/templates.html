@@ -3,12 +3,12 @@
 <script type="text/html" id="sub-group-fullform-ko-template">
     <div class="gr">
         <div class="gr-header">
-            <span class="caption"></span>
+            <span class="caption" data-bind="html: caption"></span>
             <span class="ix"></span>
-            <a class="del" href="#" data-bind="
+            <button class="btn btn-mini btn-danger del" href="#" data-bind="
                 visible: isRepetition,
                 click: deleteRepeat
-            ">delete</a>
+            ">Delete repeat</button>
         </div>
         <div class="children" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
     </div>
@@ -17,19 +17,18 @@
 <script type="text/html" id="form-fullform-ko-template">
     <div>
         <h1 class="title" data-bind="text: title"></h1>
-        <div class="form">
+        <form class="form form-horizontal" data-bind="submit: submitForm">
             <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
-        </div>
-        <input class="submit"
-            type="submit"
-            value="Submit"
-            data-bind="
-                click: submitForm,
-                attr: {
-                    value: submitText
-                }
-                "
-            />
+            <input class="submit btn btn-primary"
+                type="submit"
+                value="Submit"
+                data-bind="
+                    attr: {
+                        value: submitText
+                    }
+                    "
+                />
+        </form>
         <div data-bind="template: { name: 'instance-viewer-ko-template', data: evalXPath }"></div>
     </div>
 </script>
@@ -64,8 +63,9 @@
 
 <script type="text/html" id="question-fullform-ko-template">
     <!-- ko if: datatype() !== 'info' -->
-    <div class="q" data-bind="css: { qerr: error }">
-        <div class="widget-container">
+    <div class="q control-group" data-bind="css: { error: error, required: $data.required }">
+        <label class="caption control-label" data-bind="html: caption_markdown() || caption()"></label>
+        <div class="widget-container controls">
             <div class="widget" data-bind="
                 template: { name: entryTemplate, data: entry, afterRender: afterRender }
             ">
@@ -75,10 +75,8 @@
                 >
             </div>
         </div>
-        <span class="req" data-bind="visible: $data.required ? required : false">*</span>
-        <span class="caption" data-bind="html: caption_markdown || caption"></span>
         <span class="ix" data-bind="text: ixInfo($data)"></span>
-        <div class="error" data-bind="
+        <div class="error-message" data-bind="
             visible: error,
             text: error
         "></div>
@@ -88,7 +86,7 @@
     <!-- ko if: datatype() === 'info' -->
     <div class="info">
         <span class="ix" data-bind="text: ixInfo($data)">></span>
-        <span class="caption" data-bind="html: caption"></span>
+        <span class="caption" data-bind="html: caption_markdown() || caption()"></span>
         <div class="widget-multimedia" data-bind="
             template: { name: 'widget-multimedia-ko-template', data: $data }"
             >
@@ -106,7 +104,7 @@
         <div class="children" data-bind="template: { name: childTemplate, foreach: $data.children }"/>
         <div class="empty" data-bind="visible: !children().length">This repeatable group is empty</div>
         <div class="rep-footer">
-            <a class="add" href="#" data-bind="click: newRepeat">add new</a>
+            <button class="btn btn-mini add" href="#" data-bind="click: newRepeat">Add new repeat</button>
         </div>
     </div>
 </script>
@@ -128,8 +126,8 @@
             maxlength: lengthLimit,
         }
     "></textarea>
-    <span class="type" data-bind="
-        text: domainText()
+    <span class="help-block type" data-bind="
+        text: helpText()
     "></span>
 </script>
 <script type="text/html" id="int-entry-ko-template">
@@ -137,8 +135,8 @@
         value: $data.answer,
         attr: { maxlength: lengthLimit }
     "/>
-    <span class="type" data-bind="
-        text: domainText()
+    <span class="help-block type" data-bind="
+        text: helpText()
     "></span>
 </script>
 <script type="text/html" id="float-entry-ko-template">
@@ -146,8 +144,16 @@
         value: $data.answer,
         attr: { maxlength: lengthLimit }
     "/>
-    <span class="type" data-bind="
-        text: domainText()
+    <span class="help-block type" data-bind="
+        text: helpText()
+    "></span>
+</script>
+<script type="text/html" id="phone-entry-ko-template">
+    <input type="text" data-bind="
+        value: $data.answer
+    "/>
+    <span class="help-block type" data-bind="
+        text: helpText()
     "></span>
 </script>
 <script type="text/html" id="unsupported-entry-ko-template">
@@ -162,9 +168,9 @@
                 <td class="lat coordinate" data-bind="text: formatLat(lat())"></td>
                 <td class="lon coordinate" data-bind="text: formatLon(lon())"></td>
                 <td align="right" valign="bottom">
-                    <a class="clear" href="#" data-bind="
+                    <button class="btn btn-mini clear" data-bind="
                         click: onClear
-                    ">clear</a>
+                    ">Clear map</button>
                 </td>
             </tr>
         </tbody>
@@ -174,38 +180,47 @@
     </div>
     <div>
         <form data-bind="submit: search">
-            <input class="query" />
-            <input type="submit" class="search" value="Search">
+            <div class="input-append">
+                <input class="query" type="text" />
+                <input class="btn" type="submit" class="search" value="Search">
+            </div>
         </form>
     </div>
 </script>
 <script type="text/html" id="select-entry-ko-template">
     <div class="sel" data-bind="foreach: choices, as: 'choice'">
-        <input data-bind="
-            checked: $parent.answer,
-            value: $index() + 1,
-            attr: {
-                id: 'group-' + $parent.entryId + '-choice-' + $index(),
-                type: $parent.isMulti ? 'checkbox' : 'radio',
-                name: $parent.group,
-                class: 'group-' + $parent.entryId
-            }
-        "/>
-        <label class="fp-label" data-bind="
-            text: $data,
-            attr: {
-                for: 'group-' + $parent.group + '-choice-' + $index()
-            }
-        "></label>
+        <label data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }">
+            <input data-bind="
+                checked: $parent.answer,
+                value: $index() + 1,
+                attr: {
+                    id: 'group-' + $parent.entryId + '-choice-' + $index(),
+                    type: $parent.isMulti ? 'checkbox' : 'radio',
+                    name: $parent.entryId,
+                    class: 'group-' + $parent.entryId
+                }
+            "/>
+            <span data-bind="text: $data"></span>
+        </label>
     </div>
     <div class="clear-container">
-        <a class="clear" href="#" data-bind="
+        <button class="btn btn-mini clear" data-bind="
             click: onClear
-        ">clear</a>
+        ">Clear choices</button>
     </div>
 </script>
 <script type="text/html" id="date-entry-ko-template">
-    <input type="text" data-bind="attr: { id: entryId } "/>
-    <span>mm/dd/yy</span>
+    <div class="input-append">
+        <input type="text" data-bind="attr: { id: entryId } "/>
+        <span class="add-on">mm/dd/yy</span>
+    </div>
+</script>
+
+<script type="text/html" id="time-entry-ko-template">
+    <div class="input-append">
+        <input type="text" data-bind="value: $data.answer"/>
+        <span class="add-on" data-bind="text: helpText()"></span>
+    </div>
+    <span class="help-block">24-hour clock</span>
 </script>
 <script type="text/html" id="blank-entry-ko-template"></script>
