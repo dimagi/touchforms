@@ -132,8 +132,6 @@ Container.prototype.fromJS = function(json) {
         },
         children: {
             create: function(options) {
-                console.log('creating');
-                console.log(cmpkey(options.data));
                 if (options.data.type === Formplayer.Const.QUESTION_TYPE) {
                     return new Question(options.data, self);
                 } else if (options.data.type === Formplayer.Const.GROUP_TYPE) {
@@ -146,8 +144,14 @@ Container.prototype.fromJS = function(json) {
             },
             update: function(options) {
                 if (options.data.datatype === Formplayer.Const.MULTI_SELECT) {
-                    // Need to default to an array of strings instead of integers
-                    options.data.answer = _.map(options.data.answer, function(d) { return '' + d; });
+
+                    if (options.target.pendingAnswer !== null &&
+                            options.target.pendingAnswer !== undefined) {
+                        options.data.answer = _.clone(options.target.pendingAnswer);
+                    } else {
+                        // Need to default to an array of strings instead of integers
+                        options.data.answer = _.map(options.data.answer, function(d) { return '' + d; });
+                    }
                 }
                 return options.target;
             },
@@ -176,10 +180,13 @@ function Form(json) {
     };
 
     $.unsubscribe('adapter');
-    $.subscribe('adapter.reconcile', function(e, response) {
+    $.subscribe('adapter.reconcile', function(e, response, element) {
         response.children = response.tree;
         delete response.tree;
         self.fromJS(response);
+        if (element instanceof Question) {
+            element.pendingAnswer = null;
+        }
     });
 
     this.submitting = function() {
@@ -264,6 +271,8 @@ function Question(json, parent) {
     if (json.hasOwnProperty('domain_meta') && json.hasOwnProperty('style')) {
         self.domain_meta = parse_meta(json.datatype, val);
     }
+    self.throttle = 200;
+    self.pendingAnswer = null;
 
     self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
     self.entry = getEntry(self);
@@ -273,15 +282,16 @@ function Question(json, parent) {
     self.afterRender = function() { self.entry.afterRender(); };
 
     self.prevalidate = function() {
-        return this.entry.prevalidate(this);
+        return this.entry.prevalidate();
     }
 
-    self.onchange = function() {
+    self.onchange = _.throttle(function() {
         $.publish('formplayer.dirty', true);
-        if (self.prevalidate()) {
+        if (self.prevalidate() && !Formplayer.Utils.answersEqual(self.pendingAnswer, self.answer())) {
+            self.pendingAnswer = _.clone(self.answer());
             $.publish('formplayer.answer-question', self);
         }
-    }
+    }, self.throttle);
 
     self.mediaSrc = function(resourceType) {
         if (!resourceType) { return ''; }
@@ -316,6 +326,14 @@ Question.prototype.fromJS = function(json) {
                 return options.data ? markdowner.render(options.data) : null;
             }
         },
+        answer: {
+            update: function(options) {
+                if (self.pendingAnswer !== null && self.pendingAnswer !== undefined) {
+                    return self.pendingAnswer;
+                }
+                return options.data;
+            }
+        }
     };
 
     if (json.datatype === Formplayer.Const.MULTI_SELECT) {
