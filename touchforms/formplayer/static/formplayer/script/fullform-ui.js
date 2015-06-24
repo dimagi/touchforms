@@ -206,7 +206,9 @@ function Group(json, parent) {
     }
 
     if (self.isRepetition) {
-        self.rel_ix = ko.observable(relativeIndex(self.ix()));
+        self.ix.subscribe(function(newValue) {
+            self.rel_ix(relativeIndex(self.ix()));
+        });
     }
 
     self.deleteRepeat = function() {
