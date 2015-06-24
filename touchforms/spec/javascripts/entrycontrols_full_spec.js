@@ -23,10 +23,12 @@ describe('Entries', function() {
         };
         spy = sinon.spy();
         $.subscribe('formplayer.answer-question', spy);
+        this.clock = sinon.useFakeTimers();
     });
 
     afterEach(function() {
         $.unsubscribe();
+        this.clock.restore();
     });
 
     it('Should return the IntEntry', function() {
@@ -37,6 +39,7 @@ describe('Entries', function() {
         entry.answer(1234);
         valid = entry.prevalidate();
         expect(valid).toBe(true);
+        this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
 
         entry.answer('abc');
@@ -54,6 +57,7 @@ describe('Entries', function() {
         entry.answer(2.3);
         valid = entry.prevalidate();
         expect(valid).toBe(true);
+        this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
 
         entry.answer('2.4');
@@ -74,6 +78,7 @@ describe('Entries', function() {
         expect(entry.templateType).toBe('str');
 
         entry.answer('harry');
+        this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
     });
 
@@ -87,6 +92,7 @@ describe('Entries', function() {
         expect(entry.templateType).toBe('select');
 
         entry.answer([]);
+        this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
 
         entry.answer(['1']);
@@ -104,6 +110,7 @@ describe('Entries', function() {
         expect(entry.templateType).toBe('select');
 
         entry.answer('b');
+        this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
     });
 
@@ -116,6 +123,7 @@ describe('Entries', function() {
         expect(entry.templateType).toBe('date');
 
         entry.answer('87-11-19');
+        this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
     });
 
@@ -125,9 +133,10 @@ describe('Entries', function() {
 
         entry = (new Question(questionJSON)).entry;
         expect(entry instanceof TimeEntry).toBe(true);
-        expect(entry.templateType).toBe('str');
+        expect(entry.templateType).toBe('time');
 
         entry.answer('12:45');
+        this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
 
         entry.answer('12:451');  // Invalid time
@@ -153,5 +162,26 @@ describe('Entries', function() {
 
         entry.lat(3);
         expect(entry.answer()[0]).toBe(3);
+
+        entry.lat(null);
+        expect(entry.answer()).toBe(null);
+    });
+
+    it('Should return a PhoneEntry', function() {
+        questionJSON.datatype = Formplayer.Const.STRING;
+        questionJSON.style = { raw: 'numeric' };
+
+        entry = (new Question(questionJSON)).entry;
+        expect(entry instanceof PhoneEntry).toBe(true);
+        expect(entry.answer()).toBe(null);
+        expect(entry.templateType).toBe('phone');
+
+        entry.answer(1234)
+        this.clock.tick(1000);
+        expect(spy.calledOnce).toBe(true);
+
+        entry.answer('abc') // Invalid entry should not answer question
+        expect(spy.calledOnce).toBe(true);
+        expect(entry.question.error()).toBeTruthy();
     });
 });

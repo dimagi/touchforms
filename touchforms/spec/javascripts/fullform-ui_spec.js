@@ -1,8 +1,10 @@
 describe('Fullform UI', function() {
     var questionJSON,
+        answerSpy,
         formSpec,
         formJSON,
         sessionData,
+        spy,
         repeatJSON,
         repeatNestJSON;
 
@@ -104,7 +106,15 @@ describe('Fullform UI', function() {
             "device_id": "cloudcare",
             "host": "http://dummy"
         };
+        spy = sinon.spy();
+        $.subscribe('formplayer.answer-question', spy);
+        this.clock = sinon.useFakeTimers();
 
+    });
+
+    afterEach(function() {
+        $.unsubscribe();
+        this.clock.restore();
     });
 
     it('Should render a basic form and reconcile', function() {
@@ -167,5 +177,20 @@ describe('Fullform UI', function() {
         $.publish('adapter.reconcile', {});
         expect(spy.calledOnce).toBe(false);
         expect(spy2.calledOnce).toBe(true);
+    });
+
+
+    it('Should throttle answers', function() {
+        questionJSON.datatype = Formplayer.Const.STRING;
+        question = new Question(questionJSON);
+        question.answer('abc');
+        this.clock.tick(question.throttle);
+        expect(spy.callCount).toBe(1);
+
+        question.answer('abcd');
+        this.clock.tick(question.throttle - 10);
+        expect(spy.callCount).toBe(1);
+        this.clock.tick(10);
+        expect(spy.callCount).toBe(2);
     });
 });
