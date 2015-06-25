@@ -156,15 +156,14 @@ describe('Entries', function() {
 
         entry = (new Question(questionJSON)).entry;
         expect(entry.answer()[0]).toBe(1.2);
-        expect(entry.lat()).toBe(1.2);
         expect(entry.answer()[1]).toBe(3.4);
-        expect(entry.lon()).toBe(3.4);
 
-        entry.lat(3);
-        expect(entry.answer()[0]).toBe(3);
+        entry.answer([3,3]);
+        this.clock.tick(1000);
+        expect(spy.calledOnce).toBe(true);
 
-        entry.lat(null);
-        expect(entry.answer()).toBe(null);
+        entry.answer([3,3]); // do not call on same values
+        expect(spy.calledOnce).toBe(true);
     });
 
     it('Should return a PhoneEntry', function() {
@@ -176,11 +175,11 @@ describe('Entries', function() {
         expect(entry.answer()).toBe(null);
         expect(entry.templateType).toBe('phone');
 
-        entry.answer(1234)
+        entry.answer(1234);
         this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
 
-        entry.answer('abc') // Invalid entry should not answer question
+        entry.answer('abc'); // Invalid entry should not answer question
         expect(spy.calledOnce).toBe(true);
         expect(entry.question.error()).toBeTruthy();
     });

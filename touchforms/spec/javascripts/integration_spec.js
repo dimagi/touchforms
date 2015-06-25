@@ -71,13 +71,13 @@ describe('Integration', function() {
 
         var response1 = {};
         $.extend(response1, formJSON);
-        response1.tree[0].answer = 'ben'
-        response1.tree[1].answer = null
+        response1.tree[0].answer = 'ben';
+        response1.tree[1].answer = null;
 
         var response2 = {};
         $.extend(response2, formJSON);
-        response2.tree[0].answer = 'ben'
-        response2.tree[1].answer = 'lisa'
+        response2.tree[0].answer = 'ben';
+        response2.tree[1].answer = 'lisa';
 
 
         // Fire off a change in the string question

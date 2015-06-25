@@ -102,7 +102,7 @@ function IntEntry(question, options) {
 
     this._prevalidate = function(raw) {
         return (isNaN(+raw) || +raw != Math.floor(+raw) ? "Not a valid whole number" : null);
-    }
+    };
 
     this.helpText = function() {
         return 'Number';
@@ -282,23 +282,6 @@ function GeoPointEntry(question, options) {
     self.templateType = 'geo';
     self.apiKey = 'https://maps.googleapis.com/maps/api/js?key=' + window.GMAPS_API_KEY + '&sensor=false';
     self.map = null;
-    self.lat = ko.observable(self.answer() ? self.answer()[0] : null);
-    self.lon = ko.observable(self.answer() ? self.answer()[1] : null);
-
-    self.lat.subscribe(function(newValue) {
-        var newAnswer = [newValue, self.answer() ? self.answer()[1] : null]
-        if (newAnswer[0] === null || newAnswer[1] === null) {
-            newAnswer = null;
-        }
-        self.answer(newAnswer);
-    });
-    self.lon.subscribe(function(newValue) {
-        var newAnswer = [self.answer() ? self.answer()[0] : null, newValue];
-        if (newAnswer[0] === null || newAnswer[1] === null) {
-            newAnswer = null;
-        }
-        self.answer(newAnswer);
-    });
 
     self.DEFAULT = {
         lat: 30,
@@ -308,8 +291,7 @@ function GeoPointEntry(question, options) {
     };
 
     self.onClear = function() {
-        self.lat(null);
-        self.lon(null);
+        self.answer(null);
     };
 
     window.gMapsCallback = function() {
@@ -320,7 +302,7 @@ function GeoPointEntry(question, options) {
             zoom: self.DEFAULT.zoom
         });
         if (self.answer()) {
-            self.map.setCenter(new google.maps.LatLng(self.lat(), self.lon()));
+            self.map.setCenter(new google.maps.LatLng(self.answer()[0], self.answer()[1]));
             self.map.setZoom(self.DEFAULT.anszoom);
         }
         google.maps.event.addListener(self.map, "center_changed", self.updateCenter.bind(self));
@@ -333,12 +315,15 @@ function GeoPointEntry(question, options) {
 
     self.updateCenter = function() {
         var center = self.map.getCenter();
-        self.lat(center.lat());
-        self.lon(center.lng());
+        self.answer([center.lat(), center.lng()]);
     };
 
-    self.formatLat = function(coordinate) { return self.formatCoordinate(coordinate, ['N', 'S']); };
-    self.formatLon = function(coordinate) { return self.formatCoordinate(coordinate, ['E', 'W']); };
+    self.formatLat = function() {
+        return self.formatCoordinate(self.answer() ? self.answer()[0] : null, ['N', 'S']);
+    };
+    self.formatLon = function() { 
+        return self.formatCoordinate(self.answer() ? self.answer()[1] : null, ['E', 'W']);
+    };
     self.formatCoordinate = function(coordinate, cardinalities) {
         var cardinality = coordinate >= 0 ? cardinalities[0] : cardinalities [1];
         if (coordinate !== null) {
@@ -368,17 +353,21 @@ function GeoPointEntry(question, options) {
             self.previousAnswer = oldValue;
         }
     }, self, 'beforeChange');
-};
+}
 GeoPointEntry.prototype = Object.create(Entry.prototype);
 GeoPointEntry.prototype.constructor = Entry;
 
-GeoPointEntry.prototype.onAnswerChange = _.debounce(function(newValue) {
+GeoPointEntry.prototype.onAnswerChange = function(newValue) {
     var self = this;
     if (Formplayer.Utils.answersEqual(self.previousAnswer, newValue)) {
         return;
     }
+    if (newValue[0] && newValue[0].length) {
+        console.error('something weird');
+        console.error(newValue);
+    }
     self.question.onchange();
-}, 200);
+};
 
 
 /**

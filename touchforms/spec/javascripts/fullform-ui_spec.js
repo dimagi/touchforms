@@ -138,7 +138,6 @@ describe('Fullform UI', function() {
         expect(form.children().length).toBe(1);
         // Each repeat is a group with questions
         expect(form.children()[0].type()).toBe(Formplayer.Const.REPEAT_TYPE);
-        expect(form.children()[0].isRepeat).toBe(true);
         expect(form.children()[0].children().length).toBe(1);
         expect(form.children()[0].children()[0].type()).toBe(Formplayer.Const.GROUP_TYPE);
         expect(form.children()[0].children()[0].isRepetition).toBe(true);
@@ -158,6 +157,25 @@ describe('Fullform UI', function() {
         form.fromJS(formJSON);
         expect(form.children().length).toBe(1);
         expect(question.choices().length).toBe(1);
+    });
+
+    it('Should reconcile a GeoPointEntry', function() {
+        questionJSON.datatype = Formplayer.Const.GEO;
+        questionJSON.answer = null;
+        formJSON.tree = [questionJSON];
+        var form = new Form(_.clone(formJSON)),
+            question = form.children()[0];
+        expect(question.answer()).toBe(null);
+
+        questionJSON.answer = [1,2];
+        formJSON.tree = [questionJSON];
+        $.publish('adapter.reconcile', [_.clone(formJSON), question]);
+        expect(question.answer()).toEqual([1,2]);
+
+        questionJSON.answer = [3,3];
+        formJSON.tree = [questionJSON];
+        $.publish('adapter.reconcile', [_.clone(formJSON), question]);
+        expect(question.answer()).toEqual([3,3]);
     });
 
     it('Should only subscribe once', function() {
