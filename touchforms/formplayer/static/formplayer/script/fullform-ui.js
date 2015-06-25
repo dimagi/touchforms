@@ -189,8 +189,8 @@ function Form(json) {
         }
     });
 
-    this.submitting = function() {
-        this.submitText('Submitting...');
+    self.submitting = function() {
+        self.submitText('Submitting...');
     };
 }
 Form.prototype = Object.create(Container.prototype);
@@ -207,12 +207,14 @@ function Group(json, parent) {
 
     self.parent = parent;
     self.rel_ix = ko.observable(relativeIndex(self.ix()));
-    self.isRepetition = parent.isRepeat; // The Group belongs to a Repeat
+    self.isRepetition = parent instanceof Repeat;
     if (json.hasOwnProperty('domain_meta') && json.hasOwnProperty('style')) {
         self.domain_meta = parse_meta(json.datatype, val);
     }
 
     if (self.isRepetition) {
+        // If the group is part of a repetition the index can change if the user adds or deletes
+        // repeat groups.
         self.ix.subscribe(function(newValue) {
             self.rel_ix(relativeIndex(self.ix()));
         });
@@ -242,7 +244,6 @@ function Repeat(json, parent) {
     if (json.hasOwnProperty('domain_meta') && json.hasOwnProperty('style')) {
         self.domain_meta = parse_meta(json.datatype, val);
     }
-    self.isRepeat = true;
     self.templateType = 'repeat';
 
     self.newRepeat = function() {
@@ -272,6 +273,9 @@ function Question(json, parent) {
         self.domain_meta = parse_meta(json.datatype, val);
     }
     self.throttle = 200;
+
+    // pendingAnswer is a copy of an answer being submitted, so that we know not to reconcile a new answer
+    // until the question has received a response from the server.
     self.pendingAnswer = null;
 
     self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
@@ -281,8 +285,9 @@ function Question(json, parent) {
     };
     self.afterRender = function() { self.entry.afterRender(); };
 
+    // Returns true if the entry is valid
     self.prevalidate = function() {
-        return this.entry.prevalidate();
+        return self.entry.prevalidate();
     }
 
     self.onchange = _.throttle(function() {
@@ -424,7 +429,7 @@ Formplayer.Utils.answersEqual = function(answer1, answer2) {
         return _.isEqual(answer1, answer2);
     }
     return false;
-}
+};
 
 /**
  * Initializes a new form to be used by the formplayer.
