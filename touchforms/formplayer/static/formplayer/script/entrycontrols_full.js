@@ -291,7 +291,7 @@ function GeoPointEntry(question, options) {
     };
 
     self.onClear = function() {
-        self.answer(null);
+        self.answer([]);
     };
 
     window.gMapsCallback = function() {
@@ -301,7 +301,7 @@ function GeoPointEntry(question, options) {
             center: new google.maps.LatLng(self.DEFAULT.lat, self.DEFAULT.lon),
             zoom: self.DEFAULT.zoom
         });
-        if (self.answer()) {
+        if (self.answer().length) {
             self.map.setCenter(new google.maps.LatLng(self.answer()[0], self.answer()[1]));
             self.map.setZoom(self.DEFAULT.anszoom);
         }
@@ -319,10 +319,10 @@ function GeoPointEntry(question, options) {
     };
 
     self.formatLat = function() {
-        return self.formatCoordinate(self.answer() ? self.answer()[0] : null, ['N', 'S']);
+        return self.formatCoordinate(self.answer()[0] || null, ['N', 'S']);
     };
-    self.formatLon = function() { 
-        return self.formatCoordinate(self.answer() ? self.answer()[1] : null, ['E', 'W']);
+    self.formatLon = function() {
+        return self.formatCoordinate(self.answer()[1] || null, ['E', 'W']);
     };
     self.formatCoordinate = function(coordinate, cardinalities) {
         var cardinality = coordinate >= 0 ? cardinalities[0] : cardinalities [1];
