@@ -63,7 +63,13 @@
 
 <script type="text/html" id="question-fullform-ko-template">
     <!-- ko if: datatype() !== 'info' -->
-    <div class="q control-group" data-bind="css: { error: error, required: $data.required }">
+    <div class="q control-group" data-bind="
+            css: {
+                error: error,
+                required: $data.required,
+                dirty: dirty
+            }
+        ">
         <label class="caption control-label" data-bind="html: caption_markdown() || caption()"></label>
         <div class="widget-container controls">
             <div class="widget" data-bind="
@@ -121,7 +127,7 @@
 
 <script type="text/html" id="str-entry-ko-template">
     <textarea class="textfield" data-bind="
-        value: $data.answer,
+        value: $data.rawAnswer,
         attr: {
             maxlength: lengthLimit,
         }
@@ -132,7 +138,7 @@
 </script>
 <script type="text/html" id="int-entry-ko-template">
     <input type="number" data-bind="
-        value: $data.answer,
+        value: $data.rawAnswer,
         attr: { maxlength: lengthLimit }
     "/>
     <span class="help-block type" data-bind="
@@ -141,7 +147,7 @@
 </script>
 <script type="text/html" id="float-entry-ko-template">
     <input type="number" step="any" data-bind="
-        value: $data.answer,
+        value: $data.rawAnswer,
         attr: { maxlength: lengthLimit }
     "/>
     <span class="help-block type" data-bind="
@@ -150,7 +156,7 @@
 </script>
 <script type="text/html" id="phone-entry-ko-template">
     <input type="text" data-bind="
-        value: $data.answer
+        value: $data.rawAnswer
     "/>
     <span class="help-block type" data-bind="
         text: helpText()
@@ -188,10 +194,11 @@
     </div>
 </script>
 <script type="text/html" id="select-entry-ko-template">
+    <div data-bind="text: rawAnswer"></div>
     <div class="sel" data-bind="foreach: choices, as: 'choice'">
         <label data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }">
             <input data-bind="
-                checked: $parent.answer,
+                checked: $parent.rawAnswer,
                 value: $index() + 1,
                 attr: {
                     id: 'group-' + $parent.entryId + '-choice-' + $index(),
@@ -218,7 +225,7 @@
 
 <script type="text/html" id="time-entry-ko-template">
     <div class="input-append">
-        <input type="text" data-bind="value: $data.answer"/>
+        <input type="text" data-bind="value: $data.rawAnswer"/>
         <span class="add-on" data-bind="text: helpText()"></span>
     </div>
     <span class="help-block">24-hour clock</span>

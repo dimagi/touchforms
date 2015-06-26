@@ -143,20 +143,26 @@ Container.prototype.fromJS = function(json) {
                 }
             },
             update: function(options) {
+                // These questions should be an array as a default
                 if (options.data.datatype === Formplayer.Const.MULTI_SELECT) {
-
-                    if (options.target.pendingAnswer !== null &&
-                            options.target.pendingAnswer !== undefined) {
-                        options.data.answer = _.clone(options.target.pendingAnswer);
+                    options.data.answer = options.data.answer || [];
+                }
+                if (options.target.pendingAnswer && options.target.pendingAnswer() !== null &&
+                        options.target.pendingAnswer() !== undefined) {
+                    // There is a request in progress
+                    if (Formplayer.Utils.answersEqual(options.data.answer, options.target.pendingAnswer())) {
+                        // We can now mark it as not dirty
+                        options.data.answer = _.clone(options.target.pendingAnswer());
+                        options.target.pendingAnswer(null);
                     } else {
-                        // Need to default to an array of strings instead of integers
-                        options.data.answer = _.map(options.data.answer, function(d) { return '' + d; });
+                        // still dirty, keep answer the same as the pending one
+                        options.data.answer = _.clone(options.target.pendingAnswer());
                     }
                 }
                 return options.target;
             },
             key: function(data) {
-                return cmpkey(data);
+                return data.uuid || data.ix;
             }
         }
     }
@@ -184,9 +190,6 @@ function Form(json) {
         response.children = response.tree;
         delete response.tree;
         self.fromJS(response);
-        if (element instanceof Question) {
-            element.pendingAnswer = null;
-        }
     });
 
     self.submitting = function() {
@@ -276,7 +279,10 @@ function Question(json, parent) {
 
     // pendingAnswer is a copy of an answer being submitted, so that we know not to reconcile a new answer
     // until the question has received a response from the server.
-    self.pendingAnswer = null;
+    self.pendingAnswer = ko.observable(null);
+    self.dirty = ko.computed(function() {
+        return self.pendingAnswer() !== null;
+    });
 
     self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
     self.entry = getEntry(self);
@@ -292,8 +298,8 @@ function Question(json, parent) {
 
     self.onchange = _.throttle(function() {
         $.publish('formplayer.dirty', true);
-        if (self.prevalidate() && !Formplayer.Utils.answersEqual(self.pendingAnswer, self.answer())) {
-            self.pendingAnswer = _.clone(self.answer());
+        if (self.prevalidate()) {
+            self.pendingAnswer(_.clone(self.answer()));
             $.publish('formplayer.answer-question', self);
         }
     }, self.throttle);
@@ -331,19 +337,8 @@ Question.prototype.fromJS = function(json) {
                 return options.data ? markdowner.render(options.data) : null;
             }
         },
-        answer: {
-            update: function(options) {
-                if (self.pendingAnswer !== null && self.pendingAnswer !== undefined) {
-                    return self.pendingAnswer;
-                }
-                return options.data;
-            }
-        }
     };
 
-    if (json.datatype === Formplayer.Const.MULTI_SELECT) {
-        json.answer = _.map(json.answer, function(d) { return '' + d; });
-    }
     ko.mapping.fromJS(json, mapping, self);
 }
 
@@ -423,10 +418,10 @@ function set_pin(pin_threshold, $container, $elem) {
  * @param {(string|string[])} answer2 - A string of answers or a single answer
  */
 Formplayer.Utils.answersEqual = function(answer1, answer2) {
-    if (answer1 === answer2) {
-        return true;
-    } else if (answer1 instanceof Array && answer2 instanceof Array) {
+    if (answer1 instanceof Array && answer2 instanceof Array) {
         return _.isEqual(answer1, answer2);
+    } else if (answer1 === answer2) {
+        return true;
     }
     return false;
 };

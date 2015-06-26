@@ -21,9 +21,16 @@ function Entry(question, options) {
     };
     if (self.answer) {
         self.answer.subscribe(self.onAnswerChange.bind(self));
+        self.rawAnswer = ko.observable(question.answer());
+        self.rawAnswer.subscribe(self.onPreProcess.bind(self));
     }
 }
 Entry.prototype.onAnswerChange = function(newValue) {};
+
+// This should set the answer value
+Entry.prototype.onPreProcess = function(newValue) {
+    this.answer(newValue);
+};
 
 
 /**
@@ -112,6 +119,10 @@ function IntEntry(question, options) {
 IntEntry.prototype = Object.create(FreeTextEntry.prototype);
 IntEntry.prototype.constructor = FreeTextEntry;
 
+IntEntry.prototype.onPreProcess = function(newValue) {
+    this.answer(+newValue);
+};
+
 
 function PhoneEntry(question, options) {
     IntEntry.call(this, question, options);
@@ -158,30 +169,34 @@ function MultiSelectEntry(question, options) {
     self.templateType = 'select';
     self.choices = question.choices;
     self.isMulti = true;
+    self.rawAnswer = ko.observableArray(question.answer());
+    self.rawAnswer.subscribe(self.onPreProcess.bind(self));
 
     self.onClear = function() {
-        self.answer([]);
+        self.rawAnswer([]);
     };
 
-    var previousAnswer = null;
-    self.answer.subscribe(function(oldValue) {
-        if (_.isArray(oldValue)) {
-            // Need to make copy since oldValue gets mutated
-            self.previousAnswer = oldValue.slice();
-        } else {
-            self.previousAnswer = oldValue;
-        }
-    }, self, 'beforeChange');
+    self.previousAnswer = null;
 }
 MultiSelectEntry.prototype = Object.create(Entry.prototype);
 MultiSelectEntry.prototype.constructor = Entry;
 
 MultiSelectEntry.prototype.onAnswerChange = function(newValue) {
-    var self = this;
-    if (Formplayer.Utils.answersEqual(self.previousAnswer, newValue)) {
+    if (Formplayer.Utils.answersEqual(this.answer(), this.previousAnswer)) {
         return;
     }
-    self.question.onchange();
+    this.question.onchange();
+    this.previousAnswer = this.answer();
+};
+
+MultiSelectEntry.prototype.onPreProcess = function(newValue) {
+    var processed = _.map(newValue, function(d) { return +d });
+    if (newValue.length && !Formplayer.Utils.answersEqual(processed, this.answer())) {
+        this.previousAnswer = this.answer();
+        this.answer(processed);
+    } else {
+        this.answer([]);
+    }
 };
 
 
@@ -190,13 +205,21 @@ MultiSelectEntry.prototype.onAnswerChange = function(newValue) {
  */
 function SingleSelectEntry(question, options) {
     var self = this;
-    MultiSelectEntry.call(this, question, options);
+    Entry.call(this, question, options);
+    self.choices = question.choices;
     self.templateType = 'select';
     self.isMulti = false;
-    self.onClear = function() { self.answer(null); };
+    self.onClear = function() { self.rawAnswer(null); };
 }
 SingleSelectEntry.prototype = Object.create(MultiSelectEntry.prototype);
 SingleSelectEntry.prototype.constructor = MultiSelectEntry;
+SingleSelectEntry.prototype.onPreProcess = function(newValue) {
+    if (newValue === null) {
+        this.answer(null);
+    } else {
+        this.answer(+newValue);
+    }
+};
 
 
 function DateEntry(question, options) {

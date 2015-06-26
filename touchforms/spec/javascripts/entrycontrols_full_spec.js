@@ -36,11 +36,12 @@ describe('Entries', function() {
         expect(entry instanceof IntEntry).toBe(true);
         expect(entry.templateType).toBe('int');
 
-        entry.answer(1234);
+        entry.rawAnswer('1234');
         valid = entry.prevalidate();
         expect(valid).toBe(true);
         this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
+        expect(entry.answer()).toBe(1234);
 
         entry.answer('abc');
         valid = entry.prevalidate();
@@ -54,11 +55,12 @@ describe('Entries', function() {
         expect(entry instanceof FloatEntry).toBe(true);
         expect(entry.templateType).toBe('float');
 
-        entry.answer(2.3);
+        entry.rawAnswer('2.3');
         valid = entry.prevalidate();
         expect(valid).toBe(true);
         this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
+        expect(entry.answer()).toBe(2.3);
 
         entry.answer('2.4');
         valid = entry.prevalidate();
@@ -85,33 +87,35 @@ describe('Entries', function() {
     it('Should return MultiSelectEntry', function() {
         questionJSON.datatype = Formplayer.Const.MULTI_SELECT;
         questionJSON.choices = ['a', 'b'];
-        questionJSON.answer = ['1']; // answer is based on a 1 indexed index of the choices
+        questionJSON.answer = null; // answer is based on a 1 indexed index of the choices
 
         entry = (new Question(questionJSON)).entry;
         expect(entry instanceof MultiSelectEntry).toBe(true);
         expect(entry.templateType).toBe('select');
+        expect(entry.answer()).toEqual(null);
 
-        entry.answer([]);
+        entry.rawAnswer([]);
         this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
+        expect(entry.answer()).toEqual([]);
 
-        entry.answer(['1']);
-        entry.onClear();
-        expect(entry.answer().length).toBe(0);
+        entry.rawAnswer(['1']);
+        expect(entry.answer()).toEqual([1]);
     });
 
     it('Should return SingleSelectEntry', function() {
         questionJSON.datatype = Formplayer.Const.SELECT;
         questionJSON.choices = ['a', 'b'];
-        questionJSON.answer = 'a';
+        questionJSON.answer = 1;
 
         entry = (new Question(questionJSON)).entry;
         expect(entry instanceof SingleSelectEntry).toBe(true);
         expect(entry.templateType).toBe('select');
 
-        entry.answer('b');
+        entry.rawAnswer('1');
         this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
+        expect(entry.answer()).toBe(1);
     });
 
     it('Should return DateEntry', function() {
@@ -175,9 +179,10 @@ describe('Entries', function() {
         expect(entry.answer()).toBe(null);
         expect(entry.templateType).toBe('phone');
 
-        entry.answer(1234);
+        entry.rawAnswer('1234');
         this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
+        expect(entry.answer()).toBe(1234);
 
         entry.answer('abc'); // Invalid entry should not answer question
         expect(spy.calledOnce).toBe(true);
