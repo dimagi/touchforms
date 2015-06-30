@@ -23,7 +23,7 @@ from org.javarosa.xpath.parser import XPathSyntaxException
 from org.javarosa.core.model.condition import EvaluationContext
 from org.javarosa.core.model.instance import ExternalDataInstance
 from org.commcare.api.util import UserDataUtils
-
+from java.io import FileInputStream, File
 from org.kxml2.io import KXmlParser
 
 from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
@@ -42,9 +42,11 @@ class CCInstances(InstanceInitializationFactory):
         self.username = username
         self.sandbox = UserDataUtils.getStaticStorage(username)
 
-        print "restore: ", type(restore)
+        print "restore: ", restore
 
-        UserDataUtils.parseIntoSandbox(restore, self.sandbox)
+        input_stream = FileInputStream(restore)
+
+        UserDataUtils.parseIntoSandbox(input_stream, self.sandbox)
 
 
     def generateRoot(self, instance):
