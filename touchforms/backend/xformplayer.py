@@ -38,8 +38,10 @@ from decorators import require_xform_session
 from xcp import CaseNotFound
 import persistence
 import settings
+import logging
 
 logger = logging.getLogger('formplayer.xformplayer')
+
 
 
 class NoSuchSession(Exception):
@@ -49,30 +51,36 @@ class NoSuchSession(Exception):
 class GlobalStateManager(object):
     instances = {}
     instance_id_counter = 0
-
     session_cache = {}
     
     def __init__(self, ctx):
         self.ctx = ctx
         self.lock = threading.Lock()
         self.ctx.setNumSessions(0)
-    
+
     def cache_session(self, xfsess):
         with self.lock:
             self.session_cache[xfsess.uuid] = xfsess
             self.ctx.setNumSessions(len(self.session_cache))
 
     def get_session(self, session_id, override_state=None):
+        logging.debug("Getting session id: " + str(session_id))
         with self.lock:
             try:
+                logging.debug("Getting session_cache " + str(self.session_cache[session_id]))
+                logging.debug("Getting session_cache state: " + str(self.session_cache[session_id].session_state()))
                 return self.session_cache[session_id]
             except KeyError:
                 # see if session has been persisted
+                logging.debug("Except key error id: " + str(session_id))
                 sess = persistence.restore(session_id, XFormSession, override_state)
+                logging.debug("Restored session with id: " + str(session_id))
                 if sess:
+                    logging.debug("Returning new session")
                     self.cache_session(sess)  # repopulate in-memory cache
                     return sess
                 else:
+                    logging.debug("No such session")
                     raise NoSuchSession()
         
     #todo: we're not calling this currently, but should, or else xform sessions will hang around in memory forever        
