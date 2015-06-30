@@ -6,3 +6,17 @@ PERSISTENCE_DIRECTORY = "/path/to/www/data/touchforms"
 
 # from jython_ssl import SSLContext, TRUST_ALL_CONTEXT
 # SSLContext.setDefault(TRUST_ALL_CONTEXT)
+
+USES_POSTGRES = True
+POSTGRES_TABLE = "formplayer_session"
+POSTGRES_JDBC_JAR = "{COMMCARE_HOME}/submodules/touchforms-src/touchforms/backend/jrlib/postgresql-9.4-1201.jdbc41.jar"
+
+POSTGRES_DATABASE = {
+        'HOST': 'localhost',
+        'PORT': '5432',
+        'NAME': 'hqdev',
+        'USER': 'django',
+        'PASSWORD': 'django',
+        #'SSL': True,  //only uncomment if your Postgres DB requires SSL connection
+        'PREPARE_THRESHOLD': 0, # only used for postgres bouncer
+}

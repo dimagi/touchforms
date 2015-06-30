@@ -10,7 +10,14 @@ import tempfile
 from django.contrib.auth.models import User
 
 VERSION_KEY = "version"
-UIVERSION_KEY = "uiVersion" 
+UIVERSION_KEY = "uiVersion"
+
+class Session(models.Model):
+    sess_id = models.CharField(max_length=100, primary_key=True)
+    sess_json = models.TextField()
+    last_modified = models.DateTimeField(null=True)
+    date_created = models.DateTimeField(null=True)
+
 
 class EntrySession(models.Model):
     session_id = models.CharField(max_length=100, primary_key=True)
