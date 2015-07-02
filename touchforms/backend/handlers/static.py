@@ -1,5 +1,5 @@
 from customhandlers import TouchformsFunctionHandler
-
+from java.text import SimpleDateFormat
 
 class StaticFunctionHandler(TouchformsFunctionHandler):
     """
@@ -32,3 +32,38 @@ class StaticFunctionHandler(TouchformsFunctionHandler):
 
     def eval(self, args, ec):
         return self._value
+
+
+class StaticDateFunctionHandler(StaticFunctionHandler):
+    """
+    A function handler that works just like the StaticFunctionHandler except it parses
+    the passed in value to a java.util.Date object.
+
+    Accepts strings in the following ISO-8601 formats:
+
+    - Dates: 2015-07-01
+    - Datetimes (UTC): 2015-07-01T14:52:58Z
+    - Datetimes with microseconds (UTC): 2015-07-01T14:52:58.473000Z
+
+    Fails hard if not passed a valid non-empty string in one of these formats
+    """
+
+    @classmethod
+    def slug(self):
+        return 'static-date'
+
+    def __init__(self, name, value):
+        self._name = name
+        if not value:
+            self._value = value
+        else:
+            if len(value) == 10:
+                # date format
+                parsed_value = SimpleDateFormat('yyyy-MM-dd').parse(value)
+            else:
+                # assume datetime format
+                # remove microseconds if necessary
+                if len(value) == 27:
+                    value = '%sZ' % value[:19]
+                parsed_value = SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss'Z'").parse(value)
+            self._value = parsed_value
