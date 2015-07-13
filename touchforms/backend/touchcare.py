@@ -33,20 +33,31 @@ logger = logging.getLogger('formplayer.touchcare')
 
 
 
+def get_restore_url(criteria=None):
+    query_url = '%s?%s' % (settings.RESTORE_URL, urllib.urlencode(criteria))
+    print "query url: ", query_url
 
 
 
 class CCInstances(InstanceInitializationFactory):
 
-    def __init__(self, username, restore):
+    def __init__(self, host, domain, auth, username, restore):
         self.username = username
         self.sandbox = UserDataUtils.getStaticStorage(username)
+        self.query_func = query_factory(host, domain, auth)
 
-        print "restore: ", restore
+        print "Query func: ", get_restore_url({'as': username + '@' + domain, 'version': '2.0'})
 
-        input_stream = FileInputStream(restore)
+        if not restore:
+            self.restore = self.restore(username)
+        else:
+            self.restore = restore
 
+        input_stream = FileInputStream(self.restore)
         UserDataUtils.parseIntoSandbox(input_stream, self.sandbox)
+
+    def restore(self, username):
+        print "restoring: ", username
 
 
     def generateRoot(self, instance):
@@ -109,7 +120,7 @@ def filter_cases(filter_expr, username, restore):
     modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
         {"filters": filter_expr}
 
-    ccInstances = CCInstances(username, restore)
+    ccInstances = CCInstances('space', 'localhost:8000', {}, username, restore)
     caseInstance = ExternalDataInstance("jr://instance/casedb", "casedb")
 
     try:
