@@ -32,11 +32,9 @@ from xcp import TouchFormsUnauthorized, TouchcareInvalidXPath, CaseNotFound
 logger = logging.getLogger('formplayer.touchcare')
 
 
-
 def get_restore_url(criteria=None):
     query_url = '%s?%s' % (settings.RESTORE_URL, urllib.urlencode(criteria))
-    print "query url: ", query_url
-
+    return query_url
 
 
 class CCInstances(InstanceInitializationFactory):
@@ -44,20 +42,24 @@ class CCInstances(InstanceInitializationFactory):
     def __init__(self, host, domain, auth, username, restore):
         self.username = username
         self.sandbox = UserDataUtils.getStaticStorage(username)
-        self.query_func = query_factory(host, domain, auth)
-
-        print "Query func: ", get_restore_url({'as': username + '@' + domain, 'version': '2.0'})
+        self.query_func = query_factory(host, domain, auth, 'raw')
+        self.query_url = get_restore_url({'as': username + '@' + domain, 'version': '2.0'})
 
         if not restore:
-            self.restore = self.restore(username)
+            restore_xml = self.restore(username)
+            text_file = open("restore.xml", "w")
+            text_file.write(restore_xml)
+            text_file.close()
+            self.restore = "restore.xml"
         else:
             self.restore = restore
 
         input_stream = FileInputStream(self.restore)
         UserDataUtils.parseIntoSandbox(input_stream, self.sandbox)
 
-    def restore(self, username):
-        print "restoring: ", username
+    def restore(self):
+        payload = self.query_func(self.query_url)
+        return payload
 
 
     def generateRoot(self, instance):
@@ -116,11 +118,11 @@ class CCInstances(InstanceInitializationFactory):
         return TreeElementParser(parser, 0, fixture_id).parse()
 
 
-def filter_cases(filter_expr, username, restore):
+def filter_cases(filter_expr, username, restore=None, auth=None):
     modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
         {"filters": filter_expr}
 
-    ccInstances = CCInstances('space', 'localhost:8000', {}, username, restore)
+    ccInstances = CCInstances('space', 'localhost:8000', auth, username, restore)
     caseInstance = ExternalDataInstance("jr://instance/casedb", "casedb")
 
     try:

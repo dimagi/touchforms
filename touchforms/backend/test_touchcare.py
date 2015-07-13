@@ -65,5 +65,27 @@ class TouchcareLedgerTest(unittest.TestCase):
         self.assertEqual(len(resp['cases']), 0)
         print "cases: ", resp['cases']
 
+
+
+class TouchcareRestoreTest(unittest.TestCase):
+
+    def setUp(self):
+        print "no setup"
+
+    def test_filter_cases(self):
+        filter_expr = "[case_name = 'derp']"
+
+        auth = {'type': 'http-digest',
+                'username': 'will@willslearningproject.commcarehq.org',
+                'key': '123'}
+
+        resp = touchcare.filter_cases(
+                filter_expr,
+                "will",
+                auth=auth,
+        )
+        self.assertEqual(len(resp['cases']), 1)
+        print "cases: ", resp['cases']
+
 if __name__ == '__main__':
     unittest.main()

@@ -74,4 +74,4 @@ logger.setLevel(logging.INFO)
 CASE_API_URL = '%s/cloudcare/api/cases/' % URL_ROOT
 FIXTURE_API_URL = '%s/cloudcare/api/fixtures' % URL_ROOT
 LEDGER_API_URL = '%s/cloudcare/api/ledgers/' % URL_ROOT
-RESTORE_URL = "https://www.commcarehq.org/hq/admin/phone/restore/"
+RESTORE_URL = '%s/phone/restore/' % URL_ROOT
