@@ -39,7 +39,7 @@ def get_restore_url(criteria=None):
 
 class CCInstances(InstanceInitializationFactory):
 
-    def __init__(self, sessionvars, auth, restore=None, needs_sync=True):
+    def __init__(self, sessionvars, auth, restore=None, needs_sync=False):
         self.vars = sessionvars
         self.username = sessionvars['username']
         self.auth = auth
@@ -87,10 +87,11 @@ class CCInstances(InstanceInitializationFactory):
         elif 'fixture' in ref:
             fixture_id = ref.split('/')[-1]
             user_id = self.vars['user_id']
-            ret = self._get_fixture(user_id, fixture_id)
-            # Unclear why this is necessary but it is
-            ret.setParent(instance.getBase())
-            return ret
+            print "Userid: ", user_id, " fixture id: ", fixture_id
+            fixture = UserDataUtils.loadFixture(self.sandbox, fixture_id, user_id)
+            root = fixture.getRoot()
+            root.setParent(instance.getBase())
+            return root
         elif 'ledgerdb' in ref:
             return LedgerInstanceTreeElement(
                 instance.getBase(),
@@ -113,18 +114,6 @@ class CCInstances(InstanceInitializationFactory):
 
             return from_bundle(sess.getSessionInstance(*([self.vars.get(k, '') for k in meta_keys] + \
                                                          [to_hashtable(clean_user_data)])))
-    
-    def _get_fixture(self, user_id, fixture_id):
-        query_url = '%(base)s/%(user)s/%(fixture)s' % { "base": settings.FIXTURE_API_URL, 
-                                                        "user": user_id,
-                                                        "fixture": fixture_id }
-        q = query_factory(self.vars.get('host'), self.vars['domain'], self.auth, format="raw")
-        results = q(query_url)
-        parser = KXmlParser()
-        parser.setInput(to_input_stream(results), "UTF-8")
-        parser.setFeature(KXmlParser.FEATURE_PROCESS_NAMESPACES, True)
-        parser.next()
-        return TreeElementParser(parser, 0, fixture_id).parse()
 
 
 def filter_cases(filter_expr, auth, session_data=None, restore=None):
@@ -148,6 +137,30 @@ def filter_cases(filter_expr, auth, session_data=None, restore=None):
         return {'cases': filter(lambda x: x, case_list.split(","))}
     except (XPathException, XPathSyntaxException), e:
         raise TouchcareInvalidXPath('Error querying cases with xpath %s: %s' % (filter_expr, str(e)))
+
+
+def get_fixtures(filter_expr, auth, session_data=None, restore=None):
+
+    modified_xpath = "join(',', instance('products')/products/product%(filters)s/@id)" % \
+        {"filters": filter_expr}
+
+    ccInstances = CCInstances(session_data, auth, restore)
+    productsInstance = ExternalDataInstance("jr://instance/fixture/commtrack:products", "products")
+
+    try:
+        productsInstance.initialize(ccInstances, "products")
+    except (HTTPError, URLError), e:
+        raise TouchFormsUnauthorized('Unable to connect to HQ: %s' % str(e))
+
+    instances = to_hashtable({"products": productsInstance})
+
+    try:
+        fixture_name = XPathFuncExpr.toString(
+            XPathParseTool.parseXPath(modified_xpath).eval(
+                EvaluationContext(None, instances)))
+        print "Fixture Name: ", fixture_name
+    except (XPathException, XPathSyntaxException), e:
+        raise TouchcareInvalidXPath('Error querying cases with xpath %s: %s' % (modified_xpath, str(e)))
 
 
 class Actions:

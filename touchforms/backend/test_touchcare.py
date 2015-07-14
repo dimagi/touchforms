@@ -61,14 +61,14 @@ class TouchcareLedgerTest(unittest.TestCase):
             'session_name': 'Village Healthe > Simple Form',
             'app_version': '2.0',
             'device_id': 'cloudcare',
-            'user_id': '51cd680c0bd1c21bb5e63dab99748248',
+            'user_id': 'a8f5a98c4ce767c35b9132bc75eb225c',
             'additional_filters': {'footprint': True},
             'domain': 'willslearningproject',
             'host': 'http://localhost:8000',
             'user_data': {},
             'case_id_new_RegCase_0': '1c2e7c76f0c84eaea5b44bc7d1d3caf0',
             'app_id': '6a48b8838d06febeeabb28c8c9516ab6',
-            'username': 'wspride-tc'
+            'username': 'ipm-test'
         }
 
     def test_filter_cases(self):
@@ -95,7 +95,15 @@ class TouchcareLedgerTest(unittest.TestCase):
         self.assertEqual(len(resp['cases']), 0)
         print "cases: ", resp['cases']
 
-
+    def test_get_fixtures(self):
+        filter_expr = "[name = 'Collier']"
+        resp = touchcare.get_fixtures(
+            filter_expr,
+            {},
+            self.session_data,
+            restore=self.restore,
+        )
+        print "Resp: ", resp
 
 class TouchcareRestoreTest(unittest.TestCase):
 
