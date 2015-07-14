@@ -39,25 +39,34 @@ def get_restore_url(criteria=None):
 
 class CCInstances(InstanceInitializationFactory):
 
-    def __init__(self, host, domain, auth, username, restore):
-        self.username = username
-        self.sandbox = UserDataUtils.getStaticStorage(username)
-        self.query_func = query_factory(host, domain, auth, 'raw')
-        self.query_url = get_restore_url({'as': username + '@' + domain, 'version': '2.0'})
+    def __init__(self, sessionvars, auth, restore=None, needs_sync=True):
+        self.vars = sessionvars
+        self.username = sessionvars['username']
+        self.auth = auth
+        self.sandbox = UserDataUtils.getStaticStorage(self.username)
+        self.host = sessionvars['host']
+        self.domain = sessionvars['domain']
+        self.query_func = query_factory(self.host, self.domain, self.auth, 'raw')
+        self.query_url = get_restore_url({'as': self.username + '@' + self.domain, 'version': '2.0'})
+
+        if needs_sync:
+            self.perform_ota_restore(restore)
+
+    def perform_ota_restore(self, restore=None):
 
         if not restore:
-            restore_xml = self.restore(username)
+            restore_xml = self.get_restore_xml()
             text_file = open("restore.xml", "w")
             text_file.write(restore_xml)
             text_file.close()
-            self.restore = "restore.xml"
+            restore_file = "restore.xml"
         else:
-            self.restore = restore
+            restore_file = restore
 
-        input_stream = FileInputStream(self.restore)
+        input_stream = FileInputStream(restore_file)
         UserDataUtils.parseIntoSandbox(input_stream, self.sandbox)
 
-    def restore(self):
+    def get_restore_xml(self):
         payload = self.query_func(self.query_url)
         return payload
 
@@ -118,11 +127,11 @@ class CCInstances(InstanceInitializationFactory):
         return TreeElementParser(parser, 0, fixture_id).parse()
 
 
-def filter_cases(filter_expr, username, restore=None, auth=None):
+def filter_cases(filter_expr, auth, session_data=None, restore=None):
     modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
         {"filters": filter_expr}
 
-    ccInstances = CCInstances('space', 'localhost:8000', auth, username, restore)
+    ccInstances = CCInstances(session_data, auth, restore)
     caseInstance = ExternalDataInstance("jr://instance/casedb", "casedb")
 
     try:

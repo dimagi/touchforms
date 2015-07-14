@@ -131,6 +131,7 @@ def query_factory(host='', domain='', auth=None, format="json"):
         elif auth['type'] == 'django-session':
             opener = urllib2.build_opener()
             opener.addheaders.append(('Cookie', 'sessionid=%s' % auth['key']))
+            print "Using django-session auth: ", auth['key']
             req = lambda url: opener.open(url)
         elif auth['type'] in ('http', 'http-digest'):
             password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
