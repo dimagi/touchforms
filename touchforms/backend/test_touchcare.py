@@ -26,7 +26,7 @@ class TouchcareTest(unittest.TestCase):
             'user_data': {},
             'case_id_new_RegCase_0': '1c2e7c76f0c84eaea5b44bc7d1d3caf0',
             'app_id': '6a48b8838d06febeeabb28c8c9516ab6',
-            'username': 'wspride-tc'
+            'username': 'wspride-tc-2'
         }
 
     def test_filter_cases(self):
@@ -49,8 +49,22 @@ class TouchcareTest(unittest.TestCase):
                 {},
                 self.session_data,
                 restore=self.restore,
+                needs_sync=False,
         )
         self.assertEqual(len(resp['cases']), 0)
+        print "cases: ", resp['cases']
+
+    def test_filter_cases_3(self):
+        filter_expr = "[case_name = 'case']"
+
+        resp = touchcare.filter_cases(
+                filter_expr,
+                {},
+                self.session_data,
+                restore=self.restore,
+                needs_sync=False,
+        )
+        self.assertEqual(len(resp['cases']), 2)
         print "cases: ", resp['cases']
 
 class TouchcareLedgerTest(unittest.TestCase):
@@ -119,7 +133,7 @@ class TouchcareRestoreTest(unittest.TestCase):
             'user_data': {},
             'case_id_new_RegCase_0': '1c2e7c76f0c84eaea5b44bc7d1d3caf0',
             'app_id': '6a48b8838d06febeeabb28c8c9516ab6',
-            'username': 'wspride-tc'
+            'username': 'will'
         }
 
     def test_filter_cases(self):
@@ -130,9 +144,10 @@ class TouchcareRestoreTest(unittest.TestCase):
                 'key': '123'}
 
         resp = touchcare.filter_cases(
-                filter_expr,
-                auth=auth,
-                session_data=self.session_data,
+            filter_expr,
+            auth=auth,
+            session_data=self.session_data,
+            needs_sync=True,
         )
         self.assertEqual(len(resp['cases']), 1)
         print "cases: ", resp['cases']

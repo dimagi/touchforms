@@ -16,6 +16,7 @@ from org.commcare.cases.model import Case
 from org.commcare.cases.ledger import Ledger
 from org.commcare.util import CommCareSession
 from org.javarosa.xml import TreeElementParser
+from java.util import Date
 
 from org.javarosa.xpath.expr import XPathFuncExpr
 from org.javarosa.xpath import XPathParseTool, XPathException
@@ -39,7 +40,7 @@ def get_restore_url(criteria=None):
 
 class CCInstances(InstanceInitializationFactory):
 
-    def __init__(self, sessionvars, auth, restore=None, needs_sync=False):
+    def __init__(self, sessionvars, auth, restore=None, force_sync=False):
         self.vars = sessionvars
         self.username = sessionvars['username']
         self.auth = auth
@@ -49,10 +50,14 @@ class CCInstances(InstanceInitializationFactory):
         self.query_func = query_factory(self.host, self.domain, self.auth, 'raw')
         self.query_url = get_restore_url({'as': self.username + '@' + self.domain, 'version': '2.0'})
 
-        if needs_sync:
+        if force_sync or self.needs_sync():
             self.perform_ota_restore(restore)
 
+        self.last_sync = self.sandbox.getLastSync()
+
     def perform_ota_restore(self, restore=None):
+
+        self.sandbox = UserDataUtils.getClearedStaticStorage(self.username)
 
         if not restore:
             restore_xml = self.get_restore_xml()
@@ -69,6 +74,14 @@ class CCInstances(InstanceInitializationFactory):
     def get_restore_xml(self):
         payload = self.query_func(self.query_url)
         return payload
+
+    def needs_sync(self):
+        self.last_sync = self.sandbox.getLastSync()
+        current_time = Date()
+        hours_passed = (current_time.getTime() - self.last_sync.getTime())/(1000 * 60 * 60)
+        if hours_passed > settings.SQLITE_STALENESS_WINDOW:
+            return True
+        return False
 
 
     def generateRoot(self, instance):
@@ -116,11 +129,11 @@ class CCInstances(InstanceInitializationFactory):
                                                          [to_hashtable(clean_user_data)])))
 
 
-def filter_cases(filter_expr, auth, session_data=None, restore=None):
+def filter_cases(filter_expr, auth, session_data=None, restore=None, needs_sync=True):
     modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
         {"filters": filter_expr}
 
-    ccInstances = CCInstances(session_data, auth, restore)
+    ccInstances = CCInstances(session_data, auth, restore, needs_sync)
     caseInstance = ExternalDataInstance("jr://instance/casedb", "casedb")
 
     try:
