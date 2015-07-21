@@ -332,7 +332,7 @@ def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, offline=False):
         settings.PERSIST_SESSIONS = False
     ext_mod = settings.EXTENSION_MODULES
 
-    xformplayer._init(init_gui())
+    xformplayer._init()
 
     gw = XFormHTTPGateway(port, stale_window, ext_mod)
     gw.start()

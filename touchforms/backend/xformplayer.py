@@ -53,15 +53,12 @@ class GlobalStateManager(object):
     instance_id_counter = 0
     session_cache = {}
     
-    def __init__(self, ctx):
-        self.ctx = ctx
+    def __init__(self):
         self.lock = threading.Lock()
-        self.ctx.setNumSessions(0)
 
     def cache_session(self, xfsess):
         with self.lock:
             self.session_cache[xfsess.uuid] = xfsess
-            self.ctx.setNumSessions(len(self.session_cache))
 
     def get_session(self, session_id, override_state=None):
         logging.debug("Getting session id: " + str(session_id))
@@ -117,8 +114,6 @@ class GlobalStateManager(object):
 
         # note that persisted entries use the timeout functionality provided by the caching framework
 
-        self.ctx.setNumSessions(num_sess_active)
-
         return {'purged': num_sess_purged, 'active': num_sess_active}
 
     @classmethod
@@ -128,9 +123,9 @@ class GlobalStateManager(object):
 global_state = None
 
 
-def _init(ctx):
+def _init():
     global global_state
-    global_state = GlobalStateManager(ctx)
+    global_state = GlobalStateManager()
 
 
 def load_form(xform, instance=None, extensions=None, session_data=None, api_auth=None, form_context=None):
