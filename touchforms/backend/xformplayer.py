@@ -80,16 +80,7 @@ class GlobalStateManager(object):
                     logging.debug("No such session")
                     raise NoSuchSession()
         
-    #todo: we're not calling this currently, but should, or else xform sessions will hang around in memory forever        
-    def destroy_session(self, session_id):
-        # todo: should purge from cache too
-        with self.lock:
-            try:
-                del self.session_cache[session_id]
-            except KeyError:
-                raise NoSuchSession()
-        
-    def save_instance(self, data):                
+    def save_instance(self, data):
         with self.lock:
             self.instance_id_counter += 1
             self.instances[self.instance_id_counter] = data
