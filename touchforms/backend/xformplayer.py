@@ -93,12 +93,11 @@ class GlobalStateManager(object):
             now = time.time()
             for sess_id, sess in self.session_cache.items():
                 if now - sess.last_activity > sess.staleness_window:
-                    del self.session_cache[sess_id]
-                    num_sess_purged += 1
-                    # also purge the session lock
-                    if sess_id in self.session_locks:
-                        with self.session_locks[sess_id]:
-                            del self.session_locks[sess_id]
+                    with self.get_lock(sess_id):
+                        del self.session_cache[sess_id]
+                        num_sess_purged += 1
+                        # also purge the session lock
+                        del self.session_locks[sess_id]
                 else:
                     num_sess_active += 1
 
