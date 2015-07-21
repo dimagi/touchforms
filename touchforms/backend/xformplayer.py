@@ -720,19 +720,23 @@ def next_event (xfsess):
         ev.update(form_completion(xfsess))
         return ev
 
+
 def prev_event (xfsess):
     at_start, ev = False, xfsess.back_event()
     if ev['type'] == 'form-start':
         at_start, ev = True, xfsess.next_event()
     return at_start, ev
 
+
 def save_form(xfsess):
     xfsess.finalize()
     xml = xfsess.output()
     return (None, xml)
 
+
 def form_completion(xfsess):
     return dict(zip(('save-id', 'output'), save_form(xfsess)))
+
 
 def get_caption(prompt):
     return {
@@ -743,6 +747,7 @@ def get_caption(prompt):
         # TODO use prompt.getMarkdownText() when commcare jars support it
         'caption_markdown': prompt.getSpecialFormQuestionText("markdown"),
     }
+
 
 def purge():
     resp = global_state.purge()
