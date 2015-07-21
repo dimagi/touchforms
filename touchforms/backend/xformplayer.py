@@ -49,8 +49,6 @@ class NoSuchSession(Exception):
 
 
 class GlobalStateManager(object):
-    instances = {}
-    instance_id_counter = 0
     session_cache = {}
     
     def __init__(self):
@@ -80,12 +78,6 @@ class GlobalStateManager(object):
                     logging.debug("No such session")
                     raise NoSuchSession()
         
-    def save_instance(self, data):
-        with self.lock:
-            self.instance_id_counter += 1
-            self.instances[self.instance_id_counter] = data
-        return self.instance_id_counter
-
     def purge(self):
         num_sess_purged = 0
         num_sess_active = 0
