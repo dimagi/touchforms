@@ -90,11 +90,8 @@ class GlobalStateManager(object):
                     num_sess_purged += 1
                 else:
                     num_sess_active += 1
-            #what about saved instances? we don't track when they were saved
-            #for now will just assume instances are not saved
 
         # note that persisted entries use the timeout functionality provided by the caching framework
-
         return {'purged': num_sess_purged, 'active': num_sess_active}
 
     @classmethod
@@ -152,7 +149,7 @@ class SequencingException(Exception):
     pass
 
 
-class XFormSession:
+class XFormSession(object):
     def __init__(self, xform, instance=None, **params):
         self.uuid = params.get('uuid', uuid.uuid4().hex)
         self.lock = threading.Lock()
@@ -605,6 +602,7 @@ def init_context(xfsess):
         'title': xfsess.form_title(),
         'langs': xfsess.get_locales(),
     }
+
 
 def open_form(form_spec, inst_spec=None, **kwargs):
     try:
