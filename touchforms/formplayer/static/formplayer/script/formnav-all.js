@@ -128,8 +128,8 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
 
   this.deleteRepeat = function(repetition) {
     var juncture = getIx(repetition.parent);
-    var rep_ix = +(repetition.rel_ix().split(":").slice(-1)[0]) + 1;
-    this.ajaxfunc({'action': 'delete-repeat', 
+    var rep_ix = +(repetition.rel_ix().split(":").slice(-1)[0]);
+    this.ajaxfunc({'action': 'delete-repeat',
                    'session-id': this.session_id,
                    'ix': rep_ix,
                    'form_ix': juncture},

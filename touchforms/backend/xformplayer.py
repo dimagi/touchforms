@@ -529,7 +529,7 @@ class XFormSession:
         if (junc_ix):
             self.fec.jumpToIndex(junc_ix)
 
-        self.fec.deleteRepeat(rep_ix - 1)
+        self.fec.deleteRepeat(rep_ix)
         return self._parse_current_event()
 
     #sequential (old-style) repeats only
