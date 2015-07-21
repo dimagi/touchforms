@@ -725,14 +725,10 @@ def prev_event (xfsess):
         at_start, ev = True, xfsess.next_event()
     return at_start, ev
 
-def save_form (xfsess, persist=False):
+def save_form(xfsess):
     xfsess.finalize()
     xml = xfsess.output()
-    if persist:
-        instance_id = global_state.save_instance(xml)
-    else:
-        instance_id = None
-    return (instance_id, xml)
+    return (None, xml)
 
 def form_completion(xfsess):
     return dict(zip(('save-id', 'output'), save_form(xfsess)))
