@@ -86,8 +86,6 @@ class GlobalStateManager(object):
             self.instances[self.instance_id_counter] = data
         return self.instance_id_counter
 
-    #todo: add ways to get xml, delete xml, and option not to save xml at all
-
     def purge(self):
         num_sess_purged = 0
         num_sess_active = 0
