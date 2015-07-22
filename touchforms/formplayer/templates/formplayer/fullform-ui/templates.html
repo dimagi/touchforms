@@ -193,8 +193,6 @@
     </div>
 </script>
 <script type="text/html" id="select-entry-ko-template">
-    <div data-bind="text: answer"></div>
-    <div data-bind="text: rawAnswer"></div>
     <div class="sel" data-bind="foreach: choices, as: 'choice'">
         <label data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }">
             <input data-bind="
