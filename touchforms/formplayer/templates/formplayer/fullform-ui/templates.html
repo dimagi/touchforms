@@ -125,7 +125,7 @@
     </video>
 </script>
 
-<script type="text/html" id="str-entry-ko-template">
+<script type="text/html" id="text-entry-ko-template">
     <textarea class="textfield" data-bind="
         value: $data.rawAnswer,
         attr: {
@@ -136,27 +136,12 @@
         text: helpText()
     "></span>
 </script>
-<script type="text/html" id="int-entry-ko-template">
-    <input type="number" data-bind="
-        value: $data.rawAnswer,
-        attr: { maxlength: lengthLimit }
-    "/>
-    <span class="help-block type" data-bind="
-        text: helpText()
-    "></span>
-</script>
-<script type="text/html" id="float-entry-ko-template">
-    <input type="number" step="any" data-bind="
-        value: $data.rawAnswer,
-        attr: { maxlength: lengthLimit }
-    "/>
-    <span class="help-block type" data-bind="
-        text: helpText()
-    "></span>
-</script>
-<script type="text/html" id="phone-entry-ko-template">
+<script type="text/html" id="str-entry-ko-template">
     <input type="text" data-bind="
-        value: $data.rawAnswer
+        value: $data.rawAnswer,
+        attr: {
+            maxlength: lengthLimit,
+        }
     "/>
     <span class="help-block type" data-bind="
         text: helpText()

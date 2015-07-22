@@ -56,6 +56,10 @@ input:invalid {
   font-size: 70%;
 }
 
+.dirty .widget {
+    background-color: lightblue;
+}
+
 .q,.gr,.rep,.eoq {
   clear: both;
 }

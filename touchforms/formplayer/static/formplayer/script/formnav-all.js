@@ -94,12 +94,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
                    'ix': ix,
                    'answer': answer},
       function (resp) {
-        if (resp["status"] == "validation-error") {
-          adapter.showError(q, resp);
-        } else {
-          q.clearError();
           $.publish('adapter.reconcile', [resp, q]);
-        }
       });
 
       if(this.answerCallback !== undefined) {
@@ -148,7 +143,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
             accumulate_answers(val);
           });
       } else {
-        if (o.prevalidate()) {
+        if (o.isValid()) {
           answers[getIx(o)] = ko.utils.unwrapObservable(o.answer);
         } else {
           prevalidated = false;

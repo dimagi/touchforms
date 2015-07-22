@@ -43,11 +43,11 @@ function getIx(o) {
 }
 
 function getForIx(o, ix) {
-    if (o.type == 'question') {
+    if (ko.utils.unwrapObservable(o.type) === 'question') {
         return (getIx(o) == ix ? o : null);
     } else {
-        for (var i = 0; i < o.children.length; i++) {
-            var result = getForIx(o.children[i], ix);
+        for (var i = 0; i < o.children().length; i++) {
+            var result = getForIx(o.children()[i], ix);
             if (result) {
                 return result;
             }
@@ -143,17 +143,13 @@ Container.prototype.fromJS = function(json) {
                 }
             },
             update: function(options) {
-                // These questions should be an array as a default
-                if (options.data.datatype === Formplayer.Const.MULTI_SELECT) {
-                    options.data.answer = options.data.answer || [];
-                }
-                if (options.target.pendingAnswer && options.target.pendingAnswer() !== null &&
-                        options.target.pendingAnswer() !== undefined) {
+                if (options.target.pendingAnswer &&
+                        options.target.pendingAnswer() !== Formplayer.Const.NO_PENDING_ANSWER) {
                     // There is a request in progress
                     if (Formplayer.Utils.answersEqual(options.data.answer, options.target.pendingAnswer())) {
                         // We can now mark it as not dirty
                         options.data.answer = _.clone(options.target.pendingAnswer());
-                        options.target.pendingAnswer(null);
+                        options.target.pendingAnswer(Formplayer.Const.NO_PENDING_ANSWER);
                     } else {
                         // still dirty, keep answer the same as the pending one
                         options.data.answer = _.clone(options.target.pendingAnswer());
@@ -162,7 +158,7 @@ Container.prototype.fromJS = function(json) {
                 return options.target;
             },
             key: function(data) {
-                return data.uuid || data.ix;
+                return ko.utils.unwrapObservable(data.uuid) || ko.utils.unwrapObservable(data.ix);
             }
         }
     }
@@ -187,9 +183,19 @@ function Form(json) {
 
     $.unsubscribe('adapter');
     $.subscribe('adapter.reconcile', function(e, response, element) {
-        response.children = response.tree;
-        delete response.tree;
-        self.fromJS(response);
+        // TODO where does response status parsing belong?
+        if (response.status === 'validation-error') {
+            if (response.type === 'required') {
+                element.showError('An answer is required');
+            } else if (response.type === 'constraint') {
+                element.showError(resp.reason || 'This answer is outside the allowed range.');
+            }
+            element.pendingAnswer(Formplayer.Const.NO_PENDING_ANSWER);
+        } else {
+            response.children = response.tree;
+            delete response.tree;
+            self.fromJS(response);
+        }
     });
 
     self.submitting = function() {
@@ -270,7 +276,7 @@ function Question(json, parent) {
 
     self.fromJS(json);
     self.parent = parent;
-    self.error = ko.observable('');
+    self.error = ko.observable(null);
     self.rel_ix = ko.observable(relativeIndex(self.ix()));
     if (json.hasOwnProperty('domain_meta') && json.hasOwnProperty('style')) {
         self.domain_meta = parse_meta(json.datatype, val);
@@ -279,10 +285,14 @@ function Question(json, parent) {
 
     // pendingAnswer is a copy of an answer being submitted, so that we know not to reconcile a new answer
     // until the question has received a response from the server.
-    self.pendingAnswer = ko.observable(null);
+    self.pendingAnswer = ko.observable(Formplayer.Const.NO_PENDING_ANSWER);
     self.dirty = ko.computed(function() {
-        return self.pendingAnswer() !== null;
+        return self.pendingAnswer() !== Formplayer.Const.NO_PENDING_ANSWER;
     });
+
+    self.isValid = function() {
+        return self.error() === null;
+    };
 
     self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
     self.entry = getEntry(self);
@@ -291,17 +301,10 @@ function Question(json, parent) {
     };
     self.afterRender = function() { self.entry.afterRender(); };
 
-    // Returns true if the entry is valid
-    self.prevalidate = function() {
-        return self.entry.prevalidate();
-    }
-
     self.onchange = _.throttle(function() {
         $.publish('formplayer.dirty', true);
-        if (self.prevalidate()) {
-            self.pendingAnswer(_.clone(self.answer()));
-            $.publish('formplayer.answer-question', self);
-        }
+        self.pendingAnswer(_.clone(self.answer()));
+        $.publish('formplayer.answer-question', self);
     }, self.throttle);
 
     self.mediaSrc = function(resourceType) {
@@ -456,4 +459,8 @@ Formplayer.Const = {
     TIME: 'time',
     GEO: 'geo',
     INFO: 'info',
+
+    // Note it's important to differentiate these two
+    NO_PENDING_ANSWER: undefined,
+    NO_ANSWER: null,
 };

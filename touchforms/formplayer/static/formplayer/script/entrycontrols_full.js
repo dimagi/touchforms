@@ -10,11 +10,18 @@ function Entry(question, options) {
     self.datatype = question.datatype();
     self.entryId = _.uniqueId(this.datatype);
 
-    self.prevalidate = function() {
-        return true;
+    // Returns true if the rawAnswer is valid, false otherwise
+    self.isValid = function(rawAnswer) {
+        return self.getErrorMessage(rawAnswer) === null;
     };
+
+    // Returns an error message given the answer. null if no error
+    self.getErrorMessage = function(rawAnswer) {
+        return null;
+    }
+
     self.clear = function() {
-        this.answer(null);
+        self.answer(Formplayer.Const.NO_ANSWER);
     };
     self.afterRender = function() {
       // Override with any logic that comes after rendering the Entry
@@ -27,9 +34,15 @@ function Entry(question, options) {
 }
 Entry.prototype.onAnswerChange = function(newValue) {};
 
-// This should set the answer value
+// This should set the answer value if the answer is valid. If the raw answer is valid, this
+// function performs any sort of processing that needs to be done before setting the answer.
 Entry.prototype.onPreProcess = function(newValue) {
-    this.answer(newValue);
+    if (this.isValid(newValue)) {
+        this.answer(newValue);
+        this.question.clearError();
+    } else {
+        this.question.showError(this.getErrorMessage(newValue));
+    }
 };
 
 
@@ -67,22 +80,20 @@ UnsupportedEntry.prototype.constructor = Entry;
 function FreeTextEntry(question, options) {
     var self = this;
     Entry.call(self, question, options);
-    self.templateType = 'str';
+    self.templateType = 'text';
     self.domain = question.domain ? question.domain() : 'full';
     self.lengthLimit = options.lengthLimit || 10000;
     self.prose = question.domain_meta ? question.domain_meta().longtext : false;
 
-    self.prevalidate = function() {
-        if (!self.answer()) { return true; }
-        var errmsg = this._prevalidate(self.answer());
+    self.isValid = function(rawAnswer) {
+        var errmsg = self.getErrorMessage(rawAnswer);
         if (errmsg) {
-            self.question.showError(errmsg);
             return false;
         }
         return true;
     }
 
-    self._prevalidate = function(raw) {
+    self.getErrorMessage = function(raw) {
         return null;
     };
 
@@ -94,8 +105,7 @@ FreeTextEntry.prototype = Object.create(Entry.prototype);
 FreeTextEntry.prototype.constructor = Entry;
 
 FreeTextEntry.prototype.onAnswerChange = function(newValue) {
-    var self = this;
-    self.question.onchange();
+    this.question.onchange();
 };
 
 
@@ -103,15 +113,16 @@ FreeTextEntry.prototype.onAnswerChange = function(newValue) {
  * The entry that defines an integer input. Only accepts whole numbers
  */
 function IntEntry(question, options) {
-    FreeTextEntry.call(this, question, options);
-    this.templateType = 'int';
-    this.lengthLimit = options.lengthLimit;
+    var self = this;
+    FreeTextEntry.call(self, question, options);
+    self.templateType = 'str';
+    self.lengthLimit = options.lengthLimit;
 
-    this._prevalidate = function(raw) {
-        return (isNaN(+raw) || +raw != Math.floor(+raw) ? "Not a valid whole number" : null);
+    self.getErrorMessage = function(rawAnswer) {
+        return (isNaN(+rawAnswer) || +rawAnswer != Math.floor(+rawAnswer) ? "Not a valid whole number" : null);
     };
 
-    this.helpText = function() {
+    self.helpText = function() {
         return 'Number';
     };
 
@@ -120,16 +131,25 @@ IntEntry.prototype = Object.create(FreeTextEntry.prototype);
 IntEntry.prototype.constructor = FreeTextEntry;
 
 IntEntry.prototype.onPreProcess = function(newValue) {
-    this.answer(+newValue);
+    if (this.isValid(newValue)) {
+        if (newValue === '') {
+            this.answer(Formplayer.Const.NO_ANSWER);
+        } else {
+            this.answer(+newValue);
+        }
+        this.question.clearError();
+    } else {
+        this.question.showError(this.getErrorMessage(newValue));
+    }
 };
 
 
 function PhoneEntry(question, options) {
-    IntEntry.call(this, question, options);
-    this.templateType = 'phone';
+    FreeTextEntry.call(this, question, options);
+    this.templateType = 'str';
 
-    this._prevalidate = function(raw) {
-        return (!(/^\+?[0-9]+$/.test(raw)) ? "This does not appear to be a valid phone/numeric number" : null);
+    this.getErrorMessage = function(rawAnswer) {
+        return (!(/^\+?[0-9]+$/.test(rawAnswer)) ? "This does not appear to be a valid phone/numeric number" : null);
     };
 
     this.helpText = function() {
@@ -137,19 +157,19 @@ function PhoneEntry(question, options) {
     };
 
 }
-PhoneEntry.prototype = Object.create(IntEntry.prototype);
-PhoneEntry.prototype.constructor = IntEntry;
+PhoneEntry.prototype = Object.create(FreeTextEntry.prototype);
+PhoneEntry.prototype.constructor = FreeTextEntry;
 
 
 /**
  * The entry that defines an float input. Only accepts real numbers
  */
 function FloatEntry(question, options) {
-    FreeTextEntry.call(this, question, options);
-    this.templateType = 'float';
+    IntEntry.call(this, question, options);
+    this.templateType = 'str';
 
-    this._prevalidate = function(raw) {
-        return (isNaN(+raw) ? "Not a valid number" : null);
+    this.getErrorMessage = function(rawAnswer) {
+        return (isNaN(+rawAnswer) ? "Not a valid number" : null);
     }
 
     this.helpText = function() {
@@ -176,6 +196,10 @@ function MultiSelectEntry(question, options) {
         self.rawAnswer([]);
     };
 
+    self.isValid = function(rawAnswer) {
+        return _.isArray(rawAnswer);
+    }
+
     self.previousAnswer = null;
 }
 MultiSelectEntry.prototype = Object.create(Entry.prototype);
@@ -190,12 +214,18 @@ MultiSelectEntry.prototype.onAnswerChange = function(newValue) {
 };
 
 MultiSelectEntry.prototype.onPreProcess = function(newValue) {
-    var processed = _.map(newValue, function(d) { return +d });
-    if (newValue.length && !Formplayer.Utils.answersEqual(processed, this.answer())) {
-        this.previousAnswer = this.answer();
-        this.answer(processed);
-    } else {
-        this.answer([]);
+    var processed;
+    if (this.isValid(newValue)) {
+        if (newValue.length) {
+            processed = _.map(newValue, function(d) { return +d });
+        } else {
+            processed = Formplayer.Const.NO_ANSWER;
+        }
+
+        if (!Formplayer.Utils.answersEqual(processed, this.answer())) {
+            this.previousAnswer = this.answer();
+            this.answer(processed);
+        }
     }
 };
 
@@ -209,13 +239,14 @@ function SingleSelectEntry(question, options) {
     self.choices = question.choices;
     self.templateType = 'select';
     self.isMulti = false;
-    self.onClear = function() { self.rawAnswer(null); };
+    self.onClear = function() { self.rawAnswer(Formplayer.Const.NO_ANSWER); };
+    self.isValid = function() { return true };
 }
 SingleSelectEntry.prototype = Object.create(MultiSelectEntry.prototype);
 SingleSelectEntry.prototype.constructor = MultiSelectEntry;
 SingleSelectEntry.prototype.onPreProcess = function(newValue) {
-    if (newValue === null) {
-        this.answer(null);
+    if (newValue === Formplayer.Const.NO_ANSWER) {
+        this.answer(newValue);
     } else {
         this.answer(+newValue);
     }
@@ -242,15 +273,12 @@ function DateEntry(question, options) {
             self.answer(raw ? $.datepicker.formatDate('yy-mm-dd', raw) : null);
         });
     }
-
-    self.answer = question.answer;
-    self.answer.subscribe(function(newValue) {
-        self.question.onchange();
-    });
-
-}
+};
 DateEntry.prototype = Object.create(Entry.prototype);
 DateEntry.prototype.constructor = Entry;
+DateEntry.prototype.onAnswerChange = function(newValue) {
+    this.question.onchange();
+};
 
 
 function TimeEntry(question, options) {
@@ -258,8 +286,8 @@ function TimeEntry(question, options) {
     FreeTextEntry.call(self, question, options);
     self.templateType = 'time';
 
-    self._prevalidate = function(raw) {
-        var timeParts = self.parseAnswer(raw);
+    self.getErrorMessage = function(rawAnswer) {
+        var timeParts = self.parseAnswer(rawAnswer);
         if (timeParts === null ||
                 timeParts.hour < 0 || timeParts.hour >= 24 ||
                 timeParts.min < 0 || timeParts.min >= 60) {
@@ -284,19 +312,22 @@ function TimeEntry(question, options) {
 TimeEntry.prototype = Object.create(FreeTextEntry.prototype);
 TimeEntry.prototype.constructor = FreeTextEntry;
 
-TimeEntry.prototype.onAnswerChange = function(newValue) {
+TimeEntry.prototype.onPreProcess = function(newValue) {
     var self = this,
-        timeParts = self.parseAnswer(self.answer()),
-        formatted;
-    if (timeParts) {
-        formatted = intpad(timeParts.hour, 2) + ':' + intpad(timeParts.min, 2);
-        if (formatted !== self.answer()) {
-            self.answer(formatted);
-            return;
+        timeParts = self.parseAnswer(newValue),
+        processed;
+    if (self.isValid(newValue)) {
+        if (timeParts) {
+            processed = intpad(timeParts.hour, 2) + ':' + intpad(timeParts.min, 2);
+            if (!Formplayer.Utils.answersEqual(processed, self.answer())) {
+                self.answer(processed);
+            }
         }
+        self.question.clearError();
+    } else {
+        self.question.showError(self.getErrorMessage(newValue));
     }
-    self.question.onchange();
-};
+}
 
 
 function GeoPointEntry(question, options) {
@@ -305,6 +336,8 @@ function GeoPointEntry(question, options) {
     self.templateType = 'geo';
     self.apiKey = 'https://maps.googleapis.com/maps/api/js?key=' + window.GMAPS_API_KEY + '&sensor=false';
     self.map = null;
+    self.rawAnswer = ko.observableArray(question.answer() || []);
+    self.rawAnswer.subscribe(self.onPreProcess.bind(self));
 
     self.DEFAULT = {
         lat: 30,
@@ -314,7 +347,7 @@ function GeoPointEntry(question, options) {
     };
 
     self.onClear = function() {
-        self.answer([]);
+        self.rawAnswer([]);
     };
 
     window.gMapsCallback = function() {
@@ -324,8 +357,8 @@ function GeoPointEntry(question, options) {
             center: new google.maps.LatLng(self.DEFAULT.lat, self.DEFAULT.lon),
             zoom: self.DEFAULT.zoom
         });
-        if (self.answer().length) {
-            self.map.setCenter(new google.maps.LatLng(self.answer()[0], self.answer()[1]));
+        if (self.rawAnswer().length) {
+            self.map.setCenter(new google.maps.LatLng(self.rawAnswer()[0], self.rawAnswer()[1]));
             self.map.setZoom(self.DEFAULT.anszoom);
         }
         google.maps.event.addListener(self.map, "center_changed", self.updateCenter.bind(self));
@@ -338,14 +371,14 @@ function GeoPointEntry(question, options) {
 
     self.updateCenter = function() {
         var center = self.map.getCenter();
-        self.answer([center.lat(), center.lng()]);
+        self.rawAnswer([center.lat(), center.lng()]);
     };
 
     self.formatLat = function() {
-        return self.formatCoordinate(self.answer()[0] || null, ['N', 'S']);
+        return self.formatCoordinate(self.rawAnswer()[0] || null, ['N', 'S']);
     };
     self.formatLon = function() {
-        return self.formatCoordinate(self.answer()[1] || null, ['E', 'W']);
+        return self.formatCoordinate(self.rawAnswer()[1] || null, ['E', 'W']);
     };
     self.formatCoordinate = function(coordinate, cardinalities) {
         var cardinality = coordinate >= 0 ? cardinalities[0] : cardinalities [1];
@@ -366,16 +399,6 @@ function GeoPointEntry(question, options) {
             }
         });
     };
-
-    var previousAnswer = null;
-    self.answer.subscribe(function(oldValue) {
-        if (_.isArray(oldValue)) {
-            // Need to make copy since oldValue gets mutated
-            self.previousAnswer = oldValue.slice();
-        } else {
-            self.previousAnswer = oldValue;
-        }
-    }, self, 'beforeChange');
 }
 GeoPointEntry.prototype = Object.create(Entry.prototype);
 GeoPointEntry.prototype.constructor = Entry;
@@ -385,11 +408,18 @@ GeoPointEntry.prototype.onAnswerChange = function(newValue) {
     if (Formplayer.Utils.answersEqual(self.previousAnswer, newValue)) {
         return;
     }
-    if (newValue[0] && newValue[0].length) {
-        console.error('something weird');
-        console.error(newValue);
-    }
     self.question.onchange();
+    self.previousAnswer = self.answer();
+};
+
+GeoPointEntry.prototype.onPreProcess = function(newValue) {
+    var self = this;
+    if (newValue.length) {
+        self.previousAnswer = self.answer();
+        self.answer(newValue);
+    } else {
+        self.answer(Formplayer.Const.NO_ANSWER);
+    }
 };
 
 
