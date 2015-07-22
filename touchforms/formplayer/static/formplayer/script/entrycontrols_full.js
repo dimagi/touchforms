@@ -41,6 +41,9 @@ Entry.prototype.onPreProcess = function(newValue) {
     this.question.error(this.getErrorMessage(newValue));
 };
 
+/**
+ * Serves as the base for all entries that take an array answer.
+ */
 EntryArrayAnswer = function(question, options) {
     var self = this;
     Entry.call(self, question, options);
@@ -78,6 +81,9 @@ EntryArrayAnswer.prototype.onPreProcess = function(newValue) {
 };
 
 
+/**
+ * Serves as the base for all entries that take an answer that is not an array.
+ */
 EntrySingleAnswer = function(question, options) {
     var self = this;
     Entry.call(self, question, options);
@@ -122,7 +128,6 @@ UnsupportedEntry.prototype.constructor = Entry;
 
 /**
  * The entry that represents a free text input
- * TODO: Handle prose option
  */
 function FreeTextEntry(question, options) {
     var self = this;
