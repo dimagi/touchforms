@@ -304,11 +304,11 @@ function Question(json, parent) {
         return !self.dirty() && !self.error() && !self.serverError() && self.hasAnswered;
     });
     self.hasError = ko.computed(function() {
-        return self.error() || self.serverError();
+        return (self.error() || self.serverError()) && !self.dirty();
     });
 
     self.isValid = function() {
-        return self.error() === null && self.serverError === null;
+        return self.error() === null && self.serverError() === null;
     };
 
     self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');

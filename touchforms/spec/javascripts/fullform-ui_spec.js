@@ -200,7 +200,7 @@ describe('Fullform UI', function() {
 
     it('Should throttle answers', function() {
         questionJSON.datatype = Formplayer.Const.STRING;
-        question = new Question(questionJSON);
+        var question = new Question(questionJSON);
         question.answer('abc');
         this.clock.tick(question.throttle);
         expect(spy.callCount).toBe(1);
@@ -210,5 +210,17 @@ describe('Fullform UI', function() {
         expect(spy.callCount).toBe(1);
         this.clock.tick(10);
         expect(spy.callCount).toBe(2);
+    });
+
+    it('Should not be valid if question has serverError', function() {
+        questionJSON.datatype = Formplayer.Const.STRING;
+        var question = new Question(questionJSON);
+
+        question.serverError('Answer required');
+        expect(question.isValid()).toBe(false);
+
+        question.serverError(null);
+        expect(question.isValid()).toBe(true);
+
     });
 });

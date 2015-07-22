@@ -85,6 +85,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
   }
 
   this.answerQuestion = function (q) {
+    var self = this;
     var ix = getIx(q);
     var answer = q.answer();
 
@@ -95,11 +96,11 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
                    'answer': answer},
       function (resp) {
           $.publish('adapter.reconcile', [resp, q]);
+          if (self.answerCallback !== undefined) {
+              self.answerCallback(self.session_id);
+          }
       });
 
-      if(this.answerCallback !== undefined) {
-          this.answerCallback(this.session_id);
-      }
   };
 
   this.evaluateXPath = function(xpath, callback) {
