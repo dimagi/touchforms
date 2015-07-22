@@ -28,8 +28,6 @@ function Entry(question, options) {
     };
     if (self.answer) {
         self.answer.subscribe(self.onAnswerChange.bind(self));
-        self.rawAnswer = ko.observable(question.answer());
-        self.rawAnswer.subscribe(self.onPreProcess.bind(self));
     }
 }
 Entry.prototype.onAnswerChange = function(newValue) {};
@@ -43,6 +41,59 @@ Entry.prototype.onPreProcess = function(newValue) {
     this.question.error(this.getErrorMessage(newValue));
 };
 
+EntryArrayAnswer = function(question, options) {
+    var self = this;
+    Entry.call(self, question, options);
+    self.rawAnswer = ko.observableArray(_.map(question.answer(), function(d) {
+        return '' + d;
+    }));
+
+    self.rawAnswer.subscribe(self.onPreProcess.bind(self));
+
+}
+EntryArrayAnswer.prototype = Object.create(Entry.prototype);
+EntryArrayAnswer.prototype.constructor = Entry;
+EntryArrayAnswer.prototype.onAnswerChange = function(newValue) {
+    if (Formplayer.Utils.answersEqual(this.answer(), this.previousAnswer)) {
+        return;
+    }
+    this.question.onchange();
+    this.previousAnswer = this.answer();
+};
+EntryArrayAnswer.prototype.onPreProcess = function(newValue) {
+    var processed;
+    if (this.isValid(newValue)) {
+        if (newValue.length) {
+            processed = _.map(newValue, function(d) { return +d });
+        } else {
+            processed = Formplayer.Const.NO_ANSWER;
+        }
+
+        if (!Formplayer.Utils.answersEqual(processed, this.answer())) {
+            this.previousAnswer = this.answer();
+            this.answer(processed);
+        }
+    }
+    self.previousAnswer = null;
+};
+
+
+EntrySingleAnswer = function(question, options) {
+    var self = this;
+    Entry.call(self, question, options);
+    if (question.answer()) {
+        self.rawAnswer = ko.observable('' + question.answer());
+    } else {
+        self.rawAnswer = ko.observable(Formplayer.Const.NO_ANSWER);
+    }
+    self.rawAnswer.subscribe(self.onPreProcess.bind(self));
+}
+EntrySingleAnswer.prototype = Object.create(Entry.prototype);
+EntrySingleAnswer.prototype.constructor = Entry;
+EntrySingleAnswer.prototype.onAnswerChange = function(newValue) {
+    this.question.onchange();
+};
+
 
 /**
  * An entry that represent a question label.
@@ -50,7 +101,6 @@ Entry.prototype.onPreProcess = function(newValue) {
 function InfoEntry(question, options) {
     var self = this;
     Entry.call(self, question, options);
-    self.answer = question.answer;
     self.templateType = 'blank';
 }
 
@@ -65,7 +115,6 @@ function UnsupportedEntry(question, options) {
     var self = this;
     Entry.call(self, question, options);
     self.templateType = 'unsupported';
-    self.answer = null;
 }
 UnsupportedEntry.prototype = Object.create(Entry.prototype);
 UnsupportedEntry.prototype.constructor = Entry;
@@ -77,7 +126,7 @@ UnsupportedEntry.prototype.constructor = Entry;
  */
 function FreeTextEntry(question, options) {
     var self = this;
-    Entry.call(self, question, options);
+    EntrySingleAnswer.call(self, question, options);
     self.templateType = 'text';
     self.domain = question.domain ? question.domain() : 'full';
     self.lengthLimit = options.lengthLimit || 10000;
@@ -99,12 +148,8 @@ function FreeTextEntry(question, options) {
         return 'Free response';
     };
 }
-FreeTextEntry.prototype = Object.create(Entry.prototype);
-FreeTextEntry.prototype.constructor = Entry;
-
-FreeTextEntry.prototype.onAnswerChange = function(newValue) {
-    this.question.onchange();
-};
+FreeTextEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+FreeTextEntry.prototype.constructor = EntrySingleAnswer;
 
 
 /**
@@ -181,12 +226,10 @@ FloatEntry.prototype.constructor = IntEntry;
  */
 function MultiSelectEntry(question, options) {
     var self = this;
-    Entry.call(this, question, options);
+    EntryArrayAnswer.call(this, question, options);
     self.templateType = 'select';
     self.choices = question.choices;
     self.isMulti = true;
-    self.rawAnswer = ko.observableArray(question.answer());
-    self.rawAnswer.subscribe(self.onPreProcess.bind(self));
 
     self.onClear = function() {
         self.rawAnswer([]);
@@ -196,34 +239,14 @@ function MultiSelectEntry(question, options) {
         return _.isArray(rawAnswer);
     }
 
+    self.isChecked = function(value) {
+        return _.indexOf(self.rawAnswer(), '' + value) !== -1;
+    };
+
     self.previousAnswer = null;
 }
-MultiSelectEntry.prototype = Object.create(Entry.prototype);
-MultiSelectEntry.prototype.constructor = Entry;
-
-MultiSelectEntry.prototype.onAnswerChange = function(newValue) {
-    if (Formplayer.Utils.answersEqual(this.answer(), this.previousAnswer)) {
-        return;
-    }
-    this.question.onchange();
-    this.previousAnswer = this.answer();
-};
-
-MultiSelectEntry.prototype.onPreProcess = function(newValue) {
-    var processed;
-    if (this.isValid(newValue)) {
-        if (newValue.length) {
-            processed = _.map(newValue, function(d) { return +d });
-        } else {
-            processed = Formplayer.Const.NO_ANSWER;
-        }
-
-        if (!Formplayer.Utils.answersEqual(processed, this.answer())) {
-            this.previousAnswer = this.answer();
-            this.answer(processed);
-        }
-    }
-};
+MultiSelectEntry.prototype = Object.create(EntryArrayAnswer.prototype);
+MultiSelectEntry.prototype.constructor = EntryArrayAnswer;
 
 
 /**
@@ -231,15 +254,18 @@ MultiSelectEntry.prototype.onPreProcess = function(newValue) {
  */
 function SingleSelectEntry(question, options) {
     var self = this;
-    Entry.call(this, question, options);
+    EntrySingleAnswer.call(this, question, options);
     self.choices = question.choices;
     self.templateType = 'select';
     self.isMulti = false;
     self.onClear = function() { self.rawAnswer(Formplayer.Const.NO_ANSWER); };
     self.isValid = function() { return true };
+    self.isChecked = function(value) {
+        return '' + value === self.rawAnswer();
+    };
 }
-SingleSelectEntry.prototype = Object.create(Entry.prototype);
-SingleSelectEntry.prototype.constructor = Entry;
+SingleSelectEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+SingleSelectEntry.prototype.constructor = EntrySingleAnswer;
 SingleSelectEntry.prototype.onPreProcess = function(newValue) {
     if (this.isValid(newValue)) {
         if (newValue === Formplayer.Const.NO_ANSWER) {
@@ -249,14 +275,11 @@ SingleSelectEntry.prototype.onPreProcess = function(newValue) {
         }
     }
 };
-Entry.prototype.onAnswerChange = function(newValue) {
-    this.question.onchange();
-};
 
 
 function DateEntry(question, options) {
     var self = this;
-    Entry.call(self, question, options);
+    EntrySingleAnswer.call(self, question, options);
     var thisYear = new Date().getFullYear() + 1;
     self.templateType = 'date';
     self.format = 'mm/dd/yy';
@@ -275,11 +298,8 @@ function DateEntry(question, options) {
         });
     }
 };
-DateEntry.prototype = Object.create(Entry.prototype);
-DateEntry.prototype.constructor = Entry;
-DateEntry.prototype.onAnswerChange = function(newValue) {
-    this.question.onchange();
-};
+DateEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+DateEntry.prototype.constructor = EntrySingleAnswer;
 
 
 function TimeEntry(question, options) {
@@ -331,12 +351,10 @@ TimeEntry.prototype.onPreProcess = function(newValue) {
 
 function GeoPointEntry(question, options) {
     var self = this;
-    Entry.call(self, question, options);
+    EntryArrayAnswer.call(self, question, options);
     self.templateType = 'geo';
     self.apiKey = 'https://maps.googleapis.com/maps/api/js?key=' + window.GMAPS_API_KEY + '&sensor=false';
     self.map = null;
-    self.rawAnswer = ko.observableArray(question.answer() || []);
-    self.rawAnswer.subscribe(self.onPreProcess.bind(self));
 
     self.DEFAULT = {
         lat: 30,
@@ -401,27 +419,8 @@ function GeoPointEntry(question, options) {
         });
     };
 }
-GeoPointEntry.prototype = Object.create(Entry.prototype);
-GeoPointEntry.prototype.constructor = Entry;
-
-GeoPointEntry.prototype.onAnswerChange = function(newValue) {
-    var self = this;
-    if (Formplayer.Utils.answersEqual(self.previousAnswer, newValue)) {
-        return;
-    }
-    self.question.onchange();
-    self.previousAnswer = self.answer();
-};
-
-GeoPointEntry.prototype.onPreProcess = function(newValue) {
-    var self = this;
-    if (newValue.length) {
-        self.previousAnswer = self.answer();
-        self.answer(newValue);
-    } else {
-        self.answer(Formplayer.Const.NO_ANSWER);
-    }
-};
+GeoPointEntry.prototype = Object.create(EntryArrayAnswer.prototype);
+GeoPointEntry.prototype.constructor = EntryArrayAnswer;
 
 
 /**
