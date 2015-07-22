@@ -67,11 +67,21 @@
             css: {
                 error: error,
                 required: $data.required,
-                dirty: dirty
             }
         ">
         <label class="caption control-label" data-bind="html: caption_markdown() || caption()"></label>
         <div class="widget-container controls">
+            <div class="loading pull-right">
+                <i class="icon-ok icon-success" data-bind="
+                    visible: clean
+                "></i>
+                <i class="icon-refresh icon-spin" data-bind="
+                    visible: dirty
+                "></i>
+                <i class="icon-remove icon-error" data-bind="
+                    visible: hasError
+                "></i>
+            </div>
             <div class="widget" data-bind="
                 template: { name: entryTemplate, data: entry, afterRender: afterRender }
             ">
@@ -85,6 +95,10 @@
         <div class="error-message" data-bind="
             visible: error,
             text: error
+        "></div>
+        <div class="error-message server-error-message" data-bind="
+            visible: serverError,
+            text: serverError
         "></div>
         <div class="eoq"></div/>
     </div>
@@ -179,7 +193,6 @@
     </div>
 </script>
 <script type="text/html" id="select-entry-ko-template">
-    <div data-bind="text: rawAnswer"></div>
     <div class="sel" data-bind="foreach: choices, as: 'choice'">
         <label data-bind="css: { checkbox: $parent.isMulti, radio: !$parent.isMulti }">
             <input data-bind="

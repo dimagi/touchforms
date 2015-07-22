@@ -27,6 +27,13 @@
   font-weight: bold;
 }
 
+.icon-success {
+  color: green;
+}
+.icon-error {
+  color: red;
+}
+
 .error-message {
   color: red;
   font-weight: bold;

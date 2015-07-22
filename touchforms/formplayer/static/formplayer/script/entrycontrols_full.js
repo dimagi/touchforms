@@ -39,10 +39,8 @@ Entry.prototype.onAnswerChange = function(newValue) {};
 Entry.prototype.onPreProcess = function(newValue) {
     if (this.isValid(newValue)) {
         this.answer(newValue);
-        this.question.clearError();
-    } else {
-        this.question.showError(this.getErrorMessage(newValue));
     }
+    this.question.error(this.getErrorMessage(newValue));
 };
 
 
@@ -137,10 +135,8 @@ IntEntry.prototype.onPreProcess = function(newValue) {
         } else {
             this.answer(+newValue);
         }
-        this.question.clearError();
-    } else {
-        this.question.showError(this.getErrorMessage(newValue));
     }
+    this.question.error(this.getErrorMessage(newValue));
 };
 
 
@@ -245,10 +241,12 @@ function SingleSelectEntry(question, options) {
 SingleSelectEntry.prototype = Object.create(MultiSelectEntry.prototype);
 SingleSelectEntry.prototype.constructor = MultiSelectEntry;
 SingleSelectEntry.prototype.onPreProcess = function(newValue) {
-    if (newValue === Formplayer.Const.NO_ANSWER) {
-        this.answer(newValue);
-    } else {
-        this.answer(+newValue);
+    if (this.isValid(newValue)) {
+        if (newValue === Formplayer.Const.NO_ANSWER) {
+            this.answer(newValue);
+        } else {
+            this.answer(+newValue);
+        }
     }
 };
 
@@ -323,10 +321,8 @@ TimeEntry.prototype.onPreProcess = function(newValue) {
                 self.answer(processed);
             }
         }
-        self.question.clearError();
-    } else {
-        self.question.showError(self.getErrorMessage(newValue));
     }
+    self.question.error(self.getErrorMessage(newValue));
 }
 
 

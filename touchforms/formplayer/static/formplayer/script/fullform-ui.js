@@ -155,6 +155,11 @@ Container.prototype.fromJS = function(json) {
                         options.data.answer = _.clone(options.target.pendingAnswer());
                     }
                 }
+
+                // Do not update the answer if there is a server error on that question
+                if (ko.utils.unwrapObservable(options.target.serverError)) {
+                    options.data.answer = _.clone(options.target.answer());
+                }
                 return options.target;
             },
             key: function(data) {
@@ -186,14 +191,15 @@ function Form(json) {
         // TODO where does response status parsing belong?
         if (response.status === 'validation-error') {
             if (response.type === 'required') {
-                element.showError('An answer is required');
+                element.serverError('An answer is required');
             } else if (response.type === 'constraint') {
-                element.showError(resp.reason || 'This answer is outside the allowed range.');
+                element.serverError(resp.reason || 'This answer is outside the allowed range.');
             }
             element.pendingAnswer(Formplayer.Const.NO_PENDING_ANSWER);
         } else {
             response.children = response.tree;
             delete response.tree;
+            if (element.serverError) { element.serverError(null); }
             self.fromJS(response);
         }
     });
@@ -277,21 +283,32 @@ function Question(json, parent) {
     self.fromJS(json);
     self.parent = parent;
     self.error = ko.observable(null);
+    self.serverError = ko.observable(null);
     self.rel_ix = ko.observable(relativeIndex(self.ix()));
     if (json.hasOwnProperty('domain_meta') && json.hasOwnProperty('style')) {
         self.domain_meta = parse_meta(json.datatype, val);
     }
     self.throttle = 200;
 
+    // If the question has ever been answered, set this to true.
+    self.hasAnswered = false;
+
     // pendingAnswer is a copy of an answer being submitted, so that we know not to reconcile a new answer
     // until the question has received a response from the server.
     self.pendingAnswer = ko.observable(Formplayer.Const.NO_PENDING_ANSWER);
+    self.pendingAnswer.subscribe(function() { self.hasAnswered = true });
     self.dirty = ko.computed(function() {
         return self.pendingAnswer() !== Formplayer.Const.NO_PENDING_ANSWER;
     });
+    self.clean = ko.computed(function() {
+        return !self.dirty() && !self.error() && !self.serverError() && self.hasAnswered;
+    });
+    self.hasError = ko.computed(function() {
+        return self.error() || self.serverError();
+    });
 
     self.isValid = function() {
-        return self.error() === null;
+        return self.error() === null && self.serverError === null;
     };
 
     self.is_select = (self.datatype() === 'select' || self.datatype() === 'multiselect');
@@ -311,15 +328,6 @@ function Question(json, parent) {
         if (!resourceType) { return ''; }
         return Formplayer.resourceMap(resourceType);
     }
-
-    self.showError = function(content) {
-        self.error(content);
-    };
-
-    self.clearError = function() {
-        self.error(null);
-    };
-
 }
 
 /**

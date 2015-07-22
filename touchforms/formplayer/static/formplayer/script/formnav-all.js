@@ -163,7 +163,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
           adapter.submitfunc(resp);
         } else {
           $.each(resp.errors, function(ix, error) {
-              adapter.showError(getForIx(form, ix), error);
+              adapter.serverError(getForIx(form, ix), error);
             });
           alert('There are errors in this form; they must be corrected before the form can be submitted.');
         }
@@ -181,11 +181,11 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
       });
   }
 
-  this.showError = function(q, resp) {
+  this.serverError = function(q, resp) {
     if (resp["type"] == "required") {
-      q.showError("An answer is required");
+      q.serverError("An answer is required");
     } else if (resp["type"] == "constraint") {
-      q.showError(resp["reason"] || 'This answer is outside the allowed range.');      
+      q.serverError(resp["reason"] || 'This answer is outside the allowed range.');      
     }
   }
 }
