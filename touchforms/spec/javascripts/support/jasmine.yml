@@ -19,6 +19,7 @@ src_files:
   - script/xforgasm.js
   - script/formnav-all.js
   - script/entrycontrols_full.js
+  - script/build/*.js
   - script/fullform-ui.js
 
 # stylesheets
