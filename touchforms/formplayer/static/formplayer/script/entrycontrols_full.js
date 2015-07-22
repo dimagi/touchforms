@@ -366,6 +366,8 @@ function GeoPointEntry(question, options) {
     self.afterRender = function() {
         if (typeof google === "undefined") {
             $.getScript(self.apiKey + '&callback=gMapsCallback');
+        } else {
+            window.gMapsCallback();
         }
     };
 
