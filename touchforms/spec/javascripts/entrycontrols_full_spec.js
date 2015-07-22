@@ -81,22 +81,23 @@ describe('Entries', function() {
     it('Should return MultiSelectEntry', function() {
         questionJSON.datatype = Formplayer.Const.MULTI_SELECT;
         questionJSON.choices = ['a', 'b'];
-        questionJSON.answer = null; // answer is based on a 1 indexed index of the choices
+        questionJSON.answer = [1]; // answer is based on a 1 indexed index of the choices
 
         entry = (new Question(questionJSON)).entry;
         expect(entry instanceof MultiSelectEntry).toBe(true);
         expect(entry.templateType).toBe('select');
-        expect(entry.answer()).toEqual(null);
+        expect(entry.answer()).toEqual([1]);
+        expect(entry.rawAnswer()).toEqual(['1']);
 
         // Did not change answer, do not call change
-        entry.rawAnswer([]);
+        entry.rawAnswer(['1']);
         this.clock.tick(1000);
         expect(spy.callCount).toEqual(0);
-        expect(entry.answer()).toEqual(Formplayer.Const.NO_ANSWER);
-
-        entry.rawAnswer(['1']);
-        expect(spy.calledOnce).toEqual(true);
         expect(entry.answer()).toEqual([1]);
+
+        entry.rawAnswer(['2']);
+        expect(spy.calledOnce).toEqual(true);
+        expect(entry.answer()).toEqual([2]);
     });
 
     it('Should return SingleSelectEntry', function() {
@@ -107,6 +108,7 @@ describe('Entries', function() {
         entry = (new Question(questionJSON)).entry;
         expect(entry instanceof SingleSelectEntry).toBe(true);
         expect(entry.templateType).toBe('select');
+        expect(entry.rawAnswer()).toBe('1');
 
         entry.rawAnswer('2');
         this.clock.tick(1000);
