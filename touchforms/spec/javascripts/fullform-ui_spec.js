@@ -192,7 +192,7 @@ describe('Fullform UI', function() {
         sinon.stub(form, 'fromJS', spy);
         sinon.stub(form2, 'fromJS', spy2);
 
-        $.publish('adapter.reconcile', {});
+        $.publish('adapter.reconcile', [{}, new Question(questionJSON, form)]);
         expect(spy.calledOnce).toBe(false);
         expect(spy2.calledOnce).toBe(true);
     });

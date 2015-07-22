@@ -238,8 +238,8 @@ function SingleSelectEntry(question, options) {
     self.onClear = function() { self.rawAnswer(Formplayer.Const.NO_ANSWER); };
     self.isValid = function() { return true };
 }
-SingleSelectEntry.prototype = Object.create(MultiSelectEntry.prototype);
-SingleSelectEntry.prototype.constructor = MultiSelectEntry;
+SingleSelectEntry.prototype = Object.create(Entry.prototype);
+SingleSelectEntry.prototype.constructor = Entry;
 SingleSelectEntry.prototype.onPreProcess = function(newValue) {
     if (this.isValid(newValue)) {
         if (newValue === Formplayer.Const.NO_ANSWER) {
@@ -248,6 +248,9 @@ SingleSelectEntry.prototype.onPreProcess = function(newValue) {
             this.answer(+newValue);
         }
     }
+};
+Entry.prototype.onAnswerChange = function(newValue) {
+    this.question.onchange();
 };
 
 

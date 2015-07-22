@@ -92,7 +92,7 @@ describe('Integration', function() {
         $.publish('adapter.reconcile', [response1, stringQ1]);
         expect(stringQ2.pendingAnswer()).toBe('lisa');
         expect(stringQ2.answer()).toBe('lisa');
-        expect(stringQ1.pendingAnswer()).toBe(null);
+        expect(stringQ1.pendingAnswer()).toBe(Formplayer.Const.NO_PENDING_ANSWER);
         expect(stringQ1.answer()).toBe('ben');
 
         var response2 = {};
@@ -103,8 +103,8 @@ describe('Integration', function() {
         $.publish('adapter.reconcile', [response2, stringQ2]);
         expect(stringQ1.answer()).toBe('ben');
         expect(stringQ2.answer()).toBe('lisa');
-        expect(stringQ1.pendingAnswer()).toBe(null);
-        expect(stringQ2.pendingAnswer()).toBe(null);
+        expect(stringQ1.pendingAnswer()).toBe(Formplayer.Const.NO_PENDING_ANSWER);
+        expect(stringQ2.pendingAnswer()).toBe(Formplayer.Const.NO_PENDING_ANSWER);
     });
 
     it('Should reconcile questions answered at the same time for multi', function() {
@@ -130,7 +130,7 @@ describe('Integration', function() {
         // this would normally fire off another change to multi, but we do not reconcile
         // questions that have pending answers.
         $.publish('adapter.reconcile', [response1, stringQ]);
-        expect(stringQ.pendingAnswer()).toBe(null);
+        expect(stringQ.pendingAnswer()).toBe(Formplayer.Const.NO_PENDING_ANSWER);
         expect(stringQ.answer()).toBe('ben');
         expect(multiQ.pendingAnswer()).toEqual([1]);
         expect(multiQ.answer()).toEqual([1]);
@@ -143,8 +143,8 @@ describe('Integration', function() {
         $.publish('adapter.reconcile', [response2, multiQ]);
         expect(stringQ.answer()).toBe('ben');
         expect(multiQ.answer()).toEqual([1]);
-        expect(stringQ.pendingAnswer()).toBe(null);
-        expect(multiQ.pendingAnswer()).toBe(null);
+        expect(stringQ.pendingAnswer()).toBe(Formplayer.Const.NO_PENDING_ANSWER);
+        expect(multiQ.pendingAnswer()).toBe(Formplayer.Const.NO_PENDING_ANSWER);
     });
 
     it('Should properly reconcile Geo', function() {

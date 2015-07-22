@@ -34,50 +34,44 @@ describe('Entries', function() {
     it('Should return the IntEntry', function() {
         entry = (new Question(questionJSON)).entry;
         expect(entry instanceof IntEntry).toBe(true);
-        expect(entry.templateType).toBe('int');
+        expect(entry.templateType).toBe('str');
 
         entry.rawAnswer('1234');
-        valid = entry.prevalidate();
+        valid = entry.isValid('1234');
         expect(valid).toBe(true);
         this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
         expect(entry.answer()).toBe(1234);
 
-        entry.answer('abc');
-        valid = entry.prevalidate();
+        valid = entry.isValid('abc');
         expect(valid).toBe(false);
-        expect(spy.calledOnce).toBe(true);
     });
 
     it('Should return FloatEntry', function() {
         questionJSON.datatype = Formplayer.Const.FLOAT;
         entry = (new Question(questionJSON)).entry;
         expect(entry instanceof FloatEntry).toBe(true);
-        expect(entry.templateType).toBe('float');
+        expect(entry.templateType).toBe('str');
 
         entry.rawAnswer('2.3');
-        valid = entry.prevalidate();
+        valid = entry.isValid('2.3');
         expect(valid).toBe(true);
         this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
         expect(entry.answer()).toBe(2.3);
 
-        entry.answer('2.4');
-        valid = entry.prevalidate();
-        expect(valid).toBe(true);
+        entry.rawAnswer('2.4');
         expect(spy.calledTwice).toBe(true);
 
-        entry.answer('mouse');
-        valid = entry.prevalidate();
+        valid = entry.isValid('mouse');
         expect(valid).toBe(false);
-        expect(spy.calledTwice).toBe(true);
     });
 
     it('Should return FreeTextEntry', function() {
         questionJSON.datatype = Formplayer.Const.STRING;
         entry = (new Question(questionJSON)).entry;
         expect(entry instanceof FreeTextEntry).toBe(true);
-        expect(entry.templateType).toBe('str');
+        expect(entry.templateType).toBe('text');
 
         entry.answer('harry');
         this.clock.tick(1000);
@@ -94,12 +88,14 @@ describe('Entries', function() {
         expect(entry.templateType).toBe('select');
         expect(entry.answer()).toEqual(null);
 
+        // Did not change answer, do not call change
         entry.rawAnswer([]);
         this.clock.tick(1000);
-        expect(spy.calledOnce).toBe(true);
-        expect(entry.answer()).toEqual([]);
+        expect(spy.callCount).toEqual(0);
+        expect(entry.answer()).toEqual(Formplayer.Const.NO_ANSWER);
 
         entry.rawAnswer(['1']);
+        expect(spy.calledOnce).toEqual(true);
         expect(entry.answer()).toEqual([1]);
     });
 
@@ -112,10 +108,10 @@ describe('Entries', function() {
         expect(entry instanceof SingleSelectEntry).toBe(true);
         expect(entry.templateType).toBe('select');
 
-        entry.rawAnswer('1');
+        entry.rawAnswer('2');
         this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
-        expect(entry.answer()).toBe(1);
+        expect(entry.answer()).toBe(2);
     });
 
     it('Should return DateEntry', function() {
@@ -139,11 +135,11 @@ describe('Entries', function() {
         expect(entry instanceof TimeEntry).toBe(true);
         expect(entry.templateType).toBe('time');
 
-        entry.answer('12:45');
+        entry.rawAnswer('12:45');
         this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
 
-        entry.answer('12:451');  // Invalid time
+        entry.rawAnswer('12:451');  // Invalid time
         expect(spy.calledOnce).toBe(true);
     });
 
@@ -177,14 +173,14 @@ describe('Entries', function() {
         entry = (new Question(questionJSON)).entry;
         expect(entry instanceof PhoneEntry).toBe(true);
         expect(entry.answer()).toBe(null);
-        expect(entry.templateType).toBe('phone');
+        expect(entry.templateType).toBe('str');
 
         entry.rawAnswer('1234');
         this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
-        expect(entry.answer()).toBe(1234);
+        expect(entry.answer()).toBe('1234');
 
-        entry.answer('abc'); // Invalid entry should not answer question
+        entry.rawAnswer('abc'); // Invalid entry should not answer question
         expect(spy.calledOnce).toBe(true);
         expect(entry.question.error()).toBeTruthy();
     });
