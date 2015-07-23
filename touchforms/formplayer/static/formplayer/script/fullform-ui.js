@@ -397,10 +397,9 @@ function Question(json, parent) {
     var add_multimedia = function (attrib, control) {
       var getMediaSrc = function (attrib) {
         if (self.hasOwnProperty(attrib) && self[attrib]) {
-          try {
-            return getForm(self).adapter.render_context.resourceMap(self[attrib]);
-          } catch (err) {
-            // not found, just fall back to no media
+          var resourceMap = getForm(self).adapter.render_context.resourceMap;
+          if (resourceMap) {
+            return resourceMap(self[attrib]);
           }
         }
         return null;
