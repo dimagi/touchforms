@@ -18,5 +18,4 @@ urlpatterns = patterns('',
     url(r'^api/autocomplete/$', 'touchforms.formplayer.views.api_autocomplete', name='touchforms_autocomplete'),
     url(r'^player-abort/$', 'touchforms.formplayer.views.player_abort', name='touchforms_force_abort'),
     url(r'^get-xml/(?P<session_id>[\w-]+)$', 'touchforms.formplayer.views.get_xml', name='touchforms_get_xml'),
-    url(r'^submit/$', 'touchforms.formplayer.views.submit', name='touchforms_submit'),
 )

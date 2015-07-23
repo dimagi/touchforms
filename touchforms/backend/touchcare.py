@@ -138,7 +138,13 @@ class CCInstances(InstanceInitializationFactory):
 def process_form(auth, form_data, session_data=None, restore=None, needs_sync=False):
     ccInstances = CCInstances(session_data, auth, restore, needs_sync)
     sandbox = ccInstances.sandbox
-    form_file = File(form_data)
+
+    text_file = open("submit.xml", "w")
+    text_file.write(form_data)
+    text_file.close()
+    submit_file = "submit.xml"
+
+    form_file = File(submit_file)
     FormRecordProcessor.process(sandbox, form_file)
 
 

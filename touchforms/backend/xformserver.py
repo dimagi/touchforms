@@ -233,8 +233,15 @@ def handle_request(content, server):
             ensure_required_params(['session-id', 'ix'], action, content)
             return xformplayer.delete_repeat(content['session-id'], content['ix'], content.get('form_ix'))
         elif action == xformplayer.Actions.SUBMIT_ALL:
-            ensure_required_params(['session-id'], action, content)
-            return xformplayer.submit_form(content['session-id'], content.get('answers', []), content.get('prevalidated', False))
+            if content.get('session-id', None) and xformplayer.global_state:
+                xfsess = xformplayer.global_state.get_session(content['session-id'])
+                session_data = xfsess.orig_params['session_data']
+            else:
+                session_data = content.get('session-data')
+            return xformplayer.submit_form(content['session-id'],
+                                           content.get('answers', []),
+                                           content.get('prevalidated', False),
+                                           session_data)
         elif action == xformplayer.Actions.SET_LANG:
             ensure_required_params(['session-id', 'lang'], action, content)
             return xformplayer.set_locale(content['session-id'], content['lang'])

@@ -32,7 +32,7 @@ from org.commcare.suite.model import Text as JRText
 from java.util import Hashtable as JHashtable
 from org.javarosa.xpath import XPathException
 
-from touchcare import CCInstances
+from touchcare import CCInstances, process_form
 from util import query_factory
 from decorators import require_xform_session
 from xcp import CaseNotFound
@@ -52,7 +52,7 @@ class GlobalStateManager(object):
     instances = {}
     instance_id_counter = 0
     session_cache = {}
-    
+
     def __init__(self, ctx):
         self.ctx = ctx
         self.lock = threading.Lock()
@@ -82,8 +82,8 @@ class GlobalStateManager(object):
                 else:
                     logging.debug("No such session")
                     raise NoSuchSession()
-        
-    #todo: we're not calling this currently, but should, or else xform sessions will hang around in memory forever        
+
+    #todo: we're not calling this currently, but should, or else xform sessions will hang around in memory forever
     def destroy_session(self, session_id):
         # todo: should purge from cache too
         with self.lock:
@@ -91,8 +91,8 @@ class GlobalStateManager(object):
                 del self.session_cache[session_id]
             except KeyError:
                 raise NoSuchSession()
-        
-    def save_instance(self, data):                
+
+    def save_instance(self, data):
         with self.lock:
             self.instance_id_counter += 1
             self.instances[self.instance_id_counter] = data
@@ -232,7 +232,7 @@ class XFormSession:
             # TODO should this be done async? we must dump state before releasing the lock, however
             persistence.persist(self)
         self.lock.release()
- 
+
     def update_last_activity(self):
         self.last_activity = time.time()
 
@@ -282,7 +282,7 @@ class XFormSession:
 
         instance_bytes = FormSerializer().serializeInstance(self.form.getInstance())
         return unicode(''.join(chr(b) for b in instance_bytes.tolist()), 'utf-8')
-    
+
     def walk(self):
         form_ix = FormIndex.createBeginningOfFormIndex()
         tree = []
@@ -351,10 +351,10 @@ class XFormSession:
     def _parse_current_event(self):
         self.cur_event = self.__parse_event(self.fem.getFormIndex())
         return self.cur_event
-    
+
     def __parse_event (self, form_ix):
         event = {'ix': form_ix}
-      
+
         status = self.fem.getEvent(form_ix)
         if status == self.fec.EVENT_BEGINNING_OF_FORM:
             event['type'] = 'form-start'
@@ -412,7 +412,7 @@ class XFormSession:
                     Constants.DATATYPE_NULL: 'str',
                     Constants.DATATYPE_TEXT: 'str',
                     Constants.DATATYPE_INTEGER: 'int',
-                    Constants.DATATYPE_LONG: 'longint',              
+                    Constants.DATATYPE_LONG: 'longint',
                     Constants.DATATYPE_DECIMAL: 'float',
                     Constants.DATATYPE_DATE: 'date',
                     Constants.DATATYPE_TIME: 'time',
@@ -561,7 +561,7 @@ class XFormSession:
             return None
 
     def finalize(self):
-        self.fem.getForm().postProcessInstance() 
+        self.fem.getForm().postProcessInstance()
 
     def parse_ix(self, s_ix):
         return index_from_str(s_ix, self.form)
@@ -695,7 +695,7 @@ def go_back(xform_session):
 
 # fao mode only
 @require_xform_session
-def submit_form(xform_session, answers, prevalidated):
+def submit_form(xform_session, answers, prevalidated, session_data):
     errors = dict(
         filter(lambda resp: resp[1]['status'] != 'success',
             ((_ix, xform_session.answer_question(answer, _ix)) for _ix, answer in answers.iteritems()))
@@ -706,6 +706,13 @@ def submit_form(xform_session, answers, prevalidated):
     else:
         resp = form_completion(xform_session)
         resp['status'] = 'success'
+        xml = xform_session.output()
+        process_form(
+            {},
+            xml,
+            session_data,
+            needs_sync=False
+        )
 
     return xform_session.response(resp, no_next=True)
 

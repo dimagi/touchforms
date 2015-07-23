@@ -329,6 +329,7 @@ def current_question(session_id, auth=None):
             "session-id": session_id}
     return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
 
+
 def next(session_id, auth=None):
     """
     Moves to the next question.
