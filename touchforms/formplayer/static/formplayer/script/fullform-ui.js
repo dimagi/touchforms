@@ -394,22 +394,30 @@ function Question(json, parent) {
       //this.control.restore_ui_state(uistate);
     }
 
-    var add_multimedia = function(attrib, control) {
-      if (self.hasOwnProperty(attrib) && self[attrib]) {
-        var mediaSrc = getForm(self).adapter.render_context.resourceMap(self[attrib]);
-        if (mediaSrc) {
-          control.attr("src", mediaSrc);
-          $mediaContainer = $('<div>');
-          $mediaContainer.append(control);
-          var $widget = self.$container.find('#widget');
-          if ($widget.length) {
-            $widget.append($mediaContainer);
-          } else {
-            $capt.append($mediaContainer);
+    var add_multimedia = function (attrib, control) {
+      var getMediaSrc = function (attrib) {
+        if (self.hasOwnProperty(attrib) && self[attrib]) {
+          var resourceMap = getForm(self).adapter.render_context.resourceMap;
+          if (resourceMap) {
+            return resourceMap(self[attrib]);
           }
         }
+        return null;
+      };
+      var mediaSrc = getMediaSrc(attrib);
+      if (mediaSrc) {
+        control.attr("src", mediaSrc);
+        $mediaContainer = $('<div>');
+        $mediaContainer.append(control);
+        var $widget = self.$container.find('#widget');
+        if ($widget.length) {
+          $widget.append($mediaContainer);
+        } else {
+          $capt.append($mediaContainer);
+        }
+
       }
-    }
+    };
 
     if (refresh_widget || !self.$container.find('#widget').length) {
       add_multimedia('caption_image', $('<img>'));
