@@ -24,6 +24,7 @@ from org.javarosa.xpath.parser import XPathSyntaxException
 from org.javarosa.core.model.condition import EvaluationContext
 from org.javarosa.core.model.instance import ExternalDataInstance
 from org.commcare.api.util import UserDataUtils
+from  org.commcare.api.process import FormRecordProcessor
 from java.io import FileInputStream, File
 from org.kxml2.io import KXmlParser
 
@@ -40,7 +41,7 @@ def get_restore_url(criteria=None):
 
 class CCInstances(InstanceInitializationFactory):
 
-    def __init__(self, sessionvars, auth, restore=None, force_sync=False):
+    def __init__(self, sessionvars, auth, restore=None, force_sync=True):
         self.vars = sessionvars
         self.username = sessionvars['username']
         self.auth = auth
@@ -53,30 +54,36 @@ class CCInstances(InstanceInitializationFactory):
         if force_sync or self.needs_sync():
             self.perform_ota_restore(restore)
 
-        self.last_sync = self.sandbox.getLastSync()
-
     def perform_ota_restore(self, restore=None):
 
         self.sandbox = UserDataUtils.getClearedStaticStorage(self.username)
 
         if not restore:
+            print "If restore"
             restore_xml = self.get_restore_xml()
             text_file = open("restore.xml", "w")
             text_file.write(restore_xml)
             text_file.close()
             restore_file = "restore.xml"
         else:
+            print "Else restore"
             restore_file = restore
+
+        print "Restore file: ", restore_file
 
         input_stream = FileInputStream(restore_file)
         UserDataUtils.parseIntoSandbox(input_stream, self.sandbox)
 
     def get_restore_xml(self):
+        print "Get restore xml url: ", self.query_url
         payload = self.query_func(self.query_url)
         return payload
 
     def needs_sync(self):
-        self.last_sync = self.sandbox.getLastSync()
+        try:
+            self.last_sync = self.sandbox.getLastSync()
+        except:
+            return True
         current_time = Date()
         hours_passed = (current_time.getTime() - self.last_sync.getTime())/(1000 * 60 * 60)
         if hours_passed > settings.SQLITE_STALENESS_WINDOW:
@@ -127,6 +134,12 @@ class CCInstances(InstanceInitializationFactory):
 
             return from_bundle(sess.getSessionInstance(*([self.vars.get(k, '') for k in meta_keys] + \
                                                          [to_hashtable(clean_user_data)])))
+
+def process_form(auth, form_data, session_data=None, restore=None, needs_sync=False):
+    ccInstances = CCInstances(session_data, auth, restore, needs_sync)
+    sandbox = ccInstances.sandbox
+    form_file = File(form_data)
+    FormRecordProcessor.process(sandbox, form_file)
 
 
 def filter_cases(filter_expr, auth, session_data=None, restore=None, needs_sync=True):

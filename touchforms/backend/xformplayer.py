@@ -96,6 +96,7 @@ class GlobalStateManager(object):
         with self.lock:
             self.instance_id_counter += 1
             self.instances[self.instance_id_counter] = data
+            print "Save Instance: ", data
         return self.instance_id_counter
 
     #todo: add ways to get xml, delete xml, and option not to save xml at all
@@ -160,14 +161,14 @@ def load_form(xform, instance=None, extensions=None, session_data=None, api_auth
 
     try:
         session_data.get('additional_filters', {}).update({'use_cache': 'true'})
-        form.initialize(instance is None, CCInstances(session_data, api_auth, form_context))
+        form.initialize(instance is None, CCInstances(session_data, api_auth))
     except CaseNotFound:
         # Touchforms repeatedly makes a call to HQ to get all the case ids in its universe. We can optimize
         # this by caching that call to HQ. However, when someone adds a case to that case list, we want to ensure
         # that that case appears in the universe of cases. Therefore we first attempt to use the cached version
         # of the case id list, and in the event that we cannot find a case, we try again, but do not use the cache.
         session_data.get('additional_filters', {}).update({'use_cache': 'false'})
-        form.initialize(instance is None, CCInstances(session_data, api_auth, form_context))
+        form.initialize(instance is None, CCInstances(session_data, api_auth))
 
     return form
 
@@ -744,6 +745,7 @@ def prev_event (xfsess):
 def save_form (xfsess, persist=False):
     xfsess.finalize()
     xml = xfsess.output()
+    print "saving xml: " , xml
     if persist:
         instance_id = global_state.save_instance(xml)
     else:
@@ -751,6 +753,7 @@ def save_form (xfsess, persist=False):
     return (instance_id, xml)
 
 def form_completion(xfsess):
+    print "Form Completion: ", xfsess
     return dict(zip(('save-id', 'output'), save_form(xfsess)))
 
 def get_caption(prompt):

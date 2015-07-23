@@ -311,3 +311,7 @@ def get_xml(request, session_id):
         session = None
 
     return json_response(session)
+
+
+def submit(request):
+    logging.info("Request: ", request)
