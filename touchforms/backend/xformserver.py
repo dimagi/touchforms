@@ -270,14 +270,17 @@ def handle_request(content, server):
         return {'error': 'session is locked by another request'}
     finally:
         delta = (time.time() - start) * 1000
-        domain = '<unknown>'
+        domain = session_id = '<unknown>'
         if content.get('session-id', None) and xformplayer.global_state:
-            xfsess = xformplayer.global_state.get_session(content['session-id'])
+            session_id = content['session-id']
+            xfsess = xformplayer.global_state.get_session(session_id)
             domain = xfsess.orig_params['session_data'].get('domain', '<unknown>')
         elif content.get('session-data', None):
             domain = content['session-data'].get('domain', '<unknown>')
 
-        logger.info("Finished processing action %s in %s ms for domain '%s'" % (action, delta, domain))
+        logger.info("Finished processing action %s in %s ms for session %s in domain '%s'" % (
+            action, delta, session_id, domain
+        ))
 
 
 class Purger(threading.Thread):
