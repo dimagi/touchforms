@@ -4,7 +4,7 @@ import com.xhaus.jyson.JysonCodec as json
 import logging
 from datetime import datetime
 from copy import copy
-
+import sys
 import settings
 
 from org.javarosa.core.model.instance import InstanceInitializationFactory
@@ -17,6 +17,7 @@ from org.commcare.cases.ledger import Ledger
 from org.commcare.util import CommCareSession
 from org.javarosa.xml import TreeElementParser
 from java.util import Date
+from java.lang import Exception
 
 from org.javarosa.xpath.expr import XPathFuncExpr
 from org.javarosa.xpath import XPathParseTool, XPathException
@@ -59,23 +60,18 @@ class CCInstances(InstanceInitializationFactory):
         self.sandbox = UserDataUtils.getClearedStaticStorage(self.username)
 
         if not restore:
-            print "If restore"
             restore_xml = self.get_restore_xml()
             text_file = open("restore.xml", "w")
             text_file.write(restore_xml)
             text_file.close()
             restore_file = "restore.xml"
         else:
-            print "Else restore"
             restore_file = restore
-
-        print "Restore file: ", restore_file
 
         input_stream = FileInputStream(restore_file)
         UserDataUtils.parseIntoSandbox(input_stream, self.sandbox)
 
     def get_restore_xml(self):
-        print "Get restore xml url: ", self.query_url
         payload = self.query_func(self.query_url)
         return payload
 
@@ -107,7 +103,6 @@ class CCInstances(InstanceInitializationFactory):
         elif 'fixture' in ref:
             fixture_id = ref.split('/')[-1]
             user_id = self.vars['user_id']
-            print "Userid: ", user_id, " fixture id: ", fixture_id
             fixture = UserDataUtils.loadFixture(self.sandbox, fixture_id, user_id)
             root = fixture.getRoot()
             root.setParent(instance.getBase())
@@ -138,18 +133,15 @@ class CCInstances(InstanceInitializationFactory):
 def process_form(auth, form_data, session_data=None, restore=None, needs_sync=False):
     ccInstances = CCInstances(session_data, auth, restore, needs_sync)
     sandbox = ccInstances.sandbox
-
-    text_file = open("submit.xml", "w")
-    text_file.write(form_data)
-    text_file.close()
-    submit_file = "submit.xml"
-
-    form_file = File(submit_file)
+    form_file = File(form_data)
     FormRecordProcessor.process(sandbox, form_file)
 
 
 def filter_cases(filter_expr, auth, session_data=None, restore=None, needs_sync=True):
-    modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
+
+    sys.setrecursionlimit(10000)
+
+    modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/case_name)" % \
         {"filters": filter_expr}
 
     ccInstances = CCInstances(session_data, auth, restore, needs_sync)
@@ -163,12 +155,23 @@ def filter_cases(filter_expr, auth, session_data=None, restore=None, needs_sync=
     instances = to_hashtable({"casedb": caseInstance})
 
     try:
-        case_list = XPathFuncExpr.toString(
-            XPathParseTool.parseXPath(modified_xpath).eval(
-                EvaluationContext(None, instances)))
+
+        x_path = XPathParseTool.parseXPath(modified_xpath)
+
+        ec = EvaluationContext(None, instances)
+
+        evaled = x_path.eval(ec)
+
+        case_list = XPathFuncExpr.toString(evaled)
+
+
+
         return {'cases': filter(lambda x: x, case_list.split(","))}
     except (XPathException, XPathSyntaxException), e:
         raise TouchcareInvalidXPath('Error querying cases with xpath %s: %s' % (filter_expr, str(e)))
+    except Exception, e:
+        print "E: ", e
+        e.printStackTrace()
 
 
 def get_fixtures(filter_expr, auth, session_data=None, restore=None):

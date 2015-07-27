@@ -148,7 +148,7 @@ class TouchcareRestoreTest(unittest.TestCase):
             session_data=self.session_data,
             needs_sync=True,
         )
-        self.assertEqual(len(resp['cases']), 1)
+        self.assertEqual(len(resp['cases']), 5)
         print "cases: ", resp['cases']
 
 
@@ -188,8 +188,6 @@ class SubmissionTest(unittest.TestCase):
             needs_sync=False,
         )
         self.assertEqual(len(resp['cases']), 1)
-
-
 
 if __name__ == '__main__':
     unittest.main()
