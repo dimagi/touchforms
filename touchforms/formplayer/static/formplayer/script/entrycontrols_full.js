@@ -52,6 +52,7 @@ EntryArrayAnswer = function(question, options) {
     }));
 
     self.rawAnswer.subscribe(self.onPreProcess.bind(self));
+    self.previousAnswer = self.answer()
 
 }
 EntryArrayAnswer.prototype = Object.create(Entry.prototype);
@@ -247,8 +248,6 @@ function MultiSelectEntry(question, options) {
     self.isChecked = function(value) {
         return _.indexOf(self.rawAnswer(), '' + value) !== -1;
     };
-
-    self.previousAnswer = null;
 }
 MultiSelectEntry.prototype = Object.create(EntryArrayAnswer.prototype);
 MultiSelectEntry.prototype.constructor = EntryArrayAnswer;
