@@ -287,7 +287,10 @@ def handle_request(content, server):
 
 
 class Purger(threading.Thread):
-    def __init__(self, purge_freq=1.):
+    def __init__(self, purge_freq):
+        """
+        purge_freq is how frequently to purge, in minutes
+        """
         threading.Thread.__init__(self)
         self.purge_freq = timedelta(minutes=purge_freq)
 
@@ -344,7 +347,7 @@ def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, offline=False):
     gw.start()
     logger.info('started server on port %d' % port)
 
-    purger = Purger()
+    purger = Purger(purge_freq=5.)
     purger.start()
     logger.info('purging sessions inactive for more than %s hours' % stale_window)
 
