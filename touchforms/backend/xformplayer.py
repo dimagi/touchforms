@@ -43,7 +43,6 @@ import logging
 logger = logging.getLogger('formplayer.xformplayer')
 
 
-
 class NoSuchSession(Exception):
     pass
 
@@ -59,15 +58,18 @@ class GlobalStateManager(object):
         if session_id not in self.session_locks:
             self.session_locks[session_id] = threading.Lock()
 
+        logger.info('[locking] requested lock for session %s' % session_id)
         return self.session_locks[session_id]
 
     def cache_session(self, xfsess):
         with self.get_lock(xfsess.uuid):
+            logger.info('[locking] cache_session got lock for session %s' % xfsess.uuid)
             self.session_cache[xfsess.uuid] = xfsess
 
     def get_session(self, session_id, override_state=None):
         logging.debug("Getting session id: " + str(session_id))
         with self.get_lock(session_id):
+            logger.info('[locking] get_session got lock for session %s' % session_id)
             try:
                 logging.debug("Getting session_cache " + str(self.session_cache[session_id]))
                 logging.debug("Getting session_cache state: " + str(self.session_cache[session_id].session_state()))
@@ -94,6 +96,7 @@ class GlobalStateManager(object):
             for sess_id, sess in self.session_cache.items():
                 if now - sess.last_activity > sess.staleness_window:
                     with self.get_lock(sess_id):
+                        logger.info('[locking] purging got lock for session %s' % sess_id)
                         del self.session_cache[sess_id]
                         num_sess_purged += 1
                         # also purge the session lock
