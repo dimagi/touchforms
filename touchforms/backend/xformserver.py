@@ -156,8 +156,12 @@ def handle_request(content, server):
     start = time.time()
     ensure_required_params(['action'], 'All actions', content)
 
+    session_id = '<unknown>'
+    if content.get('session-id', None):
+        session_id = content['session-id']
+
     action = content['action']
-    logger.info('Received action %s' % action)
+    logger.info('Received action %s for session %s' % (action, session_id))
     nav_mode = content.get('nav', 'prompt')
     try:
         # Formplayer routes
@@ -270,9 +274,8 @@ def handle_request(content, server):
         return {'error': 'session is locked by another request'}
     finally:
         delta = (time.time() - start) * 1000
-        domain = session_id = '<unknown>'
+        domain = '<unknown>'
         if content.get('session-id', None) and xformplayer.global_state:
-            session_id = content['session-id']
             xfsess = xformplayer.global_state.get_session(session_id)
             domain = xfsess.orig_params['session_data'].get('domain', '<unknown>')
         elif content.get('session-data', None):
