@@ -208,6 +208,7 @@ class XFormSession(object):
         self.update_last_activity()
 
     def __enter__(self):
+        logger.info('[locking] requesting object lock for session %s' % self.uuid)
         if self.nav_mode == 'fao':
             self.lock.acquire()
         else:
@@ -215,6 +216,7 @@ class XFormSession(object):
                 raise SequencingException()
         self.seq_id += 1
         self.update_last_activity()
+        logger.info('[locking] got object lock for session %s' % self.uuid)
         return self
 
     def __exit__(self, *_):
@@ -222,7 +224,8 @@ class XFormSession(object):
             # TODO should this be done async? we must dump state before releasing the lock, however
             persistence.persist(self)
         self.lock.release()
- 
+        logger.info('[locking] released object lock for session %s' % self.uuid)
+
     def update_last_activity(self):
         self.last_activity = time.time()
 
