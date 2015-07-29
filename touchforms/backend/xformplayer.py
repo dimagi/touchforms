@@ -91,6 +91,8 @@ class GlobalStateManager(object):
         num_sess_active = 0
 
         with self.global_lock:
+            logger.info('[locking] purging got global lock')
+
             now = time.time()
             for sess_id, sess in self.session_cache.items():
                 if now - sess.last_activity > sess.staleness_window:
@@ -103,6 +105,7 @@ class GlobalStateManager(object):
                 else:
                     num_sess_active += 1
 
+        logger.info('[locking] purging released global lock')
         # note that persisted entries use the timeout functionality provided by the caching framework
         return {'purged': num_sess_purged, 'active': num_sess_active}
 
