@@ -156,8 +156,12 @@ def handle_request(content, server):
     start = time.time()
     ensure_required_params(['action'], 'All actions', content)
 
+    session_id = '<unknown>'
+    if content.get('session-id', None):
+        session_id = content['session-id']
+
     action = content['action']
-    logger.info('Received action %s' % action)
+    logger.info('Received action %s for session %s' % (action, session_id))
     nav_mode = content.get('nav', 'prompt')
     try:
         # Formplayer routes
@@ -270,9 +274,8 @@ def handle_request(content, server):
         return {'error': 'session is locked by another request'}
     finally:
         delta = (time.time() - start) * 1000
-        domain = session_id = '<unknown>'
+        domain = '<unknown>'
         if content.get('session-id', None) and xformplayer.global_state:
-            session_id = content['session-id']
             xfsess = xformplayer.global_state.get_session(session_id)
             domain = xfsess.orig_params['session_data'].get('domain', '<unknown>')
         elif content.get('session-data', None):
@@ -284,7 +287,10 @@ def handle_request(content, server):
 
 
 class Purger(threading.Thread):
-    def __init__(self, purge_freq=1.):
+    def __init__(self, purge_freq):
+        """
+        purge_freq is how frequently to purge, in minutes
+        """
         threading.Thread.__init__(self)
         self.purge_freq = timedelta(minutes=purge_freq)
 
@@ -341,7 +347,7 @@ def main(port=DEFAULT_PORT, stale_window=DEFAULT_STALE_WINDOW, offline=False):
     gw.start()
     logger.info('started server on port %d' % port)
 
-    purger = Purger()
+    purger = Purger(purge_freq=5.)
     purger.start()
     logger.info('purging sessions inactive for more than %s hours' % stale_window)
 

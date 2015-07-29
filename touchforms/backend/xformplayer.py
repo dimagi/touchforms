@@ -38,10 +38,8 @@ from decorators import require_xform_session
 from xcp import CaseNotFound
 import persistence
 import settings
-import logging
 
 logger = logging.getLogger('formplayer.xformplayer')
-
 
 
 class NoSuchSession(Exception):
@@ -59,15 +57,19 @@ class GlobalStateManager(object):
         if session_id not in self.session_locks:
             self.session_locks[session_id] = threading.Lock()
 
+        logger.info('[locking] requested lock for session %s' % session_id)
         return self.session_locks[session_id]
 
     def cache_session(self, xfsess):
         with self.get_lock(xfsess.uuid):
+            logger.info('[locking] cache_session got lock for session %s' % xfsess.uuid)
             self.session_cache[xfsess.uuid] = xfsess
+        logger.info('[locking] cache_session released lock for session %s' % xfsess.uuid)
 
     def get_session(self, session_id, override_state=None):
         logging.debug("Getting session id: " + str(session_id))
         with self.get_lock(session_id):
+            logger.info('[locking] get_session got lock for session %s' % session_id)
             try:
                 logging.debug("Getting session_cache " + str(self.session_cache[session_id]))
                 logging.debug("Getting session_cache state: " + str(self.session_cache[session_id].session_state()))
@@ -84,23 +86,29 @@ class GlobalStateManager(object):
                 else:
                     logging.debug("No such session")
                     raise NoSuchSession()
+        logger.info('[locking] get_session released lock for session %s' % session_id)
         
     def purge(self):
         num_sess_purged = 0
         num_sess_active = 0
 
         with self.global_lock:
+            logger.info('[locking] purging got global lock')
+
             now = time.time()
             for sess_id, sess in self.session_cache.items():
                 if now - sess.last_activity > sess.staleness_window:
                     with self.get_lock(sess_id):
+                        logger.info('[locking] purging got lock for session %s' % sess_id)
                         del self.session_cache[sess_id]
                         num_sess_purged += 1
                         # also purge the session lock
                         del self.session_locks[sess_id]
+                    logger.info('[locking] purging released lock for session %s' % sess_id)
                 else:
                     num_sess_active += 1
 
+        logger.info('[locking] purging released global lock')
         # note that persisted entries use the timeout functionality provided by the caching framework
         return {'purged': num_sess_purged, 'active': num_sess_active}
 
@@ -200,6 +208,7 @@ class XFormSession(object):
         self.update_last_activity()
 
     def __enter__(self):
+        logger.info('[locking] requesting object lock for session %s' % self.uuid)
         if self.nav_mode == 'fao':
             self.lock.acquire()
         else:
@@ -207,6 +216,7 @@ class XFormSession(object):
                 raise SequencingException()
         self.seq_id += 1
         self.update_last_activity()
+        logger.info('[locking] got object lock for session %s' % self.uuid)
         return self
 
     def __exit__(self, *_):
@@ -214,7 +224,8 @@ class XFormSession(object):
             # TODO should this be done async? we must dump state before releasing the lock, however
             persistence.persist(self)
         self.lock.release()
- 
+        logger.info('[locking] released object lock for session %s' % self.uuid)
+
     def update_last_activity(self):
         self.last_activity = time.time()
 
