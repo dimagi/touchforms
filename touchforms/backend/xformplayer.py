@@ -38,7 +38,6 @@ from decorators import require_xform_session
 from xcp import CaseNotFound
 import persistence
 import settings
-import logging
 
 logger = logging.getLogger('formplayer.xformplayer')
 
