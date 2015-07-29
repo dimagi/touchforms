@@ -64,6 +64,7 @@ class GlobalStateManager(object):
         with self.get_lock(xfsess.uuid):
             logger.info('[locking] cache_session got lock for session %s' % xfsess.uuid)
             self.session_cache[xfsess.uuid] = xfsess
+        logger.info('[locking] cache_session released lock for session %s' % xfsess.uuid)
 
     def get_session(self, session_id, override_state=None):
         logging.debug("Getting session id: " + str(session_id))
@@ -85,6 +86,7 @@ class GlobalStateManager(object):
                 else:
                     logging.debug("No such session")
                     raise NoSuchSession()
+        logger.info('[locking] get_session released lock for session %s' % session_id)
         
     def purge(self):
         num_sess_purged = 0
@@ -102,6 +104,7 @@ class GlobalStateManager(object):
                         num_sess_purged += 1
                         # also purge the session lock
                         del self.session_locks[sess_id]
+                    logger.info('[locking] purging released lock for session %s' % sess_id)
                 else:
                     num_sess_active += 1
 
