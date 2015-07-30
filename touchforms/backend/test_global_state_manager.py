@@ -59,7 +59,7 @@ class GlobalStateManagerTest(unittest.TestCase):
             }
         }
 
-        xformplayer._init(GUIStub())
+        xformplayer._init()
         self.manager = xformplayer.GlobalStateManager.get_globalstate()
 
     def test_basic_sessions(self):

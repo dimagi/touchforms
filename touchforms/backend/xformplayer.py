@@ -38,10 +38,8 @@ from decorators import require_xform_session
 from xcp import CaseNotFound
 import persistence
 import settings
-import logging
 
 logger = logging.getLogger('formplayer.xformplayer')
-
 
 
 class NoSuchSession(Exception):
@@ -49,23 +47,29 @@ class NoSuchSession(Exception):
 
 
 class GlobalStateManager(object):
-    instances = {}
-    instance_id_counter = 0
     session_cache = {}
+    session_locks = {}
 
-    def __init__(self, ctx):
-        self.ctx = ctx
-        self.lock = threading.Lock()
-        self.ctx.setNumSessions(0)
+    def __init__(self):
+        self.global_lock = threading.Lock()
+
+    def get_lock(self, session_id):
+        if session_id not in self.session_locks:
+            self.session_locks[session_id] = threading.Lock()
+
+        logger.info('[locking] requested lock for session %s' % session_id)
+        return self.session_locks[session_id]
 
     def cache_session(self, xfsess):
-        with self.lock:
+        with self.get_lock(xfsess.uuid):
+            logger.info('[locking] cache_session got lock for session %s' % xfsess.uuid)
             self.session_cache[xfsess.uuid] = xfsess
-            self.ctx.setNumSessions(len(self.session_cache))
+        logger.info('[locking] cache_session released lock for session %s' % xfsess.uuid)
 
     def get_session(self, session_id, override_state=None):
         logging.debug("Getting session id: " + str(session_id))
-        with self.lock:
+        with self.get_lock(session_id):
+            logger.info('[locking] get_session got lock for session %s' % session_id)
             try:
                 logging.debug("Getting session_cache " + str(self.session_cache[session_id]))
                 logging.debug("Getting session_cache state: " + str(self.session_cache[session_id].session_state()))
@@ -83,43 +87,30 @@ class GlobalStateManager(object):
                     logging.debug("No such session")
                     raise NoSuchSession()
 
-    #todo: we're not calling this currently, but should, or else xform sessions will hang around in memory forever
-    def destroy_session(self, session_id):
-        # todo: should purge from cache too
-        with self.lock:
-            try:
-                del self.session_cache[session_id]
-            except KeyError:
-                raise NoSuchSession()
-
-    def save_instance(self, data):
-        with self.lock:
-            self.instance_id_counter += 1
-            self.instances[self.instance_id_counter] = data
-            print "Save Instance: ", data
-        return self.instance_id_counter
-
-    #todo: add ways to get xml, delete xml, and option not to save xml at all
-
+        logger.info('[locking] get_session released lock for session %s' % session_id)
+        
     def purge(self):
         num_sess_purged = 0
         num_sess_active = 0
 
-        with self.lock:
+        with self.global_lock:
+            logger.info('[locking] purging got global lock')
+
             now = time.time()
             for sess_id, sess in self.session_cache.items():
                 if now - sess.last_activity > sess.staleness_window:
-                    del self.session_cache[sess_id]
-                    num_sess_purged += 1
+                    with self.get_lock(sess_id):
+                        logger.info('[locking] purging got lock for session %s' % sess_id)
+                        del self.session_cache[sess_id]
+                        num_sess_purged += 1
+                        # also purge the session lock
+                        del self.session_locks[sess_id]
+                    logger.info('[locking] purging released lock for session %s' % sess_id)
                 else:
                     num_sess_active += 1
-            #what about saved instances? we don't track when they were saved
-            #for now will just assume instances are not saved
 
+        logger.info('[locking] purging released global lock')
         # note that persisted entries use the timeout functionality provided by the caching framework
-
-        self.ctx.setNumSessions(num_sess_active)
-
         return {'purged': num_sess_purged, 'active': num_sess_active}
 
     @classmethod
@@ -129,9 +120,9 @@ class GlobalStateManager(object):
 global_state = None
 
 
-def _init(ctx):
+def _init():
     global global_state
-    global_state = GlobalStateManager(ctx)
+    global_state = GlobalStateManager()
 
 
 def load_form(xform, instance=None, extensions=None, session_data=None, api_auth=None, form_context=None):
@@ -177,7 +168,7 @@ class SequencingException(Exception):
     pass
 
 
-class XFormSession:
+class XFormSession(object):
     def __init__(self, xform, instance=None, **params):
         self.uuid = params.get('uuid', uuid.uuid4().hex)
         self.lock = threading.Lock()
@@ -218,6 +209,7 @@ class XFormSession:
         self.update_last_activity()
 
     def __enter__(self):
+        logger.info('[locking] requesting object lock for session %s' % self.uuid)
         if self.nav_mode == 'fao':
             self.lock.acquire()
         else:
@@ -225,6 +217,7 @@ class XFormSession:
                 raise SequencingException()
         self.seq_id += 1
         self.update_last_activity()
+        logger.info('[locking] got object lock for session %s' % self.uuid)
         return self
 
     def __exit__(self, *_):
@@ -232,6 +225,8 @@ class XFormSession:
             # TODO should this be done async? we must dump state before releasing the lock, however
             persistence.persist(self)
         self.lock.release()
+        logger.info('[locking] released object lock for session %s' % self.uuid)
+
 
     def update_last_activity(self):
         self.last_activity = time.time()
@@ -631,6 +626,7 @@ def init_context(xfsess):
         'langs': xfsess.get_locales(),
     }
 
+
 def open_form(form_spec, inst_spec=None, **kwargs):
     try:
         xform_xml = get_loader(form_spec, **kwargs)()
@@ -743,24 +739,24 @@ def next_event (xfsess):
         ev.update(form_completion(xfsess))
         return ev
 
+
 def prev_event (xfsess):
     at_start, ev = False, xfsess.back_event()
     if ev['type'] == 'form-start':
         at_start, ev = True, xfsess.next_event()
     return at_start, ev
 
-def save_form (xfsess, persist=False):
+
+def save_form(xfsess):
     xfsess.finalize()
     xml = xfsess.output()
-    if persist:
-        instance_id = global_state.save_instance(xml)
-    else:
-        instance_id = None
-    return (instance_id, xml)
+    return (None, xml)
+
 
 def form_completion(xfsess):
     print "Form Completion: ", xfsess
     return dict(zip(('save-id', 'output'), save_form(xfsess)))
+
 
 def get_caption(prompt):
     return {
@@ -771,6 +767,7 @@ def get_caption(prompt):
         # TODO use prompt.getMarkdownText() when commcare jars support it
         'caption_markdown': prompt.getSpecialFormQuestionText("markdown"),
     }
+
 
 def purge():
     resp = global_state.purge()
