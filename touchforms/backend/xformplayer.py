@@ -88,7 +88,7 @@ class GlobalStateManager(object):
                     raise NoSuchSession()
 
         logger.info('[locking] get_session released lock for session %s' % session_id)
-        
+
     def purge(self):
         num_sess_purged = 0
         num_sess_active = 0
@@ -754,7 +754,6 @@ def save_form(xfsess):
 
 
 def form_completion(xfsess):
-    print "Form Completion: ", xfsess
     return dict(zip(('save-id', 'output'), save_form(xfsess)))
 
 
