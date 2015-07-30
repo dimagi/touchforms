@@ -32,7 +32,7 @@ from org.commcare.suite.model import Text as JRText
 from java.util import Hashtable as JHashtable
 from org.javarosa.xpath import XPathException
 
-from touchcare import CCInstances, process_form
+from touchcare import CCInstances, process_form, process_form_xml
 from util import query_factory
 from decorators import require_xform_session
 from xcp import CaseNotFound
@@ -707,7 +707,7 @@ def submit_form(xform_session, answers, prevalidated, session_data):
         resp = form_completion(xform_session)
         resp['status'] = 'success'
         xml = xform_session.output()
-        process_form(
+        process_form_xml(
             {},
             xml,
             session_data,

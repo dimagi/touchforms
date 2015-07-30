@@ -42,7 +42,7 @@ def get_restore_url(criteria=None):
 
 class CCInstances(InstanceInitializationFactory):
 
-    def __init__(self, sessionvars, auth, restore=None, force_sync=True):
+    def __init__(self, sessionvars, auth, restore=None, force_sync=False):
         self.vars = sessionvars
         self.username = sessionvars['username']
         self.auth = auth
@@ -136,10 +136,15 @@ def process_form(auth, form_data, session_data=None, restore=None, needs_sync=Fa
     form_file = File(form_data)
     FormRecordProcessor.process(sandbox, form_file)
 
+def process_form_xml(auth, form_data, session_data=None, restore=None, needs_sync=False):
+    text_file = open("restore.xml", "w")
+    text_file.write(form_data)
+    text_file.close()
+    process_form(auth, "restore.xml", session_data, restore, needs_sync)
+
+
 
 def filter_cases(filter_expr, auth, session_data=None, restore=None, needs_sync=True):
-
-    sys.setrecursionlimit(10000)
 
     modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/case_name)" % \
         {"filters": filter_expr}
