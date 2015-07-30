@@ -32,7 +32,7 @@ from org.commcare.suite.model import Text as JRText
 from java.util import Hashtable as JHashtable
 from org.javarosa.xpath import XPathException
 
-from touchcare import CCInstances, process_form, process_form_xml
+from touchcare import CCInstances, process_form_xml
 from util import query_factory
 from decorators import require_xform_session
 from xcp import CaseNotFound
@@ -752,7 +752,6 @@ def prev_event (xfsess):
 def save_form (xfsess, persist=False):
     xfsess.finalize()
     xml = xfsess.output()
-    print "saving xml: " , xml
     if persist:
         instance_id = global_state.save_instance(xml)
     else:

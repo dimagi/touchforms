@@ -112,6 +112,7 @@ def enter_form(request, **kwargs):
     return form_entry_new(request, xform, instance_xml, session_data,
                           input_mode, offline_mode, force_template)
 
+
 def form_entry_new(request, xform, instance_xml, session_data, input_mode,
                    offline_mode, force_template=None):
     """start a new touchforms/typeforms session"""

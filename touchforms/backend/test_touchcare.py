@@ -32,10 +32,10 @@ class TouchcareTest(unittest.TestCase):
         filter_expr = "[case_name = 'case']"
 
         resp = touchcare.filter_cases(
-                filter_expr,
-                {},
-                self.session_data,
-                restore=self.restore,
+            filter_expr,
+            {},
+            self.session_data,
+            restore=self.restore,
         )
         self.assertEqual(len(resp['cases']), 2)
         print "cases: ", resp['cases']
@@ -44,11 +44,11 @@ class TouchcareTest(unittest.TestCase):
         filter_expr = "[case_name = 'derp']"
 
         resp = touchcare.filter_cases(
-                filter_expr,
-                {},
-                self.session_data,
-                restore=self.restore,
-                needs_sync=False,
+            filter_expr,
+            {},
+            self.session_data,
+            restore=self.restore,
+            needs_sync=False,
         )
         self.assertEqual(len(resp['cases']), 0)
         print "cases: ", resp['cases']
@@ -57,14 +57,15 @@ class TouchcareTest(unittest.TestCase):
         filter_expr = "[case_name = 'case']"
 
         resp = touchcare.filter_cases(
-                filter_expr,
-                {},
-                self.session_data,
-                restore=self.restore,
-                needs_sync=False,
+            filter_expr,
+            {},
+            self.session_data,
+            restore=self.restore,
+            needs_sync=False,
         )
         self.assertEqual(len(resp['cases']), 2)
         print "cases: ", resp['cases']
+
 
 class TouchcareLedgerTest(unittest.TestCase):
 
@@ -117,6 +118,7 @@ class TouchcareLedgerTest(unittest.TestCase):
             restore=self.restore,
         )
         print "Resp: ", resp
+
 
 class TouchcareRestoreTest(unittest.TestCase):
 
@@ -173,7 +175,7 @@ class SubmissionTest(unittest.TestCase):
         }
 
     def test_submission(self):
-        touchcare.process_form(
+        touchcare.process_form_file(
             {},
             self.form,
             self.session_data,

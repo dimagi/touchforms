@@ -4,7 +4,6 @@ import com.xhaus.jyson.JysonCodec as json
 import logging
 from datetime import datetime
 from copy import copy
-import sys
 import settings
 
 from org.javarosa.core.model.instance import InstanceInitializationFactory
@@ -25,7 +24,7 @@ from org.javarosa.xpath.parser import XPathSyntaxException
 from org.javarosa.core.model.condition import EvaluationContext
 from org.javarosa.core.model.instance import ExternalDataInstance
 from org.commcare.api.util import UserDataUtils
-from  org.commcare.api.process import FormRecordProcessor
+from org.commcare.api.process import FormRecordProcessor
 from java.io import FileInputStream, File
 from org.kxml2.io import KXmlParser
 
@@ -61,15 +60,10 @@ class CCInstances(InstanceInitializationFactory):
 
         if not restore:
             restore_xml = self.get_restore_xml()
-            text_file = open("restore.xml", "w")
-            text_file.write(restore_xml)
-            text_file.close()
-            restore_file = "restore.xml"
+            UserDataUtils.parseXMLIntoSandbox(restore_xml, self.sandbox)
         else:
             restore_file = restore
-
-        input_stream = FileInputStream(restore_file)
-        UserDataUtils.parseIntoSandbox(input_stream, self.sandbox)
+            UserDataUtils.parseFileIntoSandbox(File(restore_file), self.sandbox)
 
     def get_restore_xml(self):
         payload = self.query_func(self.query_url)
@@ -118,7 +112,8 @@ class CCInstances(InstanceInitializationFactory):
             exclude_keys = ['additional_filters', 'user_data']
             sess = CommCareSession(None) # will not passing a CCPlatform cause problems later?
             for k, v in self.vars.iteritems():
-                if k not in meta_keys and k not in exclude_keys:
+                if k not in meta_keys \
+                        and k not in exclude_keys:
                     # com.xhaus.jyson.JysonCodec returns data as byte strings
                     # in unknown encoding (possibly ISO-8859-1)
                     sess.setDatum(k, unicode(v, errors='replace'))
@@ -130,18 +125,17 @@ class CCInstances(InstanceInitializationFactory):
             return from_bundle(sess.getSessionInstance(*([self.vars.get(k, '') for k in meta_keys] + \
                                                          [to_hashtable(clean_user_data)])))
 
-def process_form(auth, form_data, session_data=None, restore=None, needs_sync=False):
+
+def process_form_file(auth, form_data, session_data=None, restore=None, needs_sync=False):
     ccInstances = CCInstances(session_data, auth, restore, needs_sync)
     sandbox = ccInstances.sandbox
-    form_file = File(form_data)
-    FormRecordProcessor.process(sandbox, form_file)
+    FormRecordProcessor.processFile(sandbox, File(form_data))
+
 
 def process_form_xml(auth, form_data, session_data=None, restore=None, needs_sync=False):
-    text_file = open("restore.xml", "w")
-    text_file.write(form_data)
-    text_file.close()
-    process_form(auth, "restore.xml", session_data, restore, needs_sync)
-
+    ccInstances = CCInstances(session_data, auth, restore, needs_sync)
+    sandbox = ccInstances.sandbox
+    FormRecordProcessor.processXML(sandbox, form_data)
 
 
 def filter_cases(filter_expr, auth, session_data=None, restore=None, needs_sync=True):
@@ -160,17 +154,9 @@ def filter_cases(filter_expr, auth, session_data=None, restore=None, needs_sync=
     instances = to_hashtable({"casedb": caseInstance})
 
     try:
-
-        x_path = XPathParseTool.parseXPath(modified_xpath)
-
-        ec = EvaluationContext(None, instances)
-
-        evaled = x_path.eval(ec)
-
-        case_list = XPathFuncExpr.toString(evaled)
-
-
-
+        case_list = XPathFuncExpr.toString(
+            XPathParseTool.parseXPath(modified_xpath).eval(
+                EvaluationContext(None, instances)))
         return {'cases': filter(lambda x: x, case_list.split(","))}
     except (XPathException, XPathSyntaxException), e:
         raise TouchcareInvalidXPath('Error querying cases with xpath %s: %s' % (filter_expr, str(e)))
