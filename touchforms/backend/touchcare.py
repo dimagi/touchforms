@@ -75,7 +75,7 @@ class CCInstances(InstanceInitializationFactory):
         except:
             return True
         current_time = Date()
-        hours_passed = (current_time.getTime() - self.last_sync.getTime())/(1000 * 60 * 60)
+        hours_passed = (current_time.getTime() - self.last_sync.getTime()) / (1000 * 60 * 60)
         if hours_passed > settings.SQLITE_STALENESS_WINDOW:
             return True
         return False
