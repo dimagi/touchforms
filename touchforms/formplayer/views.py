@@ -68,7 +68,7 @@ def download(request, xform_id):
         # this method is just kind of deprecated.
         return HttpResponseNotFound("Sorry that form is no longer available.")
     else:
-        response = HttpResponse(mimetype='application/xml')
+        response = HttpResponse(content_type='application/xml')
         response.write(contents)
         return response
 
@@ -150,7 +150,7 @@ def form_entry_complete(request, xform, instance_xml, callback):
     return callback(xform, instance_xml)
 
 def default_submit(xform, instance_xml):
-    response = HttpResponse(mimetype='application/xml')
+    response = HttpResponse(content_type='application/xml')
     response.write(instance_xml)
     return response
 
