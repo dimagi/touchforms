@@ -47,7 +47,7 @@ def xform_list(request):
         else:
             success = False
             notice = "No uploaded file set."
-
+            
     for form in XForm.objects.all():
         forms_by_namespace[form.namespace].append(form)
     return render_to_response("formplayer/xform_list.html", {
@@ -55,7 +55,7 @@ def xform_list(request):
             "success": success,
             "notice": notice
         }, context_instance=RequestContext(request))
-
+                              
 def download(request, xform_id):
     """
     Download an xform
@@ -103,17 +103,16 @@ def enter_form(request, **kwargs):
     if request.method == "POST":
         if request.POST["type"] == 'form-complete':
             instance_xml = request.POST["output"]
-            return form_entry_complete(request, xform, instance_xml,
+            return form_entry_complete(request, xform, instance_xml, 
                                        submit_callback)
 
         elif request.POST["type"] == 'form-aborted':
             return form_entry_abort(request, xform, abort_callback)
 
-    return form_entry_new(request, xform, instance_xml, session_data,
+    return form_entry_new(request, xform, instance_xml, session_data, 
                           input_mode, offline_mode, force_template)
 
-
-def form_entry_new(request, xform, instance_xml, session_data, input_mode,
+def form_entry_new(request, xform, instance_xml, session_data, input_mode, 
                    offline_mode, force_template=None):
     """start a new touchforms/typeforms session"""
     if force_template is not None:
@@ -165,10 +164,10 @@ def play(request, xform_id, callback=None, preloader_data=None, input_mode=None,
     Play an XForm.
 
     xform_id - which xform to play
-    callback(xform, instance_xml) - action to perform when form is submitted or aborted (both via POST)
+    callback(xform, instance_xml) - action to perform when form is submitted or aborted (both via POST) 
         default behavior is to display the xml, and return to the form list, respectively
         for abort, instance_xml will be None
-    preloader_data - data to satisfy form preloaders: {preloader type => {preload param => preload value}}
+    preloader_data - data to satisfy form preloaders: {preloader type => {preload param => preload value}} 
     input_mode - 'touch' for touchforms, 'type' for typeforms
     instance_xml - an xml instance that, if present, will be edited during the form session
     """
@@ -259,7 +258,7 @@ def track_session(request, payload, response):
                 # purge dead sessions
                 sess.delete()
 
-# DEPRECATED
+# DEPRECATED    
 def api_preload_provider(request):
     param = request.GET.get('param', "")
     param = param.strip().lower()
