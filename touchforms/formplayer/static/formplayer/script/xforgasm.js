@@ -266,6 +266,7 @@ function WebFormSession(params) {
             try {
                 callback(resp);
             } catch (err) {
+                console.error(err);
                 var msg = "".concat(ERROR_MESSAGE, err.message);
                 sess.onerror({message: msg});
             }

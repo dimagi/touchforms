@@ -15,7 +15,7 @@ from org.commcare.cases.ledger.instance import LedgerInstanceTreeElement
 from org.commcare.cases.model import Case
 from org.commcare.cases.ledger import Ledger
 from org.commcare.util import CommCareSession
-from org.commcare.xml import TreeElementParser
+from org.javarosa.xml import TreeElementParser
 
 from org.javarosa.xpath.expr import XPathFuncExpr
 from org.javarosa.xpath import XPathParseTool, XPathException
