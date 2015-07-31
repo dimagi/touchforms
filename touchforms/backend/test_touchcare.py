@@ -174,7 +174,6 @@ class SubmissionTest(unittest.TestCase):
             'username': 'submission-test'
         }
 
-
         self.filter_expr = "[case_name = 'Napoli']"
 
     def test_submission(self):

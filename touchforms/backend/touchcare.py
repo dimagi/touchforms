@@ -16,7 +16,6 @@ from org.commcare.cases.ledger import Ledger
 from org.commcare.util import CommCareSession
 from org.javarosa.xml import TreeElementParser
 from java.util import Date
-from java.lang import Exception
 
 from org.javarosa.xpath.expr import XPathFuncExpr
 from org.javarosa.xpath import XPathParseTool, XPathException
@@ -127,6 +126,8 @@ process_form_file and process_form_xml both perform submissions of the completed
 against the sandbox of the current user.
 
 """
+
+
 def process_form_file(auth, submission_file, session_data=None):
     ccInstances = CCInstances(session_data, auth)
     sandbox = ccInstances.sandbox
@@ -141,6 +142,7 @@ def process_form_xml(auth, submission_xml, session_data=None):
 
 def perform_restore(auth, session_data=None, restore_xml=None):
     CCInstances(session_data, auth, restore_xml, True)
+
 
 def filter_cases(filter_expr, auth, session_data=None, restore_xml=None, needs_sync=True):
 
