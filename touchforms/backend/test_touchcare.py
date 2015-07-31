@@ -35,7 +35,7 @@ class TouchcareTest(unittest.TestCase):
             filter_expr,
             {},
             self.session_data,
-            restore=self.restore,
+            restore_xml=self.restore,
         )
         self.assertEqual(len(resp['cases']), 2)
         print "cases: ", resp['cases']
@@ -47,7 +47,7 @@ class TouchcareTest(unittest.TestCase):
             filter_expr,
             {},
             self.session_data,
-            restore=self.restore,
+            restore_xml=self.restore,
             needs_sync=False,
         )
         self.assertEqual(len(resp['cases']), 0)
@@ -60,7 +60,7 @@ class TouchcareTest(unittest.TestCase):
             filter_expr,
             {},
             self.session_data,
-            restore=self.restore,
+            restore_xml=self.restore,
             needs_sync=False,
         )
         self.assertEqual(len(resp['cases']), 2)
@@ -92,7 +92,7 @@ class TouchcareLedgerTest(unittest.TestCase):
             filter_expr,
             {},
             self.session_data,
-            restore=self.restore,
+            restore_xml=self.restore,
         )
         self.assertEqual(len(resp['cases']), 1)
         print "cases: ", resp['cases']
@@ -104,7 +104,7 @@ class TouchcareLedgerTest(unittest.TestCase):
             filter_expr,
             {},
             self.session_data,
-            restore=self.restore,
+            restore_xml=self.restore,
         )
         self.assertEqual(len(resp['cases']), 0)
         print "cases: ", resp['cases']
@@ -174,13 +174,20 @@ class SubmissionTest(unittest.TestCase):
             'username': 'submission-test'
         }
 
+
+        self.filter_expr = "[case_name = 'Napoli']"
+
     def test_submission(self):
+        touchcare.perform_restore(
+            {},
+            self.session_data,
+            restore_xml=self.restore,
+        )
+
         touchcare.process_form_file(
             {},
             self.form,
             self.session_data,
-            self.restore,
-            True,
         )
         filter_expr = "[@case_id = 'submission_id']"
         resp = touchcare.filter_cases(

@@ -55,9 +55,7 @@ class CCInstances(InstanceInitializationFactory):
             self.perform_ota_restore(restore)
 
     def perform_ota_restore(self, restore=None):
-
-        self.sandbox = UserDataUtils.getClearedStaticStorage(self.username)
-
+        self.sandbox.clearTables()
         if not restore:
             restore_xml = self.get_restore_xml()
             UserDataUtils.parseXMLIntoSandbox(restore_xml, self.sandbox)
@@ -73,12 +71,11 @@ class CCInstances(InstanceInitializationFactory):
         try:
             self.last_sync = self.sandbox.getLastSync()
         except:
+            logger.error("Unable to get last sync for usertime for user %s " % self.username)
             return True
         current_time = Date()
         hours_passed = (current_time.getTime() - self.last_sync.getTime()) / (1000 * 60 * 60)
-        if hours_passed > settings.SQLITE_STALENESS_WINDOW:
-            return True
-        return False
+        return hours_passed > settings.SQLITE_STALENESS_WINDOW
 
 
     def generateRoot(self, instance):
@@ -125,31 +122,34 @@ class CCInstances(InstanceInitializationFactory):
             return from_bundle(sess.getSessionInstance(*([self.vars.get(k, '') for k in meta_keys] + \
                                                          [to_hashtable(clean_user_data)])))
 
+"""
+process_form_file and process_form_xml both perform submissions of the completed form form_data
+against the sandbox of the current user.
 
-def process_form_file(auth, form_data, session_data=None, restore=None, needs_sync=False):
-    ccInstances = CCInstances(session_data, auth, restore, needs_sync)
+"""
+def process_form_file(auth, submission_file, session_data=None):
+    ccInstances = CCInstances(session_data, auth)
     sandbox = ccInstances.sandbox
-    FormRecordProcessor.processFile(sandbox, File(form_data))
+    FormRecordProcessor.processFile(sandbox, File(submission_file))
 
 
-def process_form_xml(auth, form_data, session_data=None, restore=None, needs_sync=False):
-    ccInstances = CCInstances(session_data, auth, restore, needs_sync)
+def process_form_xml(auth, submission_xml, session_data=None):
+    ccInstances = CCInstances(session_data, auth)
     sandbox = ccInstances.sandbox
-    FormRecordProcessor.processXML(sandbox, form_data)
+    FormRecordProcessor.processXML(sandbox, submission_xml)
 
 
-def filter_cases(filter_expr, auth, session_data=None, restore=None, needs_sync=True):
+def perform_restore(auth, session_data=None, restore_xml=None):
+    CCInstances(session_data, auth, restore_xml, True)
+
+def filter_cases(filter_expr, auth, session_data=None, restore_xml=None, needs_sync=True):
 
     modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/case_name)" % \
         {"filters": filter_expr}
 
-    ccInstances = CCInstances(session_data, auth, restore, needs_sync)
+    ccInstances = CCInstances(session_data, auth, restore_xml, needs_sync)
     caseInstance = ExternalDataInstance("jr://instance/casedb", "casedb")
-
-    try:
-        caseInstance.initialize(ccInstances, "casedb")
-    except (HTTPError, URLError), e:
-        raise TouchFormsUnauthorized('Unable to connect to HQ: %s' % str(e))
+    caseInstance.initialize(ccInstances, "casedb")
 
     instances = to_hashtable({"casedb": caseInstance})
 
@@ -160,9 +160,6 @@ def filter_cases(filter_expr, auth, session_data=None, restore=None, needs_sync=
         return {'cases': filter(lambda x: x, case_list.split(","))}
     except (XPathException, XPathSyntaxException), e:
         raise TouchcareInvalidXPath('Error querying cases with xpath %s: %s' % (filter_expr, str(e)))
-    except Exception, e:
-        print "E: ", e
-        e.printStackTrace()
 
 
 def get_fixtures(filter_expr, auth, session_data=None, restore=None):
@@ -172,11 +169,7 @@ def get_fixtures(filter_expr, auth, session_data=None, restore=None):
 
     ccInstances = CCInstances(session_data, auth, restore)
     productsInstance = ExternalDataInstance("jr://instance/fixture/commtrack:products", "products")
-
-    try:
-        productsInstance.initialize(ccInstances, "products")
-    except (HTTPError, URLError), e:
-        raise TouchFormsUnauthorized('Unable to connect to HQ: %s' % str(e))
+    productsInstance.initialize(ccInstances, "products")
 
     instances = to_hashtable({"products": productsInstance})
 

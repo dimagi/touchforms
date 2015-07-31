@@ -149,17 +149,8 @@ def load_form(xform, instance=None, extensions=None, session_data=None, api_auth
         context=session_data.get('function_context', {}),
         preload_data=session_data.get('preloaders', {})
     )
-
-    try:
-        session_data.get('additional_filters', {}).update({'use_cache': 'true'})
-        form.initialize(instance is None, CCInstances(session_data, api_auth))
-    except CaseNotFound:
-        # Touchforms repeatedly makes a call to HQ to get all the case ids in its universe. We can optimize
-        # this by caching that call to HQ. However, when someone adds a case to that case list, we want to ensure
-        # that that case appears in the universe of cases. Therefore we first attempt to use the cached version
-        # of the case id list, and in the event that we cannot find a case, we try again, but do not use the cache.
-        session_data.get('additional_filters', {}).update({'use_cache': 'false'})
-        form.initialize(instance is None, CCInstances(session_data, api_auth))
+    session_data.get('additional_filters', {}).update({'use_cache': 'true'})
+    form.initialize(instance is None, CCInstances(session_data, api_auth))
 
     return form
 
@@ -691,7 +682,7 @@ def go_back(xform_session):
 
 # fao mode only
 @require_xform_session
-def submit_form(xform_session, answers, prevalidated, session_data):
+def submit_form(xform_session, answers, prevalidated):
     errors = dict(
         filter(lambda resp: resp[1]['status'] != 'success',
             ((_ix, xform_session.answer_question(answer, _ix)) for _ix, answer in answers.iteritems()))
@@ -706,7 +697,7 @@ def submit_form(xform_session, answers, prevalidated, session_data):
         process_form_xml(
             {},
             xml,
-            session_data,
+            xform_session.orig_params['session_data]'],
             needs_sync=False
         )
 
