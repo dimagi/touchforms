@@ -697,8 +697,7 @@ def submit_form(xform_session, answers, prevalidated):
         process_form_xml(
             {},
             xml,
-            xform_session.orig_params['session_data]'],
-            needs_sync=False
+            xform_session.orig_params['session_data'],
         )
 
     return xform_session.response(resp, no_next=True)

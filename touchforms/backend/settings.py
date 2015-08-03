@@ -19,6 +19,9 @@ USES_POSTGRES = False
 POSTGRES_TABLE = "formplayer_session"
 POSTGRES_JDBC_JAR = "%s/jrlib/postgresql-9.4-1201.jdbc41.jar"%os.path.dirname(os.path.abspath(__file__))
 
+# SQLite backend stuff
+USES_SQLITE = True
+
 # be more forgiving about data types in api
 HACKS_MODE = True
 
