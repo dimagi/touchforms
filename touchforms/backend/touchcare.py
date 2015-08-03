@@ -70,7 +70,7 @@ class CCInstances(InstanceInitializationFactory):
         try:
             self.last_sync = self.sandbox.getLastSync()
         except:
-            logger.error("Unable to get last sync for usertime for user %s " % self.username)
+            logger.exception("Unable to get last sync for usertime for user %s " % self.username)
             return True
         current_time = Date()
         hours_passed = (current_time.getTime() - self.last_sync.getTime()) / (1000 * 60 * 60)
@@ -179,7 +179,6 @@ def get_fixtures(filter_expr, auth, session_data=None, restore=None):
         fixture_name = XPathFuncExpr.toString(
             XPathParseTool.parseXPath(modified_xpath).eval(
                 EvaluationContext(None, instances)))
-        print "Fixture Name: ", fixture_name
     except (XPathException, XPathSyntaxException), e:
         raise TouchcareInvalidXPath('Error querying cases with xpath %s: %s' % (modified_xpath, str(e)))
 
