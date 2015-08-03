@@ -164,24 +164,5 @@ def filter_cases(filter_expr, auth, session_data=None, restore_xml=None, needs_s
         raise TouchcareInvalidXPath('Error querying cases with xpath %s: %s' % (filter_expr, str(e)))
 
 
-def get_fixtures(filter_expr, auth, session_data=None, restore=None):
-
-    modified_xpath = "join(',', instance('products')/products/product%(filters)s/@id)" % \
-        {"filters": filter_expr}
-
-    ccInstances = CCInstances(session_data, auth, restore)
-    productsInstance = ExternalDataInstance("jr://instance/fixture/commtrack:products", "products")
-    productsInstance.initialize(ccInstances, "products")
-
-    instances = to_hashtable({"products": productsInstance})
-
-    try:
-        fixture_name = XPathFuncExpr.toString(
-            XPathParseTool.parseXPath(modified_xpath).eval(
-                EvaluationContext(None, instances)))
-    except (XPathException, XPathSyntaxException), e:
-        raise TouchcareInvalidXPath('Error querying cases with xpath %s: %s' % (modified_xpath, str(e)))
-
-
 class Actions:
     FILTER_CASES = 'touchcare-filter-cases'
