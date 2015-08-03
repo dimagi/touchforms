@@ -109,16 +109,6 @@ class TouchcareLedgerTest(unittest.TestCase):
         self.assertEqual(len(resp['cases']), 0)
         print "cases: ", resp['cases']
 
-    def test_get_fixtures(self):
-        filter_expr = "[name = 'Collier']"
-        resp = touchcare.get_fixtures(
-            filter_expr,
-            {},
-            self.session_data,
-            restore=self.restore,
-        )
-        print "Resp: ", resp
-
 
 class TouchcareRestoreTest(unittest.TestCase):
 
