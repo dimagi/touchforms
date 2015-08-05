@@ -170,7 +170,6 @@ class SequencingException(Exception):
 class XFormSession(object):
     def __init__(self, xform, instance=None, **params):
         self.uuid = params.get('uuid', uuid.uuid4().hex)
-        self.lock = threading.Lock()
         self.nav_mode = params.get('nav_mode', 'prompt')
         self.seq_id = params.get('seq_id', 0)
 
