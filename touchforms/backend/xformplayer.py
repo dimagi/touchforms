@@ -727,7 +727,7 @@ def heartbeat(session_id):
     # just pop this back into the context whenever necessary so no longer super relevant
     # to keep around in memory while the tab is open.
     with global_state.get_lock(session_id):
-        # this updates the session stuff and persists it
+        # this updates the session sequence ID and timestamp and persists it
         with global_state.get_session(session_id):
             {}
 
