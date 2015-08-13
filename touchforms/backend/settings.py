@@ -12,7 +12,11 @@ ALLOW_CROSS_ORIGIN = False
 # daemon restart
 PERSIST_SESSIONS = True
 PERSISTENCE_DIRECTORY = None  # defaults to /tmp
-EXTENSION_MODULES = []  # you can allow extensions by overriding this
+
+# you can add extensions using this
+EXTENSION_MODULES = [
+    'handlers.static',  # support for static functions and static date functions
+]
 
 # postgres peristence stuff
 USES_POSTGRES = False
