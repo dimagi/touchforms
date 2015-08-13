@@ -59,30 +59,22 @@ def postgres_set_session(key, value):
 
 def postgres_set_session_command(cursor, key, value):
 
-    postgres_select_session(cursor, key)
+    postgres_lookup(cursor, settings.POSTGRES_TABLE, 'sess_id', key, 'sess_json')
 
     if cursor.rowcount > 0:
         postgres_update_session_command(cursor, key, value)
     else:
         postgres_insert_session_command(cursor, key, value)
 
-def postgres_select_session(cursor, key):
-    sel_sql = replace_table("SELECT * FROM %(kwarg)s WHERE sess_id=?", settings.POSTGRES_TABLE)
-    sel_params = [str(key)]
-    cursor.execute(sel_sql, sel_params)
-
-
 def postgres_lookup_session(key):
     return postgres_helper(postgres_lookup_session_command, key)
 
 
 def postgres_lookup_session_command(cursor, key):
-    postgres_select_session(cursor, key)
-
+    postgres_lookup(cursor, settings.POSTGRES_TABLE, 'sess_id', key, 'sess_json')
     if cursor.rowcount is 0:
         raise KeyError
-    value = cursor.fetchone()[1]
-
+    value = cursor.fetchone()[0]
     jsonobj = json.loads(value.decode('utf8'))
     return jsonobj
 
@@ -100,6 +92,13 @@ def postgres_insert_session_command(cursor, key, value):
     cursor.execute(ins_sql, ins_params)
 
 
+def postgres_lookup(cursor, table_name, search_field, search_value, result_field='*'):
+    sel_sql = "SELECT %(field)s FROM %(table)s WHERE %(search)s=?" \
+              % {'table': settings.SQLITE_TABLE, 'field': result_field, 'search':search_field}
+    sel_params = [str(search_value)]
+    cursor.execute(sel_sql, sel_params)
+
+
 def postgres_lookup_sqlite_last_modified(key):
     return postgres_helper(postgres_lookup_last_modified_command, key)
 
@@ -109,48 +108,40 @@ def postgres_lookup_sqlite_version(key):
 def postgres_set_sqlite(username, version):
     return postgres_helper(postgres_set_sqlite_command, username, version)
 
-def postgres_set_sqlite_command(cursor, key, value):
+def postgres_set_sqlite_command(cursor, username, value):
 
-    postgres_select_sqlite(cursor, key)
+    postgres_lookup(cursor, settings.SQLITE_TABLE, 'username', username)
 
     if cursor.rowcount > 0:
-        postgres_update_sqlite_command(cursor, key, value)
+        postgres_update_sqlite_command(cursor, username, value)
     else:
-        postgres_insert_sqlite_command(cursor, key, value)
+        postgres_insert_sqlite_command(cursor, username, value)
 
 
-def postgres_lookup_last_modified_command(cursor, key):
-    postgres_select_sqlite(cursor, key)
-
+def postgres_lookup_last_modified_command(cursor, username):
+    postgres_lookup(cursor, settings.SQLITE_TABLE, 'username', username, 'last_modified')
     if cursor.rowcount is 0:
         raise KeyError
-    value = cursor.fetchone()[2]
+    value = cursor.fetchone()[0]
     return value
 
 
-def postgres_lookup_version_command(cursor, key):
-    postgres_select_sqlite(cursor, key)
-
+def postgres_lookup_version_command(cursor, username):
+    postgres_lookup(cursor, settings.SQLITE_TABLE, 'username', username, 'app_version')
     if cursor.rowcount is 0:
         raise KeyError
-    value = cursor.fetchone()[1]
+    value = cursor.fetchone()[0]
     return value
-
-def postgres_select_sqlite(cursor, username):
-    sel_sql = replace_table("SELECT * FROM %(kwarg)s WHERE username=?", settings.SQLITE_TABLE)
-    sel_params = [str(username)]
-    cursor.execute(sel_sql, sel_params)
-
 
 def postgres_update_sqlite_command(cursor, username, version):
-    upd_sql = replace_table("UPDATE %(kwarg)s SET app_version = ? , last_modified =?  "
+    upd_sql = replace_table("UPDATE %(table)s SET app_version = ? , last_modified =?  "
                             "WHERE username = ?", settings.SQLITE_TABLE)
     upd_params = [version, datetime.utcnow(), str(username)]
     cursor.execute(upd_sql, upd_params)
 
 
 def postgres_insert_sqlite_command(cursor, username, version):
-    ins_sql = replace_table("INSERT INTO %(kwarg)s (username, app_version, last_modified, date_created) "
+    ins_sql = replace_table("INSERT INTO %(table)s (username, app_version, last_modified, date_created) "
                             "VALUES (?, ?, ?, ?)", settings.SQLITE_TABLE)
     ins_params = [str(username), version, datetime.utcnow(), datetime.utcnow()]
     cursor.execute(ins_sql, ins_params)
@@ -194,7 +185,7 @@ def get_conn():
 
 # need to replace the table name in Python instead of in statement
 def replace_table(qry, table):
-    return qry % {'kwarg': table}
+    return qry % {'table': table}
 
 
 # now deprecated old method, used for fallback
