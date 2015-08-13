@@ -5,6 +5,7 @@ import logging
 from datetime import datetime
 from copy import copy
 import settings
+import os
 
 from org.javarosa.core.model.instance import InstanceInitializationFactory
 from org.javarosa.core.services.storage import IStorageUtilityIndexed
@@ -22,10 +23,12 @@ from org.javarosa.xpath import XPathParseTool, XPathException
 from org.javarosa.xpath.parser import XPathSyntaxException
 from org.javarosa.core.model.condition import EvaluationContext
 from org.javarosa.core.model.instance import ExternalDataInstance
-from org.commcare.api.util import UserDataUtils
-from org.commcare.api.process import FormRecordProcessor
+from org.commcare.api.persistence import SqlSandboxUtils
+from org.commcare.core.process import FormRecordProcessor
+from org.commcare.core.parse import ParseUtils
 from java.io import FileInputStream, File
 from org.kxml2.io import KXmlParser
+import persistence
 
 from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
 from xcp import TouchFormsUnauthorized, TouchcareInvalidXPath, CaseNotFound
@@ -46,7 +49,7 @@ class CCInstances(InstanceInitializationFactory):
 
         if settings.USES_SQLITE:
             self.username = sessionvars['username']
-            self.sandbox = UserDataUtils.getStaticStorage(self.username)
+            self.sandbox = SqlSandboxUtils.getStaticStorage(self.username)
             self.host = sessionvars['host']
             self.domain = sessionvars['domain']
             self.query_func = query_factory(self.host, self.domain, self.auth, 'raw')
@@ -58,14 +61,20 @@ class CCInstances(InstanceInitializationFactory):
             self.fixtures = {}
             self.form_context = form_context or {}
 
+    def clear_tables(self):
+        db_name = self.username + ".db"
+        os.remove(db_name)
+        self.sandbox = SqlSandboxUtils.getStaticStorage(self.username)
+
     def perform_ota_restore(self, restore=None):
-        self.sandbox.clearTables()
+        self.clear_tables()
         if not restore:
             restore_xml = self.get_restore_xml()
-            UserDataUtils.parseXMLIntoSandbox(restore_xml, self.sandbox)
+            ParseUtils.parseXMLIntoSandbox(restore_xml, self.sandbox)
         else:
             restore_file = restore
-            UserDataUtils.parseFileIntoSandbox(File(restore_file), self.sandbox)
+            ParseUtils.parseFileIntoSandbox(File(restore_file), self.sandbox)
+        persistence.postgres_set_sqlite(self.username, 1)
 
     def get_restore_xml(self):
         payload = self.query_func(self.query_url)
@@ -73,13 +82,15 @@ class CCInstances(InstanceInitializationFactory):
 
     def needs_sync(self):
         try:
-            self.last_sync = self.sandbox.getLastSync()
+            self.last_sync = persistence.postgres_lookup_sqlite_last_modified(self.username)
         except:
             logger.exception("Unable to get last sync for usertime for user %s " % self.username)
             return True
-        current_time = Date()
-        hours_passed = (current_time.getTime() - self.last_sync.getTime()) / (1000 * 60 * 60)
-        return hours_passed > settings.SQLITE_STALENESS_WINDOW
+
+        current_time = datetime.utcnow()
+        elapsed = current_time - self.last_sync
+        minutes_elapsed = divmod(elapsed.days * 86400 + elapsed.seconds, 60)[0]
+        return minutes_elapsed > settings.SQLITE_STALENESS_WINDOW
 
 
     def generateRoot(self, instance):
@@ -110,7 +121,7 @@ class CCInstances(InstanceInitializationFactory):
             fixture_id = ref.split('/')[-1]
             user_id = self.vars['user_id']
             if settings.USES_SQLITE:
-                fixture = UserDataUtils.loadFixture(self.sandbox, fixture_id, user_id)
+                fixture = SqlSandboxUtils.loadFixture(self.sandbox, fixture_id, user_id)
                 root = fixture.getRoot()
             else:
                 root = self._get_fixture(user_id, fixture_id)

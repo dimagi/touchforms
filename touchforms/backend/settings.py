@@ -21,6 +21,7 @@ POSTGRES_JDBC_JAR = "%s/jrlib/postgresql-9.4-1201.jdbc41.jar"%os.path.dirname(os
 
 # SQLite backend stuff
 USES_SQLITE = True
+SQLITE_TABLE = "formplayer_sqlstatus"
 
 # be more forgiving about data types in api
 HACKS_MODE = True
@@ -80,4 +81,4 @@ LEDGER_API_URL = '%s/cloudcare/api/ledgers/' % URL_ROOT
 RESTORE_URL = '%s/phone/restore/' % URL_ROOT
 
 ### Number of hours to use Sqlite DBs without forcing a restore ###
-SQLITE_STALENESS_WINDOW = 2
+SQLITE_STALENESS_WINDOW = 120

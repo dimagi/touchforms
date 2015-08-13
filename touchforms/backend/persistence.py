@@ -34,7 +34,7 @@ def cache_set(key, value):
     if key is None:
         raise KeyError
     if settings.USES_POSTGRES:
-        postgres_set(key, value)
+        postgres_set_session(key, value)
     else:
         with open(cache_get_file_path(key), 'w') as f:
             f.write(json.dumps(value).encode('utf8'))
@@ -46,26 +46,38 @@ def cache_get(key):
         raise KeyError
     if settings.USES_POSTGRES:
         try:
-            return postgres_lookup(key)
+            return postgres_lookup_session(key)
         except KeyError:
             return cache_get_file(key)
     else:
         return cache_get_file(key)
 
 
-def postgres_select(cursor, key):
-    sel_sql = replace_table("SELECT * FROM %(kwarg)s WHERE sess_id=?")
+def postgres_set_session(key, value):
+    postgres_helper(postgres_set_session_command, key, value)
+
+
+def postgres_set_session_command(cursor, key, value):
+
+    postgres_select_session(cursor, key)
+
+    if cursor.rowcount > 0:
+        postgres_update_session_command(cursor, key, value)
+    else:
+        postgres_insert_session_command(cursor, key, value)
+
+def postgres_select_session(cursor, key):
+    sel_sql = replace_table("SELECT * FROM %(kwarg)s WHERE sess_id=?", settings.POSTGRES_TABLE)
     sel_params = [str(key)]
     cursor.execute(sel_sql, sel_params)
 
 
-def postgres_lookup(key):
-    return postgres_helper(postgres_lookup_command, key)
+def postgres_lookup_session(key):
+    return postgres_helper(postgres_lookup_session_command, key)
 
 
-def postgres_lookup_command(cursor, key):
-
-    postgres_select(cursor, key)
+def postgres_lookup_session_command(cursor, key):
+    postgres_select_session(cursor, key)
 
     if cursor.rowcount is 0:
         raise KeyError
@@ -75,30 +87,73 @@ def postgres_lookup_command(cursor, key):
     return jsonobj
 
 
-def postgres_update_command(cursor, key, value):
-    upd_sql = replace_table("UPDATE %(kwarg)s SET sess_json = ? , last_modified =?  WHERE sess_id = ?")
+def postgres_update_session_command(cursor, key, value):
+    upd_sql = replace_table("UPDATE %(kwarg)s SET sess_json = ? , last_modified =?  "
+                            "WHERE sess_id = ?", settings.POSTGRES_TABLE)
     upd_params = [json.dumps(value).encode('utf8'), datetime.utcnow(), str(key)]
     cursor.execute(upd_sql, upd_params)
 
-
-def postgres_insert_command(cursor, key, value):
-    ins_sql = replace_table("INSERT INTO %(kwarg)s (sess_id, sess_json, last_modified, date_created) VALUES (?, ?, ?, ?)")
+def postgres_insert_session_command(cursor, key, value):
+    ins_sql = replace_table("INSERT INTO %(kwarg)s (sess_id, sess_json, last_modified, date_created) "
+                            "VALUES (?, ?, ?, ?)", settings.POSTGRES_TABLE)
     ins_params = [str(key), json.dumps(value).encode('utf8'), datetime.utcnow(), datetime.utcnow()]
     cursor.execute(ins_sql, ins_params)
 
 
-def postgres_set(key, value):
-    postgres_helper(postgres_set_command, key, value)
+def postgres_lookup_sqlite_last_modified(key):
+    return postgres_helper(postgres_lookup_last_modified_command, key)
 
+def postgres_lookup_sqlite_version(key):
+    return postgres_helper(postgres_lookup_version_command, key)
 
-def postgres_set_command(cursor, key, value):
+def postgres_set_sqlite(username, version):
+    return postgres_helper(postgres_set_sqlite_command, username, version)
 
-    postgres_select(cursor, key)
+def postgres_set_sqlite_command(cursor, key, value):
+
+    postgres_select_sqlite(cursor, key)
 
     if cursor.rowcount > 0:
-        postgres_update_command(cursor, key, value)
+        postgres_update_sqlite_command(cursor, key, value)
     else:
-        postgres_insert_command(cursor, key, value)
+        postgres_insert_sqlite_command(cursor, key, value)
+
+
+def postgres_lookup_last_modified_command(cursor, key):
+    postgres_select_sqlite(cursor, key)
+
+    if cursor.rowcount is 0:
+        raise KeyError
+    value = cursor.fetchone()[2]
+    return value
+
+
+def postgres_lookup_version_command(cursor, key):
+    postgres_select_sqlite(cursor, key)
+
+    if cursor.rowcount is 0:
+        raise KeyError
+    value = cursor.fetchone()[1]
+    return value
+
+def postgres_select_sqlite(cursor, username):
+    sel_sql = replace_table("SELECT * FROM %(kwarg)s WHERE username=?", settings.SQLITE_TABLE)
+    sel_params = [str(username)]
+    cursor.execute(sel_sql, sel_params)
+
+
+def postgres_update_sqlite_command(cursor, username, version):
+    upd_sql = replace_table("UPDATE %(kwarg)s SET app_version = ? , last_modified =?  "
+                            "WHERE username = ?", settings.SQLITE_TABLE)
+    upd_params = [version, datetime.utcnow(), str(username)]
+    cursor.execute(upd_sql, upd_params)
+
+
+def postgres_insert_sqlite_command(cursor, username, version):
+    ins_sql = replace_table("INSERT INTO %(kwarg)s (username, app_version, last_modified, date_created) "
+                            "VALUES (?, ?, ?, ?)", settings.SQLITE_TABLE)
+    ins_params = [str(username), version, datetime.utcnow(), datetime.utcnow()]
+    cursor.execute(ins_sql, ins_params)
 
 
 def postgres_helper(method, *kwargs):
@@ -137,9 +192,8 @@ def get_conn():
 
     return conn
 
-
-def replace_table(qry):
-    table = settings.POSTGRES_TABLE
+# need to replace the table name in Python instead of in statement
+def replace_table(qry, table):
     return qry % {'kwarg': table}
 
 
