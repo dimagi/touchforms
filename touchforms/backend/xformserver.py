@@ -223,9 +223,7 @@ def handle_request(content, server):
             return xformplayer.current_question(content['session-id'], override_state=override_state)
 
         elif action == xformplayer.Actions.HEARTBEAT:
-            ensure_required_params(['session-id'], action, content)
-            return xformplayer.heartbeat(content['session-id'])
-
+            return {}
         elif action == xformplayer.Actions.EDIT_REPEAT:
             ensure_required_params(['session-id', 'ix'], action, content)
             return xformplayer.edit_repeat(content['session-id'], content['ix'])

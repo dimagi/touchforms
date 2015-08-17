@@ -170,7 +170,6 @@ class SequencingException(Exception):
 class XFormSession(object):
     def __init__(self, xform, instance=None, **params):
         self.uuid = params.get('uuid', uuid.uuid4().hex)
-        self.lock = threading.Lock()
         self.nav_mode = params.get('nav_mode', 'prompt')
         self.seq_id = params.get('seq_id', 0)
 
@@ -207,24 +206,24 @@ class XFormSession(object):
         }
         self.update_last_activity()
 
+    def _assert_locked(self):
+        if not global_state.get_lock(self.uuid).locked():
+            # note that this isn't a perfect check that we have the lock
+            # but is hopefully a good enough proxy. this is basically an
+            # assertion.
+            raise Exception('Tried to update XFormSession without the lock!')
+
     def __enter__(self):
-        logger.info('[locking] requesting object lock for session %s' % self.uuid)
-        if self.nav_mode == 'fao':
-            self.lock.acquire()
-        else:
-            if not self.lock.acquire(False):
-                raise SequencingException()
+        self._assert_locked()
         self.seq_id += 1
         self.update_last_activity()
-        logger.info('[locking] got object lock for session %s' % self.uuid)
         return self
 
-    def __exit__(self, *_):
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._assert_locked()
         if self.persist:
             # TODO should this be done async? we must dump state before releasing the lock, however
             persistence.persist(self)
-        self.lock.release()
-        logger.info('[locking] released object lock for session %s' % self.uuid)
 
     def update_last_activity(self):
         self.last_activity = time.time()
@@ -634,10 +633,13 @@ def open_form(form_spec, inst_spec=None, **kwargs):
 
     xfsess = XFormSession(xform_xml, instance_xml, **kwargs)
     global_state.cache_session(xfsess)
-    with xfsess: # triggers persisting of the fresh session
-        extra = {'session_id': xfsess.uuid}
-        extra.update(init_context(xfsess))
-        return xfsess.response(extra)
+    with global_state.get_lock(xfsess.uuid):
+        with xfsess:
+            # triggers persisting of the fresh session
+            extra = {'session_id': xfsess.uuid}
+            extra.update(init_context(xfsess))
+            response = xfsess.response(extra)
+            return response
 
 
 @require_xform_session
@@ -716,11 +718,6 @@ def current_question(xform_session, override_state=None):
     extra.update(init_context(xform_session))
     return xform_session.response(extra, xform_session.cur_event)
 
-
-def heartbeat(session_id):
-    # just touch the session
-    with global_state.get_session(session_id) as xfsess:
-        return {}
 
 def next_event (xfsess):
     ev = xfsess.next_event()
