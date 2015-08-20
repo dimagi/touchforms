@@ -80,13 +80,13 @@ def postgres_lookup_session_command(cursor, key):
 
 
 def postgres_update_session_command(cursor, key, value):
-    upd_sql = replace_table("UPDATE %(kwarg)s SET sess_json = ? , last_modified =?  "
+    upd_sql = replace_table("UPDATE %(table)s SET sess_json = ? , last_modified =?  "
                             "WHERE sess_id = ?", settings.POSTGRES_TABLE)
     upd_params = [json.dumps(value).encode('utf8'), datetime.utcnow(), str(key)]
     cursor.execute(upd_sql, upd_params)
 
 def postgres_insert_session_command(cursor, key, value):
-    ins_sql = replace_table("INSERT INTO %(kwarg)s (sess_id, sess_json, last_modified, date_created) "
+    ins_sql = replace_table("INSERT INTO %(table)s (sess_id, sess_json, last_modified, date_created) "
                             "VALUES (?, ?, ?, ?)", settings.POSTGRES_TABLE)
     ins_params = [str(key), json.dumps(value).encode('utf8'), datetime.utcnow(), datetime.utcnow()]
     cursor.execute(ins_sql, ins_params)
@@ -94,7 +94,7 @@ def postgres_insert_session_command(cursor, key, value):
 
 def postgres_lookup(cursor, table_name, search_field, search_value, result_field='*'):
     sel_sql = "SELECT %(field)s FROM %(table)s WHERE %(search)s=?" \
-              % {'table': settings.SQLITE_TABLE, 'field': result_field, 'search':search_field}
+              % {'table': table_name, 'field': result_field, 'search':search_field}
     sel_params = [str(search_value)]
     cursor.execute(sel_sql, sel_params)
 

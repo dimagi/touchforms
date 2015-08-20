@@ -260,7 +260,7 @@ def handle_request(content, server):
             ensure_required_params(['session-id'], action, content)
             xfsess = xformplayer.global_state.get_session(content['session-id'])
             result = xfsess.sync_user_database()
-            return {"status": result}
+            return {"output": result['output'], "status": result['status']}
         # Touchcare routes
         elif action == touchcare.Actions.FILTER_CASES:
             ensure_required_params(['hq_auth', 'filter_expr'], action, content)

@@ -92,7 +92,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
     this.ajaxfunc({'action': 'sync-user-db',
                    'session-id': this.session_id},
       function (resp) {
-        callback(resp);
+        callback(resp.output, resp.status);
       });
   };
 

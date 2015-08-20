@@ -159,11 +159,11 @@ function Form(json, adapter) {
 
     this.$container.find('#sync').click(function() {
        $(document.getElementById("sync")).val("Syncing...")
-       adapter.syncUserData(function(status){
-            if(status) {
+       adapter.syncUserData(function(status, output){
+            if(status === "success") {
                 $(document.getElementById("sync")).val("Synced!")
             } else{
-                // do something?
+                this.showError(output)
             }
         });
       });

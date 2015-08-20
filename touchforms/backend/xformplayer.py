@@ -261,12 +261,16 @@ class XFormSession(object):
         return result
 
     def sync_user_database(self):
+        result = {}
         try:
             CCInstances(self.orig_params['session_data'], self.orig_params['api_auth']).perform_ota_restore()
-            return True
+            result['status'] = 'success'
+            result['output'] = 'success'
         except Exception, e:
-            # do something better?
-            return False
+            result['status'] = 'failure'
+            result['output'] = e.getMessage()
+
+        return result
 
     def output(self):
         if self.cur_event['type'] != 'form-complete':

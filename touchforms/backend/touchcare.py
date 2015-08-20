@@ -24,6 +24,7 @@ from org.javarosa.xpath.parser import XPathSyntaxException
 from org.javarosa.core.model.condition import EvaluationContext
 from org.javarosa.core.model.instance import ExternalDataInstance
 from org.commcare.api.persistence import SqlSandboxUtils
+from org.commcare.core.database import SandboxUtils
 from org.commcare.core.process import FormRecordProcessor
 from org.commcare.core.parse import ParseUtils
 from java.io import FileInputStream, File
@@ -121,7 +122,7 @@ class CCInstances(InstanceInitializationFactory):
             fixture_id = ref.split('/')[-1]
             user_id = self.vars['user_id']
             if settings.USES_SQLITE:
-                fixture = SqlSandboxUtils.loadFixture(self.sandbox, fixture_id, user_id)
+                fixture = SandboxUtils.loadFixture(self.sandbox, fixture_id, user_id)
                 root = fixture.getRoot()
             else:
                 root = self._get_fixture(user_id, fixture_id)
