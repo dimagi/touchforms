@@ -117,12 +117,9 @@ def get_conn():
         'user': django_params['USER'],
         'password': django_params['PASSWORD'],
     }
-
-    if "SSL" in django_params:
-        jdbc_params['ssl'] = django_params['SSL']
         
     if "PREPARE_THRESHOLD" in django_params:
-        jdbc_params['prepareThreshold'] = django_params['PREPARE_THRESHOLD'],
+        jdbc_params['prepareThreshold'] = django_params['PREPARE_THRESHOLD']
 
     try:
         # try to connect regularly
