@@ -157,6 +157,17 @@ function Form(json, adapter) {
         form.submit();
       });
 
+    this.$container.find('#sync').click(function() {
+       $(document.getElementById("sync")).val("Syncing...")
+       adapter.syncUserData(function(status){
+            if(status) {
+                $(document.getElementById("sync")).val("Synced!")
+            } else{
+                // do something?
+            }
+        });
+      });
+
     $("#evaluate-button").click(function() {
 
         var mxpath = document.getElementById("xpath").value;

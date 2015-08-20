@@ -260,6 +260,14 @@ class XFormSession(object):
 
         return result
 
+    def sync_user_database(self):
+        try:
+            CCInstances(self.orig_params['session_data'], self.orig_params['api_auth']).perform_ota_restore()
+            return True
+        except Exception, e:
+            # do something better?
+            return False
+
     def output(self):
         if self.cur_event['type'] != 'form-complete':
             #warn that not at end of form
@@ -790,3 +798,4 @@ class Actions:
     PURGE_STALE = 'purge-stale'
     GET_INSTANCE = 'get-instance'
     EVALUATE_XPATH = 'evaluate-xpath'
+    SYNC_USER_DB = 'sync-user-db'
