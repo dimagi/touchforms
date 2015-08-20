@@ -722,19 +722,6 @@ def current_question(xform_session, override_state=None):
     return xform_session.response(extra, xform_session.cur_event)
 
 
-def heartbeat(session_id):
-    """
-    The heartbeat will update the session's last seen timestamp and sequence ID.
-    """
-    # todo: cz as of 8/5/2015 I'm pretty sure this isn't necessary. persistence can
-    # just pop this back into the context whenever necessary so no longer super relevant
-    # to keep around in memory while the tab is open.
-    with global_state.get_lock(session_id):
-        # this updates the session sequence ID and timestamp and persists it
-        with global_state.get_session(session_id):
-            {}
-
-
 def next_event (xfsess):
     ev = xfsess.next_event()
     if ev['type'] != 'form-complete':
