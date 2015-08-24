@@ -26,7 +26,7 @@ from org.javarosa.core.model.instance import ExternalDataInstance
 from org.kxml2.io import KXmlParser
 
 from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
-from xcp import TouchFormsUnauthorized, TouchcareInvalidXPath, CaseNotFound
+from xcp import TouchFormsUnauthorized, TouchcareInvalidXPath, TouchFormsNotFound, CaseNotFound
 
 logger = logging.getLogger('formplayer.touchcare')
 
@@ -348,7 +348,10 @@ class CCInstances(InstanceInitializationFactory):
                                                         "user": user_id,
                                                         "fixture": fixture_id }
         q = query_factory(self.vars.get('host'), self.vars['domain'], self.auth, format="raw")
-        results = q(query_url)
+        try:
+            results = q(query_url)
+        except (HTTPError, URLError), e:
+            raise TouchFormsNotFound('Unable to fetch fixture at %s: %s' % (query_url, str(e)))
         parser = KXmlParser()
         parser.setInput(to_input_stream(results), "UTF-8")
         parser.setFeature(KXmlParser.FEATURE_PROCESS_NAMESPACES, True)
