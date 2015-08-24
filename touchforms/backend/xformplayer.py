@@ -627,9 +627,13 @@ def init_context(xfsess):
 def open_form(form_spec, inst_spec=None, **kwargs):
     try:
         xform_xml = get_loader(form_spec, **kwargs)()
+    except Exception, e:
+        return {'error': 'There was a problem downloading the XForm: %s' % str(e)}
+
+    try:
         instance_xml = get_loader(inst_spec, **kwargs)()
     except Exception, e:
-        return {'error': str(e)}
+        return {'error': 'There was a problem downloading the XForm instance: %s' % str(e)}
 
     xfsess = XFormSession(xform_xml, instance_xml, **kwargs)
     global_state.cache_session(xfsess)
