@@ -150,7 +150,10 @@ def load_form(xform, instance=None, extensions=None, session_data=None, api_auth
     )
 
     try:
-        session_data.get('additional_filters', {}).update({'use_cache': 'true'})
+        session_data.get('additional_filters', {}).update({
+            'use_cache': 'true',
+            'hsph_hack': session_data.get('case_id', None)
+        })
         form.initialize(instance is None, CCInstances(session_data, api_auth, form_context))
     except CaseNotFound:
         # Touchforms repeatedly makes a call to HQ to get all the case ids in its universe. We can optimize
