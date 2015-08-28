@@ -36,6 +36,7 @@ class TouchcareTest(unittest.TestCase):
             {},
             self.session_data,
             restore_xml=self.restore,
+            uses_sqlite=True,
         )
         self.assertEqual(len(resp['cases']), 2)
 
@@ -48,6 +49,7 @@ class TouchcareTest(unittest.TestCase):
             self.session_data,
             restore_xml=self.restore,
             force_sync=False,
+            uses_sqlite=True,
         )
         self.assertEqual(len(resp['cases']), 0)
 
@@ -60,6 +62,7 @@ class TouchcareTest(unittest.TestCase):
             self.session_data,
             restore_xml=self.restore,
             force_sync=False,
+            uses_sqlite=True,
         )
         self.assertEqual(len(resp['cases']), 2)
 
@@ -90,6 +93,7 @@ class TouchcareLedgerTest(unittest.TestCase):
             {},
             self.session_data,
             restore_xml=self.restore,
+            uses_sqlite=True,
         )
         self.assertEqual(len(resp['cases']), 1)
 
@@ -101,6 +105,7 @@ class TouchcareLedgerTest(unittest.TestCase):
             {},
             self.session_data,
             restore_xml=self.restore,
+            uses_sqlite=True,
         )
         self.assertEqual(len(resp['cases']), 0)
 
@@ -145,6 +150,7 @@ class SubmissionTest(unittest.TestCase):
             {},
             session_data=self.session_data,
             force_sync=False,
+            uses_sqlite=True,
         )
         self.assertEqual(len(resp['cases']), 1)
 

@@ -27,8 +27,7 @@ from org.commcare.modern.process import FormRecordProcessorHelper as FormRecordP
 from org.commcare.modern.parse import ParseUtilsHelper as ParseUtils
 from org.kxml2.io import KXmlParser
 import persistence
-
-from corehq import toggles
+from java.io import File
 from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
 from xcp import TouchFormsUnauthorized, TouchcareInvalidXPath, TouchFormsNotFound, CaseNotFound
 
@@ -42,12 +41,13 @@ def get_restore_url(criteria=None):
 
 class CCInstances(InstanceInitializationFactory):
 
-    def __init__(self, sessionvars, auth, restore_xml=None, force_sync=False, form_context=None):
+    def __init__(self, sessionvars, auth, restore_xml=None, force_sync=False, form_context=None, uses_sqlite=False):
         self.vars = sessionvars
         self.auth = auth
+        self.uses_sqlite = uses_sqlite
 
-        if toggles.TF_USE_SQLITE_BACKEND.enabled(self.domain):
-            self.username = sessionvars['username'] + '@' + self.domain
+        if self.uses_sqlite:
+            self.username = sessionvars['username'] + '@' + sessionvars['domain']
             self.sandbox = SqlSandboxUtils.getStaticStorage(self.username)
             self.host = sessionvars['host']
             self.domain = sessionvars['domain']
@@ -100,7 +100,7 @@ class CCInstances(InstanceInitializationFactory):
             return root
 
         if 'casedb' in ref:
-            if toggles.TF_USE_SQLITE_BACKEND.enabled(self.domain):
+            if self.uses_sqlite:
                 case_storage = self.sandbox.getCaseStorage()
             else:
                 case_storage = CaseDatabase(
@@ -119,7 +119,7 @@ class CCInstances(InstanceInitializationFactory):
         elif 'fixture' in ref:
             fixture_id = ref.split('/')[-1]
             user_id = self.vars['user_id']
-            if toggles.TF_USE_SQLITE_BACKEND.enabled(self.domain):
+            if self.uses_sqlite:
                 fixture = SandboxUtils.loadFixture(self.sandbox, fixture_id, user_id)
                 root = fixture.getRoot()
             else:
@@ -127,7 +127,7 @@ class CCInstances(InstanceInitializationFactory):
             root.setParent(instance.getBase())
             return root
         elif 'ledgerdb' in ref:
-            if toggles.TF_USE_SQLITE_BACKEND.enabled(self.domain):
+            if self.uses_sqlite:
                 ledger_storage = self.sandbox.getLedgerStorage()
             else:
                 ledger_storage = LedgerDatabase(
@@ -179,22 +179,23 @@ def process_form_file(auth, submission_file, session_data=None):
     against the sandbox of the current user.
 
     """
-    ccInstances = CCInstances(session_data, auth)
+    ccInstances = CCInstances(session_data, auth, uses_sqlite=True)
     sandbox = ccInstances.sandbox
     FormRecordProcessor.processFile(sandbox, File(submission_file))
 
 
 def process_form_xml(auth, submission_xml, session_data=None):
-    ccInstances = CCInstances(session_data, auth)
+    ccInstances = CCInstances(session_data, auth, uses_sqlite=True)
     sandbox = ccInstances.sandbox
     FormRecordProcessor.processXML(sandbox, submission_xml)
 
 
 def perform_restore(auth, session_data=None, restore_xml=None):
-    CCInstances(session_data, auth, restore_xml, True)
+    CCInstances(session_data, auth, restore_xml, True, uses_sqlite=True)
 
 
-def filter_cases(filter_expr, api_auth, session_data=None, form_context=None, restore_xml=None, force_sync=True):
+def filter_cases(filter_expr, api_auth, session_data=None, form_context=None,
+                 restore_xml=None, force_sync=True, uses_sqlite=False):
     session_data = session_data or {}
     form_context = form_context or {}
     modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
@@ -206,7 +207,7 @@ def filter_cases(filter_expr, api_auth, session_data=None, form_context=None, re
         session_data['preload_cases'] = True
 
     ccInstances = CCInstances(session_data, api_auth, form_context=form_context,
-                              restore_xml=restore_xml, force_sync=force_sync)
+                              restore_xml=restore_xml, force_sync=force_sync, uses_sqlite=uses_sqlite)
     caseInstance = ExternalDataInstance("jr://instance/casedb", "casedb")
 
     try:

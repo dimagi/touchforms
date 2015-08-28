@@ -271,6 +271,7 @@ def handle_request(content, server):
                 content.get('hq_auth'),
                 content.get('session_data', {}),
                 content.get('form_context', {}),
+                uses_sqlite=content.get('uses_sqlite', False)
             )
             return result
 
