@@ -17,8 +17,8 @@ class SqlitePersistenceTest(unittest.TestCase):
         persistence.postgres_set_sqlite(user, 2)
         date_two = persistence.postgres_lookup_sqlite_last_modified(user)
         version = persistence.postgres_lookup_sqlite_version(user)
-        assert(date_two > date_one)
-        assert(version == 2)
+        self.assertTrue(date_two > date_one)
+        self.assertTrue(version == 2)
 
 if __name__ == '__main__':
     unittest.main()

@@ -38,7 +38,6 @@ class TouchcareTest(unittest.TestCase):
             restore_xml=self.restore,
         )
         self.assertEqual(len(resp['cases']), 2)
-        print "cases: ", resp['cases']
 
     def test_filter_cases_two(self):
         filter_expr = "[case_name = 'derp']"
@@ -51,7 +50,6 @@ class TouchcareTest(unittest.TestCase):
             force_sync=False,
         )
         self.assertEqual(len(resp['cases']), 0)
-        print "cases: ", resp['cases']
 
     def test_filter_cases_3(self):
         filter_expr = "[case_name = 'case']"
@@ -64,7 +62,6 @@ class TouchcareTest(unittest.TestCase):
             force_sync=False,
         )
         self.assertEqual(len(resp['cases']), 2)
-        print "cases: ", resp['cases']
 
 
 class TouchcareLedgerTest(unittest.TestCase):
@@ -95,7 +92,6 @@ class TouchcareLedgerTest(unittest.TestCase):
             restore_xml=self.restore,
         )
         self.assertEqual(len(resp['cases']), 1)
-        print "cases: ", resp['cases']
 
     def test_filter_cases_two(self):
         filter_expr = "[case_name = 'derp']"
@@ -107,7 +103,6 @@ class TouchcareLedgerTest(unittest.TestCase):
             restore_xml=self.restore,
         )
         self.assertEqual(len(resp['cases']), 0)
-        print "cases: ", resp['cases']
 
 
 class SubmissionTest(unittest.TestCase):

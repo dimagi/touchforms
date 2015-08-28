@@ -173,14 +173,13 @@ class CCInstances(InstanceInitializationFactory):
         parser.next()
         return TreeElementParser(parser, 0, fixture_id).parse()
 
-"""
-process_form_file and process_form_xml both perform submissions of the completed form form_data
-against the sandbox of the current user.
-
-"""
-
 
 def process_form_file(auth, submission_file, session_data=None):
+    """
+    process_form_file and process_form_xml both perform submissions of the completed form form_data
+    against the sandbox of the current user.
+
+    """
     ccInstances = CCInstances(session_data, auth)
     sandbox = ccInstances.sandbox
     FormRecordProcessor.processFile(sandbox, File(submission_file))
