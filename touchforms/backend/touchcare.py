@@ -40,8 +40,8 @@ def get_restore_url(criteria=None):
 
 
 class CCInstances(InstanceInitializationFactory):
-
-    def __init__(self, sessionvars, auth, restore_xml=None, force_sync=False, form_context=None, uses_sqlite=False):
+    def __init__(self, sessionvars, auth, restore_xml=None,
+                 force_sync=False, form_context=None, uses_sqlite=False):
         self.vars = sessionvars
         self.auth = auth
         self.uses_sqlite = uses_sqlite
@@ -159,8 +159,8 @@ class CCInstances(InstanceInitializationFactory):
 
     def _get_fixture(self, user_id, fixture_id):
         query_url = '%(base)s/%(user)s/%(fixture)s' % {"base": settings.FIXTURE_API_URL,
-                                                        "user": user_id,
-                                                        "fixture": fixture_id}
+                                                       "user": user_id,
+                                                       "fixture": fixture_id}
         q = query_factory(self.vars.get('host'), self.vars['domain'], self.auth, format="raw")
         try:
             results = q(query_url)
@@ -199,7 +199,7 @@ def filter_cases(filter_expr, api_auth, session_data=None, form_context=None,
     session_data = session_data or {}
     form_context = form_context or {}
     modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
-        {"filters": filter_expr}
+                     {"filters": filter_expr}
 
     # whenever we do a filter case operation we need to load all
     # the cases, so force this unless manually specified
@@ -233,7 +233,7 @@ def filter_cases(filter_expr, api_auth, session_data=None, form_context=None,
 
 
 def query_case_ids(q, criteria=None):
-    criteria = copy(criteria) or {} # don't modify the passed in dict
+    criteria = copy(criteria) or {}  # don't modify the passed in dict
     criteria["ids_only"] = 'true'
     query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria))
     return [id for id in q(query_url)]
@@ -241,7 +241,7 @@ def query_case_ids(q, criteria=None):
 
 def query_cases(q, criteria=None):
     query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria)) \
-                    if criteria else settings.CASE_API_URL
+        if criteria else settings.CASE_API_URL
     return [case_from_json(cj) for cj in q(query_url)]
 
 
@@ -260,9 +260,10 @@ def case_from_json(data):
     c.setName(data['properties']['case_name'])
     c.setClosed(data['closed'])
     if data['properties']['date_opened']:
-        c.setDateOpened(to_jdate(datetime.strptime(data['properties']['date_opened'], '%Y-%m-%dT%H:%M:%S'))) # 'Z' in fmt string omitted due to jython bug
+        c.setDateOpened(to_jdate(datetime.strptime(data['properties']['date_opened'],
+                                                   '%Y-%m-%dT%H:%M:%S')))  # 'Z' in fmt string omitted due to jython bug
     owner_id = data['properties']['owner_id'] or data['user_id'] or ""
-    c.setUserId(owner_id) # according to clayton "there is no user_id, only owner_id"
+    c.setUserId(owner_id)  # according to clayton "there is no user_id, only owner_id"
 
     for k, v in data['properties'].iteritems():
         if v is not None and k not in ['case_name', 'case_type', 'date_opened']:
@@ -388,7 +389,6 @@ class TouchformsStorageUtility(IStorageUtilityIndexed):
 
 
 class CaseDatabase(TouchformsStorageUtility):
-
     def get_object_id(self, case):
         return case.getCaseId()
 

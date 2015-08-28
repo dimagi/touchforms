@@ -1,12 +1,12 @@
 from __future__ import with_statement
 import unittest
 import os
-from setup import init_classpath
-init_classpath()
 import persistence
 from setup import init_classpath
+init_classpath()
 
 CUR_DIR = os.path.dirname(__file__)
+
 
 class SqlitePersistenceTest(unittest.TestCase):
 
