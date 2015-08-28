@@ -10,9 +10,6 @@ CUR_DIR = os.path.dirname(__file__)
 
 class SqlitePersistenceTest(unittest.TestCase):
 
-    def setUp(self):
-        print "setup"
-
     def test_sqlite_set(self):
         user = "test_user"
         persistence.postgres_set_sqlite(user, 1)

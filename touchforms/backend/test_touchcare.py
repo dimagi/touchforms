@@ -48,7 +48,7 @@ class TouchcareTest(unittest.TestCase):
             {},
             self.session_data,
             restore_xml=self.restore,
-            needs_sync=False,
+            force_sync=False,
         )
         self.assertEqual(len(resp['cases']), 0)
         print "cases: ", resp['cases']
@@ -61,7 +61,7 @@ class TouchcareTest(unittest.TestCase):
             {},
             self.session_data,
             restore_xml=self.restore,
-            needs_sync=False,
+            force_sync=False,
         )
         self.assertEqual(len(resp['cases']), 2)
         print "cases: ", resp['cases']
@@ -110,40 +110,6 @@ class TouchcareLedgerTest(unittest.TestCase):
         print "cases: ", resp['cases']
 
 
-class TouchcareRestoreTest(unittest.TestCase):
-
-    def setUp(self):
-        self.session_data = {
-            'session_name': 'Village Healthe > Simple Form',
-            'app_version': '2.0',
-            'device_id': 'cloudcare',
-            'user_id': '51cd680c0bd1c21bb5e63dab99748248',
-            'additional_filters': {'footprint': True},
-            'domain': 'willslearningproject',
-            'host': 'http://localhost:8000',
-            'user_data': {},
-            'case_id_new_RegCase_0': '1c2e7c76f0c84eaea5b44bc7d1d3caf0',
-            'app_id': '6a48b8838d06febeeabb28c8c9516ab6',
-            'username': 'will'
-        }
-
-    def test_filter_cases(self):
-        filter_expr = "[case_name = 'derp']"
-
-        auth = {'type': 'http-digest',
-                'username': 'will@willslearningproject.commcarehq.org',
-                'key': '123'}
-
-        resp = touchcare.filter_cases(
-            filter_expr,
-            auth=auth,
-            session_data=self.session_data,
-            needs_sync=True,
-        )
-        self.assertEqual(len(resp['cases']), 5)
-        print "cases: ", resp['cases']
-
-
 class SubmissionTest(unittest.TestCase):
 
     def setUp(self):
@@ -183,7 +149,7 @@ class SubmissionTest(unittest.TestCase):
             filter_expr,
             {},
             session_data=self.session_data,
-            needs_sync=False,
+            force_sync=False,
         )
         self.assertEqual(len(resp['cases']), 1)
 

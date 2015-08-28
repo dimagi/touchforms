@@ -24,9 +24,9 @@ from org.javarosa.xpath.parser import XPathSyntaxException
 from org.javarosa.core.model.condition import EvaluationContext
 from org.javarosa.core.model.instance import ExternalDataInstance
 from org.commcare.api.persistence import SqlSandboxUtils
-from org.commcare.core.database import SandboxUtils
-from org.commcare.core.process import FormRecordProcessor
-from org.commcare.core.parse import ParseUtils
+from org.commcare.core.sandbox import SandboxUtils
+from org.commcare.modern.process import FormRecordProcessorHelper as FormRecordProcessor
+from org.commcare.modern.parse import ParseUtilsHelper as ParseUtils
 from java.io import FileInputStream, File
 from org.kxml2.io import KXmlParser
 import persistence
