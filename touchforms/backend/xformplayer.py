@@ -125,7 +125,8 @@ def _init():
     global_state = GlobalStateManager()
 
 
-def load_form(xform, instance=None, extensions=None, session_data=None, api_auth=None, form_context=None):
+def load_form(xform, instance=None, extensions=None, session_data=None,
+              api_auth=None, form_context=None, uses_sqlite_backend=False):
     """Returns an org.javarosa.core.model.FormDef
 
     Parameters
@@ -155,14 +156,20 @@ def load_form(xform, instance=None, extensions=None, session_data=None, api_auth
             'use_cache': 'true',
             'hsph_hack': session_data.get('case_id', None)
         })
-        form.initialize(instance is None, CCInstances(session_data, api_auth, form_context=form_context))
+        form.initialize(instance is None, CCInstances(session_data,
+                                                      api_auth,
+                                                      form_context=form_context,
+                                                      uses_sqlite_backend=uses_sqlite_backend))
     except CaseNotFound:
         # Touchforms repeatedly makes a call to HQ to get all the case ids in its universe. We can optimize
         # this by caching that call to HQ. However, when someone adds a case to that case list, we want to ensure
         # that that case appears in the universe of cases. Therefore we first attempt to use the cached version
         # of the case id list, and in the event that we cannot find a case, we try again, but do not use the cache.
         session_data.get('additional_filters', {}).update({'use_cache': 'false'})
-        form.initialize(instance is None, CCInstances(session_data, api_auth, form_context=form_context))
+        form.initialize(instance is None, CCInstances(session_data,
+                                                      api_auth,
+                                                      form_context=form_context,
+                                                      uses_sqlite_backend=uses_sqlite_backend))
 
     return form
 
@@ -184,6 +191,7 @@ class XFormSession(object):
             params.get('session_data', {}),
             params.get('api_auth'),
             params.get('form_context', None),
+            params.get('uses_sqlite_backend', False),
         )
         self.fem = FormEntryModel(self.form, FormEntryModel.REPEAT_STRUCTURE_NON_LINEAR)
         self.fec = FormEntryController(self.fem)
@@ -275,7 +283,8 @@ class XFormSession(object):
     def sync_user_database(self):
         result = {}
         try:
-            CCInstances(self.orig_params['session_data'], self.orig_params['api_auth']).perform_ota_restore()
+            CCInstances(self.orig_params['session_data'], self.orig_params['api_auth'],
+                        uses_sqlite=True).perform_ota_restore()
             result['status'] = 'success'
             result['output'] = 'success'
         except Exception, e:

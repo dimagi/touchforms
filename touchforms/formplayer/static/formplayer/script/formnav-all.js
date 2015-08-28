@@ -9,13 +9,14 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
   this.render_context = render_context;
   this.answerCallback = answerCallback;
 
-  this.loadForm = function ($div, init_lang, onload, onerror) {
+  this.loadForm = function ($div, init_lang, onload, onerror, uses_sqlite_backend) {
     var args = {
       'action': 'new-form',
       'instance-content': savedInstance,
       'lang': init_lang,
       'session-data': this.sessionData,
-      'nav': 'fao'
+      'nav': 'fao',
+      'uses-sqlite-backend': uses_sqlite_backend
     };
     var form_param = {uid: 'form-name', raw: 'form-content', url: 'form-url'}[this.formSpec.type];
     args[form_param] = this.formSpec.val;

@@ -187,7 +187,7 @@ def handle_request(content, server):
                 inst_spec = None
 
             session_data = content.get("session-data", {})
-            return xformplayer.open_form(form_spec, inst_spec, **{
+                return xformplayer.open_form(form_spec, inst_spec, **{
                     'init_lang': content.get('lang'),
                     'extensions': server.extensions,
                     'session_data': session_data,
@@ -195,6 +195,7 @@ def handle_request(content, server):
                     'api_auth': content.get('hq_auth'),
                     'form_context': content.get('form_context', {}),
                     'staleness_window': content.get('staleness_window', server.default_stale_window),
+                    'uses_sqlite_backend': content.get('uses_sqlite_backend', False),
                 })
 
         elif action == xformplayer.Actions.ANSWER:
