@@ -18,6 +18,10 @@
   min-width: 800px;
 }
 
+video {
+  max-width: 400px;
+}
+
 .ix {
   display: none;
 }
