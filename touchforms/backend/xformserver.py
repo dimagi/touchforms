@@ -18,7 +18,8 @@ import com.xhaus.jyson.JysonCodec as json
 from xcp import (
     InvalidRequestException,
     TouchFormsUnauthorized,
-    TouchFormsBadRequest
+    TouchFormsBadRequest,
+    TouchFormsNotFound,
 )
 
 logger = logging.getLogger('formplayer.xformserver')
@@ -73,6 +74,9 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             return
         except TouchFormsUnauthorized, e:
             self.send_error(401, str(e))
+            return
+        except TouchFormsNotFound, e:
+            self.send_error(404, str(e))
             return
         except (Exception, java.lang.Exception), e:
             msg = ''
@@ -223,8 +227,7 @@ def handle_request(content, server):
             return xformplayer.current_question(content['session-id'], override_state=override_state)
 
         elif action == xformplayer.Actions.HEARTBEAT:
-            return xformplayer.heartbeat(content['session-id'])
-
+            return {}
         elif action == xformplayer.Actions.EDIT_REPEAT:
             ensure_required_params(['session-id', 'ix'], action, content)
             return xformplayer.edit_repeat(content['session-id'], content['ix'])

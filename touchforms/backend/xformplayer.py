@@ -149,8 +149,20 @@ def load_form(xform, instance=None, extensions=None, session_data=None, api_auth
         context=session_data.get('function_context', {}),
         preload_data=session_data.get('preloaders', {})
     )
-    session_data.get('additional_filters', {}).update({'use_cache': 'true'})
-    form.initialize(instance is None, CCInstances(session_data, api_auth))
+
+    try:
+        session_data.get('additional_filters', {}).update({
+            'use_cache': 'true',
+            'hsph_hack': session_data.get('case_id', None)
+        })
+        form.initialize(instance is None, CCInstances(session_data, api_auth))
+    except CaseNotFound:
+        # Touchforms repeatedly makes a call to HQ to get all the case ids in its universe. We can optimize
+        # this by caching that call to HQ. However, when someone adds a case to that case list, we want to ensure
+        # that that case appears in the universe of cases. Therefore we first attempt to use the cached version
+        # of the case id list, and in the event that we cannot find a case, we try again, but do not use the cache.
+        session_data.get('additional_filters', {}).update({'use_cache': 'false'})
+        form.initialize(instance is None, CCInstances(session_data, api_auth))
 
     return form
 
@@ -632,9 +644,13 @@ def init_context(xfsess):
 def open_form(form_spec, inst_spec=None, **kwargs):
     try:
         xform_xml = get_loader(form_spec, **kwargs)()
+    except Exception, e:
+        return {'error': 'There was a problem downloading the XForm: %s' % str(e)}
+
+    try:
         instance_xml = get_loader(inst_spec, **kwargs)()
     except Exception, e:
-        return {'error': str(e)}
+        return {'error': 'There was a problem downloading the XForm instance: %s' % str(e)}
 
     xfsess = XFormSession(xform_xml, instance_xml, **kwargs)
     global_state.cache_session(xfsess)
@@ -728,19 +744,6 @@ def current_question(xform_session, override_state=None):
     extra = {'lang': xform_session.get_lang()}
     extra.update(init_context(xform_session))
     return xform_session.response(extra, xform_session.cur_event)
-
-
-def heartbeat(session_id):
-    """
-    The heartbeat will update the session's last seen timestamp and sequence ID.
-    """
-    # todo: cz as of 8/5/2015 I'm pretty sure this isn't necessary. persistence can
-    # just pop this back into the context whenever necessary so no longer super relevant
-    # to keep around in memory while the tab is open.
-    with global_state.get_lock(session_id):
-        # this updates the session sequence ID and timestamp and persists it
-        with global_state.get_session(session_id):
-            {}
 
 
 def next_event (xfsess):

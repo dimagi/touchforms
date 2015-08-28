@@ -32,7 +32,7 @@ from org.kxml2.io import KXmlParser
 import persistence
 
 from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
-from xcp import TouchFormsUnauthorized, TouchcareInvalidXPath, CaseNotFound
+from xcp import TouchFormsUnauthorized, TouchcareInvalidXPath, TouchFormsNotFound, CaseNotFound
 
 logger = logging.getLogger('formplayer.touchcare')
 
@@ -44,7 +44,7 @@ def get_restore_url(criteria=None):
 
 class CCInstances(InstanceInitializationFactory):
 
-    def __init__(self, sessionvars, auth, restore=None, force_sync=False, form_context=None):
+    def __init__(self, sessionvars, auth, restore_xml=None, force_sync=False, form_context=None):
         self.vars = sessionvars
         self.auth = auth
 
@@ -57,7 +57,7 @@ class CCInstances(InstanceInitializationFactory):
             self.query_url = get_restore_url({'as': self.username + '@' + self.domain, 'version': '2.0'})
 
             if force_sync or self.needs_sync():
-                self.perform_ota_restore(restore)
+                self.perform_ota_restore(restore_xml)
         else:
             self.fixtures = {}
             self.form_context = form_context or {}
@@ -92,7 +92,6 @@ class CCInstances(InstanceInitializationFactory):
         elapsed = current_time - self.last_sync
         minutes_elapsed = divmod(elapsed.days * 86400 + elapsed.seconds, 60)[0]
         return minutes_elapsed > settings.SQLITE_STALENESS_WINDOW
-
 
     def generateRoot(self, instance):
         ref = instance.getReference()
@@ -141,7 +140,6 @@ class CCInstances(InstanceInitializationFactory):
                 instance.getBase(),
                 ledger_storage
             )
-
         elif 'session' in ref:
             meta_keys = ['device_id', 'app_version', 'username', 'user_id']
             exclude_keys = ['additional_filters', 'user_data']
@@ -159,6 +157,21 @@ class CCInstances(InstanceInitializationFactory):
 
             return from_bundle(sess.getSessionInstance(*([self.vars.get(k, '') for k in meta_keys] + \
                                                          [to_hashtable(clean_user_data)])))
+
+    def _get_fixture(self, user_id, fixture_id):
+        query_url = '%(base)s/%(user)s/%(fixture)s' % { "base": settings.FIXTURE_API_URL,
+                                                        "user": user_id,
+                                                        "fixture": fixture_id }
+        q = query_factory(self.vars.get('host'), self.vars['domain'], self.auth, format="raw")
+        try:
+            results = q(query_url)
+        except (HTTPError, URLError), e:
+            raise TouchFormsNotFound('Unable to fetch fixture at %s: %s' % (query_url, str(e)))
+        parser = KXmlParser()
+        parser.setInput(to_input_stream(results), "UTF-8")
+        parser.setFeature(KXmlParser.FEATURE_PROCESS_NAMESPACES, True)
+        parser.next()
+        return TreeElementParser(parser, 0, fixture_id).parse()
 
 """
 process_form_file and process_form_xml both perform submissions of the completed form form_data
@@ -182,17 +195,32 @@ def process_form_xml(auth, submission_xml, session_data=None):
 def perform_restore(auth, session_data=None, restore_xml=None):
     CCInstances(session_data, auth, restore_xml, True)
 
-
-def filter_cases(filter_expr, auth, session_data=None, restore_xml=None, needs_sync=True):
-
-    modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/case_name)" % \
+def filter_cases(filter_expr, api_auth, session_data=None, form_context=None, restore_xml=None, force_sync=True):
+    session_data = session_data or {}
+    form_context = form_context or {}
+    modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
         {"filters": filter_expr}
 
-    ccInstances = CCInstances(session_data, auth, restore_xml, needs_sync)
+    # whenever we do a filter case operation we need to load all
+    # the cases, so force this unless manually specified
+    if 'preload_cases' not in session_data:
+        session_data['preload_cases'] = True
+
+    ccInstances = CCInstances(session_data, api_auth, form_context=form_context, restore_xml=restore_xml, force_sync=force_sync)
     caseInstance = ExternalDataInstance("jr://instance/casedb", "casedb")
-    caseInstance.initialize(ccInstances, "casedb")
+
+    try:
+        caseInstance.initialize(ccInstances, "casedb")
+    except (HTTPError, URLError), e:
+        raise TouchFormsUnauthorized('Unable to connect to HQ: %s' % str(e))
 
     instances = to_hashtable({"casedb": caseInstance})
+
+    # load any additional instances needed
+    for extra_instance_config in session_data.get('extra_instances', []):
+        data_instance = ExternalDataInstance(extra_instance_config['src'], extra_instance_config['id'])
+        data_instance.initialize(ccInstances, extra_instance_config['id'])
+        instances[extra_instance_config['id']] = data_instance
 
     try:
         case_list = XPathFuncExpr.toString(
@@ -201,6 +229,7 @@ def filter_cases(filter_expr, auth, session_data=None, restore_xml=None, needs_s
         return {'cases': filter(lambda x: x, case_list.split(","))}
     except (XPathException, XPathSyntaxException), e:
         raise TouchcareInvalidXPath('Error querying cases with xpath %s: %s' % (filter_expr, str(e)))
+
 
 def query_case_ids(q, criteria=None):
     criteria = copy(criteria) or {} # don't modify the passed in dict
