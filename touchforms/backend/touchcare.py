@@ -30,6 +30,7 @@ from org.commcare.modern.parse import ParseUtilsHelper as ParseUtils
 from java.io import FileInputStream, File
 from org.kxml2.io import KXmlParser
 import persistence
+from corehq import toggles
 
 from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
 from xcp import TouchFormsUnauthorized, TouchcareInvalidXPath, TouchFormsNotFound, CaseNotFound
@@ -48,7 +49,7 @@ class CCInstances(InstanceInitializationFactory):
         self.vars = sessionvars
         self.auth = auth
 
-        if settings.USES_SQLITE:
+        if toggles.TF_USE_SQLITE_BACKEND.enabled(self.domain):
             self.username = sessionvars['username']
             self.sandbox = SqlSandboxUtils.getStaticStorage(self.username)
             self.host = sessionvars['host']
@@ -101,7 +102,7 @@ class CCInstances(InstanceInitializationFactory):
             return root
 
         if 'casedb' in ref:
-            if settings.USES_SQLITE:
+            if toggles.TF_USE_SQLITE_BACKEND.enabled(self.domain):
                 case_storage = self.sandbox.getCaseStorage()
             else:
                 case_storage = CaseDatabase(
@@ -120,7 +121,7 @@ class CCInstances(InstanceInitializationFactory):
         elif 'fixture' in ref:
             fixture_id = ref.split('/')[-1]
             user_id = self.vars['user_id']
-            if settings.USES_SQLITE:
+            if toggles.TF_USE_SQLITE_BACKEND.enabled(self.domain):
                 fixture = SandboxUtils.loadFixture(self.sandbox, fixture_id, user_id)
                 root = fixture.getRoot()
             else:
@@ -128,7 +129,7 @@ class CCInstances(InstanceInitializationFactory):
             root.setParent(instance.getBase())
             return root
         elif 'ledgerdb' in ref:
-            if settings.USES_SQLITE:
+            if toggles.TF_USE_SQLITE_BACKEND.enabled(self.domain):
                 ledger_storage = self.sandbox.getLedgerStorage()
             else:
                 ledger_storage = LedgerDatabase(

@@ -59,7 +59,7 @@ def postgres_set_session(key, value):
 
 def postgres_set_session_command(cursor, key, value):
 
-    postgres_lookup(cursor, settings.POSTGRES_TABLE, 'sess_id', key, 'sess_json')
+    postgres_lookup(cursor, POSTGRES_TABLE, 'sess_id', key, 'sess_json')
 
     if cursor.rowcount > 0:
         postgres_update_session_command(cursor, key, value)
@@ -71,7 +71,7 @@ def postgres_lookup_session(key):
 
 
 def postgres_lookup_session_command(cursor, key):
-    postgres_lookup(cursor, settings.POSTGRES_TABLE, 'sess_id', key, 'sess_json')
+    postgres_lookup(cursor, POSTGRES_TABLE, 'sess_id', key, 'sess_json')
     if cursor.rowcount is 0:
         raise KeyError
     value = cursor.fetchone()[0]
@@ -81,13 +81,13 @@ def postgres_lookup_session_command(cursor, key):
 
 def postgres_update_session_command(cursor, key, value):
     upd_sql = replace_table("UPDATE %(table)s SET sess_json = ? , last_modified =?  "
-                            "WHERE sess_id = ?", settings.POSTGRES_TABLE)
+                            "WHERE sess_id = ?", POSTGRES_TABLE)
     upd_params = [json.dumps(value).encode('utf8'), datetime.utcnow(), str(key)]
     cursor.execute(upd_sql, upd_params)
 
 def postgres_insert_session_command(cursor, key, value):
     ins_sql = replace_table("INSERT INTO %(table)s (sess_id, sess_json, last_modified, date_created) "
-                            "VALUES (?, ?, ?, ?)", settings.POSTGRES_TABLE)
+                            "VALUES (?, ?, ?, ?)", POSTGRES_TABLE)
     ins_params = [str(key), json.dumps(value).encode('utf8'), datetime.utcnow(), datetime.utcnow()]
     cursor.execute(ins_sql, ins_params)
 
@@ -110,7 +110,7 @@ def postgres_set_sqlite(username, version):
 
 def postgres_set_sqlite_command(cursor, username, value):
 
-    postgres_lookup(cursor, settings.SQLITE_TABLE, 'username', username)
+    postgres_lookup(cursor, SQLITE_TABLE, 'username', username)
 
     if cursor.rowcount > 0:
         postgres_update_sqlite_command(cursor, username, value)
@@ -119,7 +119,7 @@ def postgres_set_sqlite_command(cursor, username, value):
 
 
 def postgres_lookup_last_modified_command(cursor, username):
-    postgres_lookup(cursor, settings.SQLITE_TABLE, 'username', username, 'last_modified')
+    postgres_lookup(cursor, SQLITE_TABLE, 'username', username, 'last_modified')
     if cursor.rowcount is 0:
         raise KeyError
     value = cursor.fetchone()[0]
@@ -127,7 +127,7 @@ def postgres_lookup_last_modified_command(cursor, username):
 
 
 def postgres_lookup_version_command(cursor, username):
-    postgres_lookup(cursor, settings.SQLITE_TABLE, 'username', username, 'app_version')
+    postgres_lookup(cursor, SQLITE_TABLE, 'username', username, 'app_version')
     if cursor.rowcount is 0:
         raise KeyError
     value = cursor.fetchone()[0]
@@ -135,15 +135,15 @@ def postgres_lookup_version_command(cursor, username):
 
 def postgres_update_sqlite_command(cursor, username, version):
     upd_sql = replace_table("UPDATE %(table)s SET app_version = ? , last_modified =?  "
-                            "WHERE username = ?", settings.SQLITE_TABLE)
+                            "WHERE username = ?", SQLITE_TABLE)
     upd_params = [version, datetime.utcnow(), str(username)]
     cursor.execute(upd_sql, upd_params)
 
 
 def postgres_insert_sqlite_command(cursor, username, version):
     ins_sql = replace_table("INSERT INTO %(table)s (username, app_version, last_modified, date_created) "
-                            "VALUES (?, ?, ?, ?)", settings.SQLITE_TABLE)
-    ins_params = [str(username), version, datetime.utcnow(), datetime.utcnow()]
+                            "VALUES (?, ?, ?, ?)", SQLITE_TABLE)
+    ins_params = [username, version, datetime.utcnow(), datetime.utcnow()]
     cursor.execute(ins_sql, ins_params)
 
 
@@ -205,3 +205,7 @@ def cache_get_file_path(key):
     if not os.path.exists(persistence_dir):
         os.makedirs(persistence_dir)
     return os.path.join(persistence_dir, 'tfsess-%s' % key)
+
+
+POSTGRES_TABLE = "formplayer_session"
+SQLITE_TABLE = "formplayer_sqlstatus"
