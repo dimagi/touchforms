@@ -16,8 +16,6 @@ from org.commcare.cases.model import Case
 from org.commcare.cases.ledger import Ledger
 from org.commcare.util import CommCareSession
 from org.javarosa.xml import TreeElementParser
-from java.util import Date
-
 from org.javarosa.xpath.expr import XPathFuncExpr
 from org.javarosa.xpath import XPathParseTool, XPathException
 from org.javarosa.xpath.parser import XPathSyntaxException
@@ -27,11 +25,10 @@ from org.commcare.api.persistence import SqlSandboxUtils
 from org.commcare.core.sandbox import SandboxUtils
 from org.commcare.modern.process import FormRecordProcessorHelper as FormRecordProcessor
 from org.commcare.modern.parse import ParseUtilsHelper as ParseUtils
-from java.io import FileInputStream, File
 from org.kxml2.io import KXmlParser
 import persistence
-from corehq import toggles
 
+from corehq import toggles
 from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
 from xcp import TouchFormsUnauthorized, TouchcareInvalidXPath, TouchFormsNotFound, CaseNotFound
 
@@ -50,12 +47,12 @@ class CCInstances(InstanceInitializationFactory):
         self.auth = auth
 
         if toggles.TF_USE_SQLITE_BACKEND.enabled(self.domain):
-            self.username = sessionvars['username']
+            self.username = sessionvars['username'] + '@' + self.domain
             self.sandbox = SqlSandboxUtils.getStaticStorage(self.username)
             self.host = sessionvars['host']
             self.domain = sessionvars['domain']
             self.query_func = query_factory(self.host, self.domain, self.auth, 'raw')
-            self.query_url = get_restore_url({'as': self.username + '@' + self.domain, 'version': '2.0'})
+            self.query_url = get_restore_url({'as': self.username, 'version': '2.0'})
 
             if force_sync or self.needs_sync():
                 self.perform_ota_restore(restore_xml)
@@ -96,6 +93,7 @@ class CCInstances(InstanceInitializationFactory):
 
     def generateRoot(self, instance):
         ref = instance.getReference()
+
         def from_bundle(inst):
             root = inst.getRoot()
             root.setParent(instance.getBase())
@@ -144,7 +142,7 @@ class CCInstances(InstanceInitializationFactory):
         elif 'session' in ref:
             meta_keys = ['device_id', 'app_version', 'username', 'user_id']
             exclude_keys = ['additional_filters', 'user_data']
-            sess = CommCareSession(None) # will not passing a CCPlatform cause problems later?
+            sess = CommCareSession(None)  # will not passing a CCPlatform cause problems later?
             for k, v in self.vars.iteritems():
                 if k not in meta_keys \
                         and k not in exclude_keys:
@@ -156,13 +154,13 @@ class CCInstances(InstanceInitializationFactory):
             for k, v in self.vars.get('user_data', {}).iteritems():
                 clean_user_data[k] = unicode(v if v is not None else '', errors='replace')
 
-            return from_bundle(sess.getSessionInstance(*([self.vars.get(k, '') for k in meta_keys] + \
+            return from_bundle(sess.getSessionInstance(*([self.vars.get(k, '') for k in meta_keys] +
                                                          [to_hashtable(clean_user_data)])))
 
     def _get_fixture(self, user_id, fixture_id):
-        query_url = '%(base)s/%(user)s/%(fixture)s' % { "base": settings.FIXTURE_API_URL,
+        query_url = '%(base)s/%(user)s/%(fixture)s' % {"base": settings.FIXTURE_API_URL,
                                                         "user": user_id,
-                                                        "fixture": fixture_id }
+                                                        "fixture": fixture_id}
         q = query_factory(self.vars.get('host'), self.vars['domain'], self.auth, format="raw")
         try:
             results = q(query_url)
@@ -195,6 +193,7 @@ def process_form_xml(auth, submission_xml, session_data=None):
 def perform_restore(auth, session_data=None, restore_xml=None):
     CCInstances(session_data, auth, restore_xml, True)
 
+
 def filter_cases(filter_expr, api_auth, session_data=None, form_context=None, restore_xml=None, force_sync=True):
     session_data = session_data or {}
     form_context = form_context or {}
@@ -206,7 +205,8 @@ def filter_cases(filter_expr, api_auth, session_data=None, form_context=None, re
     if 'preload_cases' not in session_data:
         session_data['preload_cases'] = True
 
-    ccInstances = CCInstances(session_data, api_auth, form_context=form_context, restore_xml=restore_xml, force_sync=force_sync)
+    ccInstances = CCInstances(session_data, api_auth, form_context=form_context,
+                              restore_xml=restore_xml, force_sync=force_sync)
     caseInstance = ExternalDataInstance("jr://instance/casedb", "casedb")
 
     try:

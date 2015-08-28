@@ -4,11 +4,11 @@ import os
 
 from setup import init_classpath
 init_classpath()
-
 import touchcare
 from xcp import TouchcareInvalidXPath, TouchFormsUnauthorized
 
 CUR_DIR = os.path.dirname(__file__)
+
 
 class TouchcareTest(unittest.TestCase):
 

@@ -158,12 +158,12 @@ function Form(json, adapter) {
       });
 
     this.$container.find('#sync').click(function() {
-       $(document.getElementById("sync")).val("Syncing...")
+       $(document.getElementById("sync")).val("Syncing...");
        adapter.syncUserData(function(status, output){
             if(status === "success") {
-                $(document.getElementById("sync")).val("Synced!")
+                $(document.getElementById("sync")).val("Synced!");
             } else{
-                this.showError(output)
+                this.showError(output);
             }
         });
       });
