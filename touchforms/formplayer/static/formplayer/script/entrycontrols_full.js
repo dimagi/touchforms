@@ -165,7 +165,7 @@ function IntEntry(question, options) {
     var self = this;
     FreeTextEntry.call(self, question, options);
     self.templateType = 'str';
-    self.lengthLimit = options.lengthLimit;
+    self.lengthLimit = options.lengthLimit || 10;
 
     self.getErrorMessage = function(rawAnswer) {
         return (isNaN(+rawAnswer) || +rawAnswer != Math.floor(+rawAnswer) ? "Not a valid whole number" : null);
@@ -194,6 +194,7 @@ IntEntry.prototype.onPreProcess = function(newValue) {
 function PhoneEntry(question, options) {
     FreeTextEntry.call(this, question, options);
     this.templateType = 'str';
+    this.lengthLimit = options.lengthLimit || 15;
 
     this.getErrorMessage = function(rawAnswer) {
         return (!(/^\+?[0-9]+$/.test(rawAnswer)) ? "This does not appear to be a valid phone/numeric number" : null);

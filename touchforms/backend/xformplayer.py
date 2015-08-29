@@ -486,7 +486,10 @@ class XFormSession(object):
         if answer == None or str(answer).strip() == '' or answer == []:
             ans = None
         elif datatype == 'int':
-            ans = IntegerData(int(answer))
+            if isinstance(int(answer), long):
+                ans = LongData(int(answer))
+            else:
+                ans = IntegerData(int(answer))
         elif datatype == 'longint':
             ans = LongData(int(answer))
         elif datatype == 'float':
