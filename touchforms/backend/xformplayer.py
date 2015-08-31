@@ -126,7 +126,7 @@ def _init():
 
 
 def load_form(xform, instance=None, extensions=None, session_data=None,
-              api_auth=None, form_context=None, uses_sqlite_backend=False):
+              api_auth=None, form_context=None):
     """Returns an org.javarosa.core.model.FormDef
 
     Parameters
@@ -139,6 +139,9 @@ def load_form(xform, instance=None, extensions=None, session_data=None,
     """
     extensions = extensions or []
     session_data = session_data or {}
+
+    uses_sqlite = session_data.get('uses_sqlite')
+
     form = XFormParser(StringReader(xform)).parse()
     if instance is not None:
         XFormParser(None).loadXmlInstance(form, StringReader(instance))
@@ -159,7 +162,7 @@ def load_form(xform, instance=None, extensions=None, session_data=None,
         form.initialize(instance is None, CCInstances(session_data,
                                                       api_auth,
                                                       form_context=form_context,
-                                                      uses_sqlite_backend=uses_sqlite_backend))
+                                                      uses_sqlite=uses_sqlite))
     except CaseNotFound:
         # Touchforms repeatedly makes a call to HQ to get all the case ids in its universe. We can optimize
         # this by caching that call to HQ. However, when someone adds a case to that case list, we want to ensure
@@ -169,7 +172,7 @@ def load_form(xform, instance=None, extensions=None, session_data=None,
         form.initialize(instance is None, CCInstances(session_data,
                                                       api_auth,
                                                       form_context=form_context,
-                                                      uses_sqlite_backend=uses_sqlite_backend))
+                                                      uses_sqlite=uses_sqlite))
 
     return form
 
@@ -191,7 +194,6 @@ class XFormSession(object):
             params.get('session_data', {}),
             params.get('api_auth'),
             params.get('form_context', None),
-            params.get('uses_sqlite_backend', False),
         )
         self.fem = FormEntryModel(self.form, FormEntryModel.REPEAT_STRUCTURE_NON_LINEAR)
         self.fec = FormEntryController(self.fem)
@@ -215,6 +217,7 @@ class XFormSession(object):
             'session_data': params.get('session_data'),
             'api_auth': params.get('api_auth'),
             'staleness_window': params['staleness_window'],
+            'uses_sqlite': params.get('uses_sqlite', False),
         }
         self.update_last_activity()
 
@@ -733,11 +736,12 @@ def submit_form(xform_session, answers, prevalidated):
         resp = form_completion(xform_session)
         resp['status'] = 'success'
         xml = xform_session.output()
-        process_form_xml(
-            {},
-            xml,
-            xform_session.orig_params['session_data'],
-        )
+        if xform_session.orig_params['session_data']['uses_sqlite']:
+            process_form_xml(
+                {},
+                xml,
+                xform_session.orig_params['session_data'],
+            )
 
     return xform_session.response(resp, no_next=True)
 

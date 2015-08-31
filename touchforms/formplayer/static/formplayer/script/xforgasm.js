@@ -80,7 +80,7 @@ function WebFormSession(params) {
 
     self.instance_xml = params.instance_xml;
     self.session_data = params.session_data || {};
-    self.uses_sqlite_backend = params.uses_sqlite_backend;
+    self.uses_sqlite = self.session_data.uses_sqlite || false;
     self.answerCallback = params.answerCallback;
     if (!self.session_data.host) {
         self.session_data.host = window.location.protocol + '//' + window.location.host;
@@ -151,7 +151,7 @@ function WebFormSession(params) {
         if (params.session_id) {
             adapter.resumeForm(params.session_id, $div, this.onload, this.onerror);
         } else {
-            adapter.loadForm($div, init_lang, this.onload, this.onerror, this.uses_sqlite_backend);
+            adapter.loadForm($div, init_lang, this.onload, this.onerror, this.uses_sqlite);
         }
     }
 
