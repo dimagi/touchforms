@@ -217,7 +217,6 @@ class XFormSession(object):
             'session_data': params.get('session_data'),
             'api_auth': params.get('api_auth'),
             'staleness_window': params['staleness_window'],
-            'uses_sqlite': params.get('uses_sqlite', False),
         }
         self.update_last_activity()
 
