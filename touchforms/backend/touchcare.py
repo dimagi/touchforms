@@ -263,7 +263,7 @@ def case_from_json(data):
         c.setDateOpened(to_jdate(
             datetime.strptime(
                 data['properties']['date_opened'],
-                    '%Y-%m-%dT%H:%M:%S')))  # 'Z' in fmt string omitted due to jython bug
+                '%Y-%m-%dT%H:%M:%S')))  # 'Z' in fmt string omitted due to jython bug
     owner_id = data['properties']['owner_id'] or data['user_id'] or ""
     c.setUserId(owner_id)  # according to clayton "there is no user_id, only owner_id"
 
