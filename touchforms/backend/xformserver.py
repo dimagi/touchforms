@@ -187,7 +187,7 @@ def handle_request(content, server):
                 inst_spec = None
 
             session_data = content.get("session-data", {})
-            
+
             return xformplayer.open_form(form_spec, inst_spec, **{
                 'init_lang': content.get('lang'),
                 'extensions': server.extensions,
