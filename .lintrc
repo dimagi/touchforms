@@ -1,6 +1,8 @@
 # See https://github.com/markstory/lint-review
 [files]
 ignore = */build/*
+         */migrations/*
+         */south_migrations/*
          *.min.js
          localsettings.py
 
