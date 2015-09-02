@@ -133,7 +133,7 @@ function FreeTextEntry (args) {
 
   args = args || {};
   this.domain = args.domain || 'full';
-  this.length_limit = args.length_limit || 10000;
+  this.length_limit = args.length_limit || 100000;
   this.textarea = args.prose;
 
   this.inputfield = null;
