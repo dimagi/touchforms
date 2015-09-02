@@ -18,6 +18,9 @@ class Session(models.Model):
     last_modified = models.DateTimeField(null=True)
     date_created = models.DateTimeField(null=True)
 
+    class Meta:
+        app_label = 'formplayer'
+
 
 class EntrySession(models.Model):
     session_id = models.CharField(max_length=100, primary_key=True)
@@ -27,6 +30,10 @@ class EntrySession(models.Model):
     session_name = models.CharField(max_length=100)
     created_date = models.DateTimeField(default=datetime.utcnow)
     last_activity_date = models.DateTimeField(null=True)
+    
+    class Meta:
+        app_label = 'formplayer'
+
 
 class XForm(models.Model):
     """A record of an XForm"""

@@ -18,7 +18,8 @@ import com.xhaus.jyson.JysonCodec as json
 from xcp import (
     InvalidRequestException,
     TouchFormsUnauthorized,
-    TouchFormsBadRequest
+    TouchFormsBadRequest,
+    TouchFormsNotFound,
 )
 
 logger = logging.getLogger('formplayer.xformserver')
@@ -73,6 +74,9 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             return
         except TouchFormsUnauthorized, e:
             self.send_error(401, str(e))
+            return
+        except TouchFormsNotFound, e:
+            self.send_error(404, str(e))
             return
         except (Exception, java.lang.Exception), e:
             msg = ''

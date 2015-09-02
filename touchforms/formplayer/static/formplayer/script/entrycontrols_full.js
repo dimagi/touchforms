@@ -135,7 +135,7 @@ function FreeTextEntry(question, options) {
     EntrySingleAnswer.call(self, question, options);
     self.templateType = 'text';
     self.domain = question.domain ? question.domain() : 'full';
-    self.lengthLimit = options.lengthLimit || 10000;
+    self.lengthLimit = options.lengthLimit || 100000;
     self.prose = question.domain_meta ? question.domain_meta().longtext : false;
 
     self.isValid = function(rawAnswer) {

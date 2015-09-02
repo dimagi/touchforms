@@ -38,6 +38,12 @@ class TouchFormsUnauthorized(TouchFormsException):
     pass
 
 
+class TouchFormsNotFound(TouchFormsException):
+    """
+    Raise a subclass of this to return a 404 not found error code
+    """
+    pass
+
 class InvalidRequestException(TouchFormsBadRequest):
     pass
 
