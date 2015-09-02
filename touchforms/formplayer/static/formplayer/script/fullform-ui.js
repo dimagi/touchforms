@@ -324,7 +324,7 @@ function Question(json, parent) {
     }, self.throttle);
 
     self.mediaSrc = function(resourceType) {
-        if (!resourceType) { return ''; }
+        if (!resourceType || !_.isFunction(Formplayer.resourceMap)) { return ''; }
         return Formplayer.resourceMap(resourceType);
     }
 }
