@@ -3,9 +3,9 @@
 ignore = */build/*
          */migrations/*
          */south_migrations/*
+         */vendor/*
+         */test_vendor/*
          *.min.js
-         vendor/*
-         test_vendor/*
          localsettings.py
 
 [tools]
