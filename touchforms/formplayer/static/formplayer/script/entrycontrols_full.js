@@ -156,7 +156,12 @@ function FreeTextEntry(question, options) {
 }
 FreeTextEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 FreeTextEntry.prototype.constructor = EntrySingleAnswer;
-
+FreeTextEntry.prototype.onPreProcess = function(newValue) {
+    if (this.isValid(newValue)) {
+        this.answer(newValue === '' ? Formplayer.Const.NO_ANSWER : newValue);
+    }
+    this.question.error(this.getErrorMessage(newValue));
+};
 
 /**
  * The entry that defines an integer input. Only accepts whole numbers
@@ -197,6 +202,7 @@ function PhoneEntry(question, options) {
     this.lengthLimit = options.lengthLimit || 15;
 
     this.getErrorMessage = function(rawAnswer) {
+        if (rawAnswer === '') { return null; }
         return (!(/^\+?[0-9]+$/.test(rawAnswer)) ? "This does not appear to be a valid phone/numeric number" : null);
     };
 
@@ -313,6 +319,7 @@ function TimeEntry(question, options) {
     self.templateType = 'time';
 
     self.getErrorMessage = function(rawAnswer) {
+        if (rawAnswer === '') { return null; }
         var timeParts = self.parseAnswer(rawAnswer);
         if (timeParts === null ||
                 timeParts.hour < 0 || timeParts.hour >= 24 ||
@@ -343,6 +350,8 @@ TimeEntry.prototype.onPreProcess = function(newValue) {
         timeParts = self.parseAnswer(newValue),
         processed;
     if (self.isValid(newValue)) {
+        if (newValue === '') { self.answer(Formplayer.Const.NO_ANSWER); }
+
         if (timeParts) {
             processed = intpad(timeParts.hour, 2) + ':' + intpad(timeParts.min, 2);
             if (!Formplayer.Utils.answersEqual(processed, self.answer())) {

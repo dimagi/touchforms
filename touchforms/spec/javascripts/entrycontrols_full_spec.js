@@ -76,6 +76,9 @@ describe('Entries', function() {
         entry.answer('harry');
         this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
+
+        entry.rawAnswer('');
+        expect(entry.answer()).toBe(Formplayer.Const.NO_ANSWER);
     });
 
     it('Should return MultiSelectEntry', function() {
@@ -143,6 +146,9 @@ describe('Entries', function() {
 
         entry.rawAnswer('12:451');  // Invalid time
         expect(spy.calledOnce).toBe(true);
+
+        entry.rawAnswer('');
+        expect(entry.answer()).toBe(Formplayer.Const.NO_ANSWER);
     });
 
     it('Should return InfoEntry', function() {
@@ -185,5 +191,8 @@ describe('Entries', function() {
         entry.rawAnswer('abc'); // Invalid entry should not answer question
         expect(spy.calledOnce).toBe(true);
         expect(entry.question.error()).toBeTruthy();
+
+        entry.rawAnswer('')
+        expect(entry.answer()).toBe(Formplayer.Const.NO_ANSWER);
     });
 });
