@@ -1,5 +1,6 @@
 function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc,
                            render_context, answerCallback) {
+  var self = this;
   this.formSpec = formSpec;
   this.sessionData = sessionData;
   this.session_id = null;
@@ -8,6 +9,24 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
   this.presubmitfunc = presubmitfunc;
   this.render_context = render_context;
   this.answerCallback = answerCallback;
+
+  $.unsubscribe('formplayer');
+  $.subscribe('formplayer.submit-form', function(e, form) {
+      if (!self.presubmitfunc()) { return; }
+      self.submitForm(form);
+  });
+  $.subscribe('formplayer.delete-repeat', function(e, group) {
+      self.deleteRepeat(group);
+  });
+  $.subscribe('formplayer.new-repeat', function(e, repeat) {
+      self.newRepeat(repeat);
+  });
+  $.subscribe('formplayer.answer-question', function(e, question) {
+      self.answerQuestion(question);
+  });
+  $.subscribe('formplayer.evaluate-xpath', function(e, xpath, callback) {
+      self.evaluateXPath(xpath, callback);
+  });
 
   this.loadForm = function ($div, init_lang, onload, onerror) {
     var args = {
@@ -58,7 +77,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
         adapter.session_id = resp["session_id"];
         console.log('session id: ' + adapter.session_id);
       }
-      adapter.form = init_render(resp, adapter, $div);
+      adapter.form = Formplayer.Utils.initialRender(resp, self.render_context.resourceMap, $div);
       if (onload) {
         onload(adapter, resp);
       }
@@ -66,8 +85,9 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
   }
 
   this.answerQuestion = function (q) {
+    var self = this;
     var ix = getIx(q);
-    var answer = q.getAnswer();
+    var answer = q.answer();
 
     var adapter = this;
     this.ajaxfunc({'action': 'answer',
@@ -75,17 +95,12 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
                    'ix': ix,
                    'answer': answer},
       function (resp) {
-        if (resp["status"] == "validation-error") {
-          adapter.showError(q, resp);
-        } else {
-          q.clearError();
-          getForm(q).reconcile(resp["tree"]);
-        }
+          $.publish('adapter.reconcile', [resp, q]);
+          if (self.answerCallback !== undefined) {
+              self.answerCallback(self.session_id);
+          }
       });
 
-      if(this.answerCallback !== undefined) {
-          this.answerCallback(this.session_id);
-      }
   };
 
   this.evaluateXPath = function(xpath, callback) {
@@ -102,20 +117,20 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
                    'session-id': this.session_id,
                    'ix': getIx(repeat)},
       function (resp) {
-        getForm(repeat).reconcile(resp["tree"]);
+          $.publish('adapter.reconcile', [resp, repeat]);
       },
       true);
   }
 
   this.deleteRepeat = function(repetition) {
     var juncture = getIx(repetition.parent);
-    var rep_ix = +(repetition.rel_ix.split(":").slice(-1)[0]) + 1;
-    this.ajaxfunc({'action': 'delete-repeat', 
+    var rep_ix = +(repetition.rel_ix().split(":").slice(-1)[0]);
+    this.ajaxfunc({'action': 'delete-repeat',
                    'session-id': this.session_id,
                    'ix': rep_ix,
                    'form_ix': juncture},
       function (resp) {
-        getForm(repetition).reconcile(resp["tree"]);
+          $.publish('adapter.reconcile', [resp, repetition]);
       },
       true);
   }
@@ -124,13 +139,13 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
     var answers = {};
     var prevalidated = true;
     var accumulate_answers = function(o) {
-      if (o.type != 'question') {
-        $.each(o.children, function(i, val) {
+      if (ko.utils.unwrapObservable(o.type) !== 'question') {
+        $.each(o.children(), function(i, val) {
             accumulate_answers(val);
           });
       } else {
-        if (o.prevalidate()) {
-          answers[getIx(o)] = o.getAnswer();
+        if (o.isValid()) {
+          answers[getIx(o)] = ko.utils.unwrapObservable(o.answer);
         } else {
           prevalidated = false;
         }
@@ -149,7 +164,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
           adapter.submitfunc(resp);
         } else {
           $.each(resp.errors, function(ix, error) {
-              adapter.showError(getForIx(form, ix), error);
+              adapter.serverError(getForIx(form, ix), error);
             });
           alert('There are errors in this form; they must be corrected before the form can be submitted.');
         }
@@ -163,15 +178,15 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
                    'session-id': this.session_id,
                    'lang': lang},
       function (resp) {
-        adapter.form.reconcile(resp["tree"]);
+          $.publish('adapter.reconcile', [resp, lang]);
       });
   }
 
-  this.showError = function(q, resp) {
+  this.serverError = function(q, resp) {
     if (resp["type"] == "required") {
-      q.showError("An answer is required");
+      q.serverError("An answer is required");
     } else if (resp["type"] == "constraint") {
-      q.showError(resp["reason"] || 'This answer is outside the allowed range.');      
+      q.serverError(resp["reason"] || 'This answer is outside the allowed range.');      
     }
   }
 }

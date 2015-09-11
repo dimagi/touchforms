@@ -1,4 +1,4 @@
-describe('Test xforgasm.js', function() {
+describe('Xforgasm', function() {
 
     describe('TaskQueue', function() {
         var tq,
@@ -84,14 +84,17 @@ describe('Test xforgasm.js', function() {
 
             // Setup stubs
             $.cookie = sinon.stub()
+            sinon.stub(Formplayer.Utils, 'initialRender');
         });
         afterEach(function() {
             $('#submit').remove();
             server.restore();
+            Formplayer.Utils.initialRender.restore();
+            $.unsubscribe();
         })
 
-        it('Test request queuing', function() {
-            sess = new WebFormSession(params);
+        it('Should queue requests', function() {
+            var sess = new WebFormSession(params);
             sess.load($('#content'), 'en')
             sess.serverRequest({}, sinon.spy(), false);
 
@@ -102,6 +105,20 @@ describe('Test xforgasm.js', function() {
             server.respond();
             expect(!!$('input#submit').attr('disabled')).toBe(false);
             expect(sess.taskQueue.execute.calledOnce).toBe(true);
+        });
+
+        it('Should only subscribe once', function() {
+            var spy = sinon.spy(),
+                spy2 = sinon.spy(),
+                adapter = new xformAjaxAdapter(),
+                adapter2 = new xformAjaxAdapter();
+
+            sinon.stub(adapter, 'newRepeat', spy);
+            sinon.stub(adapter2, 'newRepeat', spy2);
+
+            $.publish('formplayer.new-repeat', {});
+            expect(spy.calledOnce).toBe(false);
+            expect(spy2.calledOnce).toBe(true);
         });
     });
 });
