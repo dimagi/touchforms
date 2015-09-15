@@ -10,7 +10,13 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
   this.render_context = render_context;
   this.answerCallback = answerCallback;
 
-  $.unsubscribe('formplayer');
+  $.unsubscribe([
+      'formplayer.submit-form',
+      'formplayer.delete-repeat',
+      'formplayer.new-repeat',
+      'formplayer.answer-question',
+      'formplayer.evaluate-xpath'
+  ].join(' '));
   $.subscribe('formplayer.submit-form', function(e, form) {
       if (!self.presubmitfunc()) { return; }
       self.submitForm(form);

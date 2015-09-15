@@ -318,7 +318,7 @@ function Question(json, parent) {
     self.afterRender = function() { self.entry.afterRender(); };
 
     self.onchange = _.throttle(function() {
-        $.publish('formplayer.dirty', true);
+        $.publish('formplayer.dirty');
         self.pendingAnswer(_.clone(self.answer()));
         $.publish('formplayer.answer-question', self);
     }, self.throttle);
