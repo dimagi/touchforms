@@ -226,7 +226,7 @@ describe('Fullform UI', function() {
 
     it('Should have handle a constraint error', function() {
         var form = new Form(formJSON);
-        var question = new Question(questionJSON, form)
+        var question = new Question(questionJSON, form);
 
         expect(question.serverError()).toBe(null);
         $.publish('adapter.reconcile', [{
