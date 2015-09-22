@@ -193,7 +193,7 @@ function Form(json) {
             if (response.type === 'required') {
                 element.serverError('An answer is required');
             } else if (response.type === 'constraint') {
-                element.serverError(resp.reason || 'This answer is outside the allowed range.');
+                element.serverError(response.reason || 'This answer is outside the allowed range.');
             }
             element.pendingAnswer(Formplayer.Const.NO_PENDING_ANSWER);
         } else {
