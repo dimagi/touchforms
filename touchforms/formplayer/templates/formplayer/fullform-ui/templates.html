@@ -227,9 +227,15 @@
     </div>
     <div>
         <form data-bind="submit: search">
-            <div class="input-append">
-                <input class="query" type="text" />
-                <input class="btn" type="submit" class="search" value="Search">
+            <div class="form-group">
+                <div class="controls" data-bind="css: Formplayer.Const.CONTROL_WIDTH">
+                    <div class="input-group">
+                        <input class="query form-control" type="text" />
+                        <span class="input-group-btn">
+                            <button class="btn btn-default search">Search</button>
+                        </span>
+                    </div>
+                </div>
             </div>
         </form>
     </div>
