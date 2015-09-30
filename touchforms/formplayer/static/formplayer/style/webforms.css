@@ -38,9 +38,7 @@ video {
 }
 
 .error-message {
-  color: red;
   font-weight: bold;
-  font-size: 80%;
 }
 
 input:invalid {
