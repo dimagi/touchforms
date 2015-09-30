@@ -50,35 +50,49 @@
         <div id="instance-xml-home" name="instance-xml-home">
             <form class="form-horizontal debug-controls">
                 <div class="form-group">
-                    <label class="checkbox">
-                        <input id="auto-sync-control" type="checkbox" checked="checked">{% trans "Auto Sync" %}
-                        <span class="help-block">
-                        {% blocktrans %}
-                            When this is checked, the CloudCare Debug tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
-                        {% endblocktrans %}
-                        </span>
-                    </label>
+                    <div class="controls" data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH">
+                        <label class="checkbox">
+                            <input id="auto-sync-control" type="checkbox" checked="checked">{% trans "Auto Sync" %}
+                            <span class="help-block">
+                            {% blocktrans %}
+                                When this is checked, the CloudCare Debug tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
+                            {% endblocktrans %}
+                            </span>
+                        </label>
+                    </div>
                 </div>
             </form>
             <div id="question-viewer-pretty"></div>
             <div id="xml-viewer-pretty"></div>
-            <textarea
-                id="evaluate-result"
-                type="text"
-                style="display: block;"
-                data-bind="
-                    value: result,
-                    css: { 'text-error': !success() }
-            "></textarea>
             <section>
-                <form data-bind="submit: evaluate">
-                <input
-                    id="xpath"
-                    name="xpath"
-                    placeholder="/data/[your path here]"
-                    style="min-width: 300px;"
-                    data-bind="value: xpath" />
-                <input id="evaluate-button" type="submit" value="Evaluate" />
+                <form class="form-horizontal" data-bind="submit: evaluate">
+                    <div class="form-group">
+                        <div class="controls col-sm-12">
+                            <textarea
+                                id="evaluate-result"
+                                type="text"
+                                style="display: block;"
+                                readonly
+                                data-bind="
+                                    value: result,
+                                    css: { 'text-error': !success(), 'form-control': true }
+                            "></textarea>
+                        </div>
+                    </div>
+                    <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH" >
+                        <div class="input-group">
+                            <input
+                                id="xpath"
+                                class="form-control"
+                                name="xpath"
+                                placeholder="/data/[your path here]"
+                                data-bind="value: xpath" />
+                            <span class="input-group-btn">
+                                <button class="btn btn-default" id="evaluate-button">Evaluate</button>
+                            </span>
+                        </div>
+                    </div>
+                </form>
             </section>
         </div>
     {% endif %}
