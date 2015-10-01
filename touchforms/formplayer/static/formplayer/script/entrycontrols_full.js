@@ -303,6 +303,7 @@ function DateEntry(question, options) {
             dateFormat: this.format,
             yearRange: "" + (thisYear - 100) + ":" + (thisYear + 10),
         });
+        self.$picker.datepicker('setDate', self.answer());
         self.$picker.change(function() {
             var raw = self.$picker.datepicker('getDate');
             self.answer(raw ? $.datepicker.formatDate('yy-mm-dd', raw) : null);
