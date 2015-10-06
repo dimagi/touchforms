@@ -121,16 +121,21 @@ describe('Entries', function() {
 
     it('Should return DateEntry', function() {
         questionJSON.datatype = Formplayer.Const.DATE;
-        questionJSON.answer = '90-09-26';
+        questionJSON.answer = '1990-09-26';
 
         entry = (new Question(questionJSON)).entry;
         expect(entry instanceof DateEntry).toBe(true);
         expect(entry.templateType).toBe('date');
 
-        entry.answer('87-11-19');
+        entry.answer('1987-11-19');
         this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
     });
+
+    it('Should parse serverDate to clientDate', function() {
+        var clientDate = DateEntry.parseServerDateToClientDate('2015-10-08');
+        expect(clientDate).toBe('10/08/2015');
+    })
 
     it('Should return TimeEntry', function() {
         questionJSON.datatype = Formplayer.Const.TIME;

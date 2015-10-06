@@ -293,25 +293,35 @@ function DateEntry(question, options) {
     EntrySingleAnswer.call(self, question, options);
     var thisYear = new Date().getFullYear() + 1;
     self.templateType = 'date';
-    self.format = 'mm/dd/yy';
 
     self.afterRender = function() {
         self.$picker = $('#' + self.entryId);
         self.$picker.datepicker({
             changeMonth: true,
             changeYear: true,
-            dateFormat: this.format,
+            dateFormat: DateEntry.clientFormat,
             yearRange: "" + (thisYear - 100) + ":" + (thisYear + 10),
         });
-        self.$picker.datepicker('setDate', self.answer());
+        self.$picker.datepicker('setDate', DateEntry.parseServerDateToClientDate(self.answer()));
         self.$picker.change(function() {
             var raw = self.$picker.datepicker('getDate');
-            self.answer(raw ? $.datepicker.formatDate('yy-mm-dd', raw) : null);
+            self.answer(raw ? $.datepicker.formatDate(DateEntry.serverFormat, raw) : null);
         });
     }
 };
 DateEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 DateEntry.prototype.constructor = EntrySingleAnswer;
+DateEntry.clientFormat = 'mm/dd/yy'
+DateEntry.serverFormat = 'yy-mm-dd'
+
+/*
+ * The server stores dates in the format yy-mm-dd, but we display them as mm/dd/yy. On initial load we
+ * need to ensure that the server date is parsed into a proper client date.
+ */
+DateEntry.parseServerDateToClientDate = function(serverDate) {
+    var date = $.datepicker.parseDate(DateEntry.serverFormat, serverDate);
+    return $.datepicker.formatDate(DateEntry.clientFormat, date);
+};
 
 
 function TimeEntry(question, options) {
