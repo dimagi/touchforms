@@ -311,8 +311,8 @@ function DateEntry(question, options) {
 };
 DateEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 DateEntry.prototype.constructor = EntrySingleAnswer;
-DateEntry.clientFormat = 'mm/dd/yy'
-DateEntry.serverFormat = 'yy-mm-dd'
+DateEntry.clientFormat = 'mm/dd/yy';
+DateEntry.serverFormat = 'yy-mm-dd';
 
 /*
  * The server stores dates in the format yy-mm-dd, but we display them as mm/dd/yy. On initial load we

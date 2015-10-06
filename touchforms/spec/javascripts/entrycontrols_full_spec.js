@@ -135,7 +135,7 @@ describe('Entries', function() {
     it('Should parse serverDate to clientDate', function() {
         var clientDate = DateEntry.parseServerDateToClientDate('2015-10-08');
         expect(clientDate).toBe('10/08/2015');
-    })
+    });
 
     it('Should return TimeEntry', function() {
         questionJSON.datatype = Formplayer.Const.TIME;
