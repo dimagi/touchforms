@@ -302,7 +302,9 @@ function DateEntry(question, options) {
             dateFormat: DateEntry.clientFormat,
             yearRange: "" + (thisYear - 100) + ":" + (thisYear + 10),
         });
-        self.$picker.datepicker('setDate', DateEntry.parseServerDateToClientDate(self.answer()));
+        if (self.answer()) {
+            self.$picker.datepicker('setDate', DateEntry.parseServerDateToClientDate(self.answer()));
+        }
         self.$picker.change(function() {
             var raw = self.$picker.datepicker('getDate');
             self.answer(raw ? $.datepicker.formatDate(DateEntry.serverFormat, raw) : null);
