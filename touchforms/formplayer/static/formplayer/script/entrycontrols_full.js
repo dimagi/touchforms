@@ -311,12 +311,12 @@ function DateEntry(question, options) {
 };
 DateEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 DateEntry.prototype.constructor = EntrySingleAnswer;
+// The datepicker's formatter uses yy to mean four-digit year.
 DateEntry.clientFormat = 'mm/dd/yy';
 DateEntry.serverFormat = 'yy-mm-dd';
 
 /*
- * The server stores dates in the format yy-mm-dd, but we display them as mm/dd/yy. On initial load we
- * need to ensure that the server date is parsed into a proper client date.
+ * On initial load, ensure that the server date is parsed into a proper client date format.
  */
 DateEntry.parseServerDateToClientDate = function(serverDate) {
     var date = $.datepicker.parseDate(DateEntry.serverFormat, serverDate);
