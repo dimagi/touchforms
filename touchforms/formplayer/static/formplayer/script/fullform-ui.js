@@ -32,7 +32,7 @@ function getIx(o) {
     var ix = o.rel_ix();
     while (ix[0] == '-') {
         o = o.parent;
-        if (!o || o.rel_ix() === undefined) {
+        if (!o || ko.utils.unwrapObservable(o.rel_ix) === undefined) {
             break;
         }
         if (o.rel_ix().split(',').slice(-1)[0].indexOf(':') != -1) {
