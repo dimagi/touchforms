@@ -282,6 +282,8 @@ def handle_request(content, server):
             domain = xfsess.orig_params['session_data'].get('domain', '<unknown>')
         elif content.get('session-data', None):
             domain = content['session-data'].get('domain', '<unknown>')
+        elif content.get('session_data', None):
+            domain = content['session_data'].get('domain', '<unknown>')
 
         logger.info("Finished processing action %s in %s ms for session %s in domain '%s'" % (
             action, delta, session_id, domain
