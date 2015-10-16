@@ -30,9 +30,13 @@ video {
   position: relative;
 }
 
+.widget {
+  margin-right: 20px;
+}
+
 .loading {
   position: absolute;
-  right: -15px;
+  right: 4px;
   line-height: 30px;
   font-size: 18px
 }
