@@ -97,7 +97,11 @@ def enter_form(request, **kwargs):
         session_data['preloaders'] = preload_data
 
     if not xform:
-        xform = get_object_or_404(XForm, id=xform_id)
+        try:
+            xform = get_object_or_404(XForm, id=xform_id)
+        except ValueError:
+            raise Http404()
+
         if not os.path.exists(xform.file.path):
             raise Http404()
     if request.method == "POST":
