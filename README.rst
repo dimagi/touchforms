@@ -76,7 +76,10 @@ Running Tests
 
 To run the backend tests you can just run the following ::
 
-     jython backend/test_server.py && jython backend/test_xformplayer.py && jython backend/test_touchcare.py && jython backend/test_global_state_manager.py
+     jython touchforms/backend/test_server.py && \
+     jython touchforms/backend/test_xformplayer.py && \
+     jython touchforms/backend/test_touchcare.py && \
+     jython touchforms/backend/test_global_state_manager.py
 
 To run tests you need to have Jython and `PhantomJS <http://phantomjs.org/>`_ installed.
 On linux PhantomJS needss to be installed from source.
