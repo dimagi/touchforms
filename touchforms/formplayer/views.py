@@ -1,3 +1,4 @@
+from functools import wraps
 from django.http.response import HttpResponseServerError, Http404
 from django.shortcuts import get_object_or_404
 from django.conf import settings
@@ -23,10 +24,20 @@ from touchforms.formplayer.const import PRELOADER_TAG_UID
 from datetime import datetime
 from dimagi.utils.web import json_response
 
-def xform_list(request):
-    if not settings.DEBUG:
-        return HttpResponseNotFound()
 
+def debug_only(fn):
+    @wraps(fn)
+    def _inner(*args, **kwargs):
+        if not settings.DEBUG:
+            return HttpResponseNotFound()
+        else:
+            return fn(*args, **kwargs)
+
+    return _inner
+
+
+@debug_only
+def xform_list(request):
     forms_by_namespace = defaultdict(list)
     success = True
     notice = ""
@@ -55,7 +66,9 @@ def xform_list(request):
             "success": success,
             "notice": notice
         }, context_instance=RequestContext(request))
-                              
+
+
+@debug_only
 def download(request, xform_id):
     """
     Download an xform
@@ -79,7 +92,9 @@ def coalesce(*args):
             return arg
     return None
 
+
 @csrf_exempt
+@debug_only
 def enter_form(request, **kwargs):
     xform_id = kwargs.get('xform_id')
     xform = kwargs.get('xform')
