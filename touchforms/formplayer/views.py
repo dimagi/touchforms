@@ -86,7 +86,7 @@ def download(request, xform_id):
         return response
 
 
-def coalesce(*args):
+def _coalesce(*args):
     for arg in args:
         if arg is not None:
             return arg
@@ -99,11 +99,11 @@ def enter_form(request, **kwargs):
     xform_id = kwargs.get('xform_id')
     xform = kwargs.get('xform')
     instance_xml = kwargs.get('instance_xml')
-    session_data = coalesce(kwargs.get('session_data'), {})
-    input_mode = coalesce(kwargs.get('input_mode'), 'touch')
-    submit_callback = coalesce(kwargs.get('onsubmit'), default_submit)
-    abort_callback = coalesce(kwargs.get('onabort'), default_abort)
-    force_template = coalesce(kwargs.get('force_template'), None)
+    session_data = _coalesce(kwargs.get('session_data'), {})
+    input_mode = _coalesce(kwargs.get('input_mode'), 'touch')
+    submit_callback = _coalesce(kwargs.get('onsubmit'), default_submit)
+    abort_callback = _coalesce(kwargs.get('onabort'), _default_abort)
+    force_template = _coalesce(kwargs.get('force_template'), None)
     offline_mode = kwargs.get('offline', False)
 
     # support for backwards compatibility; preloaders are DEPRECATED
@@ -122,16 +122,16 @@ def enter_form(request, **kwargs):
     if request.method == "POST":
         if request.POST["type"] == 'form-complete':
             instance_xml = request.POST["output"]
-            return form_entry_complete(request, xform, instance_xml, 
+            return _form_entry_complete(request, xform, instance_xml,
                                        submit_callback)
 
         elif request.POST["type"] == 'form-aborted':
-            return form_entry_abort(request, xform, abort_callback)
+            return _form_entry_abort(request, xform, abort_callback)
 
-    return form_entry_new(request, xform, instance_xml, session_data, 
+    return _form_entry_new(request, xform, instance_xml, session_data,
                           input_mode, offline_mode, force_template)
 
-def form_entry_new(request, xform, instance_xml, session_data, input_mode, 
+def _form_entry_new(request, xform, instance_xml, session_data, input_mode,
                    offline_mode, force_template=None):
     """start a new touchforms/typeforms session"""
     if force_template is not None:
@@ -152,18 +152,18 @@ def form_entry_new(request, xform, instance_xml, session_data, input_mode,
             "mode": 'xform',
             "instance_xml": json.dumps(instance_xml),
             "session_data": json.dumps(session_data),
-            "dim": get_player_dimensions(request),
+            "dim": _get_player_dimensions(request),
             "fullscreen": request.GET.get('mode', '').startswith('full'),
             "lang": request.GET.get('lang'),
             'session_id': request.GET.get('sess'),
             'maps_api_key': settings.GMAPS_API_KEY,
         }, context_instance=RequestContext(request))
 
-def form_entry_abort(request, xform, callback):
+def _form_entry_abort(request, xform, callback):
     """handle an aborted form entry session"""
     return callback(xform)
 
-def form_entry_complete(request, xform, instance_xml, callback):
+def _form_entry_complete(request, xform, instance_xml, callback):
     """handle a completed form entry session (xform finished and submitted)"""
     xform_received.send(sender="player", instance=instance_xml)
     return callback(xform, instance_xml)
@@ -173,12 +173,12 @@ def default_submit(xform, instance_xml):
     response.write(instance_xml)
     return response
 
-def default_abort(xform, abort_url='/'):
+def _default_abort(xform, abort_url='/'):
     return HttpResponseRedirect(abort_url)
 
 # this function is here for backwards compatibility (just BHOMA?); use enter_form() instead
 def play(request, xform_id, callback=None, preloader_data=None, input_mode=None,
-         abort_callback=default_abort, force_template=None):
+         abort_callback=_default_abort, force_template=None):
     """
     Play an XForm.
 
@@ -200,7 +200,7 @@ def play(request, xform_id, callback=None, preloader_data=None, input_mode=None,
                       force_template=force_template,
                       )
 
-def get_player_dimensions(request):
+def _get_player_dimensions(request):
     def get_dim(getparam, settingname):
         dim = request.GET.get(getparam)
         if not dim:
@@ -227,7 +227,7 @@ def player_proxy(request):
         response = api.post_data(data, settings.XFORMS_PLAYER_URL,
                                  content_type="text/json", auth=DjangoAuth(auth_cookie))
 
-        track_session(request, json.loads(data), json.loads(response))
+        _track_session(request, json.loads(data), json.loads(response))
         return HttpResponse(response)
     except IOError:
         logging.exception('Unable to connect to touchforms.')
@@ -238,7 +238,7 @@ def player_proxy(request):
         return HttpResponseServerError(json.dumps({'message': msg}))
 
 
-def track_session(request, payload, response):
+def _track_session(request, payload, response):
     def _concat_name(name):
         return u'...{0}'.format(name[-96:]) if len(name) > 99 else name
 
