@@ -290,7 +290,7 @@ class CCInstances(InstanceInitializationFactory):
 
     def getSpecializedExternalDataInstance(self, instance):
         if CaseInstanceTreeElement.MODEL_NAME == instance.getInstanceId():
-            return CaseDataInstance(instance);
+            return CaseDataInstance(instance)
         return instance
 
     def generateRoot(self, instance):
