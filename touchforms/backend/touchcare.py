@@ -1,6 +1,5 @@
 import urllib
 from urllib2 import HTTPError, URLError
-import com.xhaus.jyson.JysonCodec as json
 import logging
 from datetime import datetime
 from copy import copy
@@ -12,6 +11,7 @@ from org.javarosa.core.services.storage import IStorageUtilityIndexed
 from org.javarosa.core.services.storage import IStorageIterator
 from org.commcare.cases.instance import CaseInstanceTreeElement
 from org.commcare.cases.ledger.instance import LedgerInstanceTreeElement
+from org.commcare.cases.instance import CaseDataInstance
 from org.commcare.cases.model import Case
 from org.commcare.cases.ledger import Ledger
 from org.commcare.util import CommCareSession
@@ -22,7 +22,6 @@ from org.javarosa.xpath import XPathParseTool, XPathException
 from org.javarosa.xpath.parser import XPathSyntaxException
 from org.javarosa.core.model.condition import EvaluationContext
 from org.javarosa.core.model.instance import ExternalDataInstance
-
 from org.kxml2.io import KXmlParser
 
 from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
@@ -288,6 +287,11 @@ class CCInstances(InstanceInitializationFactory):
         self.auth = api_auth
         self.fixtures = {}
         self.form_context = form_context or {}
+
+    def getSpecializedExternalDataInstance(self, instance):
+        if CaseInstanceTreeElement.MODEL_NAME == instance.getInstanceId():
+            return CaseDataInstance(instance);
+        return instance
 
     def generateRoot(self, instance):
         ref = instance.getReference()
