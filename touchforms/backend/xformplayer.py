@@ -474,7 +474,7 @@ class XFormSession(object):
         ro = r.getRepeatOptions()
 
         event.update(get_caption(r))
-        event['main-header'] = ro.header
+        event['header'] = ro.header
         event['repetitions'] = list(r.getRepetitionsText())
 
         event['add-choice'] = ro.add
@@ -514,7 +514,10 @@ class XFormSession(object):
         if answer == None or str(answer).strip() == '' or answer == []:
             ans = None
         elif datatype == 'int':
-            ans = IntegerData(int(answer))
+            if isinstance(int(answer), long):
+                ans = LongData(int(answer))
+            else:
+                ans = IntegerData(int(answer))
         elif datatype == 'longint':
             ans = LongData(int(answer))
         elif datatype == 'float':
@@ -558,7 +561,7 @@ class XFormSession(object):
         if (junc_ix):
             self.fec.jumpToIndex(junc_ix)
 
-        self.fec.deleteRepeat(rep_ix - 1)
+        self.fec.deleteRepeat(rep_ix)
         return self._parse_current_event()
 
     #sequential (old-style) repeats only

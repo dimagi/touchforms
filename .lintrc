@@ -3,6 +3,8 @@
 ignore = */build/*
          */migrations/*
          */south_migrations/*
+         */vendor/*
+         */test_vendor/*
          *.min.js
          localsettings.py
 
