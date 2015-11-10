@@ -180,22 +180,23 @@ function Form(json) {
     delete json.tree;
     Container.call(self, json);
     self.submitText = ko.observable('Submit');
+    self.syncText = ko.observable('Sync');
     self.evalXPath = new Formplayer.ViewModels.EvaluateXPath();
 
     self.submitForm = function(form) {
         $.publish('formplayer.submit-form', self);
     };
 
-    this.$container.find('#sync').click(function() {
-       $(document.getElementById("sync")).val("Syncing...");
-       adapter.syncUserData(function(status, output){
+    self.syncUserData = function() {
+        console.log("Sync");
+        $.publish('formplayer.sync-user-data',(function(status, output){
             if(status === "success") {
                 $(document.getElementById("sync")).val("Synced!");
             } else{
                 this.showError(output);
             }
-        });
-      });
+        }))
+    }
     
     $.unsubscribe('adapter');
     $.subscribe('adapter.reconcile', function(e, response, element) {
@@ -375,6 +376,17 @@ Formplayer.ViewModels.EvaluateXPath = function() {
             self.success(status === "success");
         };
         $.publish('formplayer.evaluate-xpath', [self.xpath(), callback]);
+    };
+}
+
+Formplayer.ViewModels.SyncUserData = function() {
+    var self = this;
+    self.evaluate = function(form) {
+        var callback = function(result, status) {
+            self.result(result);
+            self.success(status === "success");
+        };
+        $.publish('formplayer.sync-user-data', [self.xpath(), callback]);
     };
 }
 

@@ -727,6 +727,7 @@ def go_back(xform_session):
 # fao mode only
 @require_xform_session
 def submit_form(xform_session, answers, prevalidated):
+    print "Submitting form"
     errors = dict(
         filter(lambda resp: resp[1]['status'] != 'success',
             ((_ix, xform_session.answer_question(answer, _ix)) for _ix, answer in answers.iteritems()))
@@ -738,7 +739,8 @@ def submit_form(xform_session, answers, prevalidated):
         resp = form_completion(xform_session)
         resp['status'] = 'success'
         xml = xform_session.output()
-        if xform_session.orig_params['session_data']['uses_sqlite']:
+        print "Uses SQLITE: ", xform_session.orig_params['session_data'].get('uses_sqlite')
+        if xform_session.orig_params['session_data'].get('uses_sqlite') or False :
             process_form_xml(
                 {},
                 xml,

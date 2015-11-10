@@ -30,6 +30,17 @@
                     "
                 />
         </form>
+        <form class="form form-horizontal" data-bind="submit: syncUserData">
+            <input class="sync btn btn-primary"
+                type="sync"
+                value="Sync"
+                data-bind="
+                    attr: {
+                        value: syncText
+                    }
+                    "
+            />
+        </form>
         <div data-bind="template: { name: 'instance-viewer-ko-template', data: evalXPath }"></div>
     </div>
 </script>

@@ -78,9 +78,11 @@ function WebFormSession(params) {
     //note: the 'allow_html' param will open you up to XSS attacks if you have
     //forms that insert user-entered data into captions!
 
+    console.log("uses sqlite2: " + params.uses_sqlite_backend || "derp");
+
     self.instance_xml = params.instance_xml;
     self.session_data = params.session_data || {};
-    self.uses_sqlite = self.session_data.uses_sqlite || false;
+    self.uses_sqlite = params.uses_sqlite_backend || false;
     self.answerCallback = params.answerCallback;
     if (!self.session_data.host) {
         self.session_data.host = window.location.protocol + '//' + window.location.host;
@@ -263,9 +265,10 @@ function WebFormSession(params) {
                 return;
             }
             sess.LAST_REQUEST_HANDLED = resp.seq_id;
+            callback(resp);
 
             try {
-                callback(resp);
+                //callback(resp);
             } catch (err) {
                 console.error(err);
                 var msg = "".concat(ERROR_MESSAGE, err.message);
