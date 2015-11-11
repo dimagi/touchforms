@@ -223,4 +223,19 @@ describe('Fullform UI', function() {
         expect(question.isValid()).toBe(true);
 
     });
+
+    it('Should handle a constraint error', function() {
+        var form = new Form(formJSON);
+        var question = new Question(questionJSON, form);
+
+        expect(question.serverError()).toBe(null);
+        $.publish('adapter.reconcile', [{
+            "reason": null,
+            "type": "constraint",
+            "seq_id": 2,
+            "status": "validation-error"
+        }, question]);
+
+        expect(question.serverError()).toBeTruthy();
+    });
 });

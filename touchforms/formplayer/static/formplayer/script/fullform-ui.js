@@ -32,7 +32,7 @@ function getIx(o) {
     var ix = o.rel_ix();
     while (ix[0] == '-') {
         o = o.parent;
-        if (!o || o.rel_ix() === undefined) {
+        if (!o || ko.utils.unwrapObservable(o.rel_ix) === undefined) {
             break;
         }
         if (o.rel_ix().split(',').slice(-1)[0].indexOf(':') != -1) {
@@ -193,7 +193,7 @@ function Form(json) {
             if (response.type === 'required') {
                 element.serverError('An answer is required');
             } else if (response.type === 'constraint') {
-                element.serverError(resp.reason || 'This answer is outside the allowed range.');
+                element.serverError(response.reason || 'This answer is outside the allowed range.');
             }
             element.pendingAnswer(Formplayer.Const.NO_PENDING_ANSWER);
         } else {
