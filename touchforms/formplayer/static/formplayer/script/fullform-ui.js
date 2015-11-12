@@ -470,4 +470,9 @@ Formplayer.Const = {
     // Note it's important to differentiate these two
     NO_PENDING_ANSWER: undefined,
     NO_ANSWER: null,
+
+    // UI Config
+    LABEL_WIDTH: 'col-sm-4',
+    LABEL_OFFSET: 'col-sm-offset-4',
+    CONTROL_WIDTH: 'col-sm-8'
 };
