@@ -184,6 +184,7 @@ class XFormSession(object):
         self.uuid = params.get('uuid', uuid.uuid4().hex)
         self.nav_mode = params.get('nav_mode', 'prompt')
         self.seq_id = params.get('seq_id', 0)
+        self.uses_sql_backend = params.get('uses_sql_backend'),
 
         self.form = load_form(
             xform,
@@ -192,7 +193,7 @@ class XFormSession(object):
             params.get('session_data', {}),
             params.get('api_auth'),
             params.get('form_context', None),
-            params.get('uses_sql_backend'),
+            self.uses_sql_backend,
         )
         self.fem = FormEntryModel(self.form, FormEntryModel.REPEAT_STRUCTURE_NON_LINEAR)
         self.fec = FormEntryController(self.fem)
@@ -729,7 +730,6 @@ def go_back(xform_session):
 # fao mode only
 @require_xform_session
 def submit_form(xform_session, answers, prevalidated):
-    print "Submitting form"
     errors = dict(
         filter(lambda resp: resp[1]['status'] != 'success',
             ((_ix, xform_session.answer_question(answer, _ix)) for _ix, answer in answers.iteritems()))
@@ -741,8 +741,7 @@ def submit_form(xform_session, answers, prevalidated):
         resp = form_completion(xform_session)
         resp['status'] = 'success'
         xml = xform_session.output()
-        print "Uses SQLITE: ", xform_session.orig_params['session_data'].get('uses_sqlite')
-        if xform_session.orig_params['session_data'].get('uses_sqlite') or False :
+        if xform_session.uses_sql_backend or False :
             process_form_xml(
                 {},
                 xml,

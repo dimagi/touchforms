@@ -76,7 +76,7 @@ class CCInstances(InstanceInitializationFactory):
         else:
             restore_file = restore
             ParseUtils.parseFileIntoSandbox(File(restore_file), self.sandbox)
-        #persistence.postgres_set_sqlite(self.username, 1)
+        persistence.postgres_set_sqlite(self.username, 1)
 
     def get_restore_xml(self):
         payload = self.query_func(self.query_url)

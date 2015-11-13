@@ -261,9 +261,10 @@ def post_data(data, url, content_type, auth=None):
         d['hq_auth'] = auth.to_dict()
         if 'session-data' in d:
             domain = d['session-data']['domain']
+            d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
         elif 'session_data' in d:
             domain = d['session_data']['domain']
-        d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
+            d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
         data = json.dumps(d)
 
     up = urlparse(url)
