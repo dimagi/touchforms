@@ -5,6 +5,7 @@ import httplib
 import logging
 import socket
 from touchforms.formplayer.exceptions import BadDataError
+from corehq.toggles import TF_USES_SQLITE_BACKEND
 
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
@@ -258,6 +259,11 @@ def post_data(data, url, content_type, auth=None):
         except TypeError:
             raise BadDataError('unhandleable touchforms query: %s' % data)
         d['hq_auth'] = auth.to_dict()
+        if 'session-data' in d:
+            domain = d['session-data']['domain']
+        elif 'session_data' in d:
+            domain = d['session_data']['domain']
+        d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
         data = json.dumps(d)
 
     up = urlparse(url)

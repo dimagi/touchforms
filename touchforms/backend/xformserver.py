@@ -196,6 +196,7 @@ def handle_request(content, server):
                 'api_auth': content.get('hq_auth'),
                 'form_context': content.get('form_context', {}),
                 'staleness_window': content.get('staleness_window', server.default_stale_window),
+                'uses_sql_backend': content.get('uses_sql_backend'),
             })
 
         elif action == xformplayer.Actions.ANSWER:
@@ -266,13 +267,14 @@ def handle_request(content, server):
             return {"output": result['output'], "status": result['status']}
         # Touchcare routes
         elif action == touchcare.Actions.FILTER_CASES:
+            print "Filter cases backend: ", content.get('uses_sql_backend')
             ensure_required_params(['hq_auth', 'filter_expr'], action, content)
             result = touchcare.filter_cases(
                 content.get('filter_expr'),
                 content.get('hq_auth'),
                 content.get('session_data', {}),
                 content.get('form_context', {}),
-                uses_sqlite=content.get('uses_sqlite', False)
+                uses_sqlite=content.get('uses_sql_backend', False)
             )
             return result
 

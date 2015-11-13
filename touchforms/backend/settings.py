@@ -19,7 +19,7 @@ EXTENSION_MODULES = [
 ]
 
 # postgres peristence stuff
-USES_POSTGRES = False
+USES_POSTGRES = True
 POSTGRES_JDBC_JAR = "%s/jrlib/postgresql-9.4-1201.jdbc41.jar"%os.path.dirname(os.path.abspath(__file__))
 
 # be more forgiving about data types in api

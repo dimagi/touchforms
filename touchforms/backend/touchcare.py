@@ -14,7 +14,7 @@ from org.commcare.cases.instance import CaseInstanceTreeElement
 from org.commcare.cases.ledger.instance import LedgerInstanceTreeElement
 from org.commcare.cases.model import Case
 from org.commcare.cases.ledger import Ledger
-from org.commcare.util import CommCareSession
+from org.commcare.session import CommCareSession
 from org.javarosa.xml import TreeElementParser
 from org.javarosa.xpath.expr import XPathFuncExpr
 from org.javarosa.xpath import XPathParseTool, XPathException
@@ -46,6 +46,8 @@ class CCInstances(InstanceInitializationFactory):
         self.auth = auth
         self.uses_sqlite = uses_sqlite
 
+        print "uses sqlite: ", uses_sqlite
+
         if self.uses_sqlite:
             self.username = sessionvars['username'] + '@' + sessionvars['domain']
             self.sandbox = SqlSandboxUtils.getStaticStorage(self.username)
@@ -62,7 +64,8 @@ class CCInstances(InstanceInitializationFactory):
 
     def clear_tables(self):
         db_name = self.username + ".db"
-        os.remove(db_name)
+        if os.path.isfile(db_name):
+            os.remove(db_name)
         self.sandbox = SqlSandboxUtils.getStaticStorage(self.username)
 
     def perform_ota_restore(self, restore=None):

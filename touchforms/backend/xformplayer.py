@@ -126,7 +126,7 @@ def _init():
 
 
 def load_form(xform, instance=None, extensions=None, session_data=None,
-              api_auth=None, form_context=None):
+              api_auth=None, form_context=None, uses_sql_backend=False):
     """Returns an org.javarosa.core.model.FormDef
 
     Parameters
@@ -139,8 +139,6 @@ def load_form(xform, instance=None, extensions=None, session_data=None,
     """
     extensions = extensions or []
     session_data = session_data or {}
-
-    uses_sqlite = session_data.get('uses_sqlite')
 
     form = XFormParser(StringReader(xform)).parse()
     if instance is not None:
@@ -162,7 +160,7 @@ def load_form(xform, instance=None, extensions=None, session_data=None,
         form.initialize(instance is None, CCInstances(session_data,
                                                       api_auth,
                                                       form_context=form_context,
-                                                      uses_sqlite=uses_sqlite))
+                                                      uses_sqlite=uses_sql_backend))
     except CaseNotFound:
         # Touchforms repeatedly makes a call to HQ to get all the case ids in its universe. We can optimize
         # this by caching that call to HQ. However, when someone adds a case to that case list, we want to ensure
@@ -172,7 +170,7 @@ def load_form(xform, instance=None, extensions=None, session_data=None,
         form.initialize(instance is None, CCInstances(session_data,
                                                       api_auth,
                                                       form_context=form_context,
-                                                      uses_sqlite=uses_sqlite))
+                                                      uses_sqlite=uses_sql_backend))
 
     return form
 
@@ -194,6 +192,7 @@ class XFormSession(object):
             params.get('session_data', {}),
             params.get('api_auth'),
             params.get('form_context', None),
+            params.get('uses_sql_backend'),
         )
         self.fem = FormEntryModel(self.form, FormEntryModel.REPEAT_STRUCTURE_NON_LINEAR)
         self.fec = FormEntryController(self.fem)
@@ -656,6 +655,9 @@ def init_context(xfsess):
 
 
 def open_form(form_spec, inst_spec=None, **kwargs):
+
+    print "Open form: ", kwargs
+
     try:
         xform_xml = get_loader(form_spec, **kwargs)()
     except Exception, e:
