@@ -169,6 +169,8 @@ def get_conn():
         'user': django_params['USER'],
         'password': django_params['PASSWORD'],
     }
+
+    print "jdbc params: ", jdbc_params
         
     if "PREPARE_THRESHOLD" in django_params:
         jdbc_params['prepareThreshold'] = django_params['PREPARE_THRESHOLD']
@@ -181,6 +183,7 @@ def get_conn():
         # else fall back to this workaround (we expect to do this)
 
         jarloader = classPathHacker.classPathHacker()
+        print "jar: ", settings.POSTGRES_JDBC_JAR
         a = jarloader.addFile(settings.POSTGRES_JDBC_JAR)
         conn = zxJDBC.connectx("org.postgresql.ds.PGPoolingDataSource", **jdbc_params)
 
