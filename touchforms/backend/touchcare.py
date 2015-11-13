@@ -1,6 +1,5 @@
 import urllib
 from urllib2 import HTTPError, URLError
-import com.xhaus.jyson.JysonCodec as json
 import logging
 from datetime import datetime
 from copy import copy
@@ -12,6 +11,7 @@ from org.javarosa.core.services.storage import IStorageUtilityIndexed
 from org.javarosa.core.services.storage import IStorageIterator
 from org.commcare.cases.instance import CaseInstanceTreeElement
 from org.commcare.cases.ledger.instance import LedgerInstanceTreeElement
+from org.commcare.cases.instance import CaseDataInstance
 from org.commcare.cases.model import Case
 from org.commcare.cases.ledger import Ledger
 from org.commcare.session import CommCareSession
@@ -76,7 +76,7 @@ class CCInstances(InstanceInitializationFactory):
         else:
             restore_file = restore
             ParseUtils.parseFileIntoSandbox(File(restore_file), self.sandbox)
-        persistence.postgres_set_sqlite(self.username, 1)
+        #persistence.postgres_set_sqlite(self.username, 1)
 
     def get_restore_xml(self):
         payload = self.query_func(self.query_url)
@@ -484,6 +484,42 @@ class LedgerDatabase(TouchformsStorageUtility):
 
         id_map = dict((v, k) for k, v in self.ids.iteritems())
         return to_vect(id_map[l.getEntiyId()] for l in ledgers)
+
+
+def filter_cases(filter_expr, api_auth, session_data=None, form_context=None):
+    session_data = session_data or {}
+    form_context = form_context or {}
+    modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
+        {"filters": filter_expr}
+
+    # whenever we do a filter case operation we need to load all
+    # the cases, so force this unless manually specified
+    if 'preload_cases' not in session_data:
+        session_data['preload_cases'] = True
+
+    ccInstances = CCInstances(session_data, api_auth, form_context)
+    caseInstance = ExternalDataInstance("jr://instance/casedb", "casedb")
+
+    try:
+        caseInstance.initialize(ccInstances, "casedb")
+    except (HTTPError, URLError), e:
+        raise TouchFormsUnauthorized('Unable to connect to HQ: %s' % str(e))
+
+    instances = to_hashtable({"casedb": caseInstance})
+
+    # load any additional instances needed
+    for extra_instance_config in session_data.get('extra_instances', []):
+        data_instance = ExternalDataInstance(extra_instance_config['src'], extra_instance_config['id'])
+        data_instance.initialize(ccInstances, extra_instance_config['id'])
+        instances[extra_instance_config['id']] = data_instance
+
+    try:
+        case_list = XPathFuncExpr.toString(
+            XPathParseTool.parseXPath(modified_xpath).eval(
+                EvaluationContext(None, instances)))
+        return {'cases': filter(lambda x: x, case_list.split(","))}
+    except (XPathException, XPathSyntaxException), e:
+        raise TouchcareInvalidXPath('Error querying cases with xpath %s: %s' % (filter_expr, str(e)))
 
 
 class Actions:
