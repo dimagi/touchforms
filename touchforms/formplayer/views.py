@@ -321,12 +321,3 @@ def player_abort(request):
         redirect_to = '/'
 
     return HttpResponseRedirect(redirect_to)
-
-
-def get_xml(request, session_id):
-    try:
-        session = get_raw_instance(session_id)
-    except EntrySession.InvalidSessionIdException:
-        session = None
-
-    return json_response(session)
