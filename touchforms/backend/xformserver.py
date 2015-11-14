@@ -165,7 +165,7 @@ def handle_request(content, server):
         session_id = content['session-id']
 
     action = content['action']
-    logger.info('Received action %s for session %s' % (action, session_id))
+    logger.info('event=received action=%s session=%s' % (action, session_id))
     nav_mode = content.get('nav', 'prompt')
     try:
         # Formplayer routes
@@ -285,7 +285,7 @@ def handle_request(content, server):
         elif content.get('session_data', None):
             domain = content['session_data'].get('domain', '<unknown>')
 
-        logger.info("Finished processing action %s in %s ms for session %s in domain '%s'" % (
+        logger.info("event=processed action=%s time=%s unit=ms session=%s domain=%s" % (
             action, delta, session_id, domain
         ))
 
