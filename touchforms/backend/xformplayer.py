@@ -726,7 +726,7 @@ def submit_form(xform_session, answers, prevalidated):
         resp = form_completion(xform_session)
         resp['status'] = 'success'
         xml = xform_session.output()
-        if xform_session.uses_sql_backend or False :
+        if xform_session.uses_sql_backend or False:
             process_form_xml(
                 {},
                 xml,

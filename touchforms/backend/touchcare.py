@@ -38,12 +38,15 @@ def get_restore_url(criteria=None):
     query_url = '%s?%s' % (settings.RESTORE_URL, urllib.urlencode(criteria))
     return query_url
 
+
 def force_ota_restore(domained_username, auth):
     username = domained_username.split("@")[0]
     domain = domained_username.split("@")[1]
-    ccInstances = CCInstances({"username": username, "domain": domain, "host": "http://localhost:8000/"}, auth, force_sync=True, uses_sqlite=True)
-    result = {'status':'OK'}
+    CCInstances({"username": username, "domain": domain, "host": "http://localhost:8000/"},
+                              auth, force_sync=True, uses_sqlite=True)
+    result = {'status': 'OK'}
     return result
+
 
 class CCInstances(InstanceInitializationFactory):
     def __init__(self, sessionvars, auth, restore_xml=None,
@@ -488,7 +491,7 @@ class LedgerDatabase(TouchformsStorageUtility):
 
         id_map = dict((v, k) for k, v in self.ids.iteritems())
         return to_vect(id_map[l.getEntiyId()] for l in ledgers)
-    
+
 
 class Actions:
     FILTER_CASES = 'touchcare-filter-cases'
