@@ -196,6 +196,7 @@ def handle_request(content, server):
                 'api_auth': content.get('hq_auth'),
                 'form_context': content.get('form_context', {}),
                 'staleness_window': content.get('staleness_window', server.default_stale_window),
+                'uses_sql_backend': content.get('uses_sql_backend'),
             })
 
         elif action == xformplayer.Actions.ANSWER:
@@ -260,10 +261,9 @@ def handle_request(content, server):
             result = xfsess.evaluate_xpath(content['xpath'])
             return {"output": result['output'], "status": result['status']}
         elif action == xformplayer.Actions.SYNC_USER_DB:
-            ensure_required_params(['session-id'], action, content)
-            xfsess = xformplayer.global_state.get_session(content['session-id'])
-            result = xfsess.sync_user_database()
-            return {"output": result['output'], "status": result['status']}
+            ensure_required_params(['username', 'hq_auth'], action, content)
+            result = touchcare.force_ota_restore(domained_username=content['username'], auth=content['hq_auth'])
+            return result
         # Touchcare routes
         elif action == touchcare.Actions.FILTER_CASES:
             ensure_required_params(['hq_auth', 'filter_expr'], action, content)
@@ -272,7 +272,7 @@ def handle_request(content, server):
                 content.get('hq_auth'),
                 content.get('session_data', {}),
                 content.get('form_context', {}),
-                uses_sqlite=content.get('uses_sqlite', False)
+                uses_sqlite=content.get('uses_sql_backend', False)
             )
             return result
 

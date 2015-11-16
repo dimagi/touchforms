@@ -1,6 +1,5 @@
 import urllib
 from urllib2 import HTTPError, URLError
-import com.xhaus.jyson.JysonCodec as json
 import logging
 from datetime import datetime
 from copy import copy
@@ -12,9 +11,10 @@ from org.javarosa.core.services.storage import IStorageUtilityIndexed
 from org.javarosa.core.services.storage import IStorageIterator
 from org.commcare.cases.instance import CaseInstanceTreeElement
 from org.commcare.cases.ledger.instance import LedgerInstanceTreeElement
+from org.commcare.cases.instance import CaseDataInstance
 from org.commcare.cases.model import Case
 from org.commcare.cases.ledger import Ledger
-from org.commcare.util import CommCareSession
+from org.commcare.session import CommCareSession
 from org.javarosa.xml import TreeElementParser
 from org.javarosa.xpath.expr import XPathFuncExpr
 from org.javarosa.xpath import XPathParseTool, XPathException
@@ -38,6 +38,12 @@ def get_restore_url(criteria=None):
     query_url = '%s?%s' % (settings.RESTORE_URL, urllib.urlencode(criteria))
     return query_url
 
+def force_ota_restore(domained_username, auth):
+    username = domained_username.split("@")[0]
+    domain = domained_username.split("@")[1]
+    ccInstances = CCInstances({"username": username, "domain": domain, "host": "http://localhost:8000/"}, auth, force_sync=True, uses_sqlite=True)
+    result = {'status':'OK'}
+    return result
 
 class CCInstances(InstanceInitializationFactory):
     def __init__(self, sessionvars, auth, restore_xml=None,
@@ -62,7 +68,8 @@ class CCInstances(InstanceInitializationFactory):
 
     def clear_tables(self):
         db_name = self.username + ".db"
-        os.remove(db_name)
+        if os.path.isfile(db_name):
+            os.remove(db_name)
         self.sandbox = SqlSandboxUtils.getStaticStorage(self.username)
 
     def perform_ota_restore(self, restore=None):
@@ -481,7 +488,7 @@ class LedgerDatabase(TouchformsStorageUtility):
 
         id_map = dict((v, k) for k, v in self.ids.iteritems())
         return to_vect(id_map[l.getEntiyId()] for l in ledgers)
-
+    
 
 class Actions:
     FILTER_CASES = 'touchcare-filter-cases'

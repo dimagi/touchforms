@@ -185,17 +185,6 @@ function Form(json) {
     self.submitForm = function(form) {
         $.publish('formplayer.submit-form', self);
     };
-
-    this.$container.find('#sync').click(function() {
-       $(document.getElementById("sync")).val("Syncing...");
-       adapter.syncUserData(function(status, output){
-            if(status === "success") {
-                $(document.getElementById("sync")).val("Synced!");
-            } else{
-                this.showError(output);
-            }
-        });
-      });
     
     $.unsubscribe('adapter');
     $.subscribe('adapter.reconcile', function(e, response, element) {
@@ -378,6 +367,17 @@ Formplayer.ViewModels.EvaluateXPath = function() {
     };
 }
 
+Formplayer.ViewModels.SyncUserData = function() {
+    var self = this;
+    self.evaluate = function(form) {
+        var callback = function(result, status) {
+            self.result(result);
+            self.success(status === "success");
+        };
+        $.publish('formplayer.sync-user-data', [self.xpath(), callback]);
+    };
+}
+
 /**
  * Used to compare if questions are equal to each other by looking at their index
  * @param {Object} e - Either the javascript object Question, Group, Repeat or the JSON representation
@@ -481,4 +481,9 @@ Formplayer.Const = {
     // Note it's important to differentiate these two
     NO_PENDING_ANSWER: undefined,
     NO_ANSWER: null,
+
+    // UI Config
+    LABEL_WIDTH: 'col-sm-4',
+    LABEL_OFFSET: 'col-sm-offset-4',
+    CONTROL_WIDTH: 'col-sm-8'
 };

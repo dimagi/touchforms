@@ -110,14 +110,6 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
 
   };
 
-  this.syncUserData = function(callback) {
-    this.ajaxfunc({'action': 'sync-user-db',
-                   'session-id': this.session_id},
-      function (resp) {
-        callback(resp.output, resp.status);
-      });
-  };
-
   this.evaluateXPath = function(xpath, callback) {
     this.ajaxfunc({'action': 'evaluate-xpath',
                    'session-id': this.session_id,

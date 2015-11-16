@@ -126,7 +126,7 @@ def _init():
 
 
 def load_form(xform, instance=None, extensions=None, session_data=None,
-              api_auth=None, form_context=None):
+              api_auth=None, form_context=None, uses_sql_backend=False):
     """Returns an org.javarosa.core.model.FormDef
 
     Parameters
@@ -139,8 +139,6 @@ def load_form(xform, instance=None, extensions=None, session_data=None,
     """
     extensions = extensions or []
     session_data = session_data or {}
-
-    uses_sqlite = session_data.get('uses_sqlite')
 
     form = XFormParser(StringReader(xform)).parse()
     if instance is not None:
@@ -162,7 +160,7 @@ def load_form(xform, instance=None, extensions=None, session_data=None,
         form.initialize(instance is None, CCInstances(session_data,
                                                       api_auth,
                                                       form_context=form_context,
-                                                      uses_sqlite=uses_sqlite))
+                                                      uses_sqlite=uses_sql_backend))
     except CaseNotFound:
         # Touchforms repeatedly makes a call to HQ to get all the case ids in its universe. We can optimize
         # this by caching that call to HQ. However, when someone adds a case to that case list, we want to ensure
@@ -172,7 +170,7 @@ def load_form(xform, instance=None, extensions=None, session_data=None,
         form.initialize(instance is None, CCInstances(session_data,
                                                       api_auth,
                                                       form_context=form_context,
-                                                      uses_sqlite=uses_sqlite))
+                                                      uses_sqlite=uses_sql_backend))
 
     return form
 
@@ -186,6 +184,7 @@ class XFormSession(object):
         self.uuid = params.get('uuid', uuid.uuid4().hex)
         self.nav_mode = params.get('nav_mode', 'prompt')
         self.seq_id = params.get('seq_id', 0)
+        self.uses_sql_backend = params.get('uses_sql_backend'),
 
         self.form = load_form(
             xform,
@@ -194,6 +193,7 @@ class XFormSession(object):
             params.get('session_data', {}),
             params.get('api_auth'),
             params.get('form_context', None),
+            self.uses_sql_backend,
         )
         self.fem = FormEntryModel(self.form, FormEntryModel.REPEAT_STRUCTURE_NON_LINEAR)
         self.fec = FormEntryController(self.fem)
@@ -277,19 +277,6 @@ class XFormSession(object):
             result['status'] = 'success'
             result['output'] = m_text.evaluate(evaluation_context)
         except XPathException, e:
-            result['status'] = 'failure'
-            result['output'] = e.getMessage()
-
-        return result
-
-    def sync_user_database(self):
-        result = {}
-        try:
-            CCInstances(self.orig_params['session_data'], self.orig_params['api_auth'],
-                        uses_sqlite=True).perform_ota_restore()
-            result['status'] = 'success'
-            result['output'] = 'success'
-        except Exception, e:
             result['status'] = 'failure'
             result['output'] = e.getMessage()
 
@@ -656,6 +643,7 @@ def init_context(xfsess):
 
 
 def open_form(form_spec, inst_spec=None, **kwargs):
+
     try:
         xform_xml = get_loader(form_spec, **kwargs)()
     except Exception, e:
@@ -738,7 +726,7 @@ def submit_form(xform_session, answers, prevalidated):
         resp = form_completion(xform_session)
         resp['status'] = 'success'
         xml = xform_session.output()
-        if xform_session.orig_params['session_data']['uses_sqlite']:
+        if xform_session.uses_sql_backend or False :
             process_form_xml(
                 {},
                 xml,
@@ -820,4 +808,4 @@ class Actions:
     PURGE_STALE = 'purge-stale'
     GET_INSTANCE = 'get-instance'
     EVALUATE_XPATH = 'evaluate-xpath'
-    SYNC_USER_DB = 'sync-user-db'
+    SYNC_USER_DB = 'sync-db'
