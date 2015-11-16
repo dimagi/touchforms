@@ -376,7 +376,7 @@ Formplayer.ViewModels.SyncUserData = function() {
         };
         $.publish('formplayer.sync-user-data', [self.xpath(), callback]);
     };
-}
+};
 
 /**
  * Used to compare if questions are equal to each other by looking at their index

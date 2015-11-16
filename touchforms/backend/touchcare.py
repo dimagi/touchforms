@@ -43,7 +43,7 @@ def force_ota_restore(domained_username, auth):
     username = domained_username.split("@")[0]
     domain = domained_username.split("@")[1]
     CCInstances({"username": username, "domain": domain, "host": "http://localhost:8000/"},
-                              auth, force_sync=True, uses_sqlite=True)
+                auth, force_sync=True, uses_sqlite=True)
     result = {'status': 'OK'}
     return result
 
