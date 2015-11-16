@@ -15,8 +15,7 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
       'formplayer.delete-repeat',
       'formplayer.new-repeat',
       'formplayer.answer-question',
-      'formplayer.evaluate-xpath',
-      'formplayer.sync-user-data'
+      'formplayer.evaluate-xpath'
   ].join(' '));
   $.subscribe('formplayer.submit-form', function(e, form) {
       if (!self.presubmitfunc()) { return; }
@@ -33,9 +32,6 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
   });
   $.subscribe('formplayer.evaluate-xpath', function(e, xpath, callback) {
       self.evaluateXPath(xpath, callback);
-  });
-  $.subscribe('formplayer.sync-user-data', function(e, xpath, callback) {
-      self.syncUserData(callback);
   });
 
   this.loadForm = function ($div, init_lang, onload, onerror, uses_sqlite) {
@@ -112,15 +108,6 @@ function xformAjaxAdapter (formSpec, sessionData, savedInstance, ajaxfunc, submi
           }
       });
 
-  };
-
-  this.syncUserData = function(callback) {
-      console.log("sync user data")
-    this.ajaxfunc({'action': 'sync-user-db',
-                   'session-id': this.session_id},
-      function (resp) {
-        callback(resp.output, resp.status);
-      });
   };
 
   this.evaluateXPath = function(xpath, callback) {

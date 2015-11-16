@@ -180,23 +180,11 @@ function Form(json) {
     delete json.tree;
     Container.call(self, json);
     self.submitText = ko.observable('Submit');
-    self.syncText = ko.observable('Sync');
     self.evalXPath = new Formplayer.ViewModels.EvaluateXPath();
 
     self.submitForm = function(form) {
         $.publish('formplayer.submit-form', self);
     };
-
-    self.syncUserData = function() {
-        console.log("Sync");
-        $.publish('formplayer.sync-user-data',(function(status, output){
-            if(status === "success") {
-                $(document.getElementById("sync")).val("Synced!");
-            } else{
-                this.showError(output);
-            }
-        }))
-    }
     
     $.unsubscribe('adapter');
     $.subscribe('adapter.reconcile', function(e, response, element) {

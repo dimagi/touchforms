@@ -282,19 +282,6 @@ class XFormSession(object):
 
         return result
 
-    def sync_user_database(self):
-        result = {}
-        try:
-            CCInstances(self.orig_params['session_data'], self.orig_params['api_auth'],
-                        uses_sqlite=True).perform_ota_restore()
-            result['status'] = 'success'
-            result['output'] = 'success'
-        except Exception, e:
-            result['status'] = 'failure'
-            result['output'] = e.getMessage()
-
-        return result
-
     def output(self):
         if self.cur_event['type'] != 'form-complete':
             #warn that not at end of form
@@ -657,8 +644,6 @@ def init_context(xfsess):
 
 def open_form(form_spec, inst_spec=None, **kwargs):
 
-    print "Open form: ", kwargs
-
     try:
         xform_xml = get_loader(form_spec, **kwargs)()
     except Exception, e:
@@ -823,4 +808,4 @@ class Actions:
     PURGE_STALE = 'purge-stale'
     GET_INSTANCE = 'get-instance'
     EVALUATE_XPATH = 'evaluate-xpath'
-    SYNC_USER_DB = 'sync-user-db'
+    SYNC_USER_DB = 'sync-db'

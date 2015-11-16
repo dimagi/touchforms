@@ -78,8 +78,6 @@ function WebFormSession(params) {
     //note: the 'allow_html' param will open you up to XSS attacks if you have
     //forms that insert user-entered data into captions!
 
-    console.log("uses sqlite2: " + params.uses_sqlite_backend || "derp");
-
     self.instance_xml = params.instance_xml;
     self.session_data = params.session_data || {};
     self.uses_sqlite = params.uses_sqlite_backend || false;
