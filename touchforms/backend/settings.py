@@ -57,7 +57,7 @@ except ImportError:
 
 ### LOGGING CONFIG ###
 formatter = logging.Formatter(formats['verbose'])
-datadog_formatter = logging.Formatter(formats['datadog'], datefmt='%S')
+datadog_formatter = logging.Formatter(formats['datadog'])
 
 logging.basicConfig(
     stream=sys.stdout,
