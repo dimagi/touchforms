@@ -41,7 +41,7 @@ POSTGRES_DATABASE = {
 
 ### LOGGING VARIABLES ###
 FORMPLAYER_LOG_FILE = 'formplayer-dev.log'
-DATADOG_FORMPLAYER_LOG_FILE = 'datadog-dev.log'
+DATADOG_FORMPLAYER_LOG_FILE = 'datadog-formplayer-dev.log'
 
 formats = {
     'verbose': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s',
