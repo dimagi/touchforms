@@ -23,6 +23,7 @@ from xcp import (
 )
 
 logger = logging.getLogger('formplayer.xformserver')
+datadog_logger = logging.getLogger('datadog')
 DEFAULT_PORT = 4444
 DEFAULT_STALE_WINDOW = 3. #hours
 
@@ -165,7 +166,10 @@ def handle_request(content, server):
         session_id = content['session-id']
 
     action = content['action']
-    logger.info('event=received action=%s session=%s' % (action, session_id))
+    datadog_logger.info(
+        'event=received action=%s unit=request' % (action),
+        extra={'value': 1, 'metric_type': 'counter', 'timestamp': int(time.time())}
+    )
     nav_mode = content.get('nav', 'prompt')
     try:
         # Formplayer routes
@@ -285,9 +289,10 @@ def handle_request(content, server):
         elif content.get('session_data', None):
             domain = content['session_data'].get('domain', '<unknown>')
 
-        logger.info("event=processed action=%s time=%s unit=ms session=%s domain=%s" % (
-            action, delta, session_id, domain
-        ))
+        datadog_logger.info(
+            'event=processed action=%s domain=%s unit=ms' % (action, domain),
+            extra={'value': delta, 'metric_type': 'gauge', 'timestamp': int(time.time())}
+        )
 
 
 class Purger(threading.Thread):
