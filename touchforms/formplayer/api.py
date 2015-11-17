@@ -290,8 +290,8 @@ def get_response(data, url, auth=None):
 def sync_db(username, auth=None):
     data = {
         "action":"sync-db",
-        "username": username,
-        }
+        "username": username
+    }
     response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
     response = json.loads(response)
     return response
