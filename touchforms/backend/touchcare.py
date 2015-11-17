@@ -42,7 +42,7 @@ def get_restore_url(criteria=None):
 def force_ota_restore(domained_username, auth):
     username = domained_username.split("@")[0]
     domain = domained_username.split("@")[1]
-    CCInstances({"username": username, "domain": domain, "host": "http://localhost:8000/"},
+    CCInstances({"username": username, "domain": domain, "host": settings.URL_HOST},
                 auth, force_sync=True, uses_sqlite=True)
     result = {'status': 'OK'}
     return result
@@ -58,7 +58,7 @@ class CCInstances(InstanceInitializationFactory):
         if self.uses_sqlite:
             self.username = sessionvars['username'] + '@' + sessionvars['domain']
             self.sandbox = SqlSandboxUtils.getStaticStorage(self.username)
-            self.host = sessionvars['host']
+            self.host = settings.URL_HOST
             self.domain = sessionvars['domain']
             self.query_func = query_factory(self.host, self.domain, self.auth, 'raw')
             self.query_url = get_restore_url({'as': self.username, 'version': '2.0'})

@@ -79,5 +79,5 @@ FIXTURE_API_URL = '%s/cloudcare/api/fixtures' % URL_ROOT
 LEDGER_API_URL = '%s/cloudcare/api/ledgers/' % URL_ROOT
 RESTORE_URL = '%s/phone/restore/' % URL_ROOT
 
-### Number of hours to use Sqlite DBs without forcing a restore ###
+### Number of hours to sqlite Sqlite DBs without forcing a restore ###
 SQLITE_STALENESS_WINDOW = 120
