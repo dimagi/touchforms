@@ -45,7 +45,7 @@ DATADOG_FORMPLAYER_LOG_FILE = 'datadog-dev.log'
 
 formats = {
     'verbose': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s',
-    'datadog': 'touchforms.timings %(timestamp)s %(value)s metric_type=%(metric_type)s %(message)s'
+    'datadog': 'touchforms.%(metric)s %(timestamp)s %(value)s metric_type=%(metric_type)s %(message)s'
 }
 ### END LOGGING VARIABLES ###
 

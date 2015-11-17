@@ -169,7 +169,7 @@ def handle_request(content, server):
     logger.info('Received action %s for session %s' % (action, session_id))
     datadog_logger.info(
         'event=received action=%s unit=request' % (action),
-        extra={'value': 1, 'metric_type': 'counter', 'timestamp': int(time.time())}
+        extra={'value': 1, 'metric_type': 'counter', 'timestamp': int(time.time()), 'metric': 'ations'}
     )
     nav_mode = content.get('nav', 'prompt')
     try:
@@ -295,7 +295,7 @@ def handle_request(content, server):
         ))
         datadog_logger.info(
             'event=processed action=%s domain=%s unit=ms' % (action, domain),
-            extra={'value': delta, 'metric_type': 'gauge', 'timestamp': int(time.time())}
+            extra={'value': delta, 'metric_type': 'gauge', 'timestamp': int(time.time()), 'metric': 'timings'}
         )
 
 
