@@ -166,6 +166,7 @@ def handle_request(content, server):
         session_id = content['session-id']
 
     action = content['action']
+    logger.info('Received action %s for session %s' % (action, session_id))
     datadog_logger.info(
         'event=received action=%s unit=request' % (action),
         extra={'value': 1, 'metric_type': 'counter', 'timestamp': int(time.time())}
@@ -289,6 +290,9 @@ def handle_request(content, server):
         elif content.get('session_data', None):
             domain = content['session_data'].get('domain', '<unknown>')
 
+        logger.info("Finished processing action %s in %s ms for session %s in domain '%s'" % (
+            action, delta, session_id, domain
+        ))
         datadog_logger.info(
             'event=processed action=%s domain=%s unit=ms' % (action, domain),
             extra={'value': delta, 'metric_type': 'gauge', 'timestamp': int(time.time())}
