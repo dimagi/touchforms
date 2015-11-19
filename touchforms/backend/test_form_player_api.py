@@ -2,7 +2,7 @@ import os
 import unittest
 import xformplayer
 import touchcare
-from org.commcare.api.json import PromptToJson
+from org.commcare.api.json import PromptToJson, AnswerQuestionJson
 from org.json import JSONObject
 from java.lang import RuntimeException
 
@@ -95,6 +95,43 @@ class FormPlayerApiTest(unittest.TestCase):
             except RuntimeException:
                 break
 
+    def answer_assert(self, model, session, answer):
+        session.answer_question(answer)
+        old = session._parse_current_event()
+        new = PromptToJson.formEntryModelToJson(model)
+        print "Old:"
+        print old
+        print "New:"
+        print new
+        assert(self.compare_dict(old, new))
+
+    def test_form_entry(self):
+
+        xform_session = xformplayer.XFormSession(
+            self.xform,
+            instance=None,
+            **self.session_metadata
+        )
+
+        model = xform_session.fem
+        controller = xform_session.fec
+        controller.stepToNextEvent()
+        print "==="
+
+        print AnswerQuestionJson.questionAnswerToJson(controller, model, "123")
+        print AnswerQuestionJson.questionAnswerToJson(controller, model, "ABC 123")
+        print AnswerQuestionJson.questionAnswerToJson(controller, model, "123")
+        print AnswerQuestionJson.questionAnswerToJson(controller, model, "123.123")
+        print AnswerQuestionJson.questionAnswerToJson(controller, model, "1970-10-23")
+        print AnswerQuestionJson.questionAnswerToJson(controller, model, "1970-10-23T12:30:30")
+        print AnswerQuestionJson.questionAnswerToJson(controller, model, "12:30:30")
+        print AnswerQuestionJson.questionAnswerToJson(controller, model, "william s pride")
+        print AnswerQuestionJson.questionAnswerToJson(controller, model, "12345")
+        print AnswerQuestionJson.questionAnswerToJson(controller, model, "000012345")
+        print PromptToJson.formEntryModelToJson(model)
+        print AnswerQuestionJson.questionAnswerToJson(controller, model, "Will")
+        print PromptToJson.formEntryModelToJson(model)
+
 
     def compare_dict(self, first, second):
         for key in first:
@@ -123,10 +160,10 @@ class FormPlayerApiTest(unittest.TestCase):
     def json_equals(self, first, second):
         if first == None:
             return second is JSONObject.NULL
-        if isinstance(first, list):
-            return self.compare_list(first, second)
         if isinstance(first, dict):
             return self.compare_dict(first, second)
+        if isinstance(first, list):
+            return self.compare_list(first, second)
         if isinstance(first, xformplayer.choice):
             #TODO WSP: How to represent choices?
             return first.__repr__() == second
