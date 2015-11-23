@@ -76,7 +76,6 @@ class CCInstances(InstanceInitializationFactory):
         self.sandbox = SqlSandboxUtils.getStaticStorage(self.username)
         persistence.postgres_drop_sqlite(self.username)
 
-
     def perform_ota_restore(self, restore=None):
         self.clear_tables()
         if not restore:

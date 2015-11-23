@@ -114,6 +114,7 @@ def postgres_lookup_sqlite_version(key):
 def postgres_set_sqlite(username, version):
     return postgres_helper(postgres_set_sqlite_command, username, version)
 
+
 def postgres_drop_sqlite(username):
     return postgres_helper(postgres_drop_sqlite_command, username)
 
@@ -149,6 +150,7 @@ def postgres_lookup_version_command(cursor, username):
         raise KeyError
     value = cursor.fetchone()[0]
     return value
+
 
 def postgres_update_sqlite_command(cursor, username, version):
 
