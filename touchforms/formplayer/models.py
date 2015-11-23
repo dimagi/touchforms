@@ -21,7 +21,7 @@ class SqlStatus(models.Model):
 
 
 class Session(models.Model):
-    sess_id = models.CharField(max_length=255, primary_key=True)
+    sess_id = models.CharField(max_length=100, primary_key=True)
     sess_json = models.TextField()
     last_modified = models.DateTimeField(null=True)
     date_created = models.DateTimeField(null=True)

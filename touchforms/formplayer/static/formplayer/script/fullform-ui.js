@@ -367,17 +367,6 @@ Formplayer.ViewModels.EvaluateXPath = function() {
     };
 }
 
-Formplayer.ViewModels.SyncUserData = function() {
-    var self = this;
-    self.evaluate = function(form) {
-        var callback = function(result, status) {
-            self.result(result);
-            self.success(status === "success");
-        };
-        $.publish('formplayer.sync-user-data', [self.xpath(), callback]);
-    };
-};
-
 /**
  * Used to compare if questions are equal to each other by looking at their index
  * @param {Object} e - Either the javascript object Question, Group, Repeat or the JSON representation

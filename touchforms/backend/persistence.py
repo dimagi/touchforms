@@ -72,7 +72,7 @@ def postgres_lookup_session(key):
 
 
 def postgres_lookup_session_command(cursor, key):
-    postgres_lookup(cursor, POSTGRES_TABLE, 'sess_id', key, 'sess_json')
+    postgres_lookup(cursor, POSTGRES_TABLE, 'sess_id', str(key), 'sess_json')
     if cursor.rowcount is 0:
         raise KeyError
     value = cursor.fetchone()[0]
@@ -97,7 +97,9 @@ def postgres_insert_session_command(cursor, key, value):
 def postgres_lookup(cursor, table_name, search_field, search_value, result_field='*'):
     sel_sql = "SELECT %(field)s FROM %(table)s WHERE %(search)s=?" \
               % {'table': table_name, 'field': result_field, 'search': search_field}
-    sel_params = [str(search_value)]
+
+    sel_params = [search_value]
+
     cursor.execute(sel_sql, sel_params)
 
 
@@ -112,6 +114,9 @@ def postgres_lookup_sqlite_version(key):
 def postgres_set_sqlite(username, version):
     return postgres_helper(postgres_set_sqlite_command, username, version)
 
+def postgres_drop_sqlite(username):
+    return postgres_helper(postgres_drop_sqlite_command, username)
+
 
 def postgres_set_sqlite_command(cursor, username, value):
 
@@ -123,7 +128,14 @@ def postgres_set_sqlite_command(cursor, username, value):
         postgres_insert_sqlite_command(cursor, username, value)
 
 
+def postgres_drop_sqlite_command(cursor, username):
+    upd_sql = replace_table("DELETE FROM %(table)s WHERE username = ?", SQLITE_TABLE)
+    upd_params = [str(username)]
+    cursor.execute(upd_sql, upd_params)
+
+
 def postgres_lookup_last_modified_command(cursor, username):
+
     postgres_lookup(cursor, SQLITE_TABLE, 'username', username, 'last_modified')
     if cursor.rowcount is 0:
         raise KeyError
@@ -138,8 +150,8 @@ def postgres_lookup_version_command(cursor, username):
     value = cursor.fetchone()[0]
     return value
 
-
 def postgres_update_sqlite_command(cursor, username, version):
+
     upd_sql = replace_table("UPDATE %(table)s SET app_version = ? , last_modified =?  "
                             "WHERE username = ?", SQLITE_TABLE)
     upd_params = [version, datetime.utcnow(), str(username)]
@@ -147,6 +159,7 @@ def postgres_update_sqlite_command(cursor, username, version):
 
 
 def postgres_insert_sqlite_command(cursor, username, version):
+
     ins_sql = replace_table("INSERT INTO %(table)s (username, app_version, last_modified, date_created) "
                             "VALUES (?, ?, ?, ?)", SQLITE_TABLE)
     ins_params = [username, version, datetime.utcnow(), datetime.utcnow()]
@@ -154,6 +167,7 @@ def postgres_insert_sqlite_command(cursor, username, version):
 
 
 def postgres_helper(method, *kwargs):
+
     with get_conn() as conn:
         with conn.cursor() as cursor:
             ret = method(cursor, *kwargs)
