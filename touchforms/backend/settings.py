@@ -19,11 +19,11 @@ EXTENSION_MODULES = [
 ]
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.abspath(__file__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # postgres peristence stuff
 USES_POSTGRES = True
-POSTGRES_JDBC_JAR = "%s/jrlib/postgresql-9.4-1201.jdbc41.jar" % os.path.dirname(os.path.abspath(__file__))
+POSTGRES_JDBC_JAR = "%s/jrlib/postgresql-9.4-1201.jdbc41.jar" % BASE_DIR
 
 # sqlite persistence stuff
 
