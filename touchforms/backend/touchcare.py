@@ -57,7 +57,7 @@ class CCInstances(InstanceInitializationFactory):
 
         if self.uses_sqlite:
             self.username = sessionvars['username'] + '@' + sessionvars['domain']
-            self.sandbox = SqlSandboxUtils.getStaticStorage(self.username)
+            self.sandbox = SqlSandboxUtils.getStaticStorage(self.username, settings.SQLITE_DBS_DIRECTORY)
             self.host = settings.URL_HOST
             self.domain = sessionvars['domain']
             self.query_func = query_factory(self.host, self.domain, self.auth, 'raw')
@@ -73,7 +73,8 @@ class CCInstances(InstanceInitializationFactory):
         db_name = self.username + ".db"
         if os.path.isfile(db_name):
             os.remove(db_name)
-        self.sandbox = SqlSandboxUtils.getStaticStorage(self.username)
+        self.sandbox = SqlSandboxUtils.getStaticStorage(self.username, settings.SQLITE_DBS_DIRECTORY)
+        persistence.postgres_drop_sqlite(self.username)
 
     def perform_ota_restore(self, restore=None):
         self.clear_tables()
@@ -102,6 +103,7 @@ class CCInstances(InstanceInitializationFactory):
         return minutes_elapsed > settings.SQLITE_STALENESS_WINDOW
 
     def generateRoot(self, instance):
+
         ref = instance.getReference()
 
         def from_bundle(inst):
@@ -330,6 +332,7 @@ class TouchformsStorageUtility(IStorageUtilityIndexed):
     """
 
     def __init__(self, host, domain, auth, additional_filters=None, preload=False, form_context=None):
+
         self.cached_lookups = {}
         self.form_context = form_context or {}
 

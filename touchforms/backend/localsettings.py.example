@@ -1,4 +1,5 @@
-URL_ROOT = "https://example.com/a/{{ DOMAIN }}"
+URL_HOST = "https://example.com"
+URL_ROOT = URL_HOST + "/a/{{ DOMAIN }}"
 PERSISTENCE_DIRECTORY = "/path/to/www/data/touchforms"
 
 # If you want to test with https on a proxy

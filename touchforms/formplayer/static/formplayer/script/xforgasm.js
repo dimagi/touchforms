@@ -263,10 +263,9 @@ function WebFormSession(params) {
                 return;
             }
             sess.LAST_REQUEST_HANDLED = resp.seq_id;
-            callback(resp);
-
+            
             try {
-                //callback(resp);
+                callback(resp);
             } catch (err) {
                 console.error(err);
                 var msg = "".concat(ERROR_MESSAGE, err.message);
