@@ -18,9 +18,16 @@ EXTENSION_MODULES = [
     'handlers.static',  # support for static functions and static date functions
 ]
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+BASE_DIR = os.path.abspath(__file__)
+
 # postgres peristence stuff
 USES_POSTGRES = True
 POSTGRES_JDBC_JAR = "%s/jrlib/postgresql-9.4-1201.jdbc41.jar"%os.path.dirname(os.path.abspath(__file__))
+
+# sqlite persistence stuff
+
+SQLITE_DBS_DIRECTORY = "%s/dbs"%BASE_DIR
 
 # be more forgiving about data types in api
 HACKS_MODE = True

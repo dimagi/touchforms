@@ -7,7 +7,7 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('formplayer', '0002_auto_20150828_1510'),
+        ('formplayer', '0001_initial'),
     ]
 
     operations = [
