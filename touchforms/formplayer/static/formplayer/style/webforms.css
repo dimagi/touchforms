@@ -18,6 +18,15 @@
   min-width: 800px;
 }
 
+/* Override default nprogress bar color to match CommCareHQ */
+#nprogress .bar {
+  background: #004ebc;
+}
+
+#nprogress .peg {
+  box-shadow: 0 0 10px #004ebc, 0 0 5px #004ebc;
+}
+
 video {
   max-width: 400px;
 }
