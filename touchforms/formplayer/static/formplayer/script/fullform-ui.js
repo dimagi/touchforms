@@ -180,7 +180,7 @@ function Form(json) {
     delete json.tree;
     Container.call(self, json);
     self.submitText = ko.observable('Submit');
-    self.evalXPath = new Formplayer.ViewModels.EvaluateXPath();
+    self.cloudCareDebugger = new Formplayer.ViewModels.CloudCareDebugger();
 
     self.submitForm = function(form) {
         $.publish('formplayer.submit-form', self);
@@ -352,6 +352,16 @@ Question.prototype.fromJS = function(json) {
     ko.mapping.fromJS(json, mapping, self);
 }
 
+
+Formplayer.ViewModels.CloudCareDebugger = function() {
+    var self = this;
+
+    self.evalXPath = new Formplayer.ViewModels.EvaluateXPath();
+    self.isMinimized = ko.observable(true);
+    self.toggleState = function() {
+        self.isMinimized(!self.isMinimized());
+    };
+}
 
 Formplayer.ViewModels.EvaluateXPath = function() {
     var self = this;

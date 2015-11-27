@@ -26,6 +26,10 @@
   height: 400px;
 }
 
+.debugger .debugger-state {
+  cursor: pointer;
+}
+
 .debugger-tab-title {
   font-size: 14px;
   line-height: 18px;

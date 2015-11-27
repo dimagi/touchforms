@@ -39,7 +39,7 @@
                     </div>
                 </div>
             </form>
-            <div data-bind="template: { name: 'instance-viewer-ko-template', data: evalXPath }"></div>
+            <div data-bind="template: { name: 'instance-viewer-ko-template', data: cloudCareDebugger }"></div>
         </div>
     </div>
 </script>
@@ -47,10 +47,21 @@
 <script type="text/html" id="instance-viewer-ko-template">
     {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
         <hr/>
-        <div id="instance-xml-home" class="debugger debugger-minimized" name="instance-xml-home">
+        <div id="instance-xml-home" class="debugger" data-bind="
+            css: {
+                'debugger-minimized': isMinimized,
+                'debugger-maximized': !isMinimized()
+            }
+            ">
             <!-- Tab title -->
             <div class="debugger-tab-title">
-                <i class="fa fa-expand"></i>
+                <i class="debugger-state fa" data-bind="
+                    css: {
+                        'fa-expand': isMinimized,
+                        'fa-compress': !isMinimized()
+                    },
+                    click: toggleState
+                "></i>
                 <span>CloudCare Debugger</span>
             </div>
 
@@ -93,34 +104,10 @@
                         <div id="xml-viewer-pretty"></div>
                     </div>
                     <div role="tabpanel" class="tab-pane" id="debugger-evaluate">
-                        <form class="form-horizontal" data-bind="submit: evaluate">
-                            <div class="form-group">
-                                <div class="controls col-sm-12">
-                                    <textarea
-                                        id="evaluate-result"
-                                        type="text"
-                                        style="display: block;"
-                                        readonly
-                                        data-bind="
-                                            value: result,
-                                            css: { 'text-error': !success(), 'form-control': true }
-                                    "></textarea>
-                                </div>
-                            </div>
-                            <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH" >
-                                <div class="input-group">
-                                    <input
-                                        id="xpath"
-                                        class="form-control"
-                                        name="xpath"
-                                        placeholder="/data/[your path here]"
-                                        data-bind="value: xpath" />
-                                    <span class="input-group-btn">
-                                        <button class="btn btn-default" id="evaluate-button">Evaluate</button>
-                                    </span>
-                                </div>
-                            </div>
-                        </form>
+                        <div data-bind="template: {
+                            name: 'debugger-eval-ko-template',
+                            data: evalXPath }">
+                        </div>
                     </div>
                     <div role="tabpanel" class="tab-pane" id="debugger-settings">
                         <form class="form-horizontal debug-controls">
@@ -142,6 +129,37 @@
             </div>
         </div>
     {% endif %}
+</script>
+
+<script type="text/html" id="debugger-eval-ko-template">
+    <form class="form-horizontal" data-bind="submit: evaluate">
+        <div class="form-group">
+            <div class="controls col-sm-12">
+                <textarea
+                    id="evaluate-result"
+                    type="text"
+                    style="display: block;"
+                    readonly
+                    data-bind="
+                        value: result,
+                        css: { 'text-error': !success(), 'form-control': true }
+                "></textarea>
+            </div>
+        </div>
+        <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH" >
+            <div class="input-group">
+                <input
+                    id="xpath"
+                    class="form-control"
+                    name="xpath"
+                    placeholder="/data/[your path here]"
+                    data-bind="value: xpath" />
+                <span class="input-group-btn">
+                    <button class="btn btn-default" id="evaluate-button">Evaluate</button>
+                </span>
+            </div>
+        </div>
+    </form>
 </script>
 
 <script type="text/html" id="question-fullform-ko-template">
