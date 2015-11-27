@@ -361,7 +361,7 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
     self.toggleState = function() {
         self.isMinimized(!self.isMinimized());
     };
-}
+};
 
 Formplayer.ViewModels.EvaluateXPath = function() {
     var self = this;
