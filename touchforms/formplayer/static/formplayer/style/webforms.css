@@ -4,18 +4,37 @@
   font-family: sans-serif;
 }
 
-#instance-xml {
-  min-width: 800px;
-  font-family: sans-serif;
+.debugger {
+  width: 800px;
+  position: fixed;
+  bottom: 0;
+  background-color: white;
 }
 
-#evaluate-result {
-  min-width: 800px;
-  font-family: sans-serif;
+.debugger .debugger-content {
+  height: 350px;
+  padding: 20px;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
 }
 
-#instance-xml-home {
-  min-width: 800px;
+.debugger.debugger-minimized {
+  height: 30px;
+}
+
+.debugger.debugger-maximized {
+  height: 400px;
+}
+
+.debugger-tab-title {
+  font-size: 14px;
+  line-height: 18px;
+  color: white;
+  background-color: #004ebc;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom: #ddd solid 4px;
+  padding: 6px;
 }
 
 video {
