@@ -48,54 +48,89 @@
     {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
         <hr/>
         <div id="instance-xml-home" name="instance-xml-home">
-            <form class="form-horizontal debug-controls">
-                <div class="form-group">
-                    <div class="controls" data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH">
-                        <label class="checkbox">
-                            <input id="auto-sync-control" type="checkbox" checked="checked">{% trans "Auto Sync" %}
-                            <span class="help-block">
-                            {% blocktrans %}
-                                When this is checked, the CloudCare Debug tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
-                            {% endblocktrans %}
-                            </span>
-                        </label>
-                    </div>
+            <!-- navigation tabs -->
+            <ul class="nav nav-tabs" role="tablist">
+                <li role="presentation" class="active">
+                    <a href="#debugger-form-data" aria-controls="debugger-form-data" role="tab" data-toggle="tab">
+                        Form Data
+                    </a>
+                </li>
+                <li role="presentation">
+                    <a
+                        href="#debugger-xml-instance"
+                        aria-controls="debugger-xml-instance"
+                        role="tab"
+                        id="debugger-xml-instance-tab"
+                        data-toggle="tab">
+                        Form XML
+                    </a>
+                </li>
+                <li role="presentation">
+                    <a href="#debugger-evaluate" aria-controls="debugger-evaluate" role="tab" data-toggle="tab">
+                        Evaluate XPath
+                    </a>
+                </li>
+                <li role="presentation">
+                    <a href="#debugger-settings" aria-controls="debugger-settings" role="tab" data-toggle="tab">
+                        Settings
+                    </a>
+                </li>
+            </ul>
+            <!-- tab content -->
+            <div class="tab-content">
+                <div role="tabpanel" class="tab-pane active" id="debugger-form-data">
+                    <div id="question-viewer-pretty"></div>
                 </div>
-            </form>
-            <div id="question-viewer-pretty"></div>
-            <br />
-            <div id="xml-viewer-pretty"></div>
-            <br />
-            <section>
-                <form class="form-horizontal" data-bind="submit: evaluate">
-                    <div class="form-group">
-                        <div class="controls col-sm-12">
-                            <textarea
-                                id="evaluate-result"
-                                type="text"
-                                style="display: block;"
-                                readonly
-                                data-bind="
-                                    value: result,
-                                    css: { 'text-error': !success(), 'form-control': true }
-                            "></textarea>
+                <div role="tabpanel" class="tab-pane" id="debugger-xml-instance">
+                    <div id="xml-viewer-pretty"></div>
+                </div>
+                <div role="tabpanel" class="tab-pane" id="debugger-evaluate">
+                    <form class="form-horizontal" data-bind="submit: evaluate">
+                        <div class="form-group">
+                            <div class="controls col-sm-12">
+                                <textarea
+                                    id="evaluate-result"
+                                    type="text"
+                                    style="display: block;"
+                                    readonly
+                                    data-bind="
+                                        value: result,
+                                        css: { 'text-error': !success(), 'form-control': true }
+                                "></textarea>
+                            </div>
                         </div>
-                    </div>
-                    <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH" >
-                        <div class="input-group">
-                            <input
-                                id="xpath"
-                                class="form-control"
-                                name="xpath"
-                                placeholder="/data/[your path here]"
-                                data-bind="value: xpath" />
-                            <span class="input-group-btn">
-                                <button class="btn btn-default" id="evaluate-button">Evaluate</button>
-                            </span>
+                        <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH" >
+                            <div class="input-group">
+                                <input
+                                    id="xpath"
+                                    class="form-control"
+                                    name="xpath"
+                                    placeholder="/data/[your path here]"
+                                    data-bind="value: xpath" />
+                                <span class="input-group-btn">
+                                    <button class="btn btn-default" id="evaluate-button">Evaluate</button>
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                </form>
-            </section>
+                    </form>
+                </div>
+                <div role="tabpanel" class="tab-pane" id="debugger-settings">
+                    <form class="form-horizontal debug-controls">
+                        <div class="form-group">
+                            <div class="controls" data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH">
+                                <label class="checkbox">
+                                    <input id="auto-sync-control" type="checkbox" checked="checked">{% trans "Auto Sync" %}
+                                    <span class="help-block">
+                                    {% blocktrans %}
+                                        When this is checked, the CloudCare Debug tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
+                                    {% endblocktrans %}
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     {% endif %}
 </script>
