@@ -66,7 +66,7 @@
             </div>
 
             <!-- Debugger content -->
-            <div class="debugger-content">
+            <div class="debugger-container">
                 <!-- navigation tabs -->
                 <ul class="nav nav-tabs" role="tablist">
                     <li role="presentation" class="active">
@@ -96,7 +96,7 @@
                     </li>
                 </ul>
                 <!-- tab content -->
-                <div class="tab-content">
+                <div class="tab-content debugger-content">
                     <div role="tabpanel" class="tab-pane active" id="debugger-form-data">
                         <div id="question-viewer-pretty"></div>
                     </div>
@@ -112,7 +112,7 @@
                     <div role="tabpanel" class="tab-pane" id="debugger-settings">
                         <form class="form-horizontal debug-controls">
                             <div class="form-group">
-                                <div class="controls" data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH">
+                                <div class="controls" data-bind="css: Formplayer.Const.CONTROL_WIDTH">
                                     <label class="checkbox">
                                         <input id="auto-sync-control" type="checkbox" checked="checked">{% trans "Auto Sync" %}
                                         <span class="help-block">

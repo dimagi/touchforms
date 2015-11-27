@@ -9,13 +9,23 @@
   position: fixed;
   bottom: 0;
   background-color: white;
+
+  -webkit-transition: height 0.5s;
+  transition: height 0.5s;
+}
+
+.debugger .debugger-container {
+  height: 365px;
+  padding: 20px;
+  padding-bottom: 0;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
 }
 
 .debugger .debugger-content {
-  height: 350px;
-  padding: 20px;
-  border-left: 1px solid #ddd;
-  border-right: 1px solid #ddd;
+  overflow-y: auto;
+  margin-top: 12px;
+  height: 300px;
 }
 
 .debugger.debugger-minimized {
