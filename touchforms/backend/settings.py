@@ -47,9 +47,11 @@ POSTGRES_DATABASE = {
 
 ### LOGGING VARIABLES ###
 FORMPLAYER_LOG_FILE = 'formplayer-dev.log'
+DATADOG_FORMPLAYER_LOG_FILE = 'datadog-formplayer-dev.log'
 
 formats = {
     'verbose': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s',
+    'datadog': 'touchforms.%(metric)s %(timestamp)s %(value)s metric_type=%(metric_type)s %(message)s'
 }
 ### END LOGGING VARIABLES ###
 
@@ -61,6 +63,7 @@ except ImportError:
 
 ### LOGGING CONFIG ###
 formatter = logging.Formatter(formats['verbose'])
+datadog_formatter = logging.Formatter(formats['datadog'])
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -69,6 +72,7 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger('formplayer')
+datadog_logger = logging.getLogger('datadog')
 
 rotatingHandler = logging.handlers.RotatingFileHandler(
     FORMPLAYER_LOG_FILE,
@@ -76,9 +80,18 @@ rotatingHandler = logging.handlers.RotatingFileHandler(
     backupCount=20,
 )
 rotatingHandler.setFormatter(formatter)
-
 logger.addHandler(rotatingHandler)
 logger.setLevel(logging.INFO)
+
+datadogRotatingHandler = logging.handlers.RotatingFileHandler(
+    DATADOG_FORMPLAYER_LOG_FILE,
+    maxBytes=50 * 1024 * 1024,
+    backupCount=20,
+)
+datadogRotatingHandler.setFormatter(datadog_formatter)
+datadog_logger.addHandler(datadogRotatingHandler)
+datadog_logger.setLevel(logging.INFO)
+
 ### END LOGGING CONFIG ###
 
 CASE_API_URL = '%s/cloudcare/api/cases/' % URL_ROOT
