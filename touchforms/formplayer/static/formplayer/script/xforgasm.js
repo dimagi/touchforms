@@ -148,10 +148,6 @@ function WebFormSession(params) {
     }
 
     self.submit = function (params) {
-        this.inputActivate(false);
-        this.inputActivate = function () {
-        }; //hack to keep input fields disabled during final POST
-
         this.onsubmit(params.output);
     }
 
@@ -236,14 +232,12 @@ function WebFormSession(params) {
         if (this.blockingRequestInProgress) {
             return;
         }
-
+        this.blockingRequestInProgress = blocking
+        $.publish('session.block', blocking);
 
         this.numPendingRequests++;
         this.onLoading();
 
-        if (blocking) {
-            this.inputActivate(false); // sets blockingRequestInProgress
-        }
         var sess = this;
         makeRequest(function (resp) {
             // ignore responses older than the most-recently handled
@@ -259,9 +253,9 @@ function WebFormSession(params) {
                 var msg = "".concat(ERROR_MESSAGE, err.message);
                 sess.onerror({message: msg});
             }
-            if (blocking) {
-                sess.inputActivate(true); // clears blockingRequestInProgress
-            }
+
+            $.publish('session.block', false);
+            this.blockingRequestInProgress = false;
 
             sess.numPendingRequests--;
             if (sess.numPendingRequests === 0) {
@@ -271,12 +265,6 @@ function WebFormSession(params) {
                 sess.taskQueue.clearTasks('submit-all');
             }
         });
-    }
-
-    self.inputActivate = function (enable) {
-        this.blockingRequestInProgress = !enable;
-        this.$div.find('input').attr('disabled', enable ? null : 'true');
-        this.$div.find('a').css('color', enable ? 'blue' : 'grey');
     }
 
     // workaround for "forever loading" bugs...

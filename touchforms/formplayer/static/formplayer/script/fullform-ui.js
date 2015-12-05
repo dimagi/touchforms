@@ -204,6 +204,11 @@ function Form(json) {
         }
     });
 
+    $.unsubscribe('session');
+    $.subscribe('session.block', function(e, block) {
+        $('.webforms input').prop('disabled', !!block);
+    });
+
     self.submitting = function() {
         self.submitText('Submitting...');
     };
