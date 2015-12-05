@@ -232,3 +232,13 @@ WebFormSession.prototype.loadForm = function($div, init_lang) {
 
     this.adapter.initForm(args, $div, this.onload, this.onerror);
 }
+
+WebFormSession.prototype.resumeForm = function($div, session_id, onload, onerror) {
+    var args = {
+        "action": "current",
+        "session-id": session_id
+    };
+
+    this.session_id = session_id;
+    this.initForm(args, $div, onload, onerror);
+}
