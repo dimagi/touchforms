@@ -100,7 +100,7 @@ function WebFormSession(params) {
         this.onLoadingComplete = options.onLoadingComplete
 
         if (params.session_id) {
-            this.resumeForm($form, params.session_id);
+            this.resumeForm($form, self.session_id);
         } else {
             this.loadForm($form, init_lang);
         }
@@ -119,6 +119,7 @@ function WebFormSession(params) {
         }
 
         requestParams.form_context = self.formContext;
+        requestParams['session-id'] = self.session_id;
 
         if (this.blockingRequestInProgress) {
             return;
@@ -240,10 +241,8 @@ WebFormSession.prototype.loadForm = function($form, init_lang) {
 WebFormSession.prototype.resumeForm = function($form, session_id) {
     var args = {
         "action": "current",
-        "session-id": session_id
     };
 
-    this.session_id = session_id;
     this.initForm(args, $form, this.onload, this.onerror);
 }
 
@@ -254,7 +253,6 @@ WebFormSession.prototype.answerQuestion = function(q) {
 
     this.serverRequest({
             'action': 'answer',
-            'session-id': this.session_id,
             'ix': ix,
             'answer': answer
         },
@@ -269,7 +267,6 @@ WebFormSession.prototype.answerQuestion = function(q) {
 WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
     this.serverRequest({
             'action': 'evaluate-xpath',
-            'session-id': this.session_id,
             'xpath': xpath
         },
         function(resp) {
@@ -280,7 +277,6 @@ WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
 WebFormSession.prototype.newRepeat = function(repeat) {
     this.serverRequest({
             'action': 'new-repeat',
-            'session-id': this.session_id,
             'ix': getIx(repeat)
         },
         function(resp) {
@@ -294,7 +290,6 @@ WebFormSession.prototype.deleteRepeat = function(repetition) {
     var rep_ix = +(repetition.rel_ix().split(":").slice(-1)[0]);
     this.serverRequest({
             'action': 'delete-repeat',
-            'session-id': this.session_id,
             'ix': rep_ix,
             'form_ix': juncture
         },
@@ -307,7 +302,6 @@ WebFormSession.prototype.deleteRepeat = function(repetition) {
 WebFormSession.prototype.switchLanguage = function(lang) {
     this.serverRequest({
             'action': 'set-lang',
-            'session-id': this.session_id,
             'lang': lang
         },
         function(resp) {
@@ -338,7 +332,6 @@ WebFormSession.prototype.submitForm = function(form) {
 
     this.serverRequest({
             'action': 'submit-all',
-            'session-id': this.session_id,
             'answers': answers,
             'prevalidated': prevalidated
         },
