@@ -102,24 +102,21 @@ function WebFormSession(params) {
         autocomplete: params.autocomplete_url
     };
 
-    self.load = function ($div, init_lang, options) {
+    self.load = function ($form, init_lang, options) {
         /*
          options currently allows for two parameters:
          onLoading: a function to call when there are pending requests to the server
          onLoadingComplete: a function to call when requests are completed. can take an optional
          parameter which will be true if an error occurred.
          */
-        this.$div = $div;
-        this.$div.addClass('webforms');
-
         options = options || {};
         this.onLoading = options.onLoading
         this.onLoadingComplete = options.onLoadingComplete
 
         if (params.session_id) {
-            this.resumeForm($div, params.session_id);
+            this.resumeForm($form, params.session_id);
         } else {
-            this.loadForm($div, init_lang);
+            this.loadForm($form, init_lang);
         }
     }
 
@@ -228,7 +225,7 @@ WebFormSession.prototype.applyListeners = function() {
     });
 }
 
-WebFormSession.prototype.loadForm = function($div, init_lang) {
+WebFormSession.prototype.loadForm = function($form, init_lang) {
     var args = {
         'action': 'new-form',
         'instance-content': this.instance_xml,
@@ -251,17 +248,17 @@ WebFormSession.prototype.loadForm = function($div, init_lang) {
         args['session-data'].preloaders = init_preloaders(args['session-data'].preloaders);
     }
 
-    this.initForm(args, $div, this.onload, this.onerror);
+    this.initForm(args, $form, this.onload, this.onerror);
 }
 
-WebFormSession.prototype.resumeForm = function($div, session_id) {
+WebFormSession.prototype.resumeForm = function($form, session_id) {
     var args = {
         "action": "current",
         "session-id": session_id
     };
 
     this.session_id = session_id;
-    this.initForm(args, $div, this.onload, this.onerror);
+    this.initForm(args, $form, this.onload, this.onerror);
 }
 
 WebFormSession.prototype.answerQuestion = function(q) {
@@ -381,12 +378,12 @@ WebFormSession.prototype.serverError = function(q, resp) {
     }
 }
 
-WebFormSession.prototype.initForm = function(args, $div) {
+WebFormSession.prototype.initForm = function(args, $form) {
     var self = this;
     this.serverRequest(args, function(resp) {
         self.session_id = self.session_id || resp.session_id;
 
-        self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $div);
+        self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
         self.onload(self, resp);
     });
 }
