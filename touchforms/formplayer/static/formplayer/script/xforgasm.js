@@ -162,28 +162,28 @@ function WebFormSession(params) {
         this.onsubmit(params.output);
     }
 
-    self.serverRequest = function (params, callback, blocking) {
+    self.serverRequest = function (requestParams, callback, blocking) {
         var that = this;
         var url = that.urls.xform;
-        if (params.action === 'submit-all' && self.NUM_PENDING_REQUESTS) {
-            self.taskQueue.addTask(params.action, self.serverRequest, arguments, self)
+        if (requestParams.action === 'submit-all' && self.NUM_PENDING_REQUESTS) {
+            self.taskQueue.addTask(requestParams.action, self.serverRequest, arguments, self)
         }
 
         if (this.offline_mode) {
             // give local touchforms daemon credentials to talk to HQ independently
-            params.hq_auth = {type: 'django-session', key: $.cookie('sessionid')};
+            requestParams.hq_auth = {type: 'django-session', key: $.cookie('sessionid')};
         }
         var _errMsg = function (msg) {
             return "".concat(ERROR_MESSAGE, msg);
         };
-        params.form_context = self.formContext;
+        requestParams.form_context = self.formContext;
 
         this._serverRequest(
             function (cb) {
                 jQuery.ajax(
                     {type: "POST",
                         url: url,
-                        data: JSON.stringify(params),
+                        data: JSON.stringify(requestParams),
                         jsonp: false,
                         success: cb,
                         dataType: "json",
@@ -205,7 +205,7 @@ function WebFormSession(params) {
                             }
 
                             var skip_error_msg = false;
-                            if (params.action == "heartbeat") {
+                            if (requestParams.action == "heartbeat") {
                                 if (that.heartbeat_has_failed) {
                                     // If the xformAjaxAdapter heartbeat can't find the server,
                                     // we only want to log that error one time.
