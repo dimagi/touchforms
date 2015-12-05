@@ -75,9 +75,6 @@ function WebFormSession(params) {
         self.form_spec = {type: 'url', val: params.form_url};
     }
 
-    //note: the 'allow_html' param will open you up to XSS attacks if you have
-    //forms that insert user-entered data into captions!
-
     self.instance_xml = params.instance_xml;
     self.session_data = params.session_data || {};
     self.answerCallback = params.answerCallback;
