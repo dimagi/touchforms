@@ -186,8 +186,8 @@ function Form(json) {
         $.publish('formplayer.submit-form', self);
     };
 
-    $.unsubscribe('adapter');
-    $.subscribe('adapter.reconcile', function(e, response, element) {
+    $.unsubscribe('session');
+    $.subscribe('session.reconcile', function(e, response, element) {
         // TODO where does response status parsing belong?
         if (response.status === 'validation-error') {
             if (response.type === 'required') {
@@ -204,7 +204,6 @@ function Form(json) {
         }
     });
 
-    $.unsubscribe('session');
     $.subscribe('session.block', function(e, block) {
         $('.webforms input').prop('disabled', !!block);
     });

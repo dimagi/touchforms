@@ -257,7 +257,7 @@ WebFormSession.prototype.answerQuestion = function(q) {
             'answer': answer
         },
         function(resp) {
-            $.publish('adapter.reconcile', [resp, q]);
+            $.publish('session.reconcile', [resp, q]);
             if (self.answerCallback !== undefined) {
                 self.answerCallback(self.session_id);
             }
@@ -280,7 +280,7 @@ WebFormSession.prototype.newRepeat = function(repeat) {
             'ix': getIx(repeat)
         },
         function(resp) {
-            $.publish('adapter.reconcile', [resp, repeat]);
+            $.publish('session.reconcile', [resp, repeat]);
         },
         true);
 }
@@ -294,7 +294,7 @@ WebFormSession.prototype.deleteRepeat = function(repetition) {
             'form_ix': juncture
         },
         function(resp) {
-            $.publish('adapter.reconcile', [resp, repetition]);
+            $.publish('session.reconcile', [resp, repetition]);
         },
         true);
 }
@@ -305,7 +305,7 @@ WebFormSession.prototype.switchLanguage = function(lang) {
             'lang': lang
         },
         function(resp) {
-            $.publish('adapter.reconcile', [resp, lang]);
+            $.publish('session.reconcile', [resp, lang]);
         });
 }
 
