@@ -130,43 +130,13 @@ function WebFormSession(params) {
         this.numPendingRequests++;
         this.onLoading();
 
-        var onSuccess = function(resp) {
-            if (resp.status === 'error' || resp.error) {
-                self.onerror(resp);
-            }
-
-            // ignore responses older than the most-recently handled
-            if (resp.seq_id && resp.seq_id < self.lastRequestHandled) {
-                return;
-            }
-            self.lastRequestHandled = resp.seq_id;
-
-            try {
-                callback(resp);
-            } catch (err) {
-                console.error(err);
-                self.onerror({message: Formplayer.Utils.touchformsError(err)});
-            }
-
-            $.publish('session.block', false);
-            this.blockingRequestInProgress = false;
-
-            self.numPendingRequests--;
-            if (self.numPendingRequests === 0) {
-                self.onLoadingComplete();
-                self.taskQueue.execute('submit-all');
-                // Remove any submission tasks that have been queued up from spamming the submit button
-                self.taskQueue.clearTasks('submit-all');
-            }
-        }
-
         $.ajax({
                 type: 'POST',
                 url: url,
                 data: JSON.stringify(requestParams),
                 dataType: "json",
             })
-            .success(onSuccess)
+            .success(function(resp) { self.handleSuccess(resp, callback) })
             .fail(function (jqXHR, textStatus, errorThrown) {
                 var error = Formplayer.Utils.touchformsError(jqXHR.responseJSON.message);
                 self.onerror({human_readable_message: error});
@@ -184,6 +154,37 @@ function WebFormSession(params) {
         self.NUM_PENDING_REQUESTS = 0;
         self.blockingRequestInProgress = false;
     });
+}
+
+WebFormSession.prototype.handleSuccess = function(resp, callback) {
+    var self = this;
+    if (resp.status === 'error' || resp.error) {
+        self.onerror(resp);
+    }
+
+    // ignore responses older than the most-recently handled
+    if (resp.seq_id && resp.seq_id < self.lastRequestHandled) {
+        return;
+    }
+    self.lastRequestHandled = resp.seq_id;
+
+    try {
+        callback(resp);
+    } catch (err) {
+        console.error(err);
+        self.onerror({message: Formplayer.Utils.touchformsError(err)});
+    }
+
+    $.publish('session.block', false);
+    this.blockingRequestInProgress = false;
+
+    self.numPendingRequests--;
+    if (self.numPendingRequests === 0) {
+        self.onLoadingComplete();
+        self.taskQueue.execute('submit-all');
+        // Remove any submission tasks that have been queued up from spamming the submit button
+        self.taskQueue.clearTasks('submit-all');
+    }
 }
 
 WebFormSession.prototype.applyListeners = function() {
