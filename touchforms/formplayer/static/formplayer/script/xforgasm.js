@@ -118,10 +118,7 @@ function WebFormSession(params) {
             function (p) {
                 self.onsubmit(p.output);
             },
-            {
-                allow_html: params.allow_html,
-                resourceMap: params.resourceMap
-            },
+            params.resourceMap,
             this.answerCallback
         );
         if (params.session_id) {

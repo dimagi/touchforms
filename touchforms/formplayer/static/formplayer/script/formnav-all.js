@@ -1,12 +1,12 @@
 function xformAjaxAdapter(formSpec, sessionData, savedInstance, ajaxfunc, submitfunc,
-    render_context, answerCallback) {
+    resourceMap, answerCallback) {
     var self = this;
     this.formSpec = formSpec;
     this.sessionData = sessionData;
     this.session_id = null;
     this.ajaxfunc = ajaxfunc;
     this.submitfunc = submitfunc;
-    this.render_context = render_context;
+    this.resourceMap = resourceMap;
     this.answerCallback = answerCallback;
 
     $.unsubscribe([
@@ -85,7 +85,7 @@ function xformAjaxAdapter(formSpec, sessionData, savedInstance, ajaxfunc, submit
                 adapter.session_id = resp["session_id"];
                 console.log('session id: ' + adapter.session_id);
             }
-            adapter.form = Formplayer.Utils.initialRender(resp, self.render_context.resourceMap, $div);
+            adapter.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $div);
             if (onload) {
                 onload(adapter, resp);
             }
