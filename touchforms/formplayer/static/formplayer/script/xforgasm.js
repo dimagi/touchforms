@@ -65,9 +65,6 @@ function WebFormSession(params) {
     self.offline_mode = isOffline(params.xform_url);
     self.formContext = params.formContext;
     if (params.form_uid) {
-        if (self.offline_mode) {
-            throw "load form by UID is not possible for offline mode";
-        }
         self.form_spec = {type: 'uid', val: params.form_uid};
     } else if (params.form_content) {
         self.form_spec = {type: 'raw', val: params.form_content};
