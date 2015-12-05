@@ -113,7 +113,7 @@ function WebFormSession(params) {
         this.onLoading = options.onLoading
         this.onLoadingComplete = options.onLoadingComplete
 
-        var adapter = new xformAjaxAdapter(this.form_spec, this.session_data, this.instance_xml,
+        this.adapter = new xformAjaxAdapter(this.form_spec, this.session_data, this.instance_xml,
             self.serverRequest.bind(self),
             function (p) {
                 self.onsubmit(p.output);
@@ -122,9 +122,9 @@ function WebFormSession(params) {
             this.answerCallback
         );
         if (params.session_id) {
-            adapter.resumeForm($div, params.session_id, this.onload, this.onerror);
+            this.adapter.resumeForm($div, params.session_id, this.onload, this.onerror);
         } else {
-            adapter.loadForm($div, init_lang, this.onload, this.onerror);
+            this.adapter.loadForm($div, init_lang, this.onload, this.onerror);
         }
     }
 
