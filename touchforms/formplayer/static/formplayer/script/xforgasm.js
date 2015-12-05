@@ -165,44 +165,44 @@ function WebFormSession(params) {
 
         this._serverRequest(
             function (cb) {
-                jQuery.ajax(
-                    {type: "POST",
+                $.ajax({
+                        type: 'POST',
                         url: url,
                         data: JSON.stringify(requestParams),
-                        success: cb,
                         dataType: "json",
-                        error: function (jqXHR, textStatus, errorThrown) {
-                            var error = _errMsg(errorThrown);
-                            if (textStatus === 'timeout') {
-                                error = "CommCareHQ has detected a possible network connectivity problem. " +
-                                    "Please make sure you are connected to the " +
-                                    "Internet in order to submit your form."
-                            } else {
-                                try {
-                                    var json_resp = JSON.parse(jqXHR.responseText);
-                                    if (json_resp.hasOwnProperty('message')) {
-                                        error = json_resp.message;
-                                    }
-                                } catch (e) {
-                                    // do nothing
+                    })
+                    .success(cb)
+                    .fail(function (jqXHR, textStatus, errorThrown) {
+                        var error = _errMsg(errorThrown);
+                        if (textStatus === 'timeout') {
+                            error = "CommCareHQ has detected a possible network connectivity problem. " +
+                                "Please make sure you are connected to the " +
+                                "Internet in order to submit your form."
+                        } else {
+                            try {
+                                var json_resp = JSON.parse(jqXHR.responseText);
+                                if (json_resp.hasOwnProperty('message')) {
+                                    error = json_resp.message;
                                 }
+                            } catch (e) {
+                                // do nothing
                             }
-
-                            var skip_error_msg = false;
-                            if (requestParams.action == "heartbeat") {
-                                if (that.heartbeat_has_failed) {
-                                    // If the xformAjaxAdapter heartbeat can't find the server,
-                                    // we only want to log that error one time.
-                                    skip_error_msg = true;
-                                } else {
-                                    that.heartbeat_has_failed = true;
-                                }
-                            }
-                            if (!skip_error_msg) {
-                                that.onerror({human_readable_message: error});
-                            }
-                            that.onLoadingComplete(true);
                         }
+
+                        var skip_error_msg = false;
+                        if (requestParams.action == "heartbeat") {
+                            if (that.heartbeat_has_failed) {
+                                // If the xformAjaxAdapter heartbeat can't find the server,
+                                // we only want to log that error one time.
+                                skip_error_msg = true;
+                            } else {
+                                that.heartbeat_has_failed = true;
+                            }
+                        }
+                        if (!skip_error_msg) {
+                            that.onerror({human_readable_message: error});
+                        }
+                        that.onLoadingComplete(true);
                     });
 
             },
