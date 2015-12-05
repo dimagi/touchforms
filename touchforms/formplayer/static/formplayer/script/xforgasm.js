@@ -86,7 +86,6 @@ function WebFormSession(params) {
 
     self.urls = {
         xform: params.xform_url,
-        autocomplete: params.autocomplete_url
     };
 
     self.load = function ($form, init_lang, options) {
