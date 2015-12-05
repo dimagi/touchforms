@@ -284,9 +284,4 @@ function WebFormSession(params) {
         self.NUM_PENDING_REQUESTS = 0;
         self.BLOCKING_REQUEST_IN_PROGRESS = false;
     });
-
-}
-
-function submit_form_post(xml) {
-    submit_redirect({type: 'form-complete', output: xml});
 }
