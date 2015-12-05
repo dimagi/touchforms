@@ -235,7 +235,7 @@ WebFormSession.prototype.loadForm = function($form, init_lang) {
         args['session-data'].preloaders = init_preloaders(args['session-data'].preloaders);
     }
 
-    this.initForm(args, $form, this.onload, this.onerror);
+    this.initForm(args, $form);
 }
 
 WebFormSession.prototype.resumeForm = function($form, session_id) {
@@ -243,7 +243,7 @@ WebFormSession.prototype.resumeForm = function($form, session_id) {
         "action": "current",
     };
 
-    this.initForm(args, $form, this.onload, this.onerror);
+    this.initForm(args, $form);
 }
 
 WebFormSession.prototype.answerQuestion = function(q) {
