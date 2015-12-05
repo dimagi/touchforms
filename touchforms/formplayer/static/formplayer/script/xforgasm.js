@@ -57,7 +57,6 @@ function WebFormSession(params) {
 
     var self = this;
     self.taskQueue = new TaskQueue();
-    self.heartbeat_has_failed = false;
     self.formContext = params.formContext;
     if (params.form_uid) {
         self.form_spec = {type: 'uid', val: params.form_uid};
