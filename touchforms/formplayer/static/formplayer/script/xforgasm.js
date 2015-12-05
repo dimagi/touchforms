@@ -95,7 +95,7 @@ function WebFormSession(params) {
         self.onload = self._onload;
     }
 
-    self.onerror = params.onerror || function (resp) {};
+    self.onerror = params.onerror;
 
     self.urls = {
         xform: params.xform_url,
