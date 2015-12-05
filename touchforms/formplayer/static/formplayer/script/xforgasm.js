@@ -117,9 +117,7 @@ function WebFormSession(params) {
         this.onLoadingComplete = options.onLoadingComplete
 
         var adapter = new xformAjaxAdapter(this.form_spec, this.session_data, this.instance_xml,
-            function (p, cb, bl) {
-                self.serverRequest(p, cb, bl);
-            },
+            self.serverRequest.bind(self),
             function (p) {
                 self.onsubmit(p.output);
             },
