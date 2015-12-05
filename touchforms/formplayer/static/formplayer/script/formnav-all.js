@@ -54,43 +54,7 @@ function xformAjaxAdapter(formSpec, sessionData, savedInstance, ajaxfunc, submit
     }
 
 
-    this.evaluateXPath = function(xpath, callback) {
-        this.ajaxfunc({
-                'action': 'evaluate-xpath',
-                'session-id': this.session_id,
-                'xpath': xpath
-            },
-            function(resp) {
-                callback(resp.output, resp.status);
-            });
-    };
 
-    this.newRepeat = function(repeat) {
-        this.ajaxfunc({
-                'action': 'new-repeat',
-                'session-id': this.session_id,
-                'ix': getIx(repeat)
-            },
-            function(resp) {
-                $.publish('adapter.reconcile', [resp, repeat]);
-            },
-            true);
-    }
-
-    this.deleteRepeat = function(repetition) {
-        var juncture = getIx(repetition.parent);
-        var rep_ix = +(repetition.rel_ix().split(":").slice(-1)[0]);
-        this.ajaxfunc({
-                'action': 'delete-repeat',
-                'session-id': this.session_id,
-                'ix': rep_ix,
-                'form_ix': juncture
-            },
-            function(resp) {
-                $.publish('adapter.reconcile', [resp, repetition]);
-            },
-            true);
-    }
 
     this.submitForm = function(form) {
         var answers = {};
@@ -129,18 +93,6 @@ function xformAjaxAdapter(formSpec, sessionData, savedInstance, ajaxfunc, submit
                 }
             },
             true);
-    }
-
-    this.switchLanguage = function(lang) {
-        var adapter = this;
-        this.ajaxfunc({
-                'action': 'set-lang',
-                'session-id': this.session_id,
-                'lang': lang
-            },
-            function(resp) {
-                $.publish('adapter.reconcile', [resp, lang]);
-            });
     }
 
     this.serverError = function(q, resp) {
