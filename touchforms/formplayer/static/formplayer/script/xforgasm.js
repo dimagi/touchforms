@@ -137,12 +137,7 @@ function WebFormSession(params) {
                 dataType: "json",
             })
             .success(function(resp) { self.handleSuccess(resp, callback) })
-            .fail(function (jqXHR, textStatus, errorThrown) {
-                var error = Formplayer.Utils.touchformsError(jqXHR.responseJSON.message);
-                self.onerror({human_readable_message: error});
-                self.onLoadingComplete(true);
-            });
-
+            .fail(self.handleFailure.bind(self))
     }
 
     this.blockingRequestInProgress = false;
@@ -185,6 +180,13 @@ WebFormSession.prototype.handleSuccess = function(resp, callback) {
         // Remove any submission tasks that have been queued up from spamming the submit button
         self.taskQueue.clearTasks('submit-all');
     }
+}
+
+WebFormSession.prototype.handleFailure = function(resp) {
+    this.onerror({
+        human_readable_message: Formplayer.Utils.touchformsError(resp.responseJSON.message) 
+    });
+    this.onLoadingComplete(true);
 }
 
 WebFormSession.prototype.applyListeners = function() {
