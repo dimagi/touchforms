@@ -122,7 +122,7 @@ function WebFormSession(params) {
             this.answerCallback
         );
         if (params.session_id) {
-            adapter.resumeForm(params.session_id, $div, this.onload, this.onerror);
+            adapter.resumeForm($div, params.session_id, this.onload, this.onerror);
         } else {
             adapter.loadForm($div, init_lang, this.onload, this.onerror);
         }

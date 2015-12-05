@@ -58,7 +58,7 @@ function xformAjaxAdapter(formSpec, sessionData, savedInstance, ajaxfunc, submit
         this.initForm(args, $div, onload, onerror);
     }
 
-    this.resumeForm = function(session_id, $div, onload, onerror) {
+    this.resumeForm = function($div, session_id, onload, onerror) {
         var args = {
             "action": "current",
             "session-id": session_id
