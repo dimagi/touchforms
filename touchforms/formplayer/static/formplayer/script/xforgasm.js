@@ -167,17 +167,6 @@ function WebFormSession(params) {
                     .success(cb)
                     .fail(function (jqXHR, textStatus, errorThrown) {
                         var error = Formplayer.Utils.touchformsError(jqXHR.responseJSON.message);
-
-                        var skip_error_msg = false;
-                        if (requestParams.action == "heartbeat") {
-                            if (that.heartbeat_has_failed) {
-                                // If the xformAjaxAdapter heartbeat can't find the server,
-                                // we only want to log that error one time.
-                                skip_error_msg = true;
-                            } else {
-                                that.heartbeat_has_failed = true;
-                            }
-                        }
                         that.onerror({human_readable_message: error});
                         that.onLoadingComplete(true);
                     });
