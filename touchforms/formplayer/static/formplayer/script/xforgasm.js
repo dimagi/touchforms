@@ -121,13 +121,12 @@ function WebFormSession(params) {
             $('#loading').hide();
         };
 
-        var sess = this;
         var adapter = new xformAjaxAdapter(this.form_spec, this.session_data, this.instance_xml,
             function (p, cb, bl) {
-                sess.serverRequest(p, cb, bl);
+                self.serverRequest(p, cb, bl);
             },
             function (p) {
-                sess.submit(p);
+                self.submit(p);
             },
             this.onpresubmit,
             {
@@ -147,9 +146,14 @@ function WebFormSession(params) {
         this.onsubmit(params.output);
     }
 
+    /**
+     * Sends a request to the touchforms server
+     * @param {Object} requestParams - request parameters to be sent
+     * @param {function} callback - function to be called on success
+     * @param {boolean} blocking - whether the request should be blocking
+     */
     self.serverRequest = function (requestParams, callback, blocking) {
-        var that = this;
-        var url = that.urls.xform;
+        var url = self.urls.xform;
         if (requestParams.action === 'submit-all' && self.NUM_PENDING_REQUESTS) {
             self.taskQueue.addTask(requestParams.action, self.serverRequest, arguments, self)
         }
@@ -165,35 +169,33 @@ function WebFormSession(params) {
         this.numPendingRequests++;
         this.onLoading();
 
-        var sess = this;
-
         var onSuccess = function(resp) {
             if (resp.status === 'error') {
-                that.onerror(response);
+                self.onerror(response);
             }
 
             // ignore responses older than the most-recently handled
-            if (resp.seq_id && resp.seq_id < sess.lastRequestHandled) {
+            if (resp.seq_id && resp.seq_id < self.lastRequestHandled) {
                 return;
             }
-            sess.lastRequestHandled = resp.seq_id;
+            self.lastRequestHandled = resp.seq_id;
 
             try {
                 callback(resp);
             } catch (err) {
                 console.error(err);
-                sess.onerror({message: Formplayer.Utils.touchformsError(msg)});
+                self.onerror({message: Formplayer.Utils.touchformsError(msg)});
             }
 
             $.publish('session.block', false);
             this.blockingRequestInProgress = false;
 
-            sess.numPendingRequests--;
-            if (sess.numPendingRequests === 0) {
-                sess.onLoadingComplete();
-                sess.taskQueue.execute('submit-all');
+            self.numPendingRequests--;
+            if (self.numPendingRequests === 0) {
+                self.onLoadingComplete();
+                self.taskQueue.execute('submit-all');
                 // Remove any submission tasks that have been queued up from spamming the submit button
-                sess.taskQueue.clearTasks('submit-all');
+                self.taskQueue.clearTasks('submit-all');
             }
         }
 
@@ -206,8 +208,8 @@ function WebFormSession(params) {
             .success(onSuccess)
             .fail(function (jqXHR, textStatus, errorThrown) {
                 var error = Formplayer.Utils.touchformsError(jqXHR.responseJSON.message);
-                that.onerror({human_readable_message: error});
-                that.onLoadingComplete(true);
+                self.onerror({human_readable_message: error});
+                self.onLoadingComplete(true);
             });
 
     }
