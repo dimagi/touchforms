@@ -1,4 +1,4 @@
-function xformAjaxAdapter(formSpec, sessionData, savedInstance, ajaxfunc, submitfunc, presubmitfunc,
+function xformAjaxAdapter(formSpec, sessionData, savedInstance, ajaxfunc, submitfunc,
     render_context, answerCallback) {
     var self = this;
     this.formSpec = formSpec;
@@ -6,7 +6,6 @@ function xformAjaxAdapter(formSpec, sessionData, savedInstance, ajaxfunc, submit
     this.session_id = null;
     this.ajaxfunc = ajaxfunc;
     this.submitfunc = submitfunc;
-    this.presubmitfunc = presubmitfunc;
     this.render_context = render_context;
     this.answerCallback = answerCallback;
 
@@ -18,9 +17,6 @@ function xformAjaxAdapter(formSpec, sessionData, savedInstance, ajaxfunc, submit
         'formplayer.evaluate-xpath'
     ].join(' '));
     $.subscribe('formplayer.submit-form', function(e, form) {
-        if (!self.presubmitfunc()) {
-            return;
-        }
         self.submitForm(form);
     });
     $.subscribe('formplayer.delete-repeat', function(e, group) {

@@ -74,9 +74,6 @@ function WebFormSession(params) {
     }
 
     self.onsubmit = params.onsubmit;
-    self.onpresubmit = params.onpresubmit || function () {
-        return true;
-    };
 
     // onload/onlanginfo
     self._onload = params.onload || function (adapter, response) {
@@ -121,7 +118,6 @@ function WebFormSession(params) {
             function (p) {
                 self.onsubmit(p.output);
             },
-            this.onpresubmit,
             {
                 allow_html: params.allow_html,
                 resourceMap: params.resourceMap
