@@ -113,12 +113,8 @@ function WebFormSession(params) {
         this.$div.addClass('webforms');
 
         options = options || {};
-        this.onLoading = options.onLoading || function () {
-            $('#loading').show();
-        };
-        this.onLoadingComplete = options.onLoadingComplete || function () {
-            $('#loading').hide();
-        };
+        this.onLoading = options.onLoading
+        this.onLoadingComplete = options.onLoadingComplete
 
         var adapter = new xformAjaxAdapter(this.form_spec, this.session_data, this.instance_xml,
             function (p, cb, bl) {
