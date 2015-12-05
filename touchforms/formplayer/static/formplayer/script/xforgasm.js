@@ -156,44 +156,6 @@ function WebFormSession(params) {
 
         requestParams.form_context = self.formContext;
 
-        this._serverRequest(
-            function (cb) {
-                $.ajax({
-                        type: 'POST',
-                        url: url,
-                        data: JSON.stringify(requestParams),
-                        dataType: "json",
-                    })
-                    .success(cb)
-                    .fail(function (jqXHR, textStatus, errorThrown) {
-                        var error = Formplayer.Utils.touchformsError(jqXHR.responseJSON.message);
-                        that.onerror({human_readable_message: error});
-                        that.onLoadingComplete(true);
-                    });
-
-            },
-            function (response) {
-                // wrap the callback so we can catch generic errors and handle them
-                if (response.status === "error") {
-                    that.onerror(response);
-                } else {
-                    callback(response);
-                }
-            },
-            blocking
-        );
-    }
-
-    this.blockingRequestInProgress = false;
-    this.lastRequestHandled = -1;
-    this.numPendingRequests = 0;
-
-    // makeRequest - function that takes in a callback function and executes an
-    //     asynchronous request (GET, POST, etc.) with the given callback
-    // callback - callback function for request
-    // blocking - if true, no further simultaneous requests are allowed until
-    //     this request completes
-    this._serverRequest = function (makeRequest, callback, blocking) {
         if (this.blockingRequestInProgress) {
             return;
         }
@@ -204,7 +166,12 @@ function WebFormSession(params) {
         this.onLoading();
 
         var sess = this;
-        makeRequest(function (resp) {
+
+        var onSuccess = function(resp) {
+            if (resp.status === 'error') {
+                that.onerror(response);
+            }
+
             // ignore responses older than the most-recently handled
             if (resp.seq_id && resp.seq_id < sess.lastRequestHandled) {
                 return;
@@ -228,8 +195,26 @@ function WebFormSession(params) {
                 // Remove any submission tasks that have been queued up from spamming the submit button
                 sess.taskQueue.clearTasks('submit-all');
             }
-        });
+        }
+
+        $.ajax({
+                type: 'POST',
+                url: url,
+                data: JSON.stringify(requestParams),
+                dataType: "json",
+            })
+            .success(onSuccess)
+            .fail(function (jqXHR, textStatus, errorThrown) {
+                var error = Formplayer.Utils.touchformsError(jqXHR.responseJSON.message);
+                that.onerror({human_readable_message: error});
+                that.onLoadingComplete(true);
+            });
+
     }
+
+    this.blockingRequestInProgress = false;
+    this.lastRequestHandled = -1;
+    this.numPendingRequests = 0;
 
     // workaround for "forever loading" bugs...
     $(document).ajaxStop(function () {
