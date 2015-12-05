@@ -39,56 +39,6 @@ function xformAjaxAdapter(formSpec, sessionData, savedInstance, ajaxfunc, submit
             }
         });
     }
-
-
-
-
-    this.submitForm = function(form) {
-        var answers = {};
-        var prevalidated = true;
-        var accumulate_answers = function(o) {
-            if (ko.utils.unwrapObservable(o.type) !== 'question') {
-                $.each(o.children(), function(i, val) {
-                    accumulate_answers(val);
-                });
-            } else {
-                if (o.isValid()) {
-                    answers[getIx(o)] = ko.utils.unwrapObservable(o.answer);
-                } else {
-                    prevalidated = false;
-                }
-            }
-        }
-        accumulate_answers(form);
-
-        var adapter = this;
-        this.ajaxfunc({
-                'action': 'submit-all',
-                'session-id': this.session_id,
-                'answers': answers,
-                'prevalidated': prevalidated
-            },
-            function(resp) {
-                if (resp.status == 'success') {
-                    form.submitting();
-                    adapter.submitfunc(resp);
-                } else {
-                    $.each(resp.errors, function(ix, error) {
-                        adapter.serverError(getForIx(form, ix), error);
-                    });
-                    alert('There are errors in this form; they must be corrected before the form can be submitted.');
-                }
-            },
-            true);
-    }
-
-    this.serverError = function(q, resp) {
-        if (resp["type"] == "required") {
-            q.serverError("An answer is required");
-        } else if (resp["type"] == "constraint") {
-            q.serverError(resp["reason"] || 'This answer is outside the allowed range.');
-        }
-    }
 }
 
 function submit_redirect(params, path, method) {
