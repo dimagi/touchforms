@@ -106,39 +106,6 @@ function WebFormSession(params) {
         }
     }
 
-    /**
-     * Sends a request to the touchforms server
-     * @param {Object} requestParams - request parameters to be sent
-     * @param {function} callback - function to be called on success
-     * @param {boolean} blocking - whether the request should be blocking
-     */
-    self.serverRequest = function (requestParams, callback, blocking) {
-        var url = self.urls.xform;
-        if (requestParams.action === 'submit-all' && self.NUM_PENDING_REQUESTS) {
-            self.taskQueue.addTask(requestParams.action, self.serverRequest, arguments, self)
-        }
-
-        requestParams.form_context = self.formContext;
-        requestParams['session-id'] = self.session_id;
-
-        if (this.blockingRequestInProgress) {
-            return;
-        }
-        this.blockingRequestInProgress = blocking
-        $.publish('session.block', blocking);
-
-        this.numPendingRequests++;
-        this.onLoading();
-
-        $.ajax({
-                type: 'POST',
-                url: url,
-                data: JSON.stringify(requestParams),
-                dataType: "json",
-            })
-            .success(function(resp) { self.handleSuccess(resp, callback) })
-            .fail(self.handleFailure.bind(self))
-    }
 
     this.blockingRequestInProgress = false;
     this.lastRequestHandled = -1;
@@ -149,6 +116,41 @@ function WebFormSession(params) {
         self.NUM_PENDING_REQUESTS = 0;
         self.blockingRequestInProgress = false;
     });
+}
+
+/**
+ * Sends a request to the touchforms server
+ * @param {Object} requestParams - request parameters to be sent
+ * @param {function} callback - function to be called on success
+ * @param {boolean} blocking - whether the request should be blocking
+ */
+WebFormSession.prototype.serverRequest = function (requestParams, callback, blocking) {
+    var self = this;
+    var url = self.urls.xform;
+    if (requestParams.action === 'submit-all' && self.NUM_PENDING_REQUESTS) {
+        self.taskQueue.addTask(requestParams.action, self.serverRequest, arguments, self)
+    }
+
+    requestParams.form_context = self.formContext;
+    requestParams['session-id'] = self.session_id;
+
+    if (this.blockingRequestInProgress) {
+        return;
+    }
+    this.blockingRequestInProgress = blocking
+    $.publish('session.block', blocking);
+
+    this.numPendingRequests++;
+    this.onLoading();
+
+    $.ajax({
+            type: 'POST',
+            url: url,
+            data: JSON.stringify(requestParams),
+            dataType: "json",
+        })
+        .success(function(resp) { self.handleSuccess(resp, callback) })
+        .fail(self.handleFailure.bind(self))
 }
 
 WebFormSession.prototype.handleSuccess = function(resp, callback) {
