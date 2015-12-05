@@ -1,4 +1,4 @@
-describe('Xforgasm', function() {
+describe('WebForm', function() {
 
     describe('TaskQueue', function() {
         var tq,
@@ -65,8 +65,6 @@ describe('Xforgasm', function() {
                 form_url: window.location.host,
                 onerror: sinon.spy(),
                 onload: sinon.spy(),
-                onLoading: sinon.spy(),
-                onLoadingComplete: sinon.spy(),
                 onsubmit: sinon.spy(),
                 resourceMap: sinon.spy(),
                 session_data: {},
@@ -97,7 +95,7 @@ describe('Xforgasm', function() {
 
         it('Should queue requests', function() {
             var sess = new WebFormSession(params);
-            sess.load($('#content'), 'en')
+            sess.load($('#content'), 'en', { onLoading: sinon.spy(), onLoadingComplete: sinon.spy() })
             sess.serverRequest({}, sinon.spy(), false);
 
             sinon.spy(sess.taskQueue, 'execute');
@@ -112,13 +110,13 @@ describe('Xforgasm', function() {
         it('Should only subscribe once', function() {
             var spy = sinon.spy(),
                 spy2 = sinon.spy(),
-                adapter = new xformAjaxAdapter(),
-                adapter2 = new xformAjaxAdapter();
+                sess = new WebFormSession(params),
+                sess2 = new WebFormSession(params);
 
-            sinon.stub(adapter, 'newRepeat', spy);
-            sinon.stub(adapter2, 'newRepeat', spy2);
+            sinon.stub(sess, 'newRepeat', spy);
+            sinon.stub(sess2, 'newRepeat', spy2);
 
-            $.publish('formplayer.' Formplayer.Const.NEW_REPEAT, {});
+            $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
             expect(spy.calledOnce).toBe(false);
             expect(spy2.calledOnce).toBe(true);
         });
