@@ -264,7 +264,7 @@ function WebFormSession(params) {
             }
 
             sess.numPendingRequests--;
-            if (sess.numPendingRequests == 0) {
+            if (sess.numPendingRequests === 0) {
                 sess.onLoadingComplete();
                 sess.taskQueue.execute('submit-all');
                 // Remove any submission tasks that have been queued up from spamming the submit button
