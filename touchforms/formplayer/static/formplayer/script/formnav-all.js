@@ -11,23 +11,10 @@ function xformAjaxAdapter(formSpec, sessionData, savedInstance, ajaxfunc, submit
 
     $.unsubscribe([
         'formplayer.submit-form',
-        'formplayer.delete-repeat',
-        'formplayer.new-repeat',
-        'formplayer.evaluate-xpath'
     ].join(' '));
     $.subscribe('formplayer.submit-form', function(e, form) {
         self.submitForm(form);
     });
-    $.subscribe('formplayer.delete-repeat', function(e, group) {
-        self.deleteRepeat(group);
-    });
-    $.subscribe('formplayer.new-repeat', function(e, repeat) {
-        self.newRepeat(repeat);
-    });
-    $.subscribe('formplayer.evaluate-xpath', function(e, xpath, callback) {
-        self.evaluateXPath(xpath, callback);
-    });
-
 
     this.initForm = function(args, $div, onload, onerror) {
         var adapter = this;

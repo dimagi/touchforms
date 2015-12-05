@@ -215,9 +215,21 @@ WebFormSession.prototype.applyListeners = function() {
     var self = this;
     $.unsubscribe([
         'formplayer.answer-question',
+        'formplayer.delete-repeat',
+        'formplayer.new-repeat',
+        'formplayer.evaluate-xpath'
     ].join(' '));
     $.subscribe('formplayer.answer-question', function(e, question) {
         self.answerQuestion(question);
+    });
+    $.subscribe('formplayer.delete-repeat', function(e, group) {
+        self.deleteRepeat(group);
+    });
+    $.subscribe('formplayer.new-repeat', function(e, repeat) {
+        self.newRepeat(repeat);
+    });
+    $.subscribe('formplayer.evaluate-xpath', function(e, xpath, callback) {
+        self.evaluateXPath(xpath, callback);
     });
 }
 
@@ -277,9 +289,9 @@ WebFormSession.prototype.answerQuestion = function(q) {
 };
 
 WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
-    this.ajaxfunc({
+    this.serverRequest({
             'action': 'evaluate-xpath',
-            'session-id': this.session_id,
+            'session-id': this.adapter.session_id,
             'xpath': xpath
         },
         function(resp) {
@@ -288,9 +300,9 @@ WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
 };
 
 WebFormSession.prototype.newRepeat = function(repeat) {
-    this.ajaxfunc({
+    this.serverRequest({
             'action': 'new-repeat',
-            'session-id': this.session_id,
+            'session-id': this.adapter.session_id,
             'ix': getIx(repeat)
         },
         function(resp) {
@@ -302,9 +314,9 @@ WebFormSession.prototype.newRepeat = function(repeat) {
 WebFormSession.prototype.deleteRepeat = function(repetition) {
     var juncture = getIx(repetition.parent);
     var rep_ix = +(repetition.rel_ix().split(":").slice(-1)[0]);
-    this.ajaxfunc({
+    this.serverRequest({
             'action': 'delete-repeat',
-            'session-id': this.session_id,
+            'session-id': this.adapter.session_id,
             'ix': rep_ix,
             'form_ix': juncture
         },
@@ -315,10 +327,9 @@ WebFormSession.prototype.deleteRepeat = function(repetition) {
 }
 
 WebFormSession.prototype.switchLanguage = function(lang) {
-    var adapter = this;
-    this.ajaxfunc({
+    this.serverRequest({
             'action': 'set-lang',
-            'session-id': this.session_id,
+            'session-id': this.adapter.session_id,
             'lang': lang
         },
         function(resp) {
