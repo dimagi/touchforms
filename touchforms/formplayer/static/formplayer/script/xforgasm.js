@@ -290,8 +290,3 @@ function WebFormSession(params) {
 function submit_form_post(xml) {
     submit_redirect({type: 'form-complete', output: xml});
 }
-
-// loadfunc: function that initializes the touchforms session (creates an adapter, loads a form, ...)
-function touchformsInit(url, loadfunc) {
-    loadfunc();
-}
