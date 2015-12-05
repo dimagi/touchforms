@@ -85,11 +85,13 @@ describe('WebForm', function() {
             // Setup stubs
             $.cookie = sinon.stub()
             sinon.stub(Formplayer.Utils, 'initialRender');
+            sinon.stub(window, 'getIx', function() { return 3 });
         });
         afterEach(function() {
             $('#submit').remove();
             server.restore();
             Formplayer.Utils.initialRender.restore();
+            getIx.restore();
             $.unsubscribe();
         })
 
@@ -119,6 +121,70 @@ describe('WebForm', function() {
             $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
             expect(spy.calledOnce).toBe(false);
             expect(spy2.calledOnce).toBe(true);
+        });
+
+        it('Should block requests', function() {
+            var sess = new WebFormSession(params);
+            sess.load($('#content'), 'en', { onLoading: sinon.spy(), onLoadingComplete: sinon.spy() })
+
+            // First blocking request
+            $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
+
+            expect(sess.blockingRequestInProgress).toBe(true);
+
+            // Attempt another request
+            $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
+
+            server.respond();
+
+            expect(sess.blockingRequestInProgress).toBe(false);
+            // One call to new-form and one call to new-repeat
+            expect(server.requests.length).toEqual(2);
+        });
+
+        it('Should not block requests', function() {
+            var sess = new WebFormSession(params);
+            sess.load($('#content'), 'en', { onLoading: sinon.spy(), onLoadingComplete: sinon.spy() })
+
+            // First blocking request
+            $.publish('formplayer.' + Formplayer.Const.ANSWER, { answer: sinon.spy() });
+
+            expect(sess.blockingRequestInProgress).toBeFalsy(false);
+
+            // Attempt another request
+            $.publish('formplayer.' + Formplayer.Const.ANSWER, { answer: sinon.spy() });
+
+            server.respond();
+
+            expect(sess.blockingRequestInProgress).toBe(false);
+            // One call to new-form and two calls to answer
+            expect(server.requests.length).toEqual(3);
+
+        });
+
+        it('Should handle error in callback', function() {
+            var sess = new WebFormSession(params);
+
+            sess.handleSuccess({}, sinon.stub().throws())
+
+            expect(sess.onerror.calledOnce).toBe(true);
+        });
+
+        it('Should handle error in response', function() {
+            var sess = new WebFormSession(params);
+
+            sess.handleSuccess({ status: 'error' }, sinon.stub())
+
+            expect(sess.onerror.calledOnce).toBe(true);
+        });
+
+        it('Should handle failure in ajax call', function() {
+            var sess = new WebFormSession(params);
+            sess.load($('#content'), 'en', { onLoading: sinon.spy(), onLoadingComplete: sinon.spy() })
+            sess.handleFailure({ responseJSON: { message: 'error' } });
+
+            expect(sess.onerror.calledOnce).toBe(true);
+
         });
     });
 });
