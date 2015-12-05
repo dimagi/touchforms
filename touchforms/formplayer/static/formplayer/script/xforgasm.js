@@ -153,7 +153,7 @@ function WebFormSession(params) {
 
         var onSuccess = function(resp) {
             if (resp.status === 'error') {
-                self.onerror(response);
+                self.onerror(resp);
             }
 
             // ignore responses older than the most-recently handled
