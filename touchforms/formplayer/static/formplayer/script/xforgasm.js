@@ -242,3 +242,24 @@ WebFormSession.prototype.resumeForm = function($div, session_id) {
     this.session_id = session_id;
     this.adapter.initForm(args, $div, this.onload, this.onerror);
 }
+
+WebFormSession.prototype.answerQuestion = function(q) {
+    var self = this;
+    var ix = getIx(q);
+    var answer = q.answer();
+
+    var adapter = this;
+    this.ajaxfunc({
+            'action': 'answer',
+            'session-id': this.session_id,
+            'ix': ix,
+            'answer': answer
+        },
+        function(resp) {
+            $.publish('adapter.reconcile', [resp, q]);
+            if (self.answerCallback !== undefined) {
+                self.answerCallback(self.session_id);
+            }
+        });
+
+};

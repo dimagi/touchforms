@@ -57,26 +57,6 @@ function xformAjaxAdapter(formSpec, sessionData, savedInstance, ajaxfunc, submit
         });
     }
 
-    this.answerQuestion = function(q) {
-        var self = this;
-        var ix = getIx(q);
-        var answer = q.answer();
-
-        var adapter = this;
-        this.ajaxfunc({
-                'action': 'answer',
-                'session-id': this.session_id,
-                'ix': ix,
-                'answer': answer
-            },
-            function(resp) {
-                $.publish('adapter.reconcile', [resp, q]);
-                if (self.answerCallback !== undefined) {
-                    self.answerCallback(self.session_id);
-                }
-            });
-
-    };
 
     this.evaluateXPath = function(xpath, callback) {
         this.ajaxfunc({
