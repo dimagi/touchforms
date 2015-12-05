@@ -1,16 +1,3 @@
-function xformAjaxAdapter(formSpec, sessionData, savedInstance, ajaxfunc, submitfunc,
-    resourceMap, answerCallback) {
-    var self = this;
-    this.formSpec = formSpec;
-    this.sessionData = sessionData;
-    this.session_id = null;
-    this.ajaxfunc = ajaxfunc;
-    this.submitfunc = submitfunc;
-    this.resourceMap = resourceMap;
-    this.answerCallback = answerCallback;
-
-}
-
 function submit_redirect(params, path, method) {
     // hat tip: http://stackoverflow.com/questions/133925/javascript-post-request-like-a-form-submit
     method = method || "post"; // Set method to post by default, if not specified.

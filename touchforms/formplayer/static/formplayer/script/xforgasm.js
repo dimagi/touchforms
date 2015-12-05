@@ -80,8 +80,8 @@ function WebFormSession(params) {
     self.onsubmit = params.onsubmit;
 
     // onload/onlanginfo
-    self._onload = params.onload || function (adapter, response) {
-    };
+    self._onload = params.onload || function (adapter, response) {};
+
     if (params.onlanginfo) {
         self.onload = function (adapter, response) {
             self._onload(adapter, response);
@@ -95,8 +95,7 @@ function WebFormSession(params) {
         self.onload = self._onload;
     }
 
-    self.onerror = params.onerror || function (resp) {
-    };
+    self.onerror = params.onerror || function (resp) {};
 
     self.urls = {
         xform: params.xform_url,
@@ -117,18 +116,10 @@ function WebFormSession(params) {
         this.onLoading = options.onLoading
         this.onLoadingComplete = options.onLoadingComplete
 
-        this.adapter = new xformAjaxAdapter(this.form_spec, this.session_data, this.instance_xml,
-            self.serverRequest.bind(self),
-            function (p) {
-                self.onsubmit(p.output);
-            },
-            params.resourceMap,
-            this.answerCallback
-        );
         if (params.session_id) {
-            this.resumeForm($div, params.session_id, this.onload, this.onerror);
+            this.resumeForm($div, params.session_id);
         } else {
-            this.loadForm($div, init_lang, this.onload, this.onerror);
+            this.loadForm($div, init_lang);
         }
     }
 
@@ -156,7 +147,7 @@ function WebFormSession(params) {
         this.onLoading();
 
         var onSuccess = function(resp) {
-            if (resp.status === 'error') {
+            if (resp.status === 'error' || resp.error) {
                 self.onerror(resp);
             }
 
@@ -260,7 +251,7 @@ WebFormSession.prototype.loadForm = function($div, init_lang) {
         args['session-data'].preloaders = init_preloaders(args['session-data'].preloaders);
     }
 
-    this.adapter.initForm(args, $div, this.onload, this.onerror);
+    this.initForm(args, $div, this.onload, this.onerror);
 }
 
 WebFormSession.prototype.resumeForm = function($div, session_id) {
@@ -270,7 +261,7 @@ WebFormSession.prototype.resumeForm = function($div, session_id) {
     };
 
     this.session_id = session_id;
-    this.adapter.initForm(args, $div, this.onload, this.onerror);
+    this.initForm(args, $div, this.onload, this.onerror);
 }
 
 WebFormSession.prototype.answerQuestion = function(q) {
@@ -280,14 +271,14 @@ WebFormSession.prototype.answerQuestion = function(q) {
 
     this.serverRequest({
             'action': 'answer',
-            'session-id': this.adapter.session_id,
+            'session-id': this.session_id,
             'ix': ix,
             'answer': answer
         },
         function(resp) {
             $.publish('adapter.reconcile', [resp, q]);
             if (self.answerCallback !== undefined) {
-                self.answerCallback(self.adapter.session_id);
+                self.answerCallback(self.session_id);
             }
         });
 };
@@ -295,7 +286,7 @@ WebFormSession.prototype.answerQuestion = function(q) {
 WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
     this.serverRequest({
             'action': 'evaluate-xpath',
-            'session-id': this.adapter.session_id,
+            'session-id': this.session_id,
             'xpath': xpath
         },
         function(resp) {
@@ -306,7 +297,7 @@ WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
 WebFormSession.prototype.newRepeat = function(repeat) {
     this.serverRequest({
             'action': 'new-repeat',
-            'session-id': this.adapter.session_id,
+            'session-id': this.session_id,
             'ix': getIx(repeat)
         },
         function(resp) {
@@ -320,7 +311,7 @@ WebFormSession.prototype.deleteRepeat = function(repetition) {
     var rep_ix = +(repetition.rel_ix().split(":").slice(-1)[0]);
     this.serverRequest({
             'action': 'delete-repeat',
-            'session-id': this.adapter.session_id,
+            'session-id': this.session_id,
             'ix': rep_ix,
             'form_ix': juncture
         },
@@ -333,7 +324,7 @@ WebFormSession.prototype.deleteRepeat = function(repetition) {
 WebFormSession.prototype.switchLanguage = function(lang) {
     this.serverRequest({
             'action': 'set-lang',
-            'session-id': this.adapter.session_id,
+            'session-id': this.session_id,
             'lang': lang
         },
         function(resp) {
@@ -364,7 +355,7 @@ WebFormSession.prototype.submitForm = function(form) {
 
     this.serverRequest({
             'action': 'submit-all',
-            'session-id': this.adapter.session_id,
+            'session-id': this.session_id,
             'answers': answers,
             'prevalidated': prevalidated
         },
@@ -390,26 +381,12 @@ WebFormSession.prototype.serverError = function(q, resp) {
     }
 }
 
-WebFormSession.prototype.initForm = function(args, $div, onload, onerror) {
-    var adapter = this;
-    this.ajaxfunc(args, function(resp) {
-        // special case short circuiting errors
-        if (resp.status === "error" || resp.error) {
-            if (!resp.message) {
-                resp.message = resp.error;
-            }
-            if (onerror) {
-                onerror(resp);
-            }
-            return;
-        }
-        if (!adapter.session_id) { // already know session id for resumed sessions
-            adapter.session_id = resp["session_id"];
-            console.log('session id: ' + adapter.session_id);
-        }
-        adapter.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $div);
-        if (onload) {
-            onload(adapter, resp);
-        }
+WebFormSession.prototype.initForm = function(args, $div) {
+    var self = this;
+    this.serverRequest(args, function(resp) {
+        self.session_id = self.session_id || resp.session_id;
+
+        self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $div);
+        self.onload(self, resp);
     });
 }
