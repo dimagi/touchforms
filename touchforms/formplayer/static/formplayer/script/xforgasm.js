@@ -124,7 +124,7 @@ function WebFormSession(params) {
         if (params.session_id) {
             this.adapter.resumeForm($div, params.session_id, this.onload, this.onerror);
         } else {
-            this.adapter.loadForm($div, init_lang, this.onload, this.onerror);
+            this.loadForm($div, init_lang, this.onload, this.onerror);
         }
     }
 
@@ -207,20 +207,20 @@ function WebFormSession(params) {
     });
 }
 
-WebFormSession.prototype.loadForm = function($div, init_lang, onload, onerror) {
+WebFormSession.prototype.loadForm = function($div, init_lang) {
     var args = {
         'action': 'new-form',
-        'instance-content': savedInstance,
+        'instance-content': this.instance_xml,
         'lang': init_lang,
-        'session-data': this.sessionData,
+        'session-data': this.session_data,
         'nav': 'fao'
     };
     var form_param = {
         uid: 'form-name',
         raw: 'form-content',
         url: 'form-url'
-    }[this.formSpec.type];
-    args[form_param] = this.formSpec.val;
+    }[this.form_spec.type];
+    args[form_param] = this.form_spec.val;
 
     // handle preloaders (deprecated) for backwards compatibilty
     if (args['session-data'] && args['session-data'].preloaders) {
@@ -230,5 +230,5 @@ WebFormSession.prototype.loadForm = function($div, init_lang, onload, onerror) {
         args['session-data'].preloaders = init_preloaders(args['session-data'].preloaders);
     }
 
-    this.initForm(args, $div, onload, onerror);
+    this.adapter.initForm(args, $div, this.onload, this.onerror);
 }
