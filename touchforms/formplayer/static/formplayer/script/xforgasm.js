@@ -223,9 +223,9 @@ function WebFormSession(params) {
         );
     }
 
-    this.BLOCKING_REQUEST_IN_PROGRESS = false;
-    this.LAST_REQUEST_HANDLED = -1;
-    this.NUM_PENDING_REQUESTS = 0;
+    this.blockingRequestInProgress = false;
+    this.lastRequestHandled = -1;
+    this.numPendingRequests = 0;
 
     // makeRequest - function that takes in a callback function and executes an
     //     asynchronous request (GET, POST, etc.) with the given callback
@@ -233,24 +233,24 @@ function WebFormSession(params) {
     // blocking - if true, no further simultaneous requests are allowed until
     //     this request completes
     this._serverRequest = function (makeRequest, callback, blocking) {
-        if (this.BLOCKING_REQUEST_IN_PROGRESS) {
+        if (this.blockingRequestInProgress) {
             return;
         }
 
 
-        this.NUM_PENDING_REQUESTS++;
+        this.numPendingRequests++;
         this.onLoading();
 
         if (blocking) {
-            this.inputActivate(false); // sets BLOCKING_REQUEST_IN_PROGRESS
+            this.inputActivate(false); // sets blockingRequestInProgress
         }
         var sess = this;
         makeRequest(function (resp) {
             // ignore responses older than the most-recently handled
-            if (resp.seq_id && resp.seq_id < sess.LAST_REQUEST_HANDLED) {
+            if (resp.seq_id && resp.seq_id < sess.lastRequestHandled) {
                 return;
             }
-            sess.LAST_REQUEST_HANDLED = resp.seq_id;
+            sess.lastRequestHandled = resp.seq_id;
 
             try {
                 callback(resp);
@@ -260,11 +260,11 @@ function WebFormSession(params) {
                 sess.onerror({message: msg});
             }
             if (blocking) {
-                sess.inputActivate(true); // clears BLOCKING_REQUEST_IN_PROGRESS
+                sess.inputActivate(true); // clears blockingRequestInProgress
             }
 
-            sess.NUM_PENDING_REQUESTS--;
-            if (sess.NUM_PENDING_REQUESTS == 0) {
+            sess.numPendingRequests--;
+            if (sess.numPendingRequests == 0) {
                 sess.onLoadingComplete();
                 sess.taskQueue.execute('submit-all');
                 // Remove any submission tasks that have been queued up from spamming the submit button
@@ -274,7 +274,7 @@ function WebFormSession(params) {
     }
 
     self.inputActivate = function (enable) {
-        this.BLOCKING_REQUEST_IN_PROGRESS = !enable;
+        this.blockingRequestInProgress = !enable;
         this.$div.find('input').attr('disabled', enable ? null : 'true');
         this.$div.find('a').css('color', enable ? 'blue' : 'grey');
     }
@@ -282,6 +282,6 @@ function WebFormSession(params) {
     // workaround for "forever loading" bugs...
     $(document).ajaxStop(function () {
         self.NUM_PENDING_REQUESTS = 0;
-        self.BLOCKING_REQUEST_IN_PROGRESS = false;
+        self.blockingRequestInProgress = false;
     });
 }
