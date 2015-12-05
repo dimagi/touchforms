@@ -389,3 +389,27 @@ WebFormSession.prototype.serverError = function(q, resp) {
         q.serverError(resp["reason"] || 'This answer is outside the allowed range.');
     }
 }
+
+WebFormSession.prototype.initForm = function(args, $div, onload, onerror) {
+    var adapter = this;
+    this.ajaxfunc(args, function(resp) {
+        // special case short circuiting errors
+        if (resp.status === "error" || resp.error) {
+            if (!resp.message) {
+                resp.message = resp.error;
+            }
+            if (onerror) {
+                onerror(resp);
+            }
+            return;
+        }
+        if (!adapter.session_id) { // already know session id for resumed sessions
+            adapter.session_id = resp["session_id"];
+            console.log('session id: ' + adapter.session_id);
+        }
+        adapter.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $div);
+        if (onload) {
+            onload(adapter, resp);
+        }
+    });
+}
