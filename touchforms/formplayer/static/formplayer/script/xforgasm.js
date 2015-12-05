@@ -80,20 +80,7 @@ function WebFormSession(params) {
     self.onsubmit = params.onsubmit;
 
     // onload/onlanginfo
-    self._onload = params.onload || function (adapter, response) {};
-
-    if (params.onlanginfo) {
-        self.onload = function (adapter, response) {
-            self._onload(adapter, response);
-            if (response['langs'].length) {
-                params.onlanginfo(function (lang) {
-                    adapter.switchLanguage(lang);
-                }, response['langs']);
-            }
-        }
-    } else {
-        self.onload = self._onload;
-    }
+    self.onload = params.onload;
 
     self.onerror = params.onerror;
 
