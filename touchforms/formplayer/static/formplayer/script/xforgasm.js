@@ -126,7 +126,7 @@ function WebFormSession(params) {
                 self.serverRequest(p, cb, bl);
             },
             function (p) {
-                self.submit(p);
+                self.onsubmit(p.output);
             },
             this.onpresubmit,
             {
@@ -140,10 +140,6 @@ function WebFormSession(params) {
         } else {
             adapter.loadForm($div, init_lang, this.onload, this.onerror);
         }
-    }
-
-    self.submit = function (params) {
-        this.onsubmit(params.output);
     }
 
     /**
