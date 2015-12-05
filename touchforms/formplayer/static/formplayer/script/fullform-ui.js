@@ -489,5 +489,9 @@ Formplayer.Const = {
     // UI Config
     LABEL_WIDTH: 'col-sm-4',
     LABEL_OFFSET: 'col-sm-offset-4',
-    CONTROL_WIDTH: 'col-sm-8'
+    CONTROL_WIDTH: 'col-sm-8',
+
+    ERROR_MESSAGE_TEMPLATE: "Something unexpected went wrong on that request. " +
+        "If you have problems filling in the rest of your form please submit an issue. " +
+        "Technical Details: "
 };

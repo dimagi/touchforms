@@ -12,10 +12,6 @@ if (!Array.prototype.indexOf) {
     }
 }
 
-var ERROR_MESSAGE = "Something unexpected went wrong on that request. " +
-    "If you have problems filling in the rest of your form please submit an issue. " +
-    "Technical Details: ";
-
 function TaskQueue() {
     this.queue = [];
 };
@@ -158,9 +154,6 @@ function WebFormSession(params) {
             self.taskQueue.addTask(requestParams.action, self.serverRequest, arguments, self)
         }
 
-        var _errMsg = function (msg) {
-            return "".concat(ERROR_MESSAGE, msg);
-        };
         requestParams.form_context = self.formContext;
 
         this._serverRequest(
@@ -173,21 +166,7 @@ function WebFormSession(params) {
                     })
                     .success(cb)
                     .fail(function (jqXHR, textStatus, errorThrown) {
-                        var error = _errMsg(errorThrown);
-                        if (textStatus === 'timeout') {
-                            error = "CommCareHQ has detected a possible network connectivity problem. " +
-                                "Please make sure you are connected to the " +
-                                "Internet in order to submit your form."
-                        } else {
-                            try {
-                                var json_resp = JSON.parse(jqXHR.responseText);
-                                if (json_resp.hasOwnProperty('message')) {
-                                    error = json_resp.message;
-                                }
-                            } catch (e) {
-                                // do nothing
-                            }
-                        }
+                        var error = Formplayer.Utils.touchformsError(jqXHR.responseJSON.message);
 
                         var skip_error_msg = false;
                         if (requestParams.action == "heartbeat") {
@@ -199,9 +178,7 @@ function WebFormSession(params) {
                                 that.heartbeat_has_failed = true;
                             }
                         }
-                        if (!skip_error_msg) {
-                            that.onerror({human_readable_message: error});
-                        }
+                        that.onerror({human_readable_message: error});
                         that.onLoadingComplete(true);
                     });
 
@@ -249,8 +226,7 @@ function WebFormSession(params) {
                 callback(resp);
             } catch (err) {
                 console.error(err);
-                var msg = "".concat(ERROR_MESSAGE, err.message);
-                sess.onerror({message: msg});
+                sess.onerror({message: Formplayer.Utils.touchformsError(msg)});
             }
 
             $.publish('session.block', false);
