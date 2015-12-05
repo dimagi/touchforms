@@ -122,7 +122,7 @@ function WebFormSession(params) {
             this.answerCallback
         );
         if (params.session_id) {
-            this.adapter.resumeForm($div, params.session_id, this.onload, this.onerror);
+            this.resumeForm($div, params.session_id, this.onload, this.onerror);
         } else {
             this.loadForm($div, init_lang, this.onload, this.onerror);
         }
@@ -233,12 +233,12 @@ WebFormSession.prototype.loadForm = function($div, init_lang) {
     this.adapter.initForm(args, $div, this.onload, this.onerror);
 }
 
-WebFormSession.prototype.resumeForm = function($div, session_id, onload, onerror) {
+WebFormSession.prototype.resumeForm = function($div, session_id) {
     var args = {
         "action": "current",
         "session-id": session_id
     };
 
     this.session_id = session_id;
-    this.initForm(args, $div, onload, onerror);
+    this.adapter.initForm(args, $div, this.onload, this.onerror);
 }
