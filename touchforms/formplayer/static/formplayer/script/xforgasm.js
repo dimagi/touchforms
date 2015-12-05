@@ -170,7 +170,7 @@ function WebFormSession(params) {
                 callback(resp);
             } catch (err) {
                 console.error(err);
-                self.onerror({message: Formplayer.Utils.touchformsError(msg)});
+                self.onerror({message: Formplayer.Utils.touchformsError(err)});
             }
 
             $.publish('session.block', false);
@@ -217,8 +217,12 @@ WebFormSession.prototype.applyListeners = function() {
         'formplayer.answer-question',
         'formplayer.delete-repeat',
         'formplayer.new-repeat',
-        'formplayer.evaluate-xpath'
+        'formplayer.evaluate-xpath',
+        'formplayer.submit-form',
     ].join(' '));
+    $.subscribe('formplayer.submit-form', function(e, form) {
+        self.submitForm(form);
+    });
     $.subscribe('formplayer.answer-question', function(e, question) {
         self.answerQuestion(question);
     });
@@ -338,9 +342,12 @@ WebFormSession.prototype.switchLanguage = function(lang) {
 }
 
 WebFormSession.prototype.submitForm = function(form) {
-    var answers = {};
-    var prevalidated = true;
-    var accumulate_answers = function(o) {
+    var self = this,
+        answers = {},
+        accumulate_answers,
+        prevalidated = true;
+
+    accumulate_answers = function(o) {
         if (ko.utils.unwrapObservable(o.type) !== 'question') {
             $.each(o.children(), function(i, val) {
                 accumulate_answers(val);
@@ -355,20 +362,19 @@ WebFormSession.prototype.submitForm = function(form) {
     }
     accumulate_answers(form);
 
-    var adapter = this;
-    this.ajaxfunc({
+    this.serverRequest({
             'action': 'submit-all',
-            'session-id': this.session_id,
+            'session-id': this.adapter.session_id,
             'answers': answers,
             'prevalidated': prevalidated
         },
         function(resp) {
             if (resp.status == 'success') {
                 form.submitting();
-                adapter.submitfunc(resp);
+                self.onsubmit(resp.output);
             } else {
                 $.each(resp.errors, function(ix, error) {
-                    adapter.serverError(getForIx(form, ix), error);
+                    self.serverError(getForIx(form, ix), error);
                 });
                 alert('There are errors in this form; they must be corrected before the form can be submitted.');
             }

@@ -9,13 +9,6 @@ function xformAjaxAdapter(formSpec, sessionData, savedInstance, ajaxfunc, submit
     this.resourceMap = resourceMap;
     this.answerCallback = answerCallback;
 
-    $.unsubscribe([
-        'formplayer.submit-form',
-    ].join(' '));
-    $.subscribe('formplayer.submit-form', function(e, form) {
-        self.submitForm(form);
-    });
-
     this.initForm = function(args, $div, onload, onerror) {
         var adapter = this;
         this.ajaxfunc(args, function(resp) {
