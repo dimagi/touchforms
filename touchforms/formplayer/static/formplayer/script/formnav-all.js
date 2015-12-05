@@ -13,7 +13,6 @@ function xformAjaxAdapter(formSpec, sessionData, savedInstance, ajaxfunc, submit
         'formplayer.submit-form',
         'formplayer.delete-repeat',
         'formplayer.new-repeat',
-        'formplayer.answer-question',
         'formplayer.evaluate-xpath'
     ].join(' '));
     $.subscribe('formplayer.submit-form', function(e, form) {
@@ -24,9 +23,6 @@ function xformAjaxAdapter(formSpec, sessionData, savedInstance, ajaxfunc, submit
     });
     $.subscribe('formplayer.new-repeat', function(e, repeat) {
         self.newRepeat(repeat);
-    });
-    $.subscribe('formplayer.answer-question', function(e, question) {
-        self.answerQuestion(question);
     });
     $.subscribe('formplayer.evaluate-xpath', function(e, xpath, callback) {
         self.evaluateXPath(xpath, callback);

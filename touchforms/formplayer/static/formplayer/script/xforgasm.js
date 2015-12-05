@@ -58,6 +58,8 @@ function WebFormSession(params) {
     var self = this;
     self.taskQueue = new TaskQueue();
     self.formContext = params.formContext;
+
+
     if (params.form_uid) {
         self.form_spec = {type: 'uid', val: params.form_uid};
     } else if (params.form_content) {
@@ -65,6 +67,8 @@ function WebFormSession(params) {
     } else if (params.form_url) {
         self.form_spec = {type: 'url', val: params.form_url};
     }
+
+    self.applyListeners();
 
     self.instance_xml = params.instance_xml;
     self.session_data = params.session_data || {};
@@ -207,6 +211,16 @@ function WebFormSession(params) {
     });
 }
 
+WebFormSession.prototype.applyListeners = function() {
+    var self = this;
+    $.unsubscribe([
+        'formplayer.answer-question',
+    ].join(' '));
+    $.subscribe('formplayer.answer-question', function(e, question) {
+        self.answerQuestion(question);
+    });
+}
+
 WebFormSession.prototype.loadForm = function($div, init_lang) {
     var args = {
         'action': 'new-form',
@@ -248,18 +262,16 @@ WebFormSession.prototype.answerQuestion = function(q) {
     var ix = getIx(q);
     var answer = q.answer();
 
-    var adapter = this;
-    this.ajaxfunc({
+    this.serverRequest({
             'action': 'answer',
-            'session-id': this.session_id,
+            'session-id': this.adapter.session_id,
             'ix': ix,
             'answer': answer
         },
         function(resp) {
             $.publish('adapter.reconcile', [resp, q]);
             if (self.answerCallback !== undefined) {
-                self.answerCallback(self.session_id);
+                self.answerCallback(self.adapter.session_id);
             }
         });
-
 };
