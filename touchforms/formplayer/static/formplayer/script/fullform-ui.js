@@ -183,7 +183,7 @@ function Form(json) {
     self.cloudCareDebugger = new Formplayer.ViewModels.CloudCareDebugger();
 
     self.submitForm = function(form) {
-        $.publish('formplayer.submit-form', self);
+        $.publish('formplayer.' + Formplayer.Const.SUBMIT, self);
     };
 
     $.unsubscribe('session');
@@ -240,7 +240,7 @@ function Group(json, parent) {
     }
 
     self.deleteRepeat = function() {
-        $.publish('formplayer.delete-repeat', self);
+        $.publish('formplayer.' + Formplayer.Const.DELETE_REPEAT, self);
         $.publish('formplayer.dirty');
     };
 
@@ -266,7 +266,7 @@ function Repeat(json, parent) {
     self.templateType = 'repeat';
 
     self.newRepeat = function() {
-        $.publish('formplayer.new-repeat', self);
+        $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, self);
         $.publish('formplayer.dirty');
     };
 
@@ -324,7 +324,7 @@ function Question(json, parent) {
     self.onchange = _.throttle(function() {
         $.publish('formplayer.dirty');
         self.pendingAnswer(_.clone(self.answer()));
-        $.publish('formplayer.answer-question', self);
+        $.publish('formplayer.' + Formplayer.Const.ANSWER, self);
     }, self.throttle);
 
     self.mediaSrc = function(resourceType) {
@@ -377,7 +377,7 @@ Formplayer.ViewModels.EvaluateXPath = function() {
             self.result(result);
             self.success(status === "success");
         };
-        $.publish('formplayer.evaluate-xpath', [self.xpath(), callback]);
+        $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [self.xpath(), callback]);
     };
 }
 
@@ -461,6 +461,15 @@ Formplayer.Const = {
     LABEL_WIDTH: 'col-sm-4',
     LABEL_OFFSET: 'col-sm-offset-4',
     CONTROL_WIDTH: 'col-sm-8',
+
+    // XForm Actions
+    NEW_FORM: 'new-form',
+    ANSWER: 'answer',
+    EVALUATE_XPATH: 'evaluate-xpath',
+    NEW_REPEAT: 'new-repeat',
+    DELETE_REPEAT: 'delete-repeat',
+    SET_LANG: 'set-lang',
+    SUBMIT: 'submit-all',
 
     ERROR_MESSAGE_TEMPLATE: "Something unexpected went wrong on that request. " +
         "If you have problems filling in the rest of your form please submit an issue. " +

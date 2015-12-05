@@ -184,7 +184,7 @@ WebFormSession.prototype.handleSuccess = function(resp, callback) {
 
 WebFormSession.prototype.handleFailure = function(resp) {
     this.onerror({
-        human_readable_message: Formplayer.Utils.touchformsError(resp.responseJSON.message) 
+        human_readable_message: Formplayer.Utils.touchformsError(resp.responseJSON.message)
     });
     this.onLoadingComplete(true);
 }
@@ -192,32 +192,32 @@ WebFormSession.prototype.handleFailure = function(resp) {
 WebFormSession.prototype.applyListeners = function() {
     var self = this;
     $.unsubscribe([
-        'formplayer.answer-question',
-        'formplayer.delete-repeat',
-        'formplayer.new-repeat',
-        'formplayer.evaluate-xpath',
-        'formplayer.submit-form',
+        'formplayer.' + Formplayer.Const.ANSWER,
+        'formplayer.' + Formplayer.Const.DELETE_REPEAT,
+        'formplayer.' + Formplayer.Const.NEW_REPEAT,
+        'formplayer.' + Formplayer.Const.EVALUATE_XPATH,
+        'formplayer.' + Formplayer.Const.SUBMIT,
     ].join(' '));
-    $.subscribe('formplayer.submit-form', function(e, form) {
+    $.subscribe('formplayer.' + Formplayer.Const.SUBMIT, function(e, form) {
         self.submitForm(form);
     });
-    $.subscribe('formplayer.answer-question', function(e, question) {
+    $.subscribe('formplayer.' + Formplayer.Const.ANSWER, function(e, question) {
         self.answerQuestion(question);
     });
-    $.subscribe('formplayer.delete-repeat', function(e, group) {
+    $.subscribe('formplayer.' + Formplayer.Const.DELETE_REPEAT, function(e, group) {
         self.deleteRepeat(group);
     });
-    $.subscribe('formplayer.new-repeat', function(e, repeat) {
+    $.subscribe('formplayer.' + Formplayer.Const.NEW_REPEAT, function(e, repeat) {
         self.newRepeat(repeat);
     });
-    $.subscribe('formplayer.evaluate-xpath', function(e, xpath, callback) {
+    $.subscribe('formplayer.' + Formplayer.Const.EVALUATE_XPATH, function(e, xpath, callback) {
         self.evaluateXPath(xpath, callback);
     });
 }
 
 WebFormSession.prototype.loadForm = function($form, init_lang) {
     var args = {
-        'action': 'new-form',
+        'action': Formplayer.Const.NEW_FORM,
         'instance-content': this.instance_xml,
         'lang': init_lang,
         'session-data': this.session_data,
@@ -255,7 +255,7 @@ WebFormSession.prototype.answerQuestion = function(q) {
     var answer = q.answer();
 
     this.serverRequest({
-            'action': 'answer',
+            'action': Formplayer.Const.ANSWER,
             'ix': ix,
             'answer': answer
         },
@@ -269,7 +269,7 @@ WebFormSession.prototype.answerQuestion = function(q) {
 
 WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
     this.serverRequest({
-            'action': 'evaluate-xpath',
+            'action': Formplayer.Const.EVALUATE_XPATH,
             'xpath': xpath
         },
         function(resp) {
@@ -279,7 +279,7 @@ WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
 
 WebFormSession.prototype.newRepeat = function(repeat) {
     this.serverRequest({
-            'action': 'new-repeat',
+            'action': Formplayer.Const.NEW_REPEAT,
             'ix': getIx(repeat)
         },
         function(resp) {
@@ -292,7 +292,7 @@ WebFormSession.prototype.deleteRepeat = function(repetition) {
     var juncture = getIx(repetition.parent);
     var rep_ix = +(repetition.rel_ix().split(":").slice(-1)[0]);
     this.serverRequest({
-            'action': 'delete-repeat',
+            'action': Formplayer.Const.DELETE_REPEAT,
             'ix': rep_ix,
             'form_ix': juncture
         },
@@ -304,7 +304,7 @@ WebFormSession.prototype.deleteRepeat = function(repetition) {
 
 WebFormSession.prototype.switchLanguage = function(lang) {
     this.serverRequest({
-            'action': 'set-lang',
+            'action': Formplayer.Const.SET_LANG,
             'lang': lang
         },
         function(resp) {
@@ -334,7 +334,7 @@ WebFormSession.prototype.submitForm = function(form) {
     accumulate_answers(form);
 
     this.serverRequest({
-            'action': 'submit-all',
+            'action': Formplayer.Const.SUBMIT,
             'answers': answers,
             'prevalidated': prevalidated
         },
