@@ -62,7 +62,6 @@ function WebFormSession(params) {
     var self = this;
     self.taskQueue = new TaskQueue();
     self.heartbeat_has_failed = false;
-    self.offline_mode = isOffline(params.xform_url);
     self.formContext = params.formContext;
     if (params.form_uid) {
         self.form_spec = {type: 'uid', val: params.form_uid};
@@ -292,53 +291,7 @@ function submit_form_post(xml) {
     submit_redirect({type: 'form-complete', output: xml});
 }
 
-function touchformsHeartbeat(url, online, offline) {
-    $.get(url).done(function () {
-        online();
-    }).fail(function (resp) {
-        if (resp.status == 0) {
-            offline();
-        } else {
-            // even error responses show that the daemon is still alive
-            online();
-        }
-    });
-}
-
-function runInterval(func, interval) {
-    var timer = setInterval(function () {
-        func(function () {
-            clearInterval(timer);
-        });
-    }, 1000. * interval);
-    // also run now without delay
-    func(function () {
-        clearInterval(timer);
-    });
-}
-
-function isOffline(touchforms_url) {
-    var tf = $('<a>').attr('href', touchforms_url)[0];
-    return (window.location.host != tf.host);
-}
-
 // loadfunc: function that initializes the touchforms session (creates an adapter, loads a form, ...)
-// promptfunc(show): function that controls UI that notifies user that offline cloudcare isn't running
-//     and prompts them to install it. show == true: show this UI; false: hide it
-function touchformsInit(url, loadfunc, promptfunc) {
-    if (!isOffline(url)) {
-        // don't bother with heartbeat
-        loadfunc();
-        return;
-    }
-
-    runInterval(function (cancel) {
-        touchformsHeartbeat(url, function () {
-            cancel();
-            promptfunc(false);
-            loadfunc();
-        }, function () {
-            promptfunc(true);
-        });
-    }, 1.);
+function touchformsInit(url, loadfunc) {
+    loadfunc();
 }
