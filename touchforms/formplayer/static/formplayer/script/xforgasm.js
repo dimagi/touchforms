@@ -166,10 +166,6 @@ function WebFormSession(params) {
             self.taskQueue.addTask(requestParams.action, self.serverRequest, arguments, self)
         }
 
-        if (this.offline_mode) {
-            // give local touchforms daemon credentials to talk to HQ independently
-            requestParams.hq_auth = {type: 'django-session', key: $.cookie('sessionid')};
-        }
         var _errMsg = function (msg) {
             return "".concat(ERROR_MESSAGE, msg);
         };
