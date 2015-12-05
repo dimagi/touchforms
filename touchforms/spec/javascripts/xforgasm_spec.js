@@ -65,6 +65,8 @@ describe('Xforgasm', function() {
                 form_url: window.location.host,
                 onerror: sinon.spy(),
                 onload: sinon.spy(),
+                onLoading: sinon.spy(),
+                onLoadingComplete: sinon.spy(),
                 onsubmit: sinon.spy(),
                 resourceMap: sinon.spy(),
                 session_data: {},
@@ -116,7 +118,7 @@ describe('Xforgasm', function() {
             sinon.stub(adapter, 'newRepeat', spy);
             sinon.stub(adapter2, 'newRepeat', spy2);
 
-            $.publish('formplayer.new-repeat', {});
+            $.publish('formplayer.' Formplayer.Const.NEW_REPEAT, {});
             expect(spy.calledOnce).toBe(false);
             expect(spy2.calledOnce).toBe(true);
         });
