@@ -206,3 +206,29 @@ function WebFormSession(params) {
         self.blockingRequestInProgress = false;
     });
 }
+
+WebFormSession.prototype.loadForm = function($div, init_lang, onload, onerror) {
+    var args = {
+        'action': 'new-form',
+        'instance-content': savedInstance,
+        'lang': init_lang,
+        'session-data': this.sessionData,
+        'nav': 'fao'
+    };
+    var form_param = {
+        uid: 'form-name',
+        raw: 'form-content',
+        url: 'form-url'
+    }[this.formSpec.type];
+    args[form_param] = this.formSpec.val;
+
+    // handle preloaders (deprecated) for backwards compatibilty
+    if (args['session-data'] && args['session-data'].preloaders) {
+        if (args['session-data'] == null) {
+            args['session-data'] = {};
+        }
+        args['session-data'].preloaders = init_preloaders(args['session-data'].preloaders);
+    }
+
+    this.initForm(args, $div, onload, onerror);
+}
