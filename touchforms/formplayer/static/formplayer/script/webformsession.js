@@ -153,6 +153,11 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
         .fail(self.handleFailure.bind(self))
 }
 
+/*
+ * Handles a successful request to touchforms.
+ * @param {Object} response - touchforms response object
+ * @param {function} callback - callback to be called if no errors occured
+ */
 WebFormSession.prototype.handleSuccess = function(resp, callback) {
     var self = this;
     if (resp.status === 'error' || resp.error) {
@@ -191,6 +196,9 @@ WebFormSession.prototype.handleFailure = function(resp) {
     this.onLoadingComplete(true);
 }
 
+/*
+ * Subscribes to form action events which then get directed to a response to touchforms
+ */
 WebFormSession.prototype.applyListeners = function() {
     var self = this;
     $.unsubscribe([
