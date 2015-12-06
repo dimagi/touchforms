@@ -61,11 +61,11 @@ function WebFormSession(params) {
 
 
     if (params.form_uid) {
-        self.form_spec = {type: 'uid', val: params.form_uid};
+        self.formSpec = {type: 'form-name', val: params.form_uid};
     } else if (params.form_content) {
-        self.form_spec = {type: 'raw', val: params.form_content};
+        self.formSpec = {type: 'form-content', val: params.form_content};
     } else if (params.form_url) {
-        self.form_spec = {type: 'url', val: params.form_url};
+        self.formSpec = {type: 'form-url', val: params.form_url};
     }
 
     self.applyListeners();
@@ -233,12 +233,7 @@ WebFormSession.prototype.loadForm = function($form, init_lang) {
         'session-data': this.session_data,
         'nav': 'fao'
     };
-    var form_param = {
-        uid: 'form-name',
-        raw: 'form-content',
-        url: 'form-url'
-    }[this.form_spec.type];
-    args[form_param] = this.form_spec.val;
+    args[this.formSpec.type] = this.formSpec.val;
 
     // handle preloaders (deprecated) for backwards compatibilty
     if (args['session-data'] && args['session-data'].preloaders) {
