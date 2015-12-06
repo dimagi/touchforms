@@ -363,10 +363,10 @@ WebFormSession.prototype.submitForm = function(form) {
 }
 
 WebFormSession.prototype.serverError = function(q, resp) {
-    if (resp["type"] == "required") {
+    if (resp.type === "required") {
         q.serverError("An answer is required");
-    } else if (resp["type"] == "constraint") {
-        q.serverError(resp["reason"] || 'This answer is outside the allowed range.');
+    } else if (resp.type === "constraint") {
+        q.serverError(resp.reason || 'This answer is outside the allowed range.');
     }
 }
 
