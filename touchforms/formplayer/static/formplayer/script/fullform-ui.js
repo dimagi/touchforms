@@ -465,6 +465,7 @@ Formplayer.Const = {
     // XForm Actions
     NEW_FORM: 'new-form',
     ANSWER: 'answer',
+    CURRENT: 'current',
     EVALUATE_XPATH: 'evaluate-xpath',
     NEW_REPEAT: 'new-repeat',
     DELETE_REPEAT: 'delete-repeat',

@@ -253,7 +253,7 @@ WebFormSession.prototype.loadForm = function($form, init_lang) {
 
 WebFormSession.prototype.resumeForm = function($form, session_id) {
     var args = {
-        "action": "current",
+        "action": Formplayer.Const.CURRENT
     };
 
     this.initForm(args, $form);
