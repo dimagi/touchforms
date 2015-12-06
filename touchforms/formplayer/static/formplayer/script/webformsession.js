@@ -127,7 +127,7 @@ function WebFormSession(params) {
 WebFormSession.prototype.serverRequest = function (requestParams, callback, blocking) {
     var self = this;
     var url = self.urls.xform;
-    if (requestParams.action === 'submit-all' && self.NUM_PENDING_REQUESTS) {
+    if (requestParams.action === Formplayer.Const.SUBMIT && self.NUM_PENDING_REQUESTS) {
         self.taskQueue.addTask(requestParams.action, self.serverRequest, arguments, self)
     }
 
@@ -183,9 +183,9 @@ WebFormSession.prototype.handleSuccess = function(resp, callback) {
     self.numPendingRequests--;
     if (self.numPendingRequests === 0) {
         self.onLoadingComplete();
-        self.taskQueue.execute('submit-all');
+        self.taskQueue.execute(Formplayer.Const.SUBMIT);
         // Remove any submission tasks that have been queued up from spamming the submit button
-        self.taskQueue.clearTasks('submit-all');
+        self.taskQueue.clearTasks(Formplayer.Const.SUBMIT);
     }
 }
 
