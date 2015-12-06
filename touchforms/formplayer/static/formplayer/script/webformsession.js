@@ -91,24 +91,24 @@ function WebFormSession(params) {
         xform: params.xform_url,
     };
 
-    self.load = function ($form, init_lang) {
-        if (self.session_id) {
-            this.resumeForm($form, self.session_id);
-        } else {
-            this.loadForm($form, init_lang);
-        }
-    }
 
-
-    this.blockingRequestInProgress = false;
-    this.lastRequestHandled = -1;
-    this.numPendingRequests = 0;
+    self.blockingRequestInProgress = false;
+    self.lastRequestHandled = -1;
+    self.numPendingRequests = 0;
 
     // workaround for "forever loading" bugs...
     $(document).ajaxStop(function () {
         self.NUM_PENDING_REQUESTS = 0;
         self.blockingRequestInProgress = false;
     });
+}
+
+WebFormSession.prototype.load = function($form, initLang) {
+    if (this.session_id) {
+        this.resumeForm($form, this.session_id);
+    } else {
+        this.loadForm($form, initLang);
+    }
 }
 
 /**
@@ -218,11 +218,11 @@ WebFormSession.prototype.applyListeners = function() {
     });
 }
 
-WebFormSession.prototype.loadForm = function($form, init_lang) {
+WebFormSession.prototype.loadForm = function($form, initLang) {
     var args = {
         'action': Formplayer.Const.NEW_FORM,
         'instance-content': this.instance_xml,
-        'lang': init_lang,
+        'lang': initLang,
         'session-data': this.session_data,
         'nav': 'fao'
     };
