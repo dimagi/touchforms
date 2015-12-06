@@ -66,6 +66,8 @@ describe('WebForm', function() {
                 onerror: sinon.spy(),
                 onload: sinon.spy(),
                 onsubmit: sinon.spy(),
+                onLoading: sinon.spy(),
+                onLoadingComplete: sinon.spy(),
                 resourceMap: sinon.spy(),
                 session_data: {},
                 xform_url: 'http://xform.url/'
@@ -97,7 +99,6 @@ describe('WebForm', function() {
 
         it('Should queue requests', function() {
             var sess = new WebFormSession(params);
-            sess.load($('#content'), 'en', { onLoading: sinon.spy(), onLoadingComplete: sinon.spy() })
             sess.serverRequest({}, sinon.spy(), false);
 
             sinon.spy(sess.taskQueue, 'execute');
@@ -125,7 +126,6 @@ describe('WebForm', function() {
 
         it('Should block requests', function() {
             var sess = new WebFormSession(params);
-            sess.load($('#content'), 'en', { onLoading: sinon.spy(), onLoadingComplete: sinon.spy() })
 
             // First blocking request
             $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
@@ -138,13 +138,12 @@ describe('WebForm', function() {
             server.respond();
 
             expect(sess.blockingRequestInProgress).toBe(false);
-            // One call to new-form and one call to new-repeat
-            expect(server.requests.length).toEqual(2);
+            // One call to new-repeat
+            expect(server.requests.length).toEqual(1);
         });
 
         it('Should not block requests', function() {
             var sess = new WebFormSession(params);
-            sess.load($('#content'), 'en', { onLoading: sinon.spy(), onLoadingComplete: sinon.spy() })
 
             // First blocking request
             $.publish('formplayer.' + Formplayer.Const.ANSWER, { answer: sinon.spy() });
@@ -157,8 +156,8 @@ describe('WebForm', function() {
             server.respond();
 
             expect(sess.blockingRequestInProgress).toBe(false);
-            // One call to new-form and two calls to answer
-            expect(server.requests.length).toEqual(3);
+            // two calls to answer
+            expect(server.requests.length).toEqual(2);
 
         });
 
@@ -180,7 +179,6 @@ describe('WebForm', function() {
 
         it('Should handle failure in ajax call', function() {
             var sess = new WebFormSession(params);
-            sess.load($('#content'), 'en', { onLoading: sinon.spy(), onLoadingComplete: sinon.spy() })
             sess.handleFailure({ responseJSON: { message: 'error' } });
 
             expect(sess.onerror.calledOnce).toBe(true);

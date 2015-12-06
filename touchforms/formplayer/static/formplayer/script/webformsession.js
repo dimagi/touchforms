@@ -81,6 +81,8 @@ function WebFormSession(params) {
 
     // onload/onlanginfo
     self.onload = params.onload;
+    self.onLoading = params.onLoading;
+    self.onLoadingComplete = params.onLoadingComplete;
 
     self.onerror = params.onerror;
 
@@ -88,17 +90,7 @@ function WebFormSession(params) {
         xform: params.xform_url,
     };
 
-    self.load = function ($form, init_lang, options) {
-        /*
-         options currently allows for two parameters:
-         onLoading: a function to call when there are pending requests to the server
-         onLoadingComplete: a function to call when requests are completed. can take an optional
-         parameter which will be true if an error occurred.
-         */
-        options = options || {};
-        this.onLoading = options.onLoading
-        this.onLoadingComplete = options.onLoadingComplete
-
+    self.load = function ($form, init_lang) {
         if (params.session_id) {
             this.resumeForm($form, self.session_id);
         } else {
