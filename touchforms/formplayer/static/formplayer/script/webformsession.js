@@ -70,6 +70,7 @@ function WebFormSession(params) {
 
     self.applyListeners();
 
+    self.session_id = params.session_id || null;
     self.instance_xml = params.instance_xml;
     self.session_data = params.session_data || {};
     self.answerCallback = params.answerCallback;
@@ -91,7 +92,7 @@ function WebFormSession(params) {
     };
 
     self.load = function ($form, init_lang) {
-        if (params.session_id) {
+        if (self.session_id) {
             this.resumeForm($form, self.session_id);
         } else {
             this.loadForm($form, init_lang);
