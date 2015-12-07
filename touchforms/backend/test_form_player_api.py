@@ -2,9 +2,11 @@ import os
 import unittest
 import xformplayer
 import touchcare
-from org.commcare.api.json import PromptToJson, AnswerQuestionJson
-from org.json import JSONObject
+from datetime import datetime, time
+from org.commcare.api.json import PromptToJson, AnswerQuestionJson, InstanceXmlUtil
 from java.lang import RuntimeException
+import com.xhaus.jyson.JysonCodec as json
+from org.javarosa.core.model import FormIndex
 
 CUR_DIR = os.path.dirname(__file__)
 
@@ -66,7 +68,7 @@ class FormPlayerApiTest(unittest.TestCase):
             },
         }
 
-        touchcare.perform_restore(
+        self.commcare_instance = touchcare.perform_restore(
             {},
             self.session_data,
             restore_xml=self.restore,
@@ -76,6 +78,15 @@ class FormPlayerApiTest(unittest.TestCase):
         xformplayer._init()
         self.manager = xformplayer.GlobalStateManager.get_globalstate()
 
+    def test_form_walking(self):
+
+        xform_session = xformplayer.XFormSession(
+            self.xform,
+            instance=None,
+            **self.session_metadata
+        )
+        print "Walk: ", xform_session.walk()
+
 
     def test_form_loading(self):
 
@@ -84,26 +95,15 @@ class FormPlayerApiTest(unittest.TestCase):
             instance=None,
             **self.session_metadata
         )
-
         form_entry_model = xform_session.fem
         old = xform_session.next_event()
         while old:
             try:
-                new = PromptToJson.formEntryModelToJson(form_entry_model)
-                assert(self.compare_dict(old, new))
+                new = json.loads(PromptToJson.formEntryModelToJson(form_entry_model))
+                assert(compare_dict(old, new))
                 old=xform_session.next_event()
             except RuntimeException:
                 break
-
-    def answer_assert(self, model, session, answer):
-        session.answer_question(answer)
-        old = session._parse_current_event()
-        new = PromptToJson.formEntryModelToJson(model)
-        print "Old:"
-        print old
-        print "New:"
-        print new
-        assert(self.compare_dict(old, new))
 
     def test_form_entry(self):
 
@@ -115,59 +115,103 @@ class FormPlayerApiTest(unittest.TestCase):
 
         model = xform_session.fem
         controller = xform_session.fec
+
+        def assert_json_equal():
+            old = xform_session._parse_current_event()
+            new = json.loads(PromptToJson.formEntryModelToJson(model))
+            assert(compare_dict(old, new))
+
         controller.stepToNextEvent()
         print "==="
-
-        print AnswerQuestionJson.questionAnswerToJson(controller, model, "123")
+        AnswerQuestionJson.questionAnswerToJson(controller, model, "123")
+        assert_json_equal()
+        controller.stepToNextEvent()
+        print "==="
         print AnswerQuestionJson.questionAnswerToJson(controller, model, "ABC 123")
+        assert_json_equal()
+        controller.stepToNextEvent()
+        print "==="
         print AnswerQuestionJson.questionAnswerToJson(controller, model, "123")
+        assert_json_equal()
+        controller.stepToNextEvent()
+        print "==="
         print AnswerQuestionJson.questionAnswerToJson(controller, model, "123.123")
+        assert_json_equal()
+        controller.stepToNextEvent()
+        print "==="
         print AnswerQuestionJson.questionAnswerToJson(controller, model, "1970-10-23")
+        assert_json_equal()
+        controller.stepToNextEvent()
+        print "==="
         print AnswerQuestionJson.questionAnswerToJson(controller, model, "1970-10-23T12:30:30")
+        assert_json_equal()
+        controller.stepToNextEvent()
+        print "==="
         print AnswerQuestionJson.questionAnswerToJson(controller, model, "12:30:30")
+        assert_json_equal()
+        controller.stepToNextEvent()
+        print "==="
         print AnswerQuestionJson.questionAnswerToJson(controller, model, "william s pride")
+        assert_json_equal()
+        controller.stepToNextEvent()
+        print "==="
         print AnswerQuestionJson.questionAnswerToJson(controller, model, "12345")
+        assert_json_equal()
+        controller.stepToNextEvent()
+        print "==="
         print AnswerQuestionJson.questionAnswerToJson(controller, model, "000012345")
-        print PromptToJson.formEntryModelToJson(model)
-        print AnswerQuestionJson.questionAnswerToJson(controller, model, "Will")
-        print PromptToJson.formEntryModelToJson(model)
+        assert_json_equal()
+        controller.stepToNextEvent()
+        print "==="
+        print AnswerQuestionJson.questionAnswerToJson(controller, model, "two")
+        assert_json_equal()
+        controller.stepToNextEvent()
+        print "==="
+        print AnswerQuestionJson.questionAnswerToJson(controller, model, "one two three")
+        assert_json_equal()
+        controller.stepToNextEvent()
 
 
-    def compare_dict(self, first, second):
-        for key in first:
-            if not second.has(key):
-                print "Comparing: ", first, " : ", second
-                print ("Second not has: ", key)
-                return False
-            if not self.json_equals(first.get(key), second.get(key)):
-                print "Comparing key: ", key, ": ", first, " : ", second
-                print "First key: ", key, ": ", first.get(key), " not equals second: ", second.get(key)
-                print "Type First: ", type(first.get(key)), " type second: ", type(second.get(key))
-                return False
-        return True
+def compare_dict(first, second):
+    for key in first:
+        if not key in second:
+            print "Comparing: ", first, " : ", second
+            print ("Second not has: ", key)
+            return False
+        if not json_equals(first.get(key), second.get(key)):
+            print "Comparing key: ", key, ": ", first, " : ", second
+            print "First key: ", key, ": ", first.get(key), " not equals second: ", second.get(key)
+            print "Type First: ", type(first.get(key)), " type second: ", type(second.get(key))
+            return False
+    return True
 
-    def compare_list(self, first, second):
-        count = 0;
-        for first_item in first:
-            second_item = second.get(count)
-            if not self.json_equals(first_item, second_item):
-                print "JSON not equals: ", first_item, " : ", second_item
-                return False
-            count += 1
-        return True
+def compare_list(first, second):
+    count = 0;
+    for first_item in first:
+        second_item = second[count]
+        if not json_equals(first_item, second_item):
+            print "JSON not equals: ", first_item, " : ", second_item
+            return False
+        count += 1
+    return True
 
 
-    def json_equals(self, first, second):
-        if first == None:
-            return second is JSONObject.NULL
-        if isinstance(first, dict):
-            return self.compare_dict(first, second)
-        if isinstance(first, list):
-            return self.compare_list(first, second)
-        if isinstance(first, xformplayer.choice):
-            #TODO WSP: How to represent choices?
-            return first.__repr__() == second
-        return first == second
+def json_equals(first, second):
+    if isinstance(first, dict):
+        return compare_dict(first, second)
+    if isinstance(first, list):
+        return compare_list(first, second)
+    if isinstance(first, FormIndex):
+        return first.toString() == second
+    if isinstance(first, xformplayer.choice):
+        #TODO WSP: How to represent choices?
+        return first.__repr__() == second
+    if isinstance(first, datetime):
+        return first == datetime.fromtimestamp(second)
+    if isinstance(first, time):
+        return first == datetime.strptime(second, "%H:%M").time()
+
+    return first == second
 
 
 if __name__ == '__main__':
