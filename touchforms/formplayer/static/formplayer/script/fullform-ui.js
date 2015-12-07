@@ -2,6 +2,7 @@ var Formplayer = {
     Utils: {},
     Const: {},
     ViewModels: {},
+    Errors: {}
 };
 var markdowner = window.markdownit();
 
@@ -472,7 +473,13 @@ Formplayer.Const = {
     SET_LANG: 'set-lang',
     SUBMIT: 'submit-all',
 
-    ERROR_MESSAGE_TEMPLATE: "Something unexpected went wrong on that request. " +
+};
+
+Formplayer.Errors = {
+    GENERIC_ERROR: "Something unexpected went wrong on that request. " +
         "If you have problems filling in the rest of your form please submit an issue. " +
-        "Technical Details: "
+        "Technical Details: ",
+    TIMEOUT_ERROR: "CommCareHQ has detected a possible network connectivity problem. " +
+        "Please make sure you are connected to the " +
+        "Internet in order to submit your form."
 };

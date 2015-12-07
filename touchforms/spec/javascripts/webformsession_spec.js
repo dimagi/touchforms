@@ -182,7 +182,16 @@ describe('WebForm', function() {
             sess.handleFailure({ responseJSON: { message: 'error' } });
 
             expect(sess.onerror.calledOnce).toBe(true);
+        });
 
+        it('Should handle timeout error', function() {
+            var sess = new WebFormSession(params);
+            sess.handleFailure({}, 'timeout');
+
+            expect(sess.onerror.calledOnce).toBe(true);
+            expect(sess.onerror.calledWith({
+                human_readable_message: Formplayer.Errors.TIMEOUT_ERROR
+            })).toBe(true);
         });
     });
 });

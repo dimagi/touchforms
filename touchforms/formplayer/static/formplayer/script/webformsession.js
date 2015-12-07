@@ -182,9 +182,15 @@ WebFormSession.prototype.handleSuccess = function(resp, callback) {
     }
 }
 
-WebFormSession.prototype.handleFailure = function(resp) {
+WebFormSession.prototype.handleFailure = function(resp, textStatus) {
+    var errorMessage;
+    if (textStatus === 'timeout') {
+        errorMessage = Formplayer.Errors.TIMEOUT_ERROR;
+    } else {
+        errorMessage = Formplayer.Utils.touchformsError(resp.responseJSON.message);
+    }
     this.onerror({
-        human_readable_message: Formplayer.Utils.touchformsError(resp.responseJSON.message)
+        human_readable_message: errorMessage
     });
     this.onLoadingComplete(true);
 }
