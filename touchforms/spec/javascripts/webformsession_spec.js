@@ -82,20 +82,21 @@ describe('WebForm', function() {
                 '{ "status": "success" }']);
 
             // Setup server constants
-            window.XFORM_URL = 'dummy'
+            window.XFORM_URL = 'dummy';
 
             // Setup stubs
-            $.cookie = sinon.stub()
+            $.cookie = sinon.stub();
             sinon.stub(Formplayer.Utils, 'initialRender');
-            sinon.stub(window, 'getIx', function() { return 3 });
+            sinon.stub(window, 'getIx', function() { return 3; });
         });
+
         afterEach(function() {
             $('#submit').remove();
             server.restore();
             Formplayer.Utils.initialRender.restore();
             getIx.restore();
             $.unsubscribe();
-        })
+        });
 
         it('Should queue requests', function() {
             var sess = new WebFormSession(params);
@@ -164,7 +165,7 @@ describe('WebForm', function() {
         it('Should handle error in callback', function() {
             var sess = new WebFormSession(params);
 
-            sess.handleSuccess({}, sinon.stub().throws())
+            sess.handleSuccess({}, sinon.stub().throws());
 
             expect(sess.onerror.calledOnce).toBe(true);
         });
@@ -172,7 +173,7 @@ describe('WebForm', function() {
         it('Should handle error in response', function() {
             var sess = new WebFormSession(params);
 
-            sess.handleSuccess({ status: 'error' }, sinon.stub())
+            sess.handleSuccess({ status: 'error' }, sinon.stub());
 
             expect(sess.onerror.calledOnce).toBe(true);
         });

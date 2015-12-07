@@ -9,12 +9,12 @@ if (!Array.prototype.indexOf) {
             }
         }
         return ix;
-    }
+    };
 }
 
 function TaskQueue() {
     this.queue = [];
-};
+}
 
 /*
  * Executes the queue in a FIFO action. If name is supplied, will execute the first
@@ -49,9 +49,9 @@ TaskQueue.prototype.clearTasks = function(name) {
             idx = _.indexOf(_.pluck(this.queue, 'name'), name);
         }
     } else {
-        this.queue = []
+        this.queue = [];
     }
-}
+};
 
 function WebFormSession(params) {
 
@@ -109,7 +109,7 @@ WebFormSession.prototype.load = function($form, initLang) {
     } else {
         this.loadForm($form, initLang);
     }
-}
+};
 
 /**
  * Sends a request to the touchforms server
@@ -121,7 +121,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     var self = this;
     var url = self.urls.xform;
     if (requestParams.action === Formplayer.Const.SUBMIT && self.NUM_PENDING_REQUESTS) {
-        self.taskQueue.addTask(requestParams.action, self.serverRequest, arguments, self)
+        self.taskQueue.addTask(requestParams.action, self.serverRequest, arguments, self);
     }
 
     requestParams.form_context = self.formContext;
@@ -130,7 +130,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     if (this.blockingRequestInProgress) {
         return;
     }
-    this.blockingRequestInProgress = blocking
+    this.blockingRequestInProgress = blocking;
     $.publish('session.block', blocking);
 
     this.numPendingRequests++;
@@ -142,9 +142,9 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
             data: JSON.stringify(requestParams),
             dataType: "json",
         })
-        .success(function(resp) { self.handleSuccess(resp, callback) })
-        .fail(self.handleFailure.bind(self))
-}
+        .success(function(resp) { self.handleSuccess(resp, callback); })
+        .fail(self.handleFailure.bind(self));
+};
 
 /*
  * Handles a successful request to touchforms.
@@ -180,7 +180,7 @@ WebFormSession.prototype.handleSuccess = function(resp, callback) {
         // Remove any submission tasks that have been queued up from spamming the submit button
         self.taskQueue.clearTasks(Formplayer.Const.SUBMIT);
     }
-}
+};
 
 WebFormSession.prototype.handleFailure = function(resp, textStatus) {
     var errorMessage;
@@ -193,7 +193,7 @@ WebFormSession.prototype.handleFailure = function(resp, textStatus) {
         human_readable_message: errorMessage
     });
     this.onLoadingComplete(true);
-}
+};
 
 /*
  * Subscribes to form action events which then get directed to a response to touchforms
@@ -222,7 +222,7 @@ WebFormSession.prototype.applyListeners = function() {
     $.subscribe('formplayer.' + Formplayer.Const.EVALUATE_XPATH, function(e, xpath, callback) {
         self.evaluateXPath(xpath, callback);
     });
-}
+};
 
 WebFormSession.prototype.loadForm = function($form, initLang) {
     var args = {
@@ -236,14 +236,14 @@ WebFormSession.prototype.loadForm = function($form, initLang) {
 
     // handle preloaders (deprecated) for backwards compatibilty
     if (args['session-data'] && args['session-data'].preloaders) {
-        if (args['session-data'] == null) {
+        if (args['session-data'] === null) {
             args['session-data'] = {};
         }
         args['session-data'].preloaders = init_preloaders(args['session-data'].preloaders);
     }
 
     this.initForm(args, $form);
-}
+};
 
 WebFormSession.prototype.resumeForm = function($form, session_id) {
     var args = {
@@ -251,7 +251,7 @@ WebFormSession.prototype.resumeForm = function($form, session_id) {
     };
 
     this.initForm(args, $form);
-}
+};
 
 WebFormSession.prototype.answerQuestion = function(q) {
     var self = this;
@@ -290,7 +290,7 @@ WebFormSession.prototype.newRepeat = function(repeat) {
             $.publish('session.reconcile', [resp, repeat]);
         },
         true);
-}
+};
 
 WebFormSession.prototype.deleteRepeat = function(repetition) {
     var juncture = getIx(repetition.parent);
@@ -304,7 +304,7 @@ WebFormSession.prototype.deleteRepeat = function(repetition) {
             $.publish('session.reconcile', [resp, repetition]);
         },
         true);
-}
+};
 
 WebFormSession.prototype.switchLanguage = function(lang) {
     this.serverRequest({
@@ -314,7 +314,7 @@ WebFormSession.prototype.switchLanguage = function(lang) {
         function(resp) {
             $.publish('session.reconcile', [resp, lang]);
         });
-}
+};
 
 WebFormSession.prototype.submitForm = function(form) {
     var self = this,
@@ -334,7 +334,7 @@ WebFormSession.prototype.submitForm = function(form) {
                 prevalidated = false;
             }
         }
-    }
+    };
     accumulate_answers(form);
 
     this.serverRequest({
@@ -354,7 +354,7 @@ WebFormSession.prototype.submitForm = function(form) {
             }
         },
         true);
-}
+};
 
 WebFormSession.prototype.serverError = function(q, resp) {
     if (resp.type === "required") {
@@ -362,7 +362,7 @@ WebFormSession.prototype.serverError = function(q, resp) {
     } else if (resp.type === "constraint") {
         q.serverError(resp.reason || 'This answer is outside the allowed range.');
     }
-}
+};
 
 WebFormSession.prototype.initForm = function(args, $form) {
     var self = this;
@@ -372,4 +372,4 @@ WebFormSession.prototype.initForm = function(args, $form) {
         self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
         self.onload(self, resp);
     });
-}
+};

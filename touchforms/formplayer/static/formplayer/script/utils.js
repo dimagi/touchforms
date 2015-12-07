@@ -1,6 +1,6 @@
 Formplayer.Utils.touchformsError = function(message) {
     return Formplayer.Errors.GENERIC_ERROR + message;
-}
+};
 
 /**
  * Compares the equality of two answer sets.
