@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # postgres peristence stuff
 USES_POSTGRES = True
-POSTGRES_JDBC_JAR =os.path.join(BASE_DIR, "jrlib/postgresql-9.4-1201.jdbc41.jar")
+POSTGRES_JDBC_JAR = os.path.join(BASE_DIR, "jrlib/postgresql-9.4-1201.jdbc41.jar")
 
 # sqlite persistence stuff
 
