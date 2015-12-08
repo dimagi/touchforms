@@ -2,6 +2,7 @@ var Formplayer = {
     Utils: {},
     Const: {},
     ViewModels: {},
+    Errors: {}
 };
 var markdowner = window.markdownit();
 
@@ -183,11 +184,11 @@ function Form(json) {
     self.cloudCareDebugger = new Formplayer.ViewModels.CloudCareDebugger();
 
     self.submitForm = function(form) {
-        $.publish('formplayer.submit-form', self);
+        $.publish('formplayer.' + Formplayer.Const.SUBMIT, self);
     };
 
-    $.unsubscribe('adapter');
-    $.subscribe('adapter.reconcile', function(e, response, element) {
+    $.unsubscribe('session');
+    $.subscribe('session.reconcile', function(e, response, element) {
         // TODO where does response status parsing belong?
         if (response.status === 'validation-error') {
             if (response.type === 'required') {
@@ -202,6 +203,10 @@ function Form(json) {
             if (element.serverError) { element.serverError(null); }
             self.fromJS(response);
         }
+    });
+
+    $.subscribe('session.block', function(e, block) {
+        $('.webforms input').prop('disabled', !!block);
     });
 
     self.submitting = function() {
@@ -236,7 +241,7 @@ function Group(json, parent) {
     }
 
     self.deleteRepeat = function() {
-        $.publish('formplayer.delete-repeat', self);
+        $.publish('formplayer.' + Formplayer.Const.DELETE_REPEAT, self);
         $.publish('formplayer.dirty');
     };
 
@@ -262,7 +267,7 @@ function Repeat(json, parent) {
     self.templateType = 'repeat';
 
     self.newRepeat = function() {
-        $.publish('formplayer.new-repeat', self);
+        $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, self);
         $.publish('formplayer.dirty');
     };
 
@@ -320,7 +325,7 @@ function Question(json, parent) {
     self.onchange = _.throttle(function() {
         $.publish('formplayer.dirty');
         self.pendingAnswer(_.clone(self.answer()));
-        $.publish('formplayer.answer-question', self);
+        $.publish('formplayer.' + Formplayer.Const.ANSWER, self);
     }, self.throttle);
 
     self.mediaSrc = function(resourceType) {
@@ -373,7 +378,7 @@ Formplayer.ViewModels.EvaluateXPath = function() {
             self.result(result);
             self.success(status === "success");
         };
-        $.publish('formplayer.evaluate-xpath', [self.xpath(), callback]);
+        $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [self.xpath(), callback]);
     };
 }
 
@@ -432,34 +437,6 @@ function set_pin(pin_threshold, $container, $elem) {
 }
 
 
-/**
- * Compares the equality of two answer sets.
- * @param {(string|string[])} answer1 - A string of answers or a single answer
- * @param {(string|string[])} answer2 - A string of answers or a single answer
- */
-Formplayer.Utils.answersEqual = function(answer1, answer2) {
-    if (answer1 instanceof Array && answer2 instanceof Array) {
-        return _.isEqual(answer1, answer2);
-    } else if (answer1 === answer2) {
-        return true;
-    }
-    return false;
-};
-
-/**
- * Initializes a new form to be used by the formplayer.
- * @param {Object} formJSON - The json representation of the form
- * @param {Object} resourceMap - Function for resolving multimedia paths
- * @param {Object} $div - The jquery element that the form will be rendered in.
- */
-Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
-    var form = new Form(formJSON);
-    Formplayer.resourceMap = resourceMap;
-    ko.cleanNode($div[0]);
-    ko.applyBindings(form, $div[0]);
-    return form;
-};
-
 Formplayer.Const = {
     GROUP_TYPE: 'sub-group',
     REPEAT_TYPE: 'repeat-juncture',
@@ -484,5 +461,25 @@ Formplayer.Const = {
     // UI Config
     LABEL_WIDTH: 'col-sm-4',
     LABEL_OFFSET: 'col-sm-offset-4',
-    CONTROL_WIDTH: 'col-sm-8'
+    CONTROL_WIDTH: 'col-sm-8',
+
+    // XForm Actions
+    NEW_FORM: 'new-form',
+    ANSWER: 'answer',
+    CURRENT: 'current',
+    EVALUATE_XPATH: 'evaluate-xpath',
+    NEW_REPEAT: 'new-repeat',
+    DELETE_REPEAT: 'delete-repeat',
+    SET_LANG: 'set-lang',
+    SUBMIT: 'submit-all',
+
+};
+
+Formplayer.Errors = {
+    GENERIC_ERROR: "Something unexpected went wrong on that request. " +
+        "If you have problems filling in the rest of your form please submit an issue. " +
+        "Technical Details: ",
+    TIMEOUT_ERROR: "CommCareHQ has detected a possible network connectivity problem. " +
+        "Please make sure you are connected to the " +
+        "Internet in order to submit your form."
 };
