@@ -12,6 +12,7 @@ from org.javarosa.core.services.storage import IStorageIterator
 from org.commcare.cases.instance import CaseInstanceTreeElement
 from org.commcare.cases.ledger.instance import LedgerInstanceTreeElement
 from org.commcare.cases.instance import CaseDataInstance
+from org.commcare.core.process import CommCareInstanceInitializer
 from org.commcare.cases.model import Case
 from org.commcare.cases.ledger import Ledger
 from org.commcare.session import CommCareSession
@@ -48,7 +49,7 @@ def force_ota_restore(domained_username, auth):
     return result
 
 
-class CCInstances(InstanceInitializationFactory):
+class CCInstances(CommCareInstanceInitializer):
     def __init__(self, sessionvars, auth, restore_xml=None,
                  force_sync=False, form_context=None, uses_sqlite=False):
         self.vars = sessionvars
@@ -62,6 +63,7 @@ class CCInstances(InstanceInitializationFactory):
             self.domain = sessionvars['domain']
             self.query_func = query_factory(self.host, self.domain, self.auth, 'raw')
             self.query_url = get_restore_url({'as': self.username, 'version': '2.0'})
+            CommCareInstanceInitializer.__init__(self, self.sandbox)
 
             if force_sync or self.needs_sync():
                 self.perform_ota_restore(restore_xml)
