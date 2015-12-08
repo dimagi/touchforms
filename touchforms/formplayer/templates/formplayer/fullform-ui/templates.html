@@ -39,7 +39,7 @@
                     </div>
                 </div>
             </form>
-            <div data-bind="template: { name: 'instance-viewer-ko-template', data: evalXPath }"></div>
+            <div data-bind="template: { name: 'instance-viewer-ko-template', data: cloudCareDebugger }"></div>
         </div>
     </div>
 </script>
@@ -47,42 +47,119 @@
 <script type="text/html" id="instance-viewer-ko-template">
     {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
         <hr/>
-        <div id="instance-xml-home" name="instance-xml-home">
-            <form class="form-horizontal debug-controls">
-                <div class="form-group">
-                    <div class="controls" data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH">
-                        <label class="checkbox">
-                            <input id="auto-sync-control" type="checkbox" checked="checked">{% trans "Auto Sync" %}
-                            <span class="help-block">
-                            {% blocktrans %}
-                                When this is checked, the CloudCare Debug tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
-                            {% endblocktrans %}
-                            </span>
-                        </label>
+        <div id="instance-xml-home" class="debugger" data-bind="
+            css: {
+                'debugger-minimized': isMinimized,
+                'debugger-maximized': !isMinimized()
+            }
+            ">
+            <!-- Tab title -->
+            <div class="debugger-tab-title">
+                <i class="debugger-state fa" data-bind="
+                    css: {
+                        'fa-expand': isMinimized,
+                        'fa-compress': !isMinimized()
+                    },
+                    click: toggleState
+                "></i>
+                <span>{% trans "CloudCare Debugger" %}</span>
+            </div>
+
+            <!-- Debugger content -->
+            <div class="debugger-container">
+                <!-- navigation tabs -->
+                <ul class="nav nav-tabs" role="tablist">
+                    <li role="presentation" class="active">
+                        <a href="#debugger-form-data" aria-controls="debugger-form-data" role="tab" data-toggle="tab">
+                            {% trans "Form Data" %}
+                        </a>
+                    </li>
+                    <li role="presentation">
+                        <a
+                            href="#debugger-xml-instance"
+                            aria-controls="debugger-xml-instance"
+                            role="tab"
+                            id="debugger-xml-instance-tab"
+                            data-toggle="tab">
+                            {% trans "Form XML" %}
+                        </a>
+                    </li>
+                    <li role="presentation">
+                        <a href="#debugger-evaluate" aria-controls="debugger-evaluate" role="tab" data-toggle="tab">
+                            {% trans "Evaluate XPath" %}
+                        </a>
+                    </li>
+                    <li role="presentation">
+                        <a href="#debugger-settings" aria-controls="debugger-settings" role="tab" data-toggle="tab">
+                            {% trans "Settings" %}
+                        </a>
+                    </li>
+                </ul>
+                <!-- tab content -->
+                <div class="tab-content debugger-content">
+                    <div role="tabpanel" class="tab-pane active" id="debugger-form-data">
+                        <div id="question-viewer-pretty">{% trans "Answer a question to show data" %}</div>
                     </div>
-                </div>
-            </form>
-            <div id="question-viewer-pretty"></div>
-            <div id="xml-viewer-pretty"></div>
-            <section>
-                <form class="form-horizontal" data-bind="submit: evaluate">
-                    <div class="form-group">
-                        <div class="controls col-sm-12">
-                            <textarea
-                                id="evaluate-result"
-                                type="text"
-                                style="display: block;"
-                                readonly
-                                data-bind="
-                                    value: result,
-                                    css: { 'text-error': !success(), 'form-control': true }
-                            "></textarea>
+                    <div role="tabpanel" class="tab-pane" id="debugger-xml-instance">
+                        <div id="xml-viewer-pretty">{% trans "Answer a question to show data" %}</div>
+                    </div>
+                    <div role="tabpanel" class="tab-pane" id="debugger-evaluate">
+                        <div data-bind="template: {
+                            name: 'debugger-eval-ko-template',
+                            data: evalXPath }">
                         </div>
                     </div>
-                </form>
-            </section>
+                    <div role="tabpanel" class="tab-pane" id="debugger-settings">
+                        <form class="form-horizontal debug-controls">
+                            <div class="form-group">
+                                <div class="controls" data-bind="css: Formplayer.Const.CONTROL_WIDTH">
+                                    <label class="checkbox">
+                                        <input id="auto-sync-control" type="checkbox" checked="checked">{% trans "Auto Sync" %}
+                                        <span class="help-block">
+                                        {% blocktrans %}
+                                            When this is checked, the CloudCare Debug tool will auto sync your XML after every question answered. On slow connetions, uncheck this.
+                                        {% endblocktrans %}
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     {% endif %}
+</script>
+
+<script type="text/html" id="debugger-eval-ko-template">
+    <form class="form-horizontal" data-bind="submit: evaluate">
+        <div class="form-group">
+            <div class="controls col-sm-12">
+                <textarea
+                    id="evaluate-result"
+                    type="text"
+                    style="display: block;"
+                    readonly
+                    data-bind="
+                        value: result,
+                        css: { 'text-error': !success(), 'form-control': true }
+                "></textarea>
+            </div>
+        </div>
+        <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH" >
+            <div class="input-group">
+                <input
+                    id="xpath"
+                    class="form-control"
+                    name="xpath"
+                    placeholder="/data/[your path here]"
+                    data-bind="value: xpath" />
+                <span class="input-group-btn">
+                    <button class="btn btn-default" id="evaluate-button">{% trans "Evaluate" %}</button>
+                </span>
+            </div>
+        </div>
+    </form>
 </script>
 
 <script type="text/html" id="question-fullform-ko-template">
