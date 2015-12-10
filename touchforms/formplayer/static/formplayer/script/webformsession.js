@@ -186,7 +186,7 @@ WebFormSession.prototype.handleFailure = function(resp, textStatus) {
     var errorMessage;
     if (textStatus === 'timeout') {
         errorMessage = Formplayer.Errors.TIMEOUT_ERROR;
-    } else {
+    } else if (resp.hasOwnProperty('responseJSON')) {
         errorMessage = Formplayer.Utils.touchformsError(resp.responseJSON.message);
     }
     this.onerror({
