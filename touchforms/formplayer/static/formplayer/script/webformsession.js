@@ -155,19 +155,19 @@ WebFormSession.prototype.handleSuccess = function(resp, callback) {
     var self = this;
     if (resp.status === 'error' || resp.error) {
         self.onerror(resp);
-    }
+    } else {
+        // ignore responses older than the most-recently handled
+        if (resp.seq_id && resp.seq_id < self.lastRequestHandled) {
+            return;
+        }
+        self.lastRequestHandled = resp.seq_id;
 
-    // ignore responses older than the most-recently handled
-    if (resp.seq_id && resp.seq_id < self.lastRequestHandled) {
-        return;
-    }
-    self.lastRequestHandled = resp.seq_id;
-
-    try {
-        callback(resp);
-    } catch (err) {
-        console.error(err);
-        self.onerror({message: Formplayer.Utils.touchformsError(err)});
+        try {
+            callback(resp);
+        } catch (err) {
+            console.error(err);
+            self.onerror({message: Formplayer.Utils.touchformsError(err)});
+        }
     }
 
     $.publish('session.block', false);
