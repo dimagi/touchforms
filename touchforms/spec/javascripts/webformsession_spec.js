@@ -171,11 +171,13 @@ describe('WebForm', function() {
         });
 
         it('Should handle error in response', function() {
-            var sess = new WebFormSession(params);
+            var sess = new WebFormSession(params),
+                cb = sinon.stub();
 
-            sess.handleSuccess({ status: 'error' }, sinon.stub());
+            sess.handleSuccess({ status: 'error' }, cb);
 
             expect(sess.onerror.calledOnce).toBe(true);
+            expect(cb.calledOnce).toBe(false);
         });
 
         it('Should handle failure in ajax call', function() {
