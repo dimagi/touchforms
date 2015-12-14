@@ -107,7 +107,7 @@ describe('Fullform UI', function() {
             "host": "http://dummy"
         };
         spy = sinon.spy();
-        $.subscribe('formplayer.answer-question', spy);
+        $.subscribe('formplayer.' + Formplayer.Const.ANSWER, spy);
         this.clock = sinon.useFakeTimers();
 
     });
@@ -169,12 +169,12 @@ describe('Fullform UI', function() {
 
         questionJSON.answer = [1,2];
         formJSON.tree = [questionJSON];
-        $.publish('adapter.reconcile', [_.clone(formJSON), question]);
+        $.publish('session.reconcile', [_.clone(formJSON), question]);
         expect(question.answer()).toEqual([1,2]);
 
         questionJSON.answer = [3,3];
         formJSON.tree = [questionJSON];
-        $.publish('adapter.reconcile', [_.clone(formJSON), question]);
+        $.publish('session.reconcile', [_.clone(formJSON), question]);
         expect(question.answer()).toEqual([3,3]);
     });
 
@@ -192,7 +192,7 @@ describe('Fullform UI', function() {
         sinon.stub(form, 'fromJS', spy);
         sinon.stub(form2, 'fromJS', spy2);
 
-        $.publish('adapter.reconcile', [{}, new Question(questionJSON, form)]);
+        $.publish('session.reconcile', [{}, new Question(questionJSON, form)]);
         expect(spy.calledOnce).toBe(false);
         expect(spy2.calledOnce).toBe(true);
     });
@@ -229,7 +229,7 @@ describe('Fullform UI', function() {
         var question = new Question(questionJSON, form);
 
         expect(question.serverError()).toBe(null);
-        $.publish('adapter.reconcile', [{
+        $.publish('session.reconcile', [{
             "reason": null,
             "type": "constraint",
             "seq_id": 2,
