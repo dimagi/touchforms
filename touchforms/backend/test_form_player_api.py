@@ -3,7 +3,7 @@ import unittest
 import xformplayer
 import touchcare
 from datetime import datetime, time
-from org.commcare.api.json import PromptToJson, AnswerQuestionJson, InstanceXmlUtil
+from org.commcare.api.json import PromptToJson, AnswerQuestionJson, InstanceXmlUtil, WalkJson
 from java.lang import RuntimeException
 import com.xhaus.jyson.JysonCodec as json
 from org.javarosa.core.model import FormIndex
@@ -23,6 +23,10 @@ class FormPlayerApiTest(unittest.TestCase):
         try:
             f = open(os.path.join(CUR_DIR, 'test_files/xforms/question_types.xml'), 'r')
             self.xform = f.read()
+            f = open(os.path.join(CUR_DIR, 'test_files/xforms/groups.xml'), 'r')
+            self.group_xform = f.read()
+            f = open(os.path.join(CUR_DIR, 'test_files/xforms/repeat.xml'), 'r')
+            self.repeat_xform = f.read()
         except IOError:
             self.fail('Could not read test form')
 
@@ -85,25 +89,30 @@ class FormPlayerApiTest(unittest.TestCase):
             instance=None,
             **self.session_metadata
         )
-        print "Walk: ", xform_session.walk()
 
+        model = xform_session.fem
+        controller = xform_session.fec
 
-    def test_form_loading(self):
+        assert(json_equals(xform_session.walk(), json.loads(WalkJson.walkToJson(model, controller))))
+
+    def test_group_walking(self):
 
         xform_session = xformplayer.XFormSession(
-            self.xform,
+            self.repeat_xform,
             instance=None,
             **self.session_metadata
         )
-        form_entry_model = xform_session.fem
-        old = xform_session.next_event()
-        while old:
-            try:
-                new = json.loads(PromptToJson.formEntryModelToJson(form_entry_model))
-                assert(compare_dict(old, new))
-                old=xform_session.next_event()
-            except RuntimeException:
-                break
+
+        model = xform_session.fem
+        controller = xform_session.fec
+
+        print "==== WALK ===="
+        print WalkJson.walkToJson(model, controller)
+        print "==== OLD WALK ===="
+        print xform_session.walk()
+
+        assert(json_equals(xform_session.walk(), json.loads(WalkJson.walkToJson(model, controller))))
+
 
     def test_form_entry(self):
 
@@ -118,7 +127,7 @@ class FormPlayerApiTest(unittest.TestCase):
 
         def assert_json_equal():
             old = xform_session._parse_current_event()
-            new = json.loads(PromptToJson.formEntryModelToJson(model))
+            new = json.loads(PromptToJson.parseQuestionToString(model))
             assert(compare_dict(old, new))
 
         controller.stepToNextEvent()
@@ -190,7 +199,7 @@ def compare_list(first, second):
     for first_item in first:
         second_item = second[count]
         if not json_equals(first_item, second_item):
-            print "JSON not equals: ", first_item, " : ", second_item
+            print "JSON not equals: ", first_item, " SECOND ", second_item
             return False
         count += 1
     return True
