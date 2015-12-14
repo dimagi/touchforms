@@ -184,7 +184,7 @@ class XFormSession(object):
         self.uuid = params.get('uuid', uuid.uuid4().hex)
         self.nav_mode = params.get('nav_mode', 'prompt')
         self.seq_id = params.get('seq_id', 0)
-        self.uses_sql_backend = params.get('uses_sql_backend'),
+        self.uses_sql_backend = params.get('uses_sql_backend')
 
         self.form = load_form(
             xform,
