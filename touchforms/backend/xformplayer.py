@@ -320,6 +320,7 @@ class XFormSession(object):
 
             evt = self.__parse_event(form_ix)
             evt['relevant'] = relevant
+
             if evt['type'] == 'sub-group':
                 presentation_group = (evt['caption'] != None)
                 if presentation_group:

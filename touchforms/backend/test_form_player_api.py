@@ -107,9 +107,11 @@ class FormPlayerApiTest(unittest.TestCase):
         controller = xform_session.fec
 
         print "==== WALK ===="
-        print WalkJson.walkToJson(model, controller)
+        parsed = WalkJson.walkToJson(model, controller)
+        print parsed
         print "==== OLD WALK ===="
-        print xform_session.walk()
+        parsed = xform_session.walk()
+        print parsed
 
         assert(json_equals(xform_session.walk(), json.loads(WalkJson.walkToJson(model, controller))))
 
@@ -184,13 +186,17 @@ class FormPlayerApiTest(unittest.TestCase):
 def compare_dict(first, second):
     for key in first:
         if not key in second:
-            print "Comparing: ", first, " : ", second
+            print "Comparing KEY: ", key
+            print "First: ", first
+            print "===="
+            print "Second: ", second
             print ("Second not has: ", key)
             return False
         if not json_equals(first.get(key), second.get(key)):
-            print "Comparing key: ", key, ": ", first, " : ", second
-            print "First key: ", key, ": ", first.get(key), " not equals second: ", second.get(key)
-            print "Type First: ", type(first.get(key)), " type second: ", type(second.get(key))
+            print "Comparing KEY: ", key
+            print "First: ", first.get(key)
+            print "===="
+            print "Second: ", second.get(key)
             return False
     return True
 
@@ -219,7 +225,6 @@ def json_equals(first, second):
         return first == datetime.fromtimestamp(second)
     if isinstance(first, time):
         return first == datetime.strptime(second, "%H:%M").time()
-
     return first == second
 
 
