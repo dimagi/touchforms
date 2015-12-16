@@ -58,18 +58,6 @@ Load fixture data    `touchforms.localsettings.URL_ROOT`       Session (cloudcar
 Load ledger data     `touchforms.localsettings.URL_ROOT`       Session (cloudcare) or `settings.TOUCHFORMS_API_USER` (sms)
 ===================  ========================================  ===========================================================
 
-Offline Cloudcare
-=================
-
-To build::
-
-    cd offline/
-    python build.py url-root
-
-url-root is the url you will download the java webstart package from.
-for example, if i download from http://commcarehq.org/offline-cloudcare/offline-cloudcare.jnlp, url-root is http://commcarehq.org/offline-cloudcare/
-
-the packaged result will be in dist/standalone (one jar) or dist/split (many jars). deploy the folder contents as-is to url-root
 
 Running Tests
 =============

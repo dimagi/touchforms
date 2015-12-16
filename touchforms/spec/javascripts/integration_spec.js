@@ -89,7 +89,7 @@ describe('Integration', function() {
         // Have server respond to the string question before string changes
         // this would normally fire off another change to multi, but we do not reconcile
         // questions that have pending answers.
-        $.publish('adapter.reconcile', [response1, stringQ1]);
+        $.publish('session.reconcile', [response1, stringQ1]);
         expect(stringQ2.pendingAnswer()).toBe('lisa');
         expect(stringQ2.answer()).toBe('lisa');
         expect(stringQ1.pendingAnswer()).toBe(Formplayer.Const.NO_PENDING_ANSWER);
@@ -100,7 +100,7 @@ describe('Integration', function() {
         response2.tree[0].answer = 'ben';
         response2.tree[1].answer = 'lisa';
 
-        $.publish('adapter.reconcile', [response2, stringQ2]);
+        $.publish('session.reconcile', [response2, stringQ2]);
         expect(stringQ1.answer()).toBe('ben');
         expect(stringQ2.answer()).toBe('lisa');
         expect(stringQ1.pendingAnswer()).toBe(Formplayer.Const.NO_PENDING_ANSWER);
@@ -129,7 +129,7 @@ describe('Integration', function() {
         // Have server respond to the string question before multi changes
         // this would normally fire off another change to multi, but we do not reconcile
         // questions that have pending answers.
-        $.publish('adapter.reconcile', [response1, stringQ]);
+        $.publish('session.reconcile', [response1, stringQ]);
         expect(stringQ.pendingAnswer()).toBe(Formplayer.Const.NO_PENDING_ANSWER);
         expect(stringQ.answer()).toBe('ben');
         expect(multiQ.pendingAnswer()).toEqual([1]);
@@ -140,7 +140,7 @@ describe('Integration', function() {
         response2.tree[0].answer = [1];
         response2.tree[1].answer = 'ben';
 
-        $.publish('adapter.reconcile', [response2, multiQ]);
+        $.publish('session.reconcile', [response2, multiQ]);
         expect(stringQ.answer()).toBe('ben');
         expect(multiQ.answer()).toEqual([1]);
         expect(stringQ.pendingAnswer()).toBe(Formplayer.Const.NO_PENDING_ANSWER);
@@ -200,7 +200,7 @@ describe('Integration', function() {
 
         var f = new Form(json1);
         var child = f.children()[0]
-        $.publish('adapter.reconcile', [json2, child]);
+        $.publish('session.reconcile', [json2, child]);
         expect(child.answer()[0]).toBe(30.000000000000018)
 
 

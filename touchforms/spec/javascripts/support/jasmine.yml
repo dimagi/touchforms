@@ -22,10 +22,11 @@ src_files:
   - script/vendor/dates.js
   - script/vendor/markdown-it-4.2.0.min.js
   - script/test_helpers/*.js
-  - script/xforgasm.js
+  - script/webformsession.js
   - script/formnav-all.js
   - script/entrycontrols_full.js
   - script/fullform-ui.js
+  - script/utils.js
 
 # stylesheets
 #

@@ -22,7 +22,7 @@ describe('Entries', function() {
             "caption_video": null,
         };
         spy = sinon.spy();
-        $.subscribe('formplayer.answer-question', spy);
+        $.subscribe('formplayer.' + Formplayer.Const.ANSWER, spy);
         this.clock = sinon.useFakeTimers();
     });
 

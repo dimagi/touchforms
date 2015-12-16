@@ -1,4 +1,4 @@
-describe('Xforgasm', function() {
+describe('WebForm', function() {
 
     describe('TaskQueue', function() {
         var tq,
@@ -66,6 +66,8 @@ describe('Xforgasm', function() {
                 onerror: sinon.spy(),
                 onload: sinon.spy(),
                 onsubmit: sinon.spy(),
+                onLoading: sinon.spy(),
+                onLoadingComplete: sinon.spy(),
                 resourceMap: sinon.spy(),
                 session_data: {},
                 xform_url: 'http://xform.url/'
@@ -80,22 +82,24 @@ describe('Xforgasm', function() {
                 '{ "status": "success" }']);
 
             // Setup server constants
-            window.XFORM_URL = 'dummy'
+            window.XFORM_URL = 'dummy';
 
             // Setup stubs
-            $.cookie = sinon.stub()
+            $.cookie = sinon.stub();
             sinon.stub(Formplayer.Utils, 'initialRender');
+            sinon.stub(window, 'getIx', function() { return 3; });
         });
+
         afterEach(function() {
             $('#submit').remove();
             server.restore();
             Formplayer.Utils.initialRender.restore();
+            getIx.restore();
             $.unsubscribe();
-        })
+        });
 
         it('Should queue requests', function() {
             var sess = new WebFormSession(params);
-            sess.load($('#content'), 'en')
             sess.serverRequest({}, sinon.spy(), false);
 
             sinon.spy(sess.taskQueue, 'execute');
@@ -110,15 +114,87 @@ describe('Xforgasm', function() {
         it('Should only subscribe once', function() {
             var spy = sinon.spy(),
                 spy2 = sinon.spy(),
-                adapter = new xformAjaxAdapter(),
-                adapter2 = new xformAjaxAdapter();
+                sess = new WebFormSession(params),
+                sess2 = new WebFormSession(params);
 
-            sinon.stub(adapter, 'newRepeat', spy);
-            sinon.stub(adapter2, 'newRepeat', spy2);
+            sinon.stub(sess, 'newRepeat', spy);
+            sinon.stub(sess2, 'newRepeat', spy2);
 
-            $.publish('formplayer.new-repeat', {});
+            $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
             expect(spy.calledOnce).toBe(false);
             expect(spy2.calledOnce).toBe(true);
+        });
+
+        it('Should block requests', function() {
+            var sess = new WebFormSession(params);
+
+            // First blocking request
+            $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
+
+            expect(sess.blockingRequestInProgress).toBe(true);
+
+            // Attempt another request
+            $.publish('formplayer.' + Formplayer.Const.NEW_REPEAT, {});
+
+            server.respond();
+
+            expect(sess.blockingRequestInProgress).toBe(false);
+            // One call to new-repeat
+            expect(server.requests.length).toEqual(1);
+        });
+
+        it('Should not block requests', function() {
+            var sess = new WebFormSession(params);
+
+            // First blocking request
+            $.publish('formplayer.' + Formplayer.Const.ANSWER, { answer: sinon.spy() });
+
+            expect(sess.blockingRequestInProgress).toBeFalsy(false);
+
+            // Attempt another request
+            $.publish('formplayer.' + Formplayer.Const.ANSWER, { answer: sinon.spy() });
+
+            server.respond();
+
+            expect(sess.blockingRequestInProgress).toBe(false);
+            // two calls to answer
+            expect(server.requests.length).toEqual(2);
+
+        });
+
+        it('Should handle error in callback', function() {
+            var sess = new WebFormSession(params);
+
+            sess.handleSuccess({}, sinon.stub().throws());
+
+            expect(sess.onerror.calledOnce).toBe(true);
+        });
+
+        it('Should handle error in response', function() {
+            var sess = new WebFormSession(params),
+                cb = sinon.stub();
+
+            sess.handleSuccess({ status: 'error' }, cb);
+
+            expect(sess.onerror.calledOnce).toBe(true);
+            expect(cb.calledOnce).toBe(false);
+        });
+
+        it('Should handle failure in ajax call', function() {
+            var sess = new WebFormSession(params);
+            sess.handleFailure({ responseJSON: { message: 'error' } });
+
+            expect(sess.onerror.calledOnce).toBe(true);
+        });
+
+        it('Should handle timeout error', function() {
+            var sess = new WebFormSession(params);
+            sess.handleFailure({}, 'timeout');
+
+            expect(sess.onerror.calledOnce).toBe(true);
+            expect(sess.onerror.calledWith({
+                human_readable_message: Formplayer.Errors.TIMEOUT_ERROR
+            })).toBe(true);
         });
     });
 });
