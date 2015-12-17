@@ -40,6 +40,10 @@
   cursor: pointer;
 }
 
+.debugger-code {
+  font-family: monospace;
+}
+
 .debugger-tab-title {
   font-size: 14px;
   line-height: 18px;
