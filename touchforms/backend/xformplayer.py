@@ -31,7 +31,7 @@ from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
 from org.commcare.suite.model import Text as JRText
 from java.util import Hashtable as JHashtable
 from org.javarosa.xpath import XPathException
-from org.commcare.api.json import WalkJson
+from org.commcare.api.json import WalkJson, AnswerQuestionJson
 
 from touchcare import CCInstances, process_form_xml
 from util import query_factory
@@ -181,11 +181,15 @@ class SequencingException(Exception):
 
 
 class XFormSession(object):
-    def __init__(self, xform, instance=None, **params):
+    def __init__(self, xform, instance=None, use_api=False, **params):
         self.uuid = params.get('uuid', uuid.uuid4().hex)
         self.nav_mode = params.get('nav_mode', 'prompt')
         self.seq_id = params.get('seq_id', 0)
         self.uses_sql_backend = params.get('uses_sql_backend')
+        if settings.USES_FORM_ENTRY_API:
+            self.use_api = True
+        else:
+            self.use_api=use_api
 
         self.form = load_form(
             xform,
@@ -292,9 +296,11 @@ class XFormSession(object):
         return unicode(''.join(chr(b) for b in instance_bytes.tolist()), 'utf-8')
 
     def walk(self):
-        if settings.USES_FORM_ENTRY_API:
+        if self.use_api:
+            print "walking new"
             return json.loads(WalkJson.walkToJson(self.fem, self.fec))
         else:
+            print "Walking old"
             form_ix = FormIndex.createBeginningOfFormIndex()
             tree = []
             self._walk(form_ix, tree)
@@ -483,7 +489,10 @@ class XFormSession(object):
         return self._parse_current_event()
 
     def answer_question (self, answer, _ix=None):
-        print "Answer: ", answer
+        if self.use_api:
+            print "Answering new: ", answer
+            return json.loads(AnswerQuestionJson.questionAnswerToJson(self.fec, self.fem, str(answer), _ix))
+        print "Answering od: ", answer
         ix = self.parse_ix(_ix)
         event = self.cur_event if ix is None else self.__parse_event(ix)
 
@@ -504,7 +513,9 @@ class XFormSession(object):
             else:
                 return str(a).split()
 
+        print "Answer type: ", type(answer)
         if answer == None or str(answer).strip() == '' or answer == []:
+            print "Answer none"
             ans = None
         elif datatype == 'int':
             if isinstance(int(answer), long):
@@ -721,6 +732,7 @@ def go_back(xform_session):
 # fao mode only
 @require_xform_session
 def submit_form(xform_session, answers, prevalidated):
+    print "Answers ", answers
     errors = dict(
         filter(lambda resp: resp[1]['status'] != 'success',
             ((_ix, xform_session.answer_question(answer, _ix)) for _ix, answer in answers.iteritems()))
@@ -738,8 +750,9 @@ def submit_form(xform_session, answers, prevalidated):
                 xml,
                 xform_session.orig_params['session_data'],
             )
-
-    return xform_session.response(resp, no_next=True)
+    submit_response = xform_session.response(resp, no_next=True)
+    print "Submit Response: ", submit_response
+    return submit_response
 
 
 @require_xform_session

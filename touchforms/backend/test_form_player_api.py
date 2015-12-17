@@ -8,6 +8,7 @@ from java.lang import RuntimeException
 import com.xhaus.jyson.JysonCodec as json
 from org.javarosa.core.model import FormIndex
 
+
 CUR_DIR = os.path.dirname(__file__)
 
 
@@ -84,24 +85,12 @@ class FormPlayerApiTest(unittest.TestCase):
         xformplayer._init()
         self.manager = xformplayer.GlobalStateManager.get_globalstate()
 
-    def test_form_walking(self):
-
-        xform_session = xformplayer.XFormSession(
-            self.xform,
-            instance=None,
-            **self.session_metadata
-        )
-
-        model = xform_session.fem
-        controller = xform_session.fec
-
-        assert(json_equals(xform_session.walk(), json.loads(WalkJson.walkToJson(model, controller))))
-
     def test_repeat_walking(self):
 
         xform_session = xformplayer.XFormSession(
             self.repeat_xform,
             instance=None,
+            use_api=True,
             **self.session_metadata
         )
 
@@ -112,22 +101,46 @@ class FormPlayerApiTest(unittest.TestCase):
 
     def test_group_walking(self):
 
-        xform_session = xformplayer.XFormSession(
+        old_xform_session = xformplayer.XFormSession(
             self.group_xform,
             instance=None,
+            use_api=False,
             **self.session_metadata
         )
 
-        model = xform_session.fem
-        controller = xform_session.fec
+        new_xform_session = xformplayer.XFormSession(
+            self.group_xform,
+            instance=None,
+            use_api=True,
+            **self.session_metadata
+        )
 
-        assert(json_equals(xform_session.walk(), json.loads(WalkJson.walkToJson(model, controller))))
+        model = new_xform_session.fem
+        controller = new_xform_session.fec
+
+        def answer_assert(answer, index):
+            new_xform_session.answer_question(answer, index)
+            old_xform_session.answer_question(answer, index)
+            assert(json_equals(old_xform_session.walk(), new_xform_session.walk()))
+
+        assert(json_equals(old_xform_session.walk(), json.loads(WalkJson.walkToJson(model, controller))))
+
+        answer_assert("1", "1,1")
+        answer_assert("William", "1,4")
+        answer_assert("1", "3")
+        answer_assert("2", "5")
+        answer_assert("2", "5")
+        answer_assert("2", "3")
+        answer_assert("1", "5")
+
+        old_submit = xformplayer.submit_form(old_xform_session,)
 
     def test_nested_walking(self):
 
         xform_session = xformplayer.XFormSession(
             self.nested_xform,
             instance=None,
+            use_api=True,
             **self.session_metadata
         )
 
@@ -140,19 +153,22 @@ class FormPlayerApiTest(unittest.TestCase):
         old_xform_session = xformplayer.XFormSession(
             self.xform,
             instance=None,
+            use_api=False,
             **self.session_metadata
         )
 
         new_xform_session = xformplayer.XFormSession(
             self.xform,
             instance=None,
+            use_api=True,
             **self.session_metadata
         )
 
         def answer_assert(answer, index):
-            AnswerQuestionJson.questionAnswerToJson(new_xform_session.fec, new_xform_session.fem, answer, index)
-            old_xform_session.answer_question(answer, index)
-            assert(json_equals(old_xform_session.walk(), json.loads(WalkJson.walkToJson(new_xform_session.fem, new_xform_session.fec))))
+            new_answer = new_xform_session.answer_question(answer, index)
+            old_answer = old_xform_session.answer_question(answer, index)
+            assert(json_equals(old_answer, new_answer))
+            assert(json_equals(old_xform_session.walk(), new_xform_session.walk()))
 
 
         answer_assert("123 ABC", "1")
@@ -166,72 +182,6 @@ class FormPlayerApiTest(unittest.TestCase):
         answer_assert("00012345", "9")
         answer_assert("2", "10")
         answer_assert("1 2 3", "11")
-
-    def test_form_entry(self):
-
-        xform_session = xformplayer.XFormSession(
-            self.xform,
-            instance=None,
-            **self.session_metadata
-        )
-
-        model = xform_session.fem
-        controller = xform_session.fec
-
-        def assert_json_equal():
-            old = xform_session._parse_current_event()
-            new = json.loads(PromptToJson.parseQuestionToString(model))
-            assert(compare_dict(old, new))
-
-        controller.stepToNextEvent()
-        print "==="
-        AnswerQuestionJson.questionAnswerToJson(controller, model, "123")
-        assert_json_equal()
-        controller.stepToNextEvent()
-        print "==="
-        print AnswerQuestionJson.questionAnswerToJson(controller, model, "ABC 123")
-        assert_json_equal()
-        controller.stepToNextEvent()
-        print "==="
-        print AnswerQuestionJson.questionAnswerToJson(controller, model, "123")
-        assert_json_equal()
-        controller.stepToNextEvent()
-        print "==="
-        print AnswerQuestionJson.questionAnswerToJson(controller, model, "123.123")
-        assert_json_equal()
-        controller.stepToNextEvent()
-        print "==="
-        print AnswerQuestionJson.questionAnswerToJson(controller, model, "1970-10-23")
-        assert_json_equal()
-        controller.stepToNextEvent()
-        print "==="
-        print AnswerQuestionJson.questionAnswerToJson(controller, model, "1970-10-23T12:30:30")
-        assert_json_equal()
-        controller.stepToNextEvent()
-        print "==="
-        print AnswerQuestionJson.questionAnswerToJson(controller, model, "12:30:30")
-        assert_json_equal()
-        controller.stepToNextEvent()
-        print "==="
-        print AnswerQuestionJson.questionAnswerToJson(controller, model, "william s pride")
-        assert_json_equal()
-        controller.stepToNextEvent()
-        print "==="
-        print AnswerQuestionJson.questionAnswerToJson(controller, model, "12345")
-        assert_json_equal()
-        controller.stepToNextEvent()
-        print "==="
-        print AnswerQuestionJson.questionAnswerToJson(controller, model, "000012345")
-        assert_json_equal()
-        controller.stepToNextEvent()
-        print "==="
-        print AnswerQuestionJson.questionAnswerToJson(controller, model, "two")
-        assert_json_equal()
-        controller.stepToNextEvent()
-        print "==="
-        print AnswerQuestionJson.questionAnswerToJson(controller, model, "one two three")
-        assert_json_equal()
-        controller.stepToNextEvent()
 
 
 def compare_dict(first, second):
