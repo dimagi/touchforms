@@ -58,13 +58,14 @@
             }
             ">
             <!-- Tab title -->
-            <div class="debugger-tab-title">
+            <div class="debugger-tab-title" data-bind="
+                click: toggleState
+                ">
                 <i class="debugger-state fa" data-bind="
                     css: {
                         'fa-expand': isMinimized,
                         'fa-compress': !isMinimized()
-                    },
-                    click: toggleState
+                    }
                 "></i>
                 <span>{% trans "CloudCare Debugger" %}</span>
             </div>

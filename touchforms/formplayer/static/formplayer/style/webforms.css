@@ -49,6 +49,14 @@
   border-top-right-radius: 5px;
   border-bottom: #ddd solid 4px;
   padding: 6px;
+  cursor: pointer;
+
+  -webkit-transition: background-color 0.5s;
+  transition: background-color 0.5s;
+}
+
+.debugger-tab-title:hover {
+  background-color: #0060E6;
 }
 
 /* Override default nprogress bar color to match CommCareHQ */
