@@ -39,7 +39,11 @@
                     </div>
                 </div>
             </form>
-            <div data-bind="template: { name: 'instance-viewer-ko-template', data: cloudCareDebugger }"></div>
+            <div data-bind="template: {
+                name: 'instance-viewer-ko-template',
+                data: cloudCareDebugger,
+                afterRender: cloudCareDebugger.adjustWidth
+            }"></div>
         </div>
     </div>
 </script>

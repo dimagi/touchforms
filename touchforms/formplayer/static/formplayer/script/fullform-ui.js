@@ -366,6 +366,15 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
     self.toggleState = function() {
         self.isMinimized(!self.isMinimized());
     };
+
+    // Called afterRender, ensures that the debugger takes the whole screen
+    self.adjustWidth = function(e) {
+        var $debug = $('#instance-xml-home'),
+            $body = $('body'),
+            margin = 10;
+
+        $debug.width($body.width() - $debug.offset().left - margin);
+    };
 };
 
 Formplayer.ViewModels.EvaluateXPath = function() {
