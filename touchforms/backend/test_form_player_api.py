@@ -87,17 +87,39 @@ class FormPlayerApiTest(unittest.TestCase):
 
     def test_repeat_walking(self):
 
-        xform_session = xformplayer.XFormSession(
+        def answer_assert(answer, index):
+            new_xform_session.answer_question(answer, index)
+            old_xform_session.answer_question(answer, index)
+            assert(json_equals(old_xform_session.walk(), new_xform_session.walk()))
+
+        old_xform_session = xformplayer.XFormSession(
+            self.repeat_xform,
+            instance=None,
+            use_api=False,
+            **self.session_metadata
+        )
+
+        new_xform_session = xformplayer.XFormSession(
             self.repeat_xform,
             instance=None,
             use_api=True,
             **self.session_metadata
         )
 
-        model = xform_session.fem
-        controller = xform_session.fec
+        assert(old_xform_session.walk(), new_xform_session.walk())
 
-        assert(json_equals(xform_session.walk(), json.loads(WalkJson.walkToJson(model, controller))))
+        answer_assert("1", "4:0,1:0,0")
+        answer_assert("2", "4:0,1:1,0")
+        answer_assert("3", "4:0,1:2,0")
+        answer_assert("4", "4:1,1:0,0")
+        answer_assert("5", "4:1,1:1,0")
+        answer_assert("6", "4:1,1:2,0")
+        answer_assert("5", "5")
+        answer_assert("1", "5")
+        answer_assert("2", "5")
+        answer_assert("Will", "7:0,0")
+        answer_assert("Rules", "7:1,0")
+
 
     def test_group_walking(self):
 
@@ -132,8 +154,6 @@ class FormPlayerApiTest(unittest.TestCase):
         answer_assert("2", "5")
         answer_assert("2", "3")
         answer_assert("1", "5")
-
-        old_submit = xformplayer.submit_form(old_xform_session,)
 
     def test_nested_walking(self):
 

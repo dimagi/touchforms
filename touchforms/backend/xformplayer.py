@@ -297,10 +297,9 @@ class XFormSession(object):
 
     def walk(self):
         if self.use_api:
-            print "walking new"
-            return json.loads(WalkJson.walkToJson(self.fem, self.fec))
+            ret =  json.loads(WalkJson.walkToJson(self.fem, self.fec))
+            return ret
         else:
-            print "Walking old"
             form_ix = FormIndex.createBeginningOfFormIndex()
             tree = []
             self._walk(form_ix, tree)
@@ -489,10 +488,9 @@ class XFormSession(object):
         return self._parse_current_event()
 
     def answer_question (self, answer, _ix=None):
+
         if self.use_api:
-            print "Answering new: ", answer
             return json.loads(AnswerQuestionJson.questionAnswerToJson(self.fec, self.fem, str(answer), _ix))
-        print "Answering od: ", answer
         ix = self.parse_ix(_ix)
         event = self.cur_event if ix is None else self.__parse_event(ix)
 
@@ -513,9 +511,7 @@ class XFormSession(object):
             else:
                 return str(a).split()
 
-        print "Answer type: ", type(answer)
         if answer == None or str(answer).strip() == '' or answer == []:
-            print "Answer none"
             ans = None
         elif datatype == 'int':
             if isinstance(int(answer), long):
