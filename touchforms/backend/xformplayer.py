@@ -31,6 +31,7 @@ from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
 from org.commcare.suite.model import Text as JRText
 from java.util import Hashtable as JHashtable
 from org.javarosa.xpath import XPathException
+from org.commcare.api.json import WalkJson
 
 from touchcare import CCInstances, process_form_xml
 from util import query_factory
@@ -291,10 +292,13 @@ class XFormSession(object):
         return unicode(''.join(chr(b) for b in instance_bytes.tolist()), 'utf-8')
 
     def walk(self):
-        form_ix = FormIndex.createBeginningOfFormIndex()
-        tree = []
-        self._walk(form_ix, tree)
-        return tree
+        if settings.USES_FORM_ENTRY_API:
+            return json.loads(WalkJson.walkToJson(self.fem, self.fec))
+        else:
+            form_ix = FormIndex.createBeginningOfFormIndex()
+            tree = []
+            self._walk(form_ix, tree)
+            return tree
 
     def _walk(self, parent_ix, siblings):
         def step(ix, descend):
@@ -479,6 +483,7 @@ class XFormSession(object):
         return self._parse_current_event()
 
     def answer_question (self, answer, _ix=None):
+        print "Answer: ", answer
         ix = self.parse_ix(_ix)
         event = self.cur_event if ix is None else self.__parse_event(ix)
 

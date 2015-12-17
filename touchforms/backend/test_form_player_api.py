@@ -27,6 +27,8 @@ class FormPlayerApiTest(unittest.TestCase):
             self.group_xform = f.read()
             f = open(os.path.join(CUR_DIR, 'test_files/xforms/repeat.xml'), 'r')
             self.repeat_xform = f.read()
+            f = open(os.path.join(CUR_DIR, 'test_files/xforms/nested.xml'), 'r')
+            self.nested_xform = f.read()
         except IOError:
             self.fail('Could not read test form')
 
@@ -95,7 +97,7 @@ class FormPlayerApiTest(unittest.TestCase):
 
         assert(json_equals(xform_session.walk(), json.loads(WalkJson.walkToJson(model, controller))))
 
-    def test_group_walking(self):
+    def test_repeat_walking(self):
 
         xform_session = xformplayer.XFormSession(
             self.repeat_xform,
@@ -106,15 +108,64 @@ class FormPlayerApiTest(unittest.TestCase):
         model = xform_session.fem
         controller = xform_session.fec
 
-        print "==== WALK ===="
-        parsed = WalkJson.walkToJson(model, controller)
-        print parsed
-        print "==== OLD WALK ===="
-        parsed = xform_session.walk()
-        print parsed
+        assert(json_equals(xform_session.walk(), json.loads(WalkJson.walkToJson(model, controller))))
+
+    def test_group_walking(self):
+
+        xform_session = xformplayer.XFormSession(
+            self.group_xform,
+            instance=None,
+            **self.session_metadata
+        )
+
+        model = xform_session.fem
+        controller = xform_session.fec
 
         assert(json_equals(xform_session.walk(), json.loads(WalkJson.walkToJson(model, controller))))
 
+    def test_nested_walking(self):
+
+        xform_session = xformplayer.XFormSession(
+            self.nested_xform,
+            instance=None,
+            **self.session_metadata
+        )
+
+        model = xform_session.fem
+        controller = xform_session.fec
+
+        assert(json_equals(xform_session.walk(), json.loads(WalkJson.walkToJson(model, controller))))
+
+    def test_form_answering(self):
+        old_xform_session = xformplayer.XFormSession(
+            self.xform,
+            instance=None,
+            **self.session_metadata
+        )
+
+        new_xform_session = xformplayer.XFormSession(
+            self.xform,
+            instance=None,
+            **self.session_metadata
+        )
+
+        def answer_assert(answer, index):
+            AnswerQuestionJson.questionAnswerToJson(new_xform_session.fec, new_xform_session.fem, answer, index)
+            old_xform_session.answer_question(answer, index)
+            assert(json_equals(old_xform_session.walk(), json.loads(WalkJson.walkToJson(new_xform_session.fem, new_xform_session.fec))))
+
+
+        answer_assert("123 ABC", "1")
+        answer_assert("123", "2")
+        answer_assert("2.5", "3")
+        answer_assert("1970-10-23", "4")
+        #answer_assert("1970-10-23T12:30:30", "5") datetime not supported
+        answer_assert("12:30:30", "6")
+        answer_assert("william s pride", "7")
+        answer_assert("12345", "8")
+        answer_assert("00012345", "9")
+        answer_assert("2", "10")
+        answer_assert("1 2 3", "11")
 
     def test_form_entry(self):
 

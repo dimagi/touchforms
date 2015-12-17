@@ -85,6 +85,7 @@ def str_form_index(form_ix):
         return ','.join(str_step(step) for step in steps)
 
 def index_from_str(s_ix, form):
+    print "Index from string: ", s_ix
     if s_ix is None:
         return None
     elif s_ix == '<':
