@@ -39,7 +39,11 @@
                     </div>
                 </div>
             </form>
-            <div data-bind="template: { name: 'instance-viewer-ko-template', data: cloudCareDebugger }"></div>
+            <div data-bind="template: {
+                name: 'instance-viewer-ko-template',
+                data: cloudCareDebugger,
+                afterRender: cloudCareDebugger.adjustWidth
+            }"></div>
         </div>
     </div>
 </script>
@@ -54,13 +58,14 @@
             }
             ">
             <!-- Tab title -->
-            <div class="debugger-tab-title">
+            <div class="debugger-tab-title" data-bind="
+                click: toggleState
+                ">
                 <i class="debugger-state fa" data-bind="
                     css: {
                         'fa-expand': isMinimized,
                         'fa-compress': !isMinimized()
-                    },
-                    click: toggleState
+                    }
                 "></i>
                 <span>{% trans "CloudCare Debugger" %}</span>
             </div>
@@ -134,30 +139,29 @@
 <script type="text/html" id="debugger-eval-ko-template">
     <form class="form-horizontal" data-bind="submit: evaluate">
         <div class="form-group">
-            <div class="controls col-sm-12">
-                <textarea
-                    id="evaluate-result"
-                    type="text"
-                    style="display: block;"
-                    readonly
-                    data-bind="
-                        value: result,
-                        css: { 'text-error': !success(), 'form-control': true }
-                "></textarea>
+            <div class="col-sm-12">
+                <div class="input-group">
+                    <input
+                        id="xpath"
+                        class="form-control debugger-code"
+                        name="xpath"
+                        placeholder="/data/[your path here]"
+                        data-bind="value: xpath" />
+                    <span class="input-group-btn">
+                        <button class="btn btn-default" id="evaluate-button">{% trans "Evaluate" %}</button>
+                    </span>
+                </div>
             </div>
         </div>
-        <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH" >
-            <div class="input-group">
-                <input
-                    id="xpath"
-                    class="form-control"
-                    name="xpath"
-                    placeholder="/data/[your path here]"
-                    data-bind="value: xpath" />
-                <span class="input-group-btn">
-                    <button class="btn btn-default" id="evaluate-button">{% trans "Evaluate" %}</button>
-                </span>
-            </div>
+        <div class="col-sm-12">
+            <p
+                id="evaluate-result"
+                type="text"
+                style="display: block;"
+                data-bind="
+                    text: result,
+                    css: { 'text-error': !success() }
+            "></p>
         </div>
     </form>
 </script>
