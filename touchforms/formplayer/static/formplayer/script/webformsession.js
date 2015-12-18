@@ -70,6 +70,7 @@ function WebFormSession(params) {
 
     self.applyListeners();
 
+    self.resourceMap = params.resourceMap;
     self.session_id = params.session_id || null;
     self.instance_xml = params.instance_xml;
     self.session_data = params.session_data || {};
