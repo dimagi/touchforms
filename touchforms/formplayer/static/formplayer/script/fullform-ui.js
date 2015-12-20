@@ -181,7 +181,6 @@ function Form(json) {
     delete json.tree;
     Container.call(self, json);
     self.submitText = ko.observable('Submit');
-    self.cloudCareDebugger = new Formplayer.ViewModels.CloudCareDebugger();
 
     self.submitForm = function(form) {
         $.publish('formplayer.' + Formplayer.Const.SUBMIT, self);

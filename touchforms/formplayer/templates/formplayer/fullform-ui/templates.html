@@ -39,17 +39,11 @@
                     </div>
                 </div>
             </form>
-            <div data-bind="template: {
-                name: 'instance-viewer-ko-template',
-                data: cloudCareDebugger,
-                afterRender: cloudCareDebugger.adjustWidth
-            }"></div>
         </div>
     </div>
 </script>
 
 <script type="text/html" id="instance-viewer-ko-template">
-    {% if request|toggle_enabled:"INSTANCE_VIEWER" %}
         <hr/>
         <div id="instance-xml-home" class="debugger" data-bind="
             css: {
@@ -133,7 +127,6 @@
                 </div>
             </div>
         </div>
-    {% endif %}
 </script>
 
 <script type="text/html" id="debugger-eval-ko-template">
