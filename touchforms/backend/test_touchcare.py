@@ -13,11 +13,11 @@ CUR_DIR = os.path.dirname(__file__)
 
 class TouchcareTest(unittest.TestCase):
 
+    persistence.postgres_drop_sqlite = lambda x: 0
+    persistence.postgres_set_sqlite = lambda x, y: 0
+
     def setUp(self):
         self.restore = os.path.join(CUR_DIR, 'test_files/restores/simple_restore.xml')
-
-        persistence.postgres_drop_sqlite = lambda x: 0
-        persistence.postgres_set_sqlite = lambda x, y: 0
 
         self.session_data = {
             'session_name': 'Village Healthe > Simple Form',
