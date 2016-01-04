@@ -6,6 +6,7 @@ from setup import init_classpath
 init_classpath()
 import touchcare
 import persistence
+import datetime
 from xcp import TouchcareInvalidXPath, TouchFormsUnauthorized
 
 CUR_DIR = os.path.dirname(__file__)
@@ -15,6 +16,7 @@ class TouchcareTest(unittest.TestCase):
 
     persistence.postgres_drop_sqlite = lambda x: 0
     persistence.postgres_set_sqlite = lambda x, y: 0
+    persistence.postgres_lookup_last_modified_command = lambda x, y: datetime.datetime.utcnow()
 
     def setUp(self):
         self.restore = os.path.join(CUR_DIR, 'test_files/restores/simple_restore.xml')
