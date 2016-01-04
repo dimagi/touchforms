@@ -33,7 +33,8 @@ SQLITE_DBS_DIRECTORY = "%s/dbs" % BASE_DIR
 HACKS_MODE = True
 
 # base url for touchcare api queries
-URL_ROOT = "{{HOST}}/a/{{DOMAIN}}"
+URL_HOST = "{{HOST}}"
+URL_ROOT = URL_HOST + "/a/{{ DOMAIN }}"
 
 POSTGRES_DATABASE = {
     'HOST': 'localhost',
