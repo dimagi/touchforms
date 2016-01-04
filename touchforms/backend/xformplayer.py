@@ -181,15 +181,11 @@ class SequencingException(Exception):
 
 
 class XFormSession(object):
-    def __init__(self, xform, instance=None, use_api=False, **params):
+    def __init__(self, xform, instance=None, **params):
         self.uuid = params.get('uuid', uuid.uuid4().hex)
         self.nav_mode = params.get('nav_mode', 'prompt')
         self.seq_id = params.get('seq_id', 0)
         self.uses_sql_backend = params.get('uses_sql_backend')
-        if settings.USES_FORM_ENTRY_API:
-            self.use_api = True
-        else:
-            self.use_api=use_api
 
         self.form = load_form(
             xform,
@@ -296,14 +292,10 @@ class XFormSession(object):
         return unicode(''.join(chr(b) for b in instance_bytes.tolist()), 'utf-8')
 
     def walk(self):
-        if self.use_api:
-            ret =  json.loads(WalkJson.walkToJson(self.fem, self.fec))
-            return ret
-        else:
-            form_ix = FormIndex.createBeginningOfFormIndex()
-            tree = []
-            self._walk(form_ix, tree)
-            return tree
+        form_ix = FormIndex.createBeginningOfFormIndex()
+        tree = []
+        self._walk(form_ix, tree)
+        return tree
 
     def _walk(self, parent_ix, siblings):
         def step(ix, descend):
@@ -489,8 +481,6 @@ class XFormSession(object):
 
     def answer_question (self, answer, _ix=None):
 
-        if self.use_api:
-            return json.loads(AnswerQuestionJson.questionAnswerToJson(self.fec, self.fem, str(answer), _ix))
         ix = self.parse_ix(_ix)
         event = self.cur_event if ix is None else self.__parse_event(ix)
 
@@ -605,6 +595,13 @@ class XFormSession(object):
         resp.update(navinfo)
         resp.update({'seq_id': self.seq_id})
         return resp
+
+class NewXFormSession(XFormSession):
+    def answer_question (self, answer, _ix=None):
+        return json.loads(AnswerQuestionJson.questionAnswerToJson(self.fec, self.fem, str(answer), _ix))
+
+    def walk(self):
+        return json.loads(WalkJson.walkToJson(self.fem, self.fec))
 
 class choice(object):
     def __init__(self, q, select_choice=None, selection=None):

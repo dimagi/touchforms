@@ -19,17 +19,17 @@ class GUIStub(object):
 
 class FormPlayerApiTest(unittest.TestCase):
 
+    def load_xform(self, path):
+        f = open(os.path.join(CUR_DIR, path), 'r')
+        return f.read()
+
     def setUp(self):
 
         try:
-            f = open(os.path.join(CUR_DIR, 'test_files/xforms/question_types.xml'), 'r')
-            self.xform = f.read()
-            f = open(os.path.join(CUR_DIR, 'test_files/xforms/groups.xml'), 'r')
-            self.group_xform = f.read()
-            f = open(os.path.join(CUR_DIR, 'test_files/xforms/repeat.xml'), 'r')
-            self.repeat_xform = f.read()
-            f = open(os.path.join(CUR_DIR, 'test_files/xforms/nested.xml'), 'r')
-            self.nested_xform = f.read()
+            self.xform = self.load_xform('test_files/xforms/question_types.xml')
+            self.group_xform = self.load_xform('test_files/xforms/groups.xml')
+            self.repeat_xform = self.load_xform( 'test_files/xforms/repeat.xml')
+            self.nested_xform = self.load_xform('test_files/xforms/nested.xml')
         except IOError:
             self.fail('Could not read test form')
 
@@ -45,9 +45,6 @@ class FormPlayerApiTest(unittest.TestCase):
             'indices': {},
             'attachments': {},
         }
-
-        self.form = os.path.join(CUR_DIR, 'test_files/simple_submission.xml')
-        self.restore = os.path.join(CUR_DIR, 'test_files/restores/simple_restore.xml')
 
         self.session_data = {
             'session_name': 'Village Healthe > Simple Form',
@@ -75,13 +72,6 @@ class FormPlayerApiTest(unittest.TestCase):
             },
         }
 
-        self.commcare_instance = touchcare.perform_restore(
-            {},
-            self.session_data,
-            restore_xml=self.restore,
-        )
-
-
         xformplayer._init()
         self.manager = xformplayer.GlobalStateManager.get_globalstate()
 
@@ -95,14 +85,12 @@ class FormPlayerApiTest(unittest.TestCase):
         old_xform_session = xformplayer.XFormSession(
             self.repeat_xform,
             instance=None,
-            use_api=False,
             **self.session_metadata
         )
 
-        new_xform_session = xformplayer.XFormSession(
+        new_xform_session = xformplayer.NewXFormSession(
             self.repeat_xform,
             instance=None,
-            use_api=True,
             **self.session_metadata
         )
 
@@ -126,14 +114,12 @@ class FormPlayerApiTest(unittest.TestCase):
         old_xform_session = xformplayer.XFormSession(
             self.group_xform,
             instance=None,
-            use_api=False,
             **self.session_metadata
         )
 
-        new_xform_session = xformplayer.XFormSession(
+        new_xform_session = xformplayer.NewXFormSession(
             self.group_xform,
             instance=None,
-            use_api=True,
             **self.session_metadata
         )
 
@@ -157,10 +143,9 @@ class FormPlayerApiTest(unittest.TestCase):
 
     def test_nested_walking(self):
 
-        xform_session = xformplayer.XFormSession(
+        xform_session = xformplayer.NewXFormSession(
             self.nested_xform,
             instance=None,
-            use_api=True,
             **self.session_metadata
         )
 
@@ -173,14 +158,12 @@ class FormPlayerApiTest(unittest.TestCase):
         old_xform_session = xformplayer.XFormSession(
             self.xform,
             instance=None,
-            use_api=False,
             **self.session_metadata
         )
 
-        new_xform_session = xformplayer.XFormSession(
+        new_xform_session = xformplayer.NewXFormSession(
             self.xform,
             instance=None,
-            use_api=True,
             **self.session_metadata
         )
 
