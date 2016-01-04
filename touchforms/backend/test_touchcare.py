@@ -5,6 +5,7 @@ import os
 from setup import init_classpath
 init_classpath()
 import touchcare
+import persistence
 from xcp import TouchcareInvalidXPath, TouchFormsUnauthorized
 
 CUR_DIR = os.path.dirname(__file__)
@@ -14,6 +15,10 @@ class TouchcareTest(unittest.TestCase):
 
     def setUp(self):
         self.restore = os.path.join(CUR_DIR, 'test_files/restores/simple_restore.xml')
+
+        persistence.postgres_drop_sqlite = lambda x: 0
+        persistence.postgres_set_sqlite = lambda x, y: 0
+
         self.session_data = {
             'session_name': 'Village Healthe > Simple Form',
             'app_version': '2.0',
