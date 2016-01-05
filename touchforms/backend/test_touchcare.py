@@ -79,6 +79,8 @@ class TouchcareTest(unittest.TestCase):
 
 class TouchcareLedgerTest(unittest.TestCase):
 
+    PrototypeFactory.setStaticHasher(ClassNameHasher())
+
     def setUp(self):
         self.restore = os.path.join(CUR_DIR, 'test_files/restores/ipm_restore.xml')
         self.session_data = {
