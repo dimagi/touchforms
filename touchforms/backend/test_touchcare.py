@@ -5,15 +5,25 @@ import os
 from setup import init_classpath
 init_classpath()
 import touchcare
+import persistence
+import datetime
 from xcp import TouchcareInvalidXPath, TouchFormsUnauthorized
+from org.javarosa.core.util.externalizable import PrototypeFactory
+from org.javarosa.core.api import ClassNameHasher
 
 CUR_DIR = os.path.dirname(__file__)
 
 
 class TouchcareTest(unittest.TestCase):
 
+    persistence.postgres_drop_sqlite = lambda x: 0
+    persistence.postgres_set_sqlite = lambda x, y: 0
+    persistence.postgres_lookup_last_modified_command = lambda x, y: datetime.datetime.utcnow()
+    PrototypeFactory.setStaticHasher(ClassNameHasher())
+
     def setUp(self):
         self.restore = os.path.join(CUR_DIR, 'test_files/restores/simple_restore.xml')
+
         self.session_data = {
             'session_name': 'Village Healthe > Simple Form',
             'app_version': '2.0',
@@ -68,6 +78,8 @@ class TouchcareTest(unittest.TestCase):
 
 
 class TouchcareLedgerTest(unittest.TestCase):
+
+    PrototypeFactory.setStaticHasher(ClassNameHasher())
 
     def setUp(self):
         self.restore = os.path.join(CUR_DIR, 'test_files/restores/ipm_restore.xml')
@@ -131,28 +143,6 @@ class SubmissionTest(unittest.TestCase):
         }
 
         self.filter_expr = "[case_name = 'Napoli']"
-
-    def test_submission(self):
-        touchcare.perform_restore(
-            {},
-            self.session_data,
-            restore_xml=self.restore,
-        )
-
-        touchcare.process_form_file(
-            {},
-            self.form,
-            self.session_data,
-        )
-        filter_expr = "[@case_id = 'submission_id']"
-        resp = touchcare.filter_cases(
-            filter_expr,
-            {},
-            session_data=self.session_data,
-            force_sync=False,
-            uses_sqlite=True,
-        )
-        self.assertEqual(len(resp['cases']), 1)
 
 if __name__ == '__main__':
     unittest.main()

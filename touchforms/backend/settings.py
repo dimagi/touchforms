@@ -22,7 +22,7 @@ EXTENSION_MODULES = [
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # postgres peristence stuff
-USES_POSTGRES = True
+USES_POSTGRES = False
 POSTGRES_JDBC_JAR = os.path.join(BASE_DIR, "jrlib/postgresql-9.4-1201.jdbc41.jar")
 
 # sqlite persistence stuff
@@ -33,7 +33,8 @@ SQLITE_DBS_DIRECTORY = "%s/dbs" % BASE_DIR
 HACKS_MODE = True
 
 # base url for touchcare api queries
-URL_ROOT = "{{HOST}}/a/{{DOMAIN}}"
+URL_HOST = "{{HOST}}"
+URL_ROOT = URL_HOST + "/a/{{ DOMAIN }}"
 
 POSTGRES_DATABASE = {
     'HOST': 'localhost',
