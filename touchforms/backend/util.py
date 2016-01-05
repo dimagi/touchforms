@@ -93,7 +93,6 @@ def index_from_str(s_ix, form):
         return FormIndex.createEndOfFormIndex()
 
     def step_from_str(step):
-        print "Py Step from String ", step
         if step.endswith('J'):
             i = int(step[:-1])
             mult = -10
@@ -104,7 +103,6 @@ def index_from_str(s_ix, form):
                 mult = int(pieces[1])
             except IndexError:
                 mult = -1
-        print "PyPair: ", (i, mult)
         return (i, mult)
 
     ix = reduce(lambda cur, (i, mult): FormIndex(cur, i, mult, None),
