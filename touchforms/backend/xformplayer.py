@@ -31,6 +31,7 @@ from org.javarosa.model.xform import XFormSerializingVisitor as FormSerializer
 from org.commcare.suite.model import Text as JRText
 from java.util import Hashtable as JHashtable
 from org.javarosa.xpath import XPathException
+from org.commcare.api.json import WalkJson, AnswerQuestionJson
 
 from touchcare import CCInstances, process_form_xml
 from util import query_factory
@@ -320,6 +321,7 @@ class XFormSession(object):
 
             evt = self.__parse_event(form_ix)
             evt['relevant'] = relevant
+
             if evt['type'] == 'sub-group':
                 presentation_group = (evt['caption'] != None)
                 if presentation_group:
@@ -478,6 +480,7 @@ class XFormSession(object):
         return self._parse_current_event()
 
     def answer_question (self, answer, _ix=None):
+
         ix = self.parse_ix(_ix)
         event = self.cur_event if ix is None else self.__parse_event(ix)
 
@@ -592,6 +595,13 @@ class XFormSession(object):
         resp.update(navinfo)
         resp.update({'seq_id': self.seq_id})
         return resp
+
+class NewXFormSession(XFormSession):
+    def answer_question (self, answer, _ix=None):
+        return json.loads(AnswerQuestionJson.questionAnswerToJson(self.fec, self.fem, str(answer), _ix))
+
+    def walk(self):
+        return json.loads(WalkJson.walkToJson(self.fem, self.fec))
 
 class choice(object):
     def __init__(self, q, select_choice=None, selection=None):
@@ -715,6 +725,7 @@ def go_back(xform_session):
 # fao mode only
 @require_xform_session
 def submit_form(xform_session, answers, prevalidated):
+    print "Answers ", answers
     errors = dict(
         filter(lambda resp: resp[1]['status'] != 'success',
             ((_ix, xform_session.answer_question(answer, _ix)) for _ix, answer in answers.iteritems()))
@@ -732,8 +743,9 @@ def submit_form(xform_session, answers, prevalidated):
                 xml,
                 xform_session.orig_params['session_data'],
             )
-
-    return xform_session.response(resp, no_next=True)
+    submit_response = xform_session.response(resp, no_next=True)
+    print "Submit Response: ", submit_response
+    return submit_response
 
 
 @require_xform_session

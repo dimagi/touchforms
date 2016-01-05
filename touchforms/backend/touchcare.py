@@ -205,7 +205,7 @@ def process_form_xml(auth, submission_xml, session_data=None):
 
 
 def perform_restore(auth, session_data=None, restore_xml=None):
-    CCInstances(session_data, auth, restore_xml, True, uses_sqlite=True)
+    return CCInstances(session_data, auth, restore_xml, True, uses_sqlite=True)
 
 
 def filter_cases(filter_expr, api_auth, session_data=None, form_context=None,
