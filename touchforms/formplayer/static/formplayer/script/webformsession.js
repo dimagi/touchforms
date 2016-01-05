@@ -80,6 +80,7 @@ function WebFormSession(params) {
     }
 
     self.onsubmit = params.onsubmit;
+    self.uses_sqlite = params.uses_sqlite_backend || false;
 
     // onload/onlanginfo
     self.onload = params.onload;
@@ -231,7 +232,8 @@ WebFormSession.prototype.loadForm = function($form, initLang) {
         'instance-content': this.instance_xml,
         'lang': initLang,
         'session-data': this.session_data,
-        'nav': 'fao'
+        'nav': 'fao',
+        'uses-sqlite': this.uses_sqlite
     };
     args[this.formSpec.type] = this.formSpec.val;
 

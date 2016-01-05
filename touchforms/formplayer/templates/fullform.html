@@ -75,6 +75,12 @@ $(document).ready(function() {
       args.session_data = {{ session_data|safe }};
       args.instance_xml = {{ instance_xml|safe }};
     }
+    {% if request|toggle_enabled:"TF_USES_SQLITE_BACKEND" %}
+      args.uses_sqlite_backend = true
+    {% else %}
+      args.uses_sqlite_backend = false
+    {% endif %}
+
     var sess = new WebFormSession(args);
 
     var init_lang = {% if lang %}'{{ lang|escapejs }}'{% else %}null{% endif %};

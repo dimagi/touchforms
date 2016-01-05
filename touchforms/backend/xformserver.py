@@ -192,15 +192,17 @@ def handle_request(content, server):
                 inst_spec = None
 
             session_data = content.get("session-data", {})
+
             return xformplayer.open_form(form_spec, inst_spec, **{
-                    'init_lang': content.get('lang'),
-                    'extensions': server.extensions,
-                    'session_data': session_data,
-                    'nav_mode': nav_mode,
-                    'api_auth': content.get('hq_auth'),
-                    'form_context': content.get('form_context', {}),
-                    'staleness_window': content.get('staleness_window', server.default_stale_window),
-                })
+                'init_lang': content.get('lang'),
+                'extensions': server.extensions,
+                'session_data': session_data,
+                'nav_mode': nav_mode,
+                'api_auth': content.get('hq_auth'),
+                'form_context': content.get('form_context', {}),
+                'staleness_window': content.get('staleness_window', server.default_stale_window),
+                'uses_sql_backend': content.get('uses_sql_backend'),
+            })
 
         elif action == xformplayer.Actions.ANSWER:
             ensure_required_params(['session-id', 'answer'], action, content)
@@ -245,7 +247,9 @@ def handle_request(content, server):
             return xformplayer.delete_repeat(content['session-id'], content['ix'], content.get('form_ix'))
         elif action == xformplayer.Actions.SUBMIT_ALL:
             ensure_required_params(['session-id'], action, content)
-            return xformplayer.submit_form(content['session-id'], content.get('answers', []), content.get('prevalidated', False))
+            return xformplayer.submit_form(content['session-id'],
+                                           content.get('answers', []),
+                                           content.get('prevalidated', False))
         elif action == xformplayer.Actions.SET_LANG:
             ensure_required_params(['session-id', 'lang'], action, content)
             return xformplayer.set_locale(content['session-id'], content['lang'])
@@ -261,6 +265,11 @@ def handle_request(content, server):
             xfsess = xformplayer.global_state.get_session(content['session-id'])
             result = xfsess.evaluate_xpath(content['xpath'])
             return {"output": result['output'], "status": result['status']}
+        elif action == xformplayer.Actions.SYNC_USER_DB:
+            ensure_required_params(['username', 'hq_auth'], action, content)
+            trimmed_username = content['username'][:content['username'].index('.')]
+            result = touchcare.force_ota_restore(trimmed_username, auth=content['hq_auth'])
+            return result
         # Touchcare routes
         elif action == touchcare.Actions.FILTER_CASES:
             ensure_required_params(['hq_auth', 'filter_expr'], action, content)
@@ -269,6 +278,7 @@ def handle_request(content, server):
                 content.get('hq_auth'),
                 content.get('session_data', {}),
                 content.get('form_context', {}),
+                uses_sqlite=content.get('uses_sql_backend', False)
             )
             return result
 

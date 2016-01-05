@@ -32,7 +32,7 @@ from org.commcare.suite.model import Text as JRText
 from java.util import Hashtable as JHashtable
 from org.javarosa.xpath import XPathException
 
-from touchcare import CCInstances
+from touchcare import CCInstances, process_form_xml
 from util import query_factory
 from decorators import require_xform_session
 from xcp import CaseNotFound
@@ -86,8 +86,9 @@ class GlobalStateManager(object):
                 else:
                     logging.debug("No such session")
                     raise NoSuchSession()
+
         logger.info('[locking] get_session released lock for session %s' % session_id)
-        
+
     def purge(self):
         num_sess_purged = 0
         num_sess_active = 0
@@ -124,7 +125,8 @@ def _init():
     global_state = GlobalStateManager()
 
 
-def load_form(xform, instance=None, extensions=None, session_data=None, api_auth=None, form_context=None):
+def load_form(xform, instance=None, extensions=None, session_data=None,
+              api_auth=None, form_context=None, uses_sql_backend=False):
     """Returns an org.javarosa.core.model.FormDef
 
     Parameters
@@ -137,6 +139,7 @@ def load_form(xform, instance=None, extensions=None, session_data=None, api_auth
     """
     extensions = extensions or []
     session_data = session_data or {}
+
     form = XFormParser(StringReader(xform)).parse()
     if instance is not None:
         XFormParser(None).loadXmlInstance(form, StringReader(instance))
@@ -154,14 +157,20 @@ def load_form(xform, instance=None, extensions=None, session_data=None, api_auth
             'use_cache': 'true',
             'hsph_hack': session_data.get('case_id', None)
         })
-        form.initialize(instance is None, CCInstances(session_data, api_auth, form_context))
+        form.initialize(instance is None, CCInstances(session_data,
+                                                      api_auth,
+                                                      form_context=form_context,
+                                                      uses_sqlite=uses_sql_backend))
     except CaseNotFound:
         # Touchforms repeatedly makes a call to HQ to get all the case ids in its universe. We can optimize
         # this by caching that call to HQ. However, when someone adds a case to that case list, we want to ensure
         # that that case appears in the universe of cases. Therefore we first attempt to use the cached version
         # of the case id list, and in the event that we cannot find a case, we try again, but do not use the cache.
         session_data.get('additional_filters', {}).update({'use_cache': 'false'})
-        form.initialize(instance is None, CCInstances(session_data, api_auth, form_context))
+        form.initialize(instance is None, CCInstances(session_data,
+                                                      api_auth,
+                                                      form_context=form_context,
+                                                      uses_sqlite=uses_sql_backend))
 
     return form
 
@@ -175,6 +184,7 @@ class XFormSession(object):
         self.uuid = params.get('uuid', uuid.uuid4().hex)
         self.nav_mode = params.get('nav_mode', 'prompt')
         self.seq_id = params.get('seq_id', 0)
+        self.uses_sql_backend = params.get('uses_sql_backend')
 
         self.form = load_form(
             xform,
@@ -183,6 +193,7 @@ class XFormSession(object):
             params.get('session_data', {}),
             params.get('api_auth'),
             params.get('form_context', None),
+            self.uses_sql_backend,
         )
         self.fem = FormEntryModel(self.form, FormEntryModel.REPEAT_STRUCTURE_NON_LINEAR)
         self.fec = FormEntryController(self.fem)
@@ -227,6 +238,7 @@ class XFormSession(object):
         if self.persist:
             # TODO should this be done async? we must dump state before releasing the lock, however
             persistence.persist(self)
+
 
     def update_last_activity(self):
         self.last_activity = time.time()
@@ -277,7 +289,7 @@ class XFormSession(object):
 
         instance_bytes = FormSerializer().serializeInstance(self.form.getInstance())
         return unicode(''.join(chr(b) for b in instance_bytes.tolist()), 'utf-8')
-    
+
     def walk(self):
         form_ix = FormIndex.createBeginningOfFormIndex()
         tree = []
@@ -346,10 +358,10 @@ class XFormSession(object):
     def _parse_current_event(self):
         self.cur_event = self.__parse_event(self.fem.getFormIndex())
         return self.cur_event
-    
+
     def __parse_event (self, form_ix):
         event = {'ix': form_ix}
-      
+
         status = self.fem.getEvent(form_ix)
         if status == self.fec.EVENT_BEGINNING_OF_FORM:
             event['type'] = 'form-start'
@@ -407,7 +419,7 @@ class XFormSession(object):
                     Constants.DATATYPE_NULL: 'str',
                     Constants.DATATYPE_TEXT: 'str',
                     Constants.DATATYPE_INTEGER: 'int',
-                    Constants.DATATYPE_LONG: 'longint',              
+                    Constants.DATATYPE_LONG: 'longint',
                     Constants.DATATYPE_DECIMAL: 'float',
                     Constants.DATATYPE_DATE: 'date',
                     Constants.DATATYPE_TIME: 'time',
@@ -559,7 +571,7 @@ class XFormSession(object):
             return None
 
     def finalize(self):
-        self.fem.getForm().postProcessInstance() 
+        self.fem.getForm().postProcessInstance()
 
     def parse_ix(self, s_ix):
         return index_from_str(s_ix, self.form)
@@ -631,6 +643,7 @@ def init_context(xfsess):
 
 
 def open_form(form_spec, inst_spec=None, **kwargs):
+
     try:
         xform_xml = get_loader(form_spec, **kwargs)()
     except Exception, e:
@@ -712,6 +725,13 @@ def submit_form(xform_session, answers, prevalidated):
     else:
         resp = form_completion(xform_session)
         resp['status'] = 'success'
+        xml = xform_session.output()
+        if xform_session.uses_sql_backend:
+            process_form_xml(
+                xform_session.orig_params['api_auth'],
+                xml,
+                xform_session.orig_params['session_data'],
+            )
 
     return xform_session.response(resp, no_next=True)
 
@@ -788,3 +808,4 @@ class Actions:
     PURGE_STALE = 'purge-stale'
     GET_INSTANCE = 'get-instance'
     EVALUATE_XPATH = 'evaluate-xpath'
+    SYNC_USER_DB = 'sync-db'

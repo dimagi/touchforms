@@ -5,6 +5,7 @@ import httplib
 import logging
 import socket
 from touchforms.formplayer.exceptions import BadDataError
+from corehq.toggles import TF_USES_SQLITE_BACKEND
 
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
@@ -258,6 +259,12 @@ def post_data(data, url, content_type, auth=None):
         except TypeError:
             raise BadDataError('unhandleable touchforms query: %s' % data)
         d['hq_auth'] = auth.to_dict()
+        if 'session-data' in d:
+            domain = d['session-data']['domain']
+            d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
+        elif 'session_data' in d:
+            domain = d['session_data']['domain']
+            d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
         data = json.dumps(d)
 
     up = urlparse(url)
@@ -279,6 +286,15 @@ def get_response(data, url, auth=None):
         return XformsResponse(json.loads(response))
     except Exception, e:
         raise e
+
+def sync_db(username, auth=None):
+    data = {
+        "action":"sync-db",
+        "username": username
+    }
+    response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
+    response = json.loads(response)
+    return response
 
 
 def get_raw_instance(session_id, auth=None):
@@ -328,6 +344,7 @@ def current_question(session_id, auth=None):
     data = {"action": "current",
             "session-id": session_id}
     return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
+
 
 def next(session_id, auth=None):
     """

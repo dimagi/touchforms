@@ -4,18 +4,25 @@ import os
 
 from setup import init_classpath
 init_classpath()
-
 import touchcare
+import persistence
+import datetime
 from xcp import TouchcareInvalidXPath, TouchFormsUnauthorized
+from org.javarosa.core.util.externalizable import PrototypeFactory
+from org.javarosa.core.api import ClassNameHasher
 
 CUR_DIR = os.path.dirname(__file__)
 
 
 class TouchcareTest(unittest.TestCase):
 
+    persistence.postgres_drop_sqlite = lambda x: 0
+    persistence.postgres_set_sqlite = lambda x, y: 0
+    persistence.postgres_lookup_last_modified_command = lambda x, y: datetime.datetime.utcnow()
+    PrototypeFactory.setStaticHasher(ClassNameHasher())
+
     def setUp(self):
-        with open(os.path.join(CUR_DIR, 'test_files/xforms/xform_simple_cases.xml'), 'r') as f:
-            self.xform = f.read()
+        self.restore = os.path.join(CUR_DIR, 'test_files/restores/simple_restore.xml')
 
         self.session_data = {
             'session_name': 'Village Healthe > Simple Form',
@@ -23,85 +30,119 @@ class TouchcareTest(unittest.TestCase):
             'device_id': 'cloudcare',
             'user_id': '51cd680c0bd1c21bb5e63dab99748248',
             'additional_filters': {'footprint': True},
-            'domain': 'aspace',
+            'domain': 'willslearningproject',
             'host': 'http://localhost:8000',
             'user_data': {},
             'case_id_new_RegCase_0': '1c2e7c76f0c84eaea5b44bc7d1d3caf0',
             'app_id': '6a48b8838d06febeeabb28c8c9516ab6',
-            'username': 'ben'
-        }
-
-        self.case = {
-            'case_id': 'legolas',
-            'properties': {
-                'case_type': 'dragon',
-                'case_name': 'rocky',
-                'date_opened': None,
-                'owner_id': 'ben-123',
-            },
-            'closed': False,
-            'indices': {},
-            'attachments': {},
-        }
-        self.case_two = {
-            'case_id': 'aragorn',
-            'properties': {
-                'case_type': 'dragon',
-                'case_name': 'smooth_operator',
-                'date_opened': None,
-                'owner_id': 'ben-123',
-            },
-            'closed': False,
-            'indices': {},
-            'attachments': {},
+            'username': 'wspride-tc-2'
         }
 
     def test_filter_cases(self):
-        filter_expr = "[case_name = 'rocky']"
+        filter_expr = "[case_name = 'case']"
 
         resp = touchcare.filter_cases(
             filter_expr,
             {},
             self.session_data,
-            form_context={
-                'cases': [self.case, self.case_two],
-                'all_case_ids': ['legolas', 'gimli'],
-                'case_model': self.case
-            }
+            restore_xml=self.restore,
+            uses_sqlite=True,
+        )
+        self.assertEqual(len(resp['cases']), 2)
+
+    def test_filter_cases_two(self):
+        filter_expr = "[case_name = 'derp']"
+
+        resp = touchcare.filter_cases(
+            filter_expr,
+            {},
+            self.session_data,
+            restore_xml=self.restore,
+            force_sync=False,
+            uses_sqlite=True,
+        )
+        self.assertEqual(len(resp['cases']), 0)
+
+    def test_filter_cases_3(self):
+        filter_expr = "[case_name = 'case']"
+
+        resp = touchcare.filter_cases(
+            filter_expr,
+            {},
+            self.session_data,
+            restore_xml=self.restore,
+            force_sync=False,
+            uses_sqlite=True,
+        )
+        self.assertEqual(len(resp['cases']), 2)
+
+
+class TouchcareLedgerTest(unittest.TestCase):
+
+    PrototypeFactory.setStaticHasher(ClassNameHasher())
+
+    def setUp(self):
+        self.restore = os.path.join(CUR_DIR, 'test_files/restores/ipm_restore.xml')
+        self.session_data = {
+            'session_name': 'Village Healthe > Simple Form',
+            'app_version': '2.0',
+            'device_id': 'cloudcare',
+            'user_id': 'a8f5a98c4ce767c35b9132bc75eb225c',
+            'additional_filters': {'footprint': True},
+            'domain': 'willslearningproject',
+            'host': 'http://localhost:8000',
+            'user_data': {},
+            'case_id_new_RegCase_0': '1c2e7c76f0c84eaea5b44bc7d1d3caf0',
+            'app_id': '6a48b8838d06febeeabb28c8c9516ab6',
+            'username': 'ipm-test-2'
+        }
+
+    def test_filter_cases(self):
+        filter_expr = "[case_name = 'Napoli']"
+
+        resp = touchcare.filter_cases(
+            filter_expr,
+            {},
+            self.session_data,
+            restore_xml=self.restore,
+            uses_sqlite=True,
         )
         self.assertEqual(len(resp['cases']), 1)
 
-    def test_mismatch_xpath(self):
-        filter_expr = "broken"
+    def test_filter_cases_two(self):
+        filter_expr = "[case_name = 'derp']"
 
-        try:
-            touchcare.filter_cases(
-                filter_expr,
-                {},
-                self.session_data,
-                form_context={
-                    'cases': [self.case],
-                    'all_case_ids': ['legolas', 'gimli'],
-                    'case_model': self.case
-                }
-            )
-        except TouchcareInvalidXPath, e:
-            self.assertTrue(filter_expr in str(e))
-        else:
-            self.fail()
+        resp = touchcare.filter_cases(
+            filter_expr,
+            {},
+            self.session_data,
+            restore_xml=self.restore,
+            uses_sqlite=True,
+        )
+        self.assertEqual(len(resp['cases']), 0)
 
-    def test_unable_to_access_hq(self):
-        try:
-            touchcare.filter_cases(
-                '',
-                {},
-                self.session_data,
-            )
-        except TouchFormsUnauthorized, e:
-            self.assertTrue('Unable to connect to HQ' in str(e))
-        else:
-            self.fail()
 
+class SubmissionTest(unittest.TestCase):
+
+    def setUp(self):
+        self.form = os.path.join(CUR_DIR, 'test_files/simple_submission.xml')
+        self.restore = os.path.join(CUR_DIR, 'test_files/restores/simple_restore.xml')
+
+        self.session_data = {
+            'session_name': 'Village Healthe > Simple Form',
+            'app_version': '2.0',
+            'device_id': 'cloudcare',
+            'user_id': '51cd680c0bd1c21bb5e63dab99748248',
+            'additional_filters': {'footprint': True},
+            'domain': 'willslearningproject',
+            'host': 'http://localhost:8000',
+            'user_data': {},
+            'case_id_new_RegCase_0': '1c2e7c76f0c84eaea5b44bc7d1d3caf0',
+            'app_id': '6a48b8838d06febeeabb28c8c9516ab6',
+            'username': 'submission-test'
+        }
+
+        self.filter_expr = "[case_name = 'Napoli']"
 
 if __name__ == '__main__':
     unittest.main()

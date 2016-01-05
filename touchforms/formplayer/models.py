@@ -12,6 +12,14 @@ from django.contrib.auth.models import User
 VERSION_KEY = "version"
 UIVERSION_KEY = "uiVersion"
 
+
+class SqlStatus(models.Model):
+    username = models.CharField(max_length=255, primary_key=True)
+    app_version = models.IntegerField()
+    last_modified = models.DateTimeField(null=True)
+    date_created = models.DateTimeField(null=True)
+
+
 class Session(models.Model):
     sess_id = models.CharField(max_length=100, primary_key=True)
     sess_json = models.TextField()

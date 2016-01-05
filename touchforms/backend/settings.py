@@ -18,16 +18,23 @@ EXTENSION_MODULES = [
     'handlers.static',  # support for static functions and static date functions
 ]
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # postgres peristence stuff
 USES_POSTGRES = False
-POSTGRES_TABLE = "formplayer_session"
-POSTGRES_JDBC_JAR = "%s/jrlib/postgresql-9.4-1201.jdbc41.jar"%os.path.dirname(os.path.abspath(__file__))
+POSTGRES_JDBC_JAR = os.path.join(BASE_DIR, "jrlib/postgresql-9.4-1201.jdbc41.jar")
+
+# sqlite persistence stuff
+
+SQLITE_DBS_DIRECTORY = "%s/dbs" % BASE_DIR
 
 # be more forgiving about data types in api
 HACKS_MODE = True
 
 # base url for touchcare api queries
-URL_ROOT = "{{HOST}}/a/{{DOMAIN}}"
+URL_HOST = "{{HOST}}"
+URL_ROOT = URL_HOST + "/a/{{ DOMAIN }}"
 
 POSTGRES_DATABASE = {
     'HOST': 'localhost',
@@ -91,4 +98,7 @@ datadog_logger.setLevel(logging.INFO)
 CASE_API_URL = '%s/cloudcare/api/cases/' % URL_ROOT
 FIXTURE_API_URL = '%s/cloudcare/api/fixtures' % URL_ROOT
 LEDGER_API_URL = '%s/cloudcare/api/ledgers/' % URL_ROOT
+RESTORE_URL = '%s/phone/restore/' % URL_ROOT
 
+### Number of hours to sqlite Sqlite DBs without forcing a restore ###
+SQLITE_STALENESS_WINDOW = 120

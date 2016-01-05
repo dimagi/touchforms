@@ -3,8 +3,8 @@ from urllib2 import HTTPError, URLError
 import logging
 from datetime import datetime
 from copy import copy
-
 import settings
+import os
 
 from org.javarosa.core.model.instance import InstanceInitializationFactory
 from org.javarosa.core.services.storage import IStorageUtilityIndexed
@@ -12,26 +12,242 @@ from org.javarosa.core.services.storage import IStorageIterator
 from org.commcare.cases.instance import CaseInstanceTreeElement
 from org.commcare.cases.ledger.instance import LedgerInstanceTreeElement
 from org.commcare.cases.instance import CaseDataInstance
+from org.commcare.core.process import CommCareInstanceInitializer
 from org.commcare.cases.model import Case
 from org.commcare.cases.ledger import Ledger
-from org.commcare.util import CommCareSession
+from org.commcare.session import CommCareSession
 from org.javarosa.xml import TreeElementParser
-
 from org.javarosa.xpath.expr import XPathFuncExpr
 from org.javarosa.xpath import XPathParseTool, XPathException
 from org.javarosa.xpath.parser import XPathSyntaxException
 from org.javarosa.core.model.condition import EvaluationContext
 from org.javarosa.core.model.instance import ExternalDataInstance
+from org.commcare.api.persistence import SqlSandboxUtils
+from org.commcare.core.sandbox import SandboxUtils
+from org.commcare.modern.process import FormRecordProcessorHelper as FormRecordProcessor
+from org.commcare.modern.parse import ParseUtilsHelper as ParseUtils
 from org.kxml2.io import KXmlParser
-
+import persistence
+from java.io import File
 from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
 from xcp import TouchFormsUnauthorized, TouchcareInvalidXPath, TouchFormsNotFound, CaseNotFound
 
 logger = logging.getLogger('formplayer.touchcare')
 
 
+def get_restore_url(criteria=None):
+    query_url = '%s?%s' % (settings.RESTORE_URL, urllib.urlencode(criteria))
+    return query_url
+
+
+def force_ota_restore(domained_username, auth):
+    username = domained_username.split("@")[0]
+    domain = domained_username.split("@")[1]
+    CCInstances({"username": username, "domain": domain, "host": settings.URL_HOST},
+                auth, force_sync=True, uses_sqlite=True)
+    result = {'status': 'OK'}
+    return result
+
+
+class CCInstances(CommCareInstanceInitializer):
+    def __init__(self, sessionvars, auth, restore_xml=None,
+                 force_sync=False, form_context=None, uses_sqlite=False):
+        self.vars = sessionvars
+        self.auth = auth
+        self.uses_sqlite = uses_sqlite
+
+        if self.uses_sqlite:
+            self.username = sessionvars['username'] + '@' + sessionvars['domain']
+            self.sandbox = SqlSandboxUtils.getStaticStorage(self.username, settings.SQLITE_DBS_DIRECTORY)
+            self.host = settings.URL_HOST
+            self.domain = sessionvars['domain']
+            self.query_func = query_factory(self.host, self.domain, self.auth, 'raw')
+            self.query_url = get_restore_url({'as': self.username, 'version': '2.0'})
+            CommCareInstanceInitializer.__init__(self, self.sandbox)
+
+            if force_sync or self.needs_sync():
+                self.perform_ota_restore(restore_xml)
+        else:
+            self.fixtures = {}
+            self.form_context = form_context or {}
+
+    def clear_tables(self):
+        db_name = self.username + ".db"
+        if os.path.isfile(db_name):
+            os.remove(db_name)
+        self.sandbox = SqlSandboxUtils.getStaticStorage(self.username, settings.SQLITE_DBS_DIRECTORY)
+        persistence.postgres_drop_sqlite(self.username)
+
+    def perform_ota_restore(self, restore=None):
+        self.clear_tables()
+        if not restore:
+            restore_xml = self.get_restore_xml()
+            ParseUtils.parseXMLIntoSandbox(restore_xml, self.sandbox)
+        else:
+            restore_file = restore
+            ParseUtils.parseFileIntoSandbox(File(restore_file), self.sandbox)
+        persistence.postgres_set_sqlite(self.username, 1)
+
+    def get_restore_xml(self):
+        payload = self.query_func(self.query_url)
+        return payload
+
+    def needs_sync(self):
+        try:
+            self.last_sync = persistence.postgres_lookup_sqlite_last_modified(self.username)
+        except:
+            logger.exception("Unable to get last sync for usertime for user %s " % self.username)
+            return True
+
+        current_time = datetime.utcnow()
+        elapsed = current_time - self.last_sync
+        minutes_elapsed = divmod(elapsed.days * 86400 + elapsed.seconds, 60)[0]
+        return minutes_elapsed > settings.SQLITE_STALENESS_WINDOW
+
+    def generateRoot(self, instance):
+
+        ref = instance.getReference()
+
+        def from_bundle(inst):
+            root = inst.getRoot()
+            root.setParent(instance.getBase())
+            return root
+
+        if 'casedb' in ref:
+            if self.uses_sqlite:
+                case_storage = self.sandbox.getCaseStorage()
+            else:
+                case_storage = CaseDatabase(
+                    self.vars.get('host'),
+                    self.vars['domain'],
+                    self.auth,
+                    self.vars.get("additional_filters", {}),
+                    self.vars.get("preload_cases", False),
+                    self.form_context,
+                )
+            return CaseInstanceTreeElement(
+                instance.getBase(),
+                case_storage,
+                False
+            )
+        elif 'fixture' in ref:
+            fixture_id = ref.split('/')[-1]
+            user_id = self.vars['user_id']
+            if self.uses_sqlite:
+                fixture = SandboxUtils.loadFixture(self.sandbox, fixture_id, user_id)
+                root = fixture.getRoot()
+            else:
+                root = self._get_fixture(user_id, fixture_id)
+            root.setParent(instance.getBase())
+            return root
+        elif 'ledgerdb' in ref:
+            if self.uses_sqlite:
+                ledger_storage = self.sandbox.getLedgerStorage()
+            else:
+                ledger_storage = LedgerDatabase(
+                    self.vars.get('host'), self.vars['domain'],
+                    self.auth, self.vars.get("additional_filters", {}),
+                    self.vars.get("preload_cases", False),
+                )
+            return LedgerInstanceTreeElement(
+                instance.getBase(),
+                ledger_storage
+            )
+        elif 'session' in ref:
+            meta_keys = ['device_id', 'app_version', 'username', 'user_id']
+            exclude_keys = ['additional_filters', 'user_data']
+            sess = CommCareSession(None)  # will not passing a CCPlatform cause problems later?
+            for k, v in self.vars.iteritems():
+                if k not in meta_keys \
+                        and k not in exclude_keys:
+                    # com.xhaus.jyson.JysonCodec returns data as byte strings
+                    # in unknown encoding (possibly ISO-8859-1)
+                    sess.setDatum(k, unicode(v, errors='replace'))
+
+            clean_user_data = {}
+            for k, v in self.vars.get('user_data', {}).iteritems():
+                clean_user_data[k] = unicode(v if v is not None else '', errors='replace')
+
+            return from_bundle(sess.getSessionInstance(*([self.vars.get(k, '') for k in meta_keys] +
+                                                         [to_hashtable(clean_user_data)])))
+
+    def _get_fixture(self, user_id, fixture_id):
+        query_url = '%(base)s/%(user)s/%(fixture)s' % {"base": settings.FIXTURE_API_URL,
+                                                       "user": user_id,
+                                                       "fixture": fixture_id}
+        q = query_factory(self.vars.get('host'), self.vars['domain'], self.auth, format="raw")
+        try:
+            results = q(query_url)
+        except (HTTPError, URLError), e:
+            raise TouchFormsNotFound('Unable to fetch fixture at %s: %s' % (query_url, str(e)))
+        parser = KXmlParser()
+        parser.setInput(to_input_stream(results), "UTF-8")
+        parser.setFeature(KXmlParser.FEATURE_PROCESS_NAMESPACES, True)
+        parser.next()
+        return TreeElementParser(parser, 0, fixture_id).parse()
+
+
+def process_form_file(auth, submission_file, session_data=None):
+    """
+    process_form_file and process_form_xml both perform submissions of the completed form form_data
+    against the sandbox of the current user.
+
+    """
+    ccInstances = CCInstances(session_data, auth, uses_sqlite=True)
+    sandbox = ccInstances.sandbox
+    FormRecordProcessor.processFile(sandbox, File(submission_file))
+
+
+def process_form_xml(auth, submission_xml, session_data=None):
+    ccInstances = CCInstances(session_data, auth, uses_sqlite=True)
+    sandbox = ccInstances.sandbox
+    FormRecordProcessor.processXML(sandbox, submission_xml)
+
+
+def perform_restore(auth, session_data=None, restore_xml=None):
+    CCInstances(session_data, auth, restore_xml, True, uses_sqlite=True)
+
+
+def filter_cases(filter_expr, api_auth, session_data=None, form_context=None,
+                 restore_xml=None, force_sync=True, uses_sqlite=False):
+    session_data = session_data or {}
+    form_context = form_context or {}
+    modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
+                     {"filters": filter_expr}
+
+    # whenever we do a filter case operation we need to load all
+    # the cases, so force this unless manually specified
+    if 'preload_cases' not in session_data:
+        session_data['preload_cases'] = True
+
+    ccInstances = CCInstances(session_data, api_auth, form_context=form_context,
+                              restore_xml=restore_xml, force_sync=force_sync, uses_sqlite=uses_sqlite)
+    caseInstance = ExternalDataInstance("jr://instance/casedb", "casedb")
+
+    try:
+        caseInstance.initialize(ccInstances, "casedb")
+    except (HTTPError, URLError), e:
+        raise TouchFormsUnauthorized('Unable to connect to HQ: %s' % str(e))
+
+    instances = to_hashtable({"casedb": caseInstance})
+
+    # load any additional instances needed
+    for extra_instance_config in session_data.get('extra_instances', []):
+        data_instance = ExternalDataInstance(extra_instance_config['src'], extra_instance_config['id'])
+        data_instance.initialize(ccInstances, extra_instance_config['id'])
+        instances[extra_instance_config['id']] = data_instance
+
+    try:
+        case_list = XPathFuncExpr.toString(
+            XPathParseTool.parseXPath(modified_xpath).eval(
+                EvaluationContext(None, instances)))
+        return {'cases': filter(lambda x: x, case_list.split(","))}
+    except (XPathException, XPathSyntaxException), e:
+        raise TouchcareInvalidXPath('Error querying cases with xpath %s: %s' % (filter_expr, str(e)))
+
+
 def query_case_ids(q, criteria=None):
-    criteria = copy(criteria) or {} # don't modify the passed in dict
+    criteria = copy(criteria) or {}  # don't modify the passed in dict
     criteria["ids_only"] = 'true'
     query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria))
     return [id for id in q(query_url)]
@@ -39,7 +255,7 @@ def query_case_ids(q, criteria=None):
 
 def query_cases(q, criteria=None):
     query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria)) \
-                    if criteria else settings.CASE_API_URL
+        if criteria else settings.CASE_API_URL
     return [case_from_json(cj) for cj in q(query_url)]
 
 
@@ -58,9 +274,12 @@ def case_from_json(data):
     c.setName(data['properties']['case_name'])
     c.setClosed(data['closed'])
     if data['properties']['date_opened']:
-        c.setDateOpened(to_jdate(datetime.strptime(data['properties']['date_opened'], '%Y-%m-%dT%H:%M:%S'))) # 'Z' in fmt string omitted due to jython bug
+        c.setDateOpened(to_jdate(
+            datetime.strptime(
+                data['properties']['date_opened'],
+                '%Y-%m-%dT%H:%M:%S')))  # 'Z' in fmt string omitted due to jython bug
     owner_id = data['properties']['owner_id'] or data['user_id'] or ""
-    c.setUserId(owner_id) # according to clayton "there is no user_id, only owner_id"
+    c.setUserId(owner_id)  # according to clayton "there is no user_id, only owner_id"
 
     for k, v in data['properties'].iteritems():
         if v is not None and k not in ['case_name', 'case_type', 'date_opened']:
@@ -109,13 +328,13 @@ class TouchformsStorageUtility(IStorageUtilityIndexed):
     uses this to populate and reference cases in the SQLite database on the Android phone. Touchforms uses HQ
     as its "mobile database" so when populating the case universe, it calls HQ to get the case universe for
     that particular user.
-
     See:
     https://github.com/dimagi/javarosa/blob/master/core/src/org/javarosa/core/services/storage/IStorageUtilityIndexed.java
     for more information on the interface.
     """
 
     def __init__(self, host, domain, auth, additional_filters=None, preload=False, form_context=None):
+
         self.cached_lookups = {}
         self.form_context = form_context or {}
 
@@ -187,7 +406,6 @@ class TouchformsStorageUtility(IStorageUtilityIndexed):
 
 
 class CaseDatabase(TouchformsStorageUtility):
-
     def get_object_id(self, case):
         return case.getCaseId()
 
@@ -278,125 +496,6 @@ class LedgerDatabase(TouchformsStorageUtility):
 
         id_map = dict((v, k) for k, v in self.ids.iteritems())
         return to_vect(id_map[l.getEntiyId()] for l in ledgers)
-
-
-class CCInstances(InstanceInitializationFactory):
-
-    def __init__(self, sessionvars, api_auth, form_context=None):
-        self.vars = sessionvars
-        self.auth = api_auth
-        self.fixtures = {}
-        self.form_context = form_context or {}
-
-    def getSpecializedExternalDataInstance(self, instance):
-        if CaseInstanceTreeElement.MODEL_NAME == instance.getInstanceId():
-            return CaseDataInstance(instance)
-        return instance
-
-    def generateRoot(self, instance):
-        ref = instance.getReference()
-        def from_bundle(inst):
-            root = inst.getRoot()
-            root.setParent(instance.getBase())
-            return root
-
-        if 'casedb' in ref:
-            return CaseInstanceTreeElement(
-                instance.getBase(),
-                CaseDatabase(
-                    self.vars.get('host'),
-                    self.vars['domain'],
-                    self.auth,
-                    self.vars.get("additional_filters", {}),
-                    self.vars.get("preload_cases", False),
-                    self.form_context,
-                ),
-                False
-            )
-        elif 'fixture' in ref:
-            fixture_id = ref.split('/')[-1]
-            user_id = self.vars['user_id']
-            ret = self._get_fixture(user_id, fixture_id)
-            # Unclear why this is necessary but it is
-            ret.setParent(instance.getBase())
-            return ret
-        elif 'ledgerdb' in ref:
-            return LedgerInstanceTreeElement(
-                instance.getBase(),
-                LedgerDatabase(
-                    self.vars.get('host'), self.vars['domain'],
-                    self.auth, self.vars.get("additional_filters", {}),
-                    self.vars.get("preload_cases", False),
-                )
-            )
-
-        elif 'session' in ref:
-            meta_keys = ['device_id', 'app_version', 'username', 'user_id']
-            exclude_keys = ['additional_filters', 'user_data']
-            sess = CommCareSession(None) # will not passing a CCPlatform cause problems later?
-            for k, v in self.vars.iteritems():
-                if k not in meta_keys and k not in exclude_keys:
-                    # com.xhaus.jyson.JysonCodec returns data as byte strings
-                    # in unknown encoding (possibly ISO-8859-1)
-                    sess.setDatum(k, unicode(v, errors='replace'))
-
-            clean_user_data = {}
-            for k, v in self.vars.get('user_data', {}).iteritems():
-                clean_user_data[k] = unicode(v if v is not None else '', errors='replace')
-
-            return from_bundle(sess.getSessionInstance(*([self.vars.get(k, '') for k in meta_keys] + \
-                                                         [to_hashtable(clean_user_data)])))
-    
-    def _get_fixture(self, user_id, fixture_id):
-        query_url = '%(base)s/%(user)s/%(fixture)s' % { "base": settings.FIXTURE_API_URL, 
-                                                        "user": user_id,
-                                                        "fixture": fixture_id }
-        q = query_factory(self.vars.get('host'), self.vars['domain'], self.auth, format="raw")
-        try:
-            results = q(query_url)
-        except (HTTPError, URLError), e:
-            raise TouchFormsNotFound('Unable to fetch fixture at %s: %s' % (query_url, str(e)))
-        parser = KXmlParser()
-        parser.setInput(to_input_stream(results), "UTF-8")
-        parser.setFeature(KXmlParser.FEATURE_PROCESS_NAMESPACES, True)
-        parser.next()
-        return TreeElementParser(parser, 0, fixture_id).parse()
-
-
-def filter_cases(filter_expr, api_auth, session_data=None, form_context=None):
-    session_data = session_data or {}
-    form_context = form_context or {}
-    modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
-        {"filters": filter_expr}
-
-    # whenever we do a filter case operation we need to load all
-    # the cases, so force this unless manually specified
-    if 'preload_cases' not in session_data:
-        session_data['preload_cases'] = True
-
-    ccInstances = CCInstances(session_data, api_auth, form_context)
-    caseInstance = ExternalDataInstance("jr://instance/casedb", "casedb")
-
-    try:
-        caseInstance.initialize(ccInstances, "casedb")
-    except (HTTPError, URLError), e:
-        raise TouchFormsUnauthorized('Unable to connect to HQ: %s' % str(e))
-
-    instances = to_hashtable({"casedb": caseInstance})
-
-    # load any additional instances needed
-    for extra_instance_config in session_data.get('extra_instances', []):
-        data_instance = ExternalDataInstance(extra_instance_config['src'], extra_instance_config['id'])
-        data_instance.initialize(ccInstances, extra_instance_config['id'])
-        instances[extra_instance_config['id']] = data_instance
-
-    try:
-        case_list = XPathFuncExpr.toString(
-            XPathParseTool.parseXPath(modified_xpath).eval(
-                EvaluationContext(None, instances)))
-        return {'cases': filter(lambda x: x, case_list.split(","))}
-    except (XPathException, XPathSyntaxException), e:
-        raise TouchcareInvalidXPath('Error querying cases with xpath %s: %s' % (filter_expr, str(e)))
 
 
 class Actions:
