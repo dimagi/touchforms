@@ -139,30 +139,5 @@ class SubmissionTest(unittest.TestCase):
 
         self.filter_expr = "[case_name = 'Napoli']"
 
-    def test_submission(self):
-
-        touchcare.CCInstances.get_restore_xml = lambda x: self.restore
-
-        touchcare.perform_restore(
-            {},
-            self.session_data,
-            restore_xml=self.restore,
-        )
-
-        touchcare.process_form_file(
-            {},
-            self.form,
-            self.session_data,
-        )
-        filter_expr = "[@case_id = 'submission_id']"
-        resp = touchcare.filter_cases(
-            filter_expr,
-            {},
-            session_data=self.session_data,
-            force_sync=False,
-            uses_sqlite=True,
-        )
-        self.assertEqual(len(resp['cases']), 1)
-
 if __name__ == '__main__':
     unittest.main()
