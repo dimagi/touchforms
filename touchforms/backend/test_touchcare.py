@@ -140,6 +140,9 @@ class SubmissionTest(unittest.TestCase):
         self.filter_expr = "[case_name = 'Napoli']"
 
     def test_submission(self):
+
+        touchcare.CCInstances.get_restore_xml = lambda x: self.restore
+
         touchcare.perform_restore(
             {},
             self.session_data,
