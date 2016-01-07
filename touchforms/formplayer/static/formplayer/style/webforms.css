@@ -4,6 +4,15 @@
   font-family: sans-serif;
 }
 
+#sync-container {
+  padding-top: 9px;
+}
+
+#sync-container #sync-button {
+  margin-bottom: 3px;
+  margin-top: 3px;
+}
+
 .debugger {
   width: 800px;
   position: fixed;
