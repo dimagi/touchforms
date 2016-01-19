@@ -137,15 +137,14 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
 
     this.numPendingRequests++;
     this.onLoading();
-
     $.ajax({
             type: 'POST',
             url: url,
             data: JSON.stringify(requestParams),
-            dataType: "json",
+            dataType: "text"  // we don't use JSON because of a weird bug: http://manage.dimagi.com/default.asp?190983
         })
-        .success(function(resp) { self.handleSuccess(resp, callback); })
-        .fail(self.handleFailure.bind(self));
+        .success(function(resp) { self.handleSuccess(JSON.parse(resp), callback); })
+        .fail(function (resp, textStatus) { self.handleFailure(JSON.parse(resp), textStatus); });
 };
 
 /*
