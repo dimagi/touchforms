@@ -228,14 +228,14 @@ def player_proxy(request):
                                  content_type="text/json", auth=DjangoAuth(auth_cookie))
 
         _track_session(request, json.loads(data), json.loads(response))
-        return HttpResponse(response)
+        return HttpResponse(response, content_type='application/json')
     except IOError:
         logging.exception('Unable to connect to touchforms.')
         msg = _(
             'An error occurred while trying to connect to the CloudCare service. '
             'If you have problems filling in the rest of your form please report an issue.'
         )
-        return HttpResponseServerError(json.dumps({'message': msg}))
+        return HttpResponseServerError(json.dumps({'message': msg}), content_type='application/json')
 
 
 def _track_session(request, payload, response):
