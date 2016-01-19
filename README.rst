@@ -75,3 +75,19 @@ Then run the following commands ::
 
     pip install -r touchforms/test_requirements.txt
     ./run_tests.sh
+
+
+Running Frontend tests
+======================
+
+The JS tests are run with `./run_tests.sh` script, but if you'd like to run the tests in the browser you can
+do that as well. You will need to have jasmine installed:
+
+    pip install -r touchforms/test_requirements.txt
+
+Then to start the Jasmine server run this command in the terminal:
+
+   cd touchforms
+   jasmine
+
+This will start a server on http://localhost:8888. Navigate to that URL and the tests will run in the browser!
