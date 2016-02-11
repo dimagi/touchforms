@@ -19,7 +19,7 @@ from django.utils.translation import ugettext as _
 import tempfile
 import os
 from . import api
-from touchforms.formplayer.api import DjangoAuth, get_raw_instance
+from touchforms.formplayer.api import DigestAuth, DjangoAuth, get_raw_instance
 from touchforms.formplayer.const import PRELOADER_TAG_UID
 from datetime import datetime
 from dimagi.utils.web import json_response
@@ -222,10 +222,17 @@ def player_proxy(request):
     Proxy to an xform player, to avoid cross-site scripting issues
     """
     data = request.body
-    auth_cookie = request.COOKIES.get('sessionid')
+    parsed_data = json.loads(data)
+
+    if parsed_data['mobile_auth'].get('username', None):
+        auth = DigestAuth(parsed_data['mobile_auth']['username'], parsed_data['mobile_auth']['password'])
+    else:
+        auth_cookie = request.COOKIES.get('sessionid')
+        auth = DjangoAuth(auth_cookie)
+
     try:
         response = api.post_data(data, settings.XFORMS_PLAYER_URL,
-                                 content_type="text/json", auth=DjangoAuth(auth_cookie))
+                                 content_type="text/json", auth=auth)
 
         _track_session(request, json.loads(data), json.loads(response))
         return HttpResponse(response, content_type='application/json')

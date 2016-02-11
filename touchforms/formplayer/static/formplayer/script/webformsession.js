@@ -58,6 +58,8 @@ function WebFormSession(params) {
     var self = this;
     self.taskQueue = new TaskQueue();
     self.formContext = params.formContext;
+    // Authentication credentials for a mobile user inputed by a web user in the CloudCare config
+    self.mobileAuth = params.mobileAuth;
 
 
     if (params.form_uid) {
@@ -127,6 +129,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     }
 
     requestParams.form_context = self.formContext;
+    requestParams.mobile_auth = self.mobileAuth;
     requestParams['session-id'] = self.session_id;
 
     if (this.blockingRequestInProgress) {
