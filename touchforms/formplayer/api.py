@@ -72,7 +72,7 @@ class XFormsConfig(object):
         self.form_path = form_path
         self.form_content = form_content
         self.language = language
-        self.session_data = session_data        
+        self.session_data = session_data
         self.preloader_data = preloader_data        
         self.instance_content = instance_content
         self.touchforms_url = touchforms_url or settings.XFORMS_PLAYER_URL
@@ -99,6 +99,7 @@ class XFormsConfig(object):
         """
         Start a new session based on this configuration
         """
+
         return get_response(json.dumps(self.get_touchforms_dict()), 
                             self.touchforms_url, auth=self.auth)
     
@@ -292,7 +293,10 @@ def sync_db(username, auth=None):
         "action":"sync-db",
         "username": username
     }
-    response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
+    if settings.USE_FORMPLAYER:
+        response = post_data(json.dumps(data), settings.FORMPLAYER_URL, "text/json", auth)
+    else:
+        response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
     response = json.loads(response)
     return response
 
@@ -306,7 +310,11 @@ def get_raw_instance(session_id, auth=None):
         "action":"get-instance",
         "session-id": session_id,
         }
-    response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
+
+    if settings.USE_FORMPLAYER:
+        response = post_data(json.dumps(data), settings.FORMPLAYER_URL, "text/json", auth)
+    else:
+        response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
     response = json.loads(response)
     if "error" in response:
         error = response["error"]
@@ -334,8 +342,12 @@ def answer_question(session_id, answer, auth=None):
     """
     data = {"action": "answer",
             "session-id": session_id,
+            "session_id": session_id,
             "answer":answer }
-    return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
+    if settings.USE_FORMPLAYER:
+        return get_response(json.dumps(data), settings.FORMPLAYER_URL, auth)
+    else:
+        return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
 
 def current_question(session_id, auth=None):
     """
@@ -343,7 +355,10 @@ def current_question(session_id, auth=None):
     """
     data = {"action": "current",
             "session-id": session_id}
-    return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
+    if settings.USE_FORMPLAYER:
+        return get_response(json.dumps(data), settings.FORMPLAYER_URL, auth)
+    else:
+        return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
 
 
 def next(session_id, auth=None):
@@ -352,4 +367,7 @@ def next(session_id, auth=None):
     """
     data = {"action": "next",
             "session-id": session_id}
-    return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
+    if settings.USE_FORMPLAYER:
+        return get_response(json.dumps(data), settings.FORMPLAYER_URL, auth)
+    else:
+        return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
