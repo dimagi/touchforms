@@ -5,8 +5,8 @@ import httplib
 import logging
 import socket
 from touchforms.formplayer.exceptions import BadDataError
-from corehq.toggles import TF_USES_SQLITE_BACKEND
-
+from corehq.toggles import TF_USES_SQLITE_BACKEND, USE_FORMPLAYER
+import util
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
 backend for various sets of tasks.
@@ -260,12 +260,8 @@ def post_data(data, url, content_type, auth=None):
         except TypeError:
             raise BadDataError('unhandleable touchforms query: %s' % data)
         d['hq_auth'] = auth.to_dict()
-        if 'session-data' in d:
-            domain = d['session-data']['domain']
-            d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
-        elif 'session_data' in d:
-            domain = d['session_data']['domain']
-            d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
+        domain = util.get_request_var(data, "domain")
+        d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
         data = json.dumps(d)
 
     up = urlparse(url)
@@ -276,11 +272,12 @@ def post_data(data, url, content_type, auth=None):
     conn.request('POST', up.path, data, headers)
     resp = conn.getresponse()
     results = resp.read()
+
     return results
     
 def get_response(data, url, auth=None):
     try:
-        response = post_data(data, url, content_type="text/json", auth=auth)
+        response = post_data(data, url, content_type="application/json", auth=auth)
     except socket.error, e:
         return XformsResponse.server_down()
     try:
@@ -288,31 +285,32 @@ def get_response(data, url, auth=None):
     except Exception, e:
         raise e
 
-def sync_db(username, auth=None):
+def sync_db(username, domain=None, auth=None):
     data = {
         "action":"sync-db",
         "username": username
     }
-    if settings.USE_FORMPLAYER:
-        response = post_data(json.dumps(data), settings.FORMPLAYER_URL, "text/json", auth)
+    if domain and USE_FORMPLAYER.enabled(domain):
+        response = post_data(json.dumps(data), settings.FORMPLAYER_URL, "application/json", auth)
     else:
         response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
     response = json.loads(response)
     return response
 
 
-def get_raw_instance(session_id, auth=None):
+def get_raw_instance(session_id, domain=None, auth=None):
     """
     Gets the raw xml instance of the current session regardless of the state that we're in (used for logging partially complete
     forms to couch when errors happen).
     """
+
     data = {
         "action":"get-instance",
         "session-id": session_id,
         }
 
-    if settings.USE_FORMPLAYER:
-        response = post_data(json.dumps(data), settings.FORMPLAYER_URL, "text/json", auth)
+    if domain and USE_FORMPLAYER.enabled(domain):
+        response = post_data(json.dumps(data), settings.FORMPLAYER_URL + "/get-instance", "application/json", auth)
     else:
         response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
     response = json.loads(response)
@@ -329,14 +327,14 @@ def start_form_session(form_path, content=None, language="", session_data={}):
     """
     Start a new form session
     """
-    # TODO: this method has been deprecated and the config object 
+    # TODO: this method has been deprecated and the config object
     # should just be used directly. Temporarily left to support legacy code.
-    return XFormsConfig(form_path=form_path, 
+    return XFormsConfig(form_path=form_path,
                         instance_content=content,
                         session_data=session_data,
                         language=language).start_session()
     
-def answer_question(session_id, answer, auth=None):
+def answer_question(session_id, answer, domain=None, auth=None):
     """
     Answer a question. 
     """
@@ -344,30 +342,30 @@ def answer_question(session_id, answer, auth=None):
             "session-id": session_id,
             "session_id": session_id,
             "answer":answer }
-    if settings.USE_FORMPLAYER:
+    if domain and USE_FORMPLAYER.enabled(domain):
         return get_response(json.dumps(data), settings.FORMPLAYER_URL, auth)
     else:
         return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
 
-def current_question(session_id, auth=None):
+def current_question(session_id, domain=None, auth=None):
     """
     Retrieves information about the current question.
     """
     data = {"action": "current",
             "session-id": session_id}
-    if settings.USE_FORMPLAYER:
+    if domain and USE_FORMPLAYER.enabled(domain):
         return get_response(json.dumps(data), settings.FORMPLAYER_URL, auth)
     else:
         return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
 
 
-def next(session_id, auth=None):
+def next(session_id, domain=None, auth=None):
     """
     Moves to the next question.
     """
     data = {"action": "next",
             "session-id": session_id}
-    if settings.USE_FORMPLAYER:
+    if domain and USE_FORMPLAYER.enabled(domain):
         return get_response(json.dumps(data), settings.FORMPLAYER_URL, auth)
     else:
         return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)

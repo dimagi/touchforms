@@ -25,6 +25,7 @@ from datetime import datetime
 from dimagi.utils.web import json_response
 from corehq.apps.cloudcare import utils
 from corehq import toggles
+import util
 
 
 def debug_only(fn):
@@ -218,16 +219,6 @@ def _get_player_dimensions(request):
         'height': get_dim('h', 'TOUCHSCREEN_HEIGHT')
     }
 
-def get_domain(request):
-    json_body = json.loads(request.body)
-    if "session-data" in json_body:
-        domain = json_body["session-data"]["domain"]
-    elif "session_data" in json_body:
-        domain = json_body["session_data"]["domain"]
-    else:
-        domain = json.loads(request.body)["domain"]
-    return domain
-
 @csrf_exempt
 @require_POST
 def player_proxy(request):
@@ -238,7 +229,7 @@ def player_proxy(request):
     action = json.loads(data)["action"]
     auth_cookie = request.COOKIES.get('sessionid')
     try:
-        domain = get_domain(request)
+        domain = util.get_request_var(request.body, "domain")
     except KeyError:
         logging.exception('Request did not specify domain.')
         msg = _(
