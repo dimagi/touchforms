@@ -254,15 +254,20 @@ class XformsResponse(object):
     
             
 def post_data(data, url, content_type, auth=None):
+
+    try:
+        d = json.loads(data)
+    except TypeError:
+        raise BadDataError('unhandleable touchforms query: %s' % data)
+
     if auth:
-        try:
-            d = json.loads(data)
-        except TypeError:
-            raise BadDataError('unhandleable touchforms query: %s' % data)
         d['hq_auth'] = auth.to_dict()
-        domain = util.get_request_var(data, "domain")
-        d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
-        data = json.dumps(d)
+
+    domain = util.get_request_var(data, "domain")
+    if domain:
+            d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
+
+    data = json.dumps(d)
 
     up = urlparse(url)
     headers = {}
@@ -290,8 +295,9 @@ def sync_db(username, domain=None, auth=None):
         "action":"sync-db",
         "username": username
     }
+
     if domain and USE_FORMPLAYER.enabled(domain):
-        response = post_data(json.dumps(data), settings.FORMPLAYER_URL, "application/json", auth)
+        response = post_data(json.dumps(data), settings.FORMPLAYER_URL + "/sync-db", "application/json", auth)
     else:
         response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
     response = json.loads(response)

@@ -20,10 +20,11 @@ def get_autocomplete_dir():
 
 def get_request_var(json_obj, var):
     json_body = json.loads(json_obj)
+    ret = None
     if "session-data" in json_body:
         ret = json_body["session-data"][var]
     elif "session_data" in json_body:
         ret = json_body["session_data"][var]
-    else:
+    elif var in json_body:
         ret = json_body[var]
     return ret
