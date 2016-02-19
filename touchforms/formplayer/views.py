@@ -218,6 +218,16 @@ def _get_player_dimensions(request):
         'height': get_dim('h', 'TOUCHSCREEN_HEIGHT')
     }
 
+def get_domain(request):
+    json_body = json.loads(request.body)
+    if "session-data" in json_body:
+        domain = json_body["session-data"]["domain"]
+    elif "session_data" in json_body:
+        domain = json_body["session_data"]["domain"]
+    else:
+        domain = json.loads(request.body)["domain"]
+    return domain
+
 @csrf_exempt
 @require_POST
 def player_proxy(request):
@@ -228,7 +238,16 @@ def player_proxy(request):
     action = json.loads(data)["action"]
     auth_cookie = request.COOKIES.get('sessionid')
     try:
-        if settings.USE_FORMPLAYER:
+        domain = get_domain(request)
+    except KeyError:
+        logging.exception('Request did not specify domain.')
+        msg = _(
+            'An internal error occurred while processing your request. '
+            'Your request must contain the "domain" attribute. Please report this bug.'
+        )
+        return HttpResponseServerError(json.dumps({'message': msg}), content_type='application/json')
+    try:
+        if toggles.USE_FORMPLAYER.enabled(domain):
             response = api.post_data(data, settings.FORMPLAYER_URL + "/" + action,
                     content_type="application/json", auth=DjangoAuth(auth_cookie))
         else:
