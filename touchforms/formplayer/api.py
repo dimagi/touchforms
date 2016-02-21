@@ -290,6 +290,7 @@ def get_response(data, url, auth=None):
     except Exception, e:
         raise e
 
+
 def sync_db(username, domain=None, auth=None):
     data = {
         "action":"sync-db",
@@ -339,7 +340,8 @@ def start_form_session(form_path, content=None, language="", session_data={}):
                         instance_content=content,
                         session_data=session_data,
                         language=language).start_session()
-    
+
+
 def answer_question(session_id, answer, domain=None, auth=None):
     """
     Answer a question. 
@@ -352,6 +354,7 @@ def answer_question(session_id, answer, domain=None, auth=None):
         return get_response(json.dumps(data), settings.FORMPLAYER_URL, auth)
     else:
         return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
+
 
 def current_question(session_id, domain=None, auth=None):
     """

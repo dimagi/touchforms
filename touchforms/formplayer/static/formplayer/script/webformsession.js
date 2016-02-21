@@ -129,6 +129,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     requestParams.form_context = self.formContext;
     requestParams.domain = self.domain;
     requestParams['session-id'] = self.session_id;
+    // stupid hack for now to make up for both being used in different requests
     requestParams['session_id'] = self.session_id;
 
     if (this.blockingRequestInProgress) {

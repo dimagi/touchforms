@@ -23,7 +23,6 @@ from touchforms.formplayer.api import DjangoAuth, get_raw_instance
 from touchforms.formplayer.const import PRELOADER_TAG_UID
 from datetime import datetime
 from dimagi.utils.web import json_response
-from corehq.apps.cloudcare import utils
 from corehq import toggles
 import util
 
