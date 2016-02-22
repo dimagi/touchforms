@@ -329,7 +329,7 @@ WebFormSession.prototype.submitForm = function(form) {
 
     accumulate_answers = function(o) {
         if (ko.utils.unwrapObservable(o.type) !== 'question') {
-            if(typeof o.children == 'function') {
+            if(o.hasOwnProperty("children")) {
                 $.each(o.children(), function (i, val) {
                     accumulate_answers(val);
                 });

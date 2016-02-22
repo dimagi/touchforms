@@ -267,7 +267,7 @@ def post_data(data, auth=None, content_type="application/json"):
         d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
 
         if USE_FORMPLAYER.enabled(domain):
-            url = settings.FORMPLAYER_URL + "/" + data.action
+            url = settings.FORMPLAYER_URL + "/" + d["action"]
         else:
             url = settings.XFORMS_PLAYER_URL
     else:
@@ -301,7 +301,8 @@ def get_response(data, auth=None):
 def sync_db(username, domain=None, auth=None):
     data = {
         "action":"sync-db",
-        "username": username
+        "username": username,
+        "domain:": domain
     }
 
     response = post_data(json.dumps(data), auth)
