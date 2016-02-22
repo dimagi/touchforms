@@ -237,12 +237,7 @@ def player_proxy(request):
         )
         return HttpResponseServerError(json.dumps({'message': msg}), content_type='application/json')
     try:
-        if toggles.USE_FORMPLAYER.enabled(domain):
-            response = api.post_data(data, settings.FORMPLAYER_URL + "/" + action,
-                    content_type="application/json", auth=DjangoAuth(auth_cookie))
-        else:
-            response = api.post_data(data, settings.XFORMS_PLAYER_URL,
-                    content_type="application/json", auth=DjangoAuth(auth_cookie))
+        response = api.post_data(data, auth=DjangoAuth(auth_cookie))
 
         _track_session(request, json.loads(data), json.loads(response))
         return HttpResponse(response, content_type='application/json')

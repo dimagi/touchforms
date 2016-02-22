@@ -100,8 +100,7 @@ class XFormsConfig(object):
         Start a new session based on this configuration
         """
 
-        return get_response(json.dumps(self.get_touchforms_dict()), 
-                            self.touchforms_url, auth=self.auth)
+        return get_response(json.dumps(self.get_touchforms_dict()), auth=self.auth)
     
 class XformsEvent(object):
     """
@@ -253,7 +252,7 @@ class XformsResponse(object):
                                         "contact your administrator for help."})
     
             
-def post_data(data, url, content_type, auth=None):
+def post_data(data, auth=None, content_type="application/json"):
 
     try:
         d = json.loads(data)
@@ -264,8 +263,16 @@ def post_data(data, url, content_type, auth=None):
         d['hq_auth'] = auth.to_dict()
 
     domain = util.get_request_var(data, "domain")
+
     if domain:
-            d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
+        d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
+
+        if USE_FORMPLAYER.enabled(domain):
+            url = settings.FORMPLAYER_URL + "/" + data.action
+        else:
+            url = settings.XFORMS_PLAYER_URL
+    else:
+        raise BadDataError('All post data queries must have domain: %s' % data)
 
     data = json.dumps(d)
 
@@ -280,9 +287,9 @@ def post_data(data, url, content_type, auth=None):
 
     return results
     
-def get_response(data, url, auth=None):
+def get_response(data, auth=None):
     try:
-        response = post_data(data, url, content_type="application/json", auth=auth)
+        response = post_data(data, auth=auth)
     except socket.error, e:
         return XformsResponse.server_down()
     try:
@@ -297,10 +304,7 @@ def sync_db(username, domain=None, auth=None):
         "username": username
     }
 
-    if domain and USE_FORMPLAYER.enabled(domain):
-        response = post_data(json.dumps(data), settings.FORMPLAYER_URL + "/sync-db", "application/json", auth)
-    else:
-        response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
+    response = post_data(json.dumps(data), auth)
     response = json.loads(response)
     return response
 
@@ -314,12 +318,10 @@ def get_raw_instance(session_id, domain=None, auth=None):
     data = {
         "action":"get-instance",
         "session-id": session_id,
+        "domain": domain
         }
 
-    if domain and USE_FORMPLAYER.enabled(domain):
-        response = post_data(json.dumps(data), settings.FORMPLAYER_URL + "/get-instance", "application/json", auth)
-    else:
-        response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
+    response = post_data(json.dumps(data), auth)
     response = json.loads(response)
     if "error" in response:
         error = response["error"]
@@ -348,12 +350,9 @@ def answer_question(session_id, answer, domain=None, auth=None):
     """
     data = {"action": "answer",
             "session-id": session_id,
-            "session_id": session_id,
-            "answer":answer }
-    if domain and USE_FORMPLAYER.enabled(domain):
-        return get_response(json.dumps(data), settings.FORMPLAYER_URL, auth)
-    else:
-        return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
+            "answer":answer,
+            "domain": domain}
+    return get_response(json.dumps(data), auth)
 
 
 def current_question(session_id, domain=None, auth=None):
@@ -361,20 +360,7 @@ def current_question(session_id, domain=None, auth=None):
     Retrieves information about the current question.
     """
     data = {"action": "current",
-            "session-id": session_id}
-    if domain and USE_FORMPLAYER.enabled(domain):
-        return get_response(json.dumps(data), settings.FORMPLAYER_URL, auth)
-    else:
-        return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
+            "session-id": session_id,
+            "domain": domain}
+    return get_response(json.dumps(data), auth)
 
-
-def next(session_id, domain=None, auth=None):
-    """
-    Moves to the next question.
-    """
-    data = {"action": "next",
-            "session-id": session_id}
-    if domain and USE_FORMPLAYER.enabled(domain):
-        return get_response(json.dumps(data), settings.FORMPLAYER_URL, auth)
-    else:
-        return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)

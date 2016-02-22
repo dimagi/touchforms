@@ -328,9 +328,11 @@ WebFormSession.prototype.submitForm = function(form) {
 
     accumulate_answers = function(o) {
         if (ko.utils.unwrapObservable(o.type) !== 'question') {
-            $.each(o.children(), function(i, val) {
-                accumulate_answers(val);
-            });
+            if(typeof o.children == 'function') {
+                $.each(o.children(), function (i, val) {
+                    accumulate_answers(val);
+                });
+            }
         } else {
             if (o.isValid()) {
                 answers[getIx(o)] = ko.utils.unwrapObservable(o.answer);
