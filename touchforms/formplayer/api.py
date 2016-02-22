@@ -90,7 +90,6 @@ class XFormsConfig(object):
                 ("preloader-data", self.preloader_data),
                 ("session-data", self.session_data),
                 ("lang", self.language))
-        print "session-data: ", self.session_data
         
         # only include anything with a value, or touchforms gets mad
         return dict(filter(lambda x: x[1], vals))
