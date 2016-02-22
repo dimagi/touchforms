@@ -18,15 +18,3 @@ def get_autocomplete_dir():
     else:
         root_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
         os.path.join(root_dir, 'static', 'census')
-
-
-def get_request_var(json_obj, var):
-    json_body = json.loads(json_obj)
-    ret = None
-    if "session-data" in json_body:
-        ret = json_body["session-data"][var]
-    elif "session_data" in json_body:
-        ret = json_body["session_data"][var]
-    elif var in json_body:
-        ret = json_body[var]
-    return ret

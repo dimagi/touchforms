@@ -6,7 +6,6 @@ import logging
 import socket
 from touchforms.formplayer.exceptions import BadDataError
 from corehq.toggles import TF_USES_SQLITE_BACKEND, USE_FORMPLAYER
-import util
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
 backend for various sets of tasks.
@@ -91,6 +90,7 @@ class XFormsConfig(object):
                 ("preloader-data", self.preloader_data),
                 ("session-data", self.session_data),
                 ("lang", self.language))
+        print "session-data: ", self.session_data
         
         # only include anything with a value, or touchforms gets mad
         return dict(filter(lambda x: x[1], vals))
@@ -262,7 +262,7 @@ def post_data(data, auth=None, content_type="application/json"):
     if auth:
         d['hq_auth'] = auth.to_dict()
 
-    domain = util.get_request_var(data, "domain")
+    domain = d["domain"]
 
     if domain:
         d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
@@ -286,7 +286,8 @@ def post_data(data, auth=None, content_type="application/json"):
     results = resp.read()
 
     return results
-    
+
+
 def get_response(data, auth=None):
     try:
         response = post_data(data, auth=auth)
@@ -350,7 +351,7 @@ def answer_question(session_id, answer, domain=None, auth=None):
     """
     data = {"action": "answer",
             "session-id": session_id,
-            "answer":answer,
+            "answer": answer,
             "domain": domain}
     return get_response(json.dumps(data), auth)
 
@@ -364,3 +365,11 @@ def current_question(session_id, domain=None, auth=None):
             "domain": domain}
     return get_response(json.dumps(data), auth)
 
+
+def next(session_id, domain=None, auth=None):
+    """
+    Moves to the next question.
+    """
+    data = {"action": "next",
+            "session-id": session_id}
+    return get_response(json.dumps(data), auth)

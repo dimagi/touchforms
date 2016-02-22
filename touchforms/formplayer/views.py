@@ -23,8 +23,6 @@ from touchforms.formplayer.api import DjangoAuth, get_raw_instance
 from touchforms.formplayer.const import PRELOADER_TAG_UID
 from datetime import datetime
 from dimagi.utils.web import json_response
-from corehq import toggles
-import util
 
 
 def debug_only(fn):
@@ -225,20 +223,9 @@ def player_proxy(request):
     Proxy to an xform player, to avoid cross-site scripting issues
     """
     data = request.body
-    action = json.loads(data)["action"]
     auth_cookie = request.COOKIES.get('sessionid')
     try:
-        domain = util.get_request_var(request.body, "domain")
-    except KeyError:
-        logging.exception('Request did not specify domain.')
-        msg = _(
-            'An internal error occurred while processing your request. '
-            'Your request must contain the "domain" attribute. Please report this bug.'
-        )
-        return HttpResponseServerError(json.dumps({'message': msg}), content_type='application/json')
-    try:
         response = api.post_data(data, auth=DjangoAuth(auth_cookie))
-
         _track_session(request, json.loads(data), json.loads(response))
         return HttpResponse(response, content_type='application/json')
     except IOError:

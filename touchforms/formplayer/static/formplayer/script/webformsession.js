@@ -233,6 +233,7 @@ WebFormSession.prototype.loadForm = function($form, initLang) {
         'instance-content': this.instance_xml,
         'lang': initLang,
         'session-data': this.session_data,
+        'domain': this.session_data.domain,
         'nav': 'fao',
         'uses-sqlite': this.uses_sqlite
     };
