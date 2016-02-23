@@ -261,7 +261,7 @@ def post_data(data, auth=None, content_type="application/json"):
     if auth:
         d['hq_auth'] = auth.to_dict()
 
-    domain = d["domain"]
+    domain = d.get("domain")
 
     if domain and USE_FORMPLAYER.enabled(domain):
         d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
