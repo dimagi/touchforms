@@ -17,3 +17,4 @@ touchforms/offline/dist/
 touchforms/offline/src/main/resources/Lib/touchforms/
 touchforms/node_modules
 touchforms/formplayer/static/formplayer/script/build/
+*.DS_STORE

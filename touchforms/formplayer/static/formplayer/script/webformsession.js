@@ -58,7 +58,7 @@ function WebFormSession(params) {
     var self = this;
     self.taskQueue = new TaskQueue();
     self.formContext = params.formContext;
-
+    self.domain = params.domain;
 
     if (params.form_uid) {
         self.formSpec = {type: 'form-name', val: params.form_uid};
@@ -127,8 +127,10 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     }
 
     requestParams.form_context = self.formContext;
+    requestParams.domain = self.domain;
     requestParams['session-id'] = self.session_id;
-
+    // stupid hack for now to make up for both being used in different requests
+    requestParams['session_id'] = self.session_id;
     if (this.blockingRequestInProgress) {
         return;
     }
@@ -231,6 +233,7 @@ WebFormSession.prototype.loadForm = function($form, initLang) {
         'instance-content': this.instance_xml,
         'lang': initLang,
         'session-data': this.session_data,
+        'domain': this.session_data.domain,
         'nav': 'fao',
         'uses-sqlite': this.uses_sqlite
     };
@@ -326,9 +329,11 @@ WebFormSession.prototype.submitForm = function(form) {
 
     accumulate_answers = function(o) {
         if (ko.utils.unwrapObservable(o.type) !== 'question') {
-            $.each(o.children(), function(i, val) {
-                accumulate_answers(val);
-            });
+            if(o.hasOwnProperty("children")) {
+                $.each(o.children(), function (i, val) {
+                    accumulate_answers(val);
+                });
+            }
         } else {
             if (o.isValid()) {
                 answers[getIx(o)] = ko.utils.unwrapObservable(o.answer);

@@ -5,8 +5,7 @@ import httplib
 import logging
 import socket
 from touchforms.formplayer.exceptions import BadDataError
-from corehq.toggles import TF_USES_SQLITE_BACKEND
-
+from corehq.toggles import TF_USES_SQLITE_BACKEND, USE_FORMPLAYER
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
 backend for various sets of tasks.
@@ -72,7 +71,7 @@ class XFormsConfig(object):
         self.form_path = form_path
         self.form_content = form_content
         self.language = language
-        self.session_data = session_data        
+        self.session_data = session_data
         self.preloader_data = preloader_data        
         self.instance_content = instance_content
         self.touchforms_url = touchforms_url or settings.XFORMS_PLAYER_URL
@@ -99,8 +98,8 @@ class XFormsConfig(object):
         """
         Start a new session based on this configuration
         """
-        return get_response(json.dumps(self.get_touchforms_dict()), 
-                            self.touchforms_url, auth=self.auth)
+
+        return get_response(json.dumps(self.get_touchforms_dict()), auth=self.auth)
     
 class XformsEvent(object):
     """
@@ -252,20 +251,29 @@ class XformsResponse(object):
                                         "contact your administrator for help."})
     
             
-def post_data(data, url, content_type, auth=None):
+def post_data(data, auth=None, content_type="application/json"):
+
+    try:
+        d = json.loads(data)
+    except TypeError:
+        raise BadDataError('unhandleable touchforms query: %s' % data)
+
     if auth:
-        try:
-            d = json.loads(data)
-        except TypeError:
-            raise BadDataError('unhandleable touchforms query: %s' % data)
         d['hq_auth'] = auth.to_dict()
-        if 'session-data' in d:
-            domain = d['session-data']['domain']
-            d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
-        elif 'session_data' in d:
-            domain = d['session_data']['domain']
-            d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
-        data = json.dumps(d)
+
+    domain = d["domain"]
+
+    if domain:
+        d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
+
+        if USE_FORMPLAYER.enabled(domain):
+            url = settings.FORMPLAYER_URL + "/" + d["action"]
+        else:
+            url = settings.XFORMS_PLAYER_URL
+    else:
+        raise BadDataError('All post data queries must have domain: %s' % data)
+
+    data = json.dumps(d)
 
     up = urlparse(url)
     headers = {}
@@ -275,11 +283,13 @@ def post_data(data, url, content_type, auth=None):
     conn.request('POST', up.path, data, headers)
     resp = conn.getresponse()
     results = resp.read()
+
     return results
-    
-def get_response(data, url, auth=None):
+
+
+def get_response(data, auth=None):
     try:
-        response = post_data(data, url, content_type="text/json", auth=auth)
+        response = post_data(data, auth=auth)
     except socket.error, e:
         return XformsResponse.server_down()
     try:
@@ -287,26 +297,32 @@ def get_response(data, url, auth=None):
     except Exception, e:
         raise e
 
-def sync_db(username, auth=None):
+
+def sync_db(username, domain=None, auth=None):
     data = {
         "action":"sync-db",
-        "username": username
+        "username": username,
+        "domain:": domain
     }
-    response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
+
+    response = post_data(json.dumps(data), auth)
     response = json.loads(response)
     return response
 
 
-def get_raw_instance(session_id, auth=None):
+def get_raw_instance(session_id, domain=None, auth=None):
     """
     Gets the raw xml instance of the current session regardless of the state that we're in (used for logging partially complete
     forms to couch when errors happen).
     """
+
     data = {
         "action":"get-instance",
         "session-id": session_id,
+        "domain": domain
         }
-    response = post_data(json.dumps(data), settings.XFORMS_PLAYER_URL, "text/json", auth)
+
+    response = post_data(json.dumps(data), auth)
     response = json.loads(response)
     if "error" in response:
         error = response["error"]
@@ -321,35 +337,39 @@ def start_form_session(form_path, content=None, language="", session_data={}):
     """
     Start a new form session
     """
-    # TODO: this method has been deprecated and the config object 
+    # TODO: this method has been deprecated and the config object
     # should just be used directly. Temporarily left to support legacy code.
-    return XFormsConfig(form_path=form_path, 
+    return XFormsConfig(form_path=form_path,
                         instance_content=content,
                         session_data=session_data,
                         language=language).start_session()
-    
-def answer_question(session_id, answer, auth=None):
+
+
+def answer_question(session_id, answer, domain=None, auth=None):
     """
     Answer a question. 
     """
     data = {"action": "answer",
             "session-id": session_id,
-            "answer":answer }
-    return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
+            "answer": answer,
+            "domain": domain}
+    return get_response(json.dumps(data), auth)
 
-def current_question(session_id, auth=None):
+
+def current_question(session_id, domain=None, auth=None):
     """
     Retrieves information about the current question.
     """
     data = {"action": "current",
-            "session-id": session_id}
-    return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
+            "session-id": session_id,
+            "domain": domain}
+    return get_response(json.dumps(data), auth)
 
 
-def next(session_id, auth=None):
+def next(session_id, domain=None, auth=None):
     """
     Moves to the next question.
     """
     data = {"action": "next",
             "session-id": session_id}
-    return get_response(json.dumps(data), settings.XFORMS_PLAYER_URL, auth)
+    return get_response(json.dumps(data), auth)

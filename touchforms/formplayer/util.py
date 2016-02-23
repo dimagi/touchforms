@@ -9,7 +9,8 @@ def get_xform_by_namespace(namespace):
     else:
         raise Exception("No XForm found! The database entry was " \
                         "deleted. Please syncdb and restart the server.")
-    
+
+
 def get_autocomplete_dir():
     if hasattr(settings, "TOUCHFORMS_AUTOCOMPL_DATA_DIR"):
         return settings.TOUCHFORMS_AUTOCOMPL_DATA_DIR
