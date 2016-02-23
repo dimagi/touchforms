@@ -271,7 +271,8 @@ def post_data(data, auth=None, content_type="application/json"):
         else:
             url = settings.XFORMS_PLAYER_URL
     else:
-        raise BadDataError('All post data queries must have domain: %s' % data)
+        # just default to old server for now
+        url = settings.XFORMS_PLAYER_URL
 
     data = json.dumps(d)
 
