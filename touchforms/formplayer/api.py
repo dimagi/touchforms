@@ -261,17 +261,14 @@ def post_data(data, auth=None, content_type="application/json"):
     if auth:
         d['hq_auth'] = auth.to_dict()
 
-    domain = d["domain"]
+    domain = d.get("domain")
 
-    if domain:
+    if domain and USE_FORMPLAYER.enabled(domain):
         d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
-
-        if USE_FORMPLAYER.enabled(domain):
-            url = settings.FORMPLAYER_URL + "/" + d["action"]
-        else:
-            url = settings.XFORMS_PLAYER_URL
+        url = settings.FORMPLAYER_URL + "/" + d["action"]
     else:
-        raise BadDataError('All post data queries must have domain: %s' % data)
+        # just default to old server for now
+        url = settings.XFORMS_PLAYER_URL
 
     data = json.dumps(d)
 
