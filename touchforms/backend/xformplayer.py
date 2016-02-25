@@ -299,7 +299,7 @@ class XFormSession(object):
     def _walk(self, parent_ix, siblings):
         def step(ix, descend):
             next_ix = self.fec.getAdjacentIndex(ix, True, descend)
-            self.fem.setQuestionIndex(next_ix)  # needed to trigger events in form engine
+            self.fem.setQuestionIndex(next_ix, True)  # needed to trigger events in form engine
             return next_ix
 
         def ix_in_scope(form_ix):
