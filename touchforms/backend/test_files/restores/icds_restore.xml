@@ -10,15 +10,6 @@
         </password>
         <uuid>4641c68378282377c3dbf44587a6f592</uuid>
         <date>2016-02-04</date>
-        <user_data>
-            <data key="ward_number">W1</data>
-            <data key="commcare_location_id">90463ef9d4419b6f72dcbfeddd0b638f</data>
-            <data key="awc_code">12345678913</data>
-            <data key="commcare_primary_case_sharing_id">90463ef9d4419b6f72dcbfeddd0b638f</data>
-            <data key="commcare_first_name">saket</data>
-            <data key="commcare_last_name">district</data>
-            <data key="commcare_phone_number"/>
-        </user_data>
     </Registration>
     <case xmlns="http://commcarehq.org/case/transaction/v2" case_id="7ff989fe-3458-4eeb-9950-eddcfadc7279"
           date_modified="2016-02-15T13:21:56.176000Z" user_id="a7514c522f36169e07555495acb9cffb">
