@@ -212,13 +212,9 @@ def filter_cases(filter_expr, api_auth, session_data=None, form_context=None,
                  restore_xml=None, force_sync=True, uses_sqlite=False):
     session_data = session_data or {}
     form_context = form_context or {}
+    modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
+                     {"filters": filter_expr}
 
-    if uses_sqlite:
-        modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s[@status= 'open']/@case_id)" % \
-                     {"filters": filter_expr}
-    else:
-        modified_xpath = "join(',', instance('casedb')/casedb/case%(filters)s/@case_id)" % \
-                     {"filters": filter_expr}
     # whenever we do a filter case operation we need to load all
     # the cases, so force this unless manually specified
     if 'preload_cases' not in session_data:
