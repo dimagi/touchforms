@@ -188,17 +188,6 @@ class ParentClosedTests(unittest.TestCase):
 
         self.assertEqual(len(resp['cases']), 2)
 
-    def test_filter_cases_two(self):
-        filter_expr = "[case_name = 'derp']"
-
-        resp = touchcare.filter_cases(
-            filter_expr,
-            {},
-            self.session_data,
-            restore_xml=self.restore,
-            uses_sqlite=True,
-        )
-        self.assertEqual(len(resp['cases']), 0)
-
 if __name__ == '__main__':
     unittest.main()
+    
