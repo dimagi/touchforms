@@ -144,6 +144,7 @@ class SubmissionTest(unittest.TestCase):
 
         self.filter_expr = "[case_name = 'Napoli']"
 
+
 class ParentClosedTests(unittest.TestCase):
 
     PrototypeFactory.setStaticHasher(ClassNameHasher())
