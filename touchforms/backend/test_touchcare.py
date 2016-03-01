@@ -144,5 +144,50 @@ class SubmissionTest(unittest.TestCase):
 
         self.filter_expr = "[case_name = 'Napoli']"
 
+
+class ParentClosedTests(unittest.TestCase):
+
+    PrototypeFactory.setStaticHasher(ClassNameHasher())
+
+    def setUp(self):
+        self.restore = os.path.join(CUR_DIR, 'test_files/restores/icds_restore.xml')
+        self.session_data = {
+            'session_name': 'Whatever',
+            'app_version': '2.0',
+            'device_id': 'cloudcare',
+            'user_id': 'a7514c522f36169e07555495acb9cffb',
+            'additional_filters': {'footprint': True},
+            'domain': 'icds-test',
+            'host': 'http://localhost:8000',
+            'user_data': {},
+            'app_id': 'a7514c522f36169e07555495ac956bd4',
+            'username': 'saket.district'
+        }
+
+    def test_filter_cases(self):
+        filter_expr = "[@case_type='tech_issue'][@status='open']"
+
+        resp = touchcare.filter_cases(
+            filter_expr,
+            {},
+            self.session_data,
+            restore_xml=self.restore,
+            uses_sqlite=True,
+        )
+
+        self.assertEqual(len(resp['cases']), 2)
+
+        filter_expr = "[@case_type='tech_issue'][@status='closed']"
+
+        resp = touchcare.filter_cases(
+            filter_expr,
+            {},
+            self.session_data,
+            restore_xml=self.restore,
+            uses_sqlite=True,
+        )
+
+        self.assertEqual(len(resp['cases']), 2)
+
 if __name__ == '__main__':
     unittest.main()
