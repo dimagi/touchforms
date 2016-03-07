@@ -19,11 +19,11 @@ class FormplayerExperiment(laboratory.Experiment):
         control_value = json.loads(result.control.value)
         candidate_value = json.loads(result.observations[0].value)
 
-        if not formplayer_compare(result.control, result.observations[0]):
-            print "Not equal :("
+        if formplayer_compare(control_value, candidate_value):
+            print "Equal!"
             self.printDiffs(control_value, candidate_value)
         else:
-            print "Equal!"
+            print "Not equal :("
 
 
     def printDiffs(self, control, candidate):
@@ -45,22 +45,30 @@ class FormplayerExperiment(laboratory.Experiment):
             print "Both files are identical"
 
 def compare_list(control, candidate):
+    print "Comparing list: ", control, " candidate: ", candidate
+    are_equal = True
     for first_item,second_item in zip(control, candidate):
         if not formplayer_compare(first_item, second_item):
-            return False
-    return True
+            are_equal = False
+    return are_equal
 
 def compare_dict(control, candidate):
+    print "Comparing dict: ", control, " candidate: ", candidate
+    are_equal = True
     for key in control:
         if not key in candidate:
-            return False
+            are_equal = False
         if not formplayer_compare(control.get(key), candidate.get(key)):
-            return False
-    return True
+            are_equal = False
+    return are_equal
 
 def formplayer_compare(control, candidate):
+    print "Comparing control: ", control, " candidate: ", candidate
     if isinstance(control, dict):
-        return compare_dict(control, candidate)
-    if isinstance(control, list):
-        return compare_list(control, candidate)
-    return control == candidate
+        are_equal = compare_dict(control, candidate)
+    elif isinstance(control, list):
+        are_equal = compare_list(control, candidate)
+    else:
+        print "Returning: ", control == candidate
+        are_equal = (control == candidate)
+    return are_equal
