@@ -5,7 +5,7 @@ import httplib
 import logging
 import socket
 from touchforms.formplayer.exceptions import BadDataError
-from corehq.toggles import TF_USES_SQLITE_BACKEND, USE_FORMPLAYER_EXPERIMENT
+from corehq.toggles import TF_USES_SQLITE_BACKEND, USE_FORMPLAYER, FORMPLAYER_EXPERIMENT
 from experiments import FormplayerExperiment
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
@@ -276,12 +276,14 @@ def post_data(data, auth=None, content_type="application/json"):
 
     if domain:
         d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
-        if USE_FORMPLAYER_EXPERIMENT.enabled(domain):
+        # see if we want to experiment or do it LIVE
+        if FORMPLAYER_EXPERIMENT.enabled(domain):
             return perform_experiment(d, auth, content_type)
+        elif USE_FORMPLAYER.enabled(domain):
+            return post_data_helper(d, auth, content_type, settings.FORMPLAYER_URL + "/" + d["action"])
 
     # just default to old server for now
     url = settings.XFORMS_PLAYER_URL
-
     return post_data_helper(d, auth, content_type, url)
 
 def perform_experiment(d, auth, content_type):
