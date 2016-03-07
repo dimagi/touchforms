@@ -17,6 +17,7 @@ class FormplayerExperiment(laboratory.Experiment):
         # We're only ever returning one of these (I think)
         candidate = result.observations[0]
 
+        # TODO: How to use this data?
         print "Control took ", control.duration
         print "Candidate took ", candidate.duration
 
@@ -26,7 +27,8 @@ class FormplayerExperiment(laboratory.Experiment):
         if formplayer_compare(control_value, candidate_value):
             print "Equal!"
         else:
-            print "Not equal :("
+            # TODO: How best to store these?
+            print "Not Equal :("
 
 def compare_list(control, candidate):
     are_equal = True
@@ -53,14 +55,17 @@ def formplayer_compare(control, candidate, current_key=None):
         are_equal = formplayer_string_compare(control, candidate, current_key)
     return are_equal
 
+## Here are a bunch of exceptions for things that are currently different between servers. We should decide what is
+## right and wrong.
 def formplayer_string_compare(control, candidate, current_key=None):
     if current_key == "session_id":
         # clearly these will be different
         return True
     elif current_key == "ix":
-        # trim whitespace
+        # trim whitespace - Java adds spacing
         ret = (control == candidate.replace(' ', ''))
     elif current_key == "repeatable":
+        # These end up as '0' and '1' in python world, despite being set to True and False in xformplayer.py
         if control == 0:
             ret = candidate == "false"
         elif control == 1:
