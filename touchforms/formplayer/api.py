@@ -291,11 +291,11 @@ def perform_experiment(d, auth, content_type):
     with experiment.control() as c:
         c.record(post_data_helper(d, auth, content_type, settings.XFORMS_PLAYER_URL))
     with experiment.candidate() as c:
-        d["session_id"] = FormplayerExperiment.session_id_mapping.get(d["session_id"])
+        if "session_id" in d:
+            # If we should already have a session, look up its ID in the experiment mapping. it better be there.
+            d["session_id"] = FormplayerExperiment.session_id_mapping.get(d["session_id"])
         c.record(post_data_helper(d, auth, content_type, settings.FORMPLAYER_URL + "/" + d["action"]))
-
     objects = experiment.run()
-
     return objects
 
 
