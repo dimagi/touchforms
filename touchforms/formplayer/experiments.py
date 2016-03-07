@@ -1,6 +1,7 @@
 import laboratory
 import json
 
+
 class FormplayerExperiment(laboratory.Experiment):
 
     session_id_mapping = {}
@@ -30,21 +31,24 @@ class FormplayerExperiment(laboratory.Experiment):
             # TODO: How best to store these?
             print "Not Equal :("
 
+
 def compare_list(control, candidate):
     are_equal = True
-    for first_item,second_item in zip(control, candidate):
+    for first_item, second_item in zip(control, candidate):
         if not formplayer_compare(first_item, second_item):
             are_equal = False
     return are_equal
 
+
 def compare_dict(control, candidate):
     are_equal = True
     for key in control:
-        if not key in candidate:
+        if key not in candidate:
             are_equal = False
         if not formplayer_compare(control.get(key), candidate.get(key), key):
             are_equal = False
     return are_equal
+
 
 def formplayer_compare(control, candidate, current_key=None):
     if isinstance(control, dict):
@@ -54,6 +58,7 @@ def formplayer_compare(control, candidate, current_key=None):
     else:
         are_equal = formplayer_string_compare(control, candidate, current_key)
     return are_equal
+
 
 ## Here are a bunch of exceptions for things that are currently different between servers. We should decide what is
 ## right and wrong.

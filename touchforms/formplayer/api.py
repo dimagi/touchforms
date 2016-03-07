@@ -251,6 +251,7 @@ class XformsResponse(object):
                                "error": "No response from server. Please "
                                         "contact your administrator for help."})
 
+
 def post_data_helper(d, auth, content_type, url):
     data = json.dumps(d)
     up = urlparse(url)
@@ -285,6 +286,7 @@ def post_data(data, auth=None, content_type="application/json"):
     # just default to old server for now
     url = settings.XFORMS_PLAYER_URL
     return post_data_helper(d, auth, content_type, url)
+
 
 def perform_experiment(d, auth, content_type):
     experiment = FormplayerExperiment(name=d["action"])
