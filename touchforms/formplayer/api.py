@@ -6,6 +6,7 @@ import logging
 import socket
 from touchforms.formplayer.exceptions import BadDataError
 from corehq.toggles import TF_USES_SQLITE_BACKEND, USE_FORMPLAYER
+from experiments import FormplayerExperiment
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
 backend for various sets of tasks.
@@ -249,7 +250,18 @@ class XformsResponse(object):
         return XformsResponse({"status": "http-error",
                                "error": "No response from server. Please "
                                         "contact your administrator for help."})
-    
+
+def post_data_helper(d, auth, content_type, url):
+    data = json.dumps(d)
+    up = urlparse(url)
+    headers = {}
+    headers["content-type"] = content_type
+    headers["content-length"] = len(data)
+    conn = httplib.HTTPConnection(up.netloc)
+    conn.request('POST', up.path, data, headers)
+    resp = conn.getresponse()
+    results = resp.read()
+    return results
             
 def post_data(data, auth=None, content_type="application/json"):
 
@@ -261,30 +273,17 @@ def post_data(data, auth=None, content_type="application/json"):
     if auth:
         d['hq_auth'] = auth.to_dict()
 
-    domain = d.get("domain")
+    experiment = FormplayerExperiment(name=d["action"])
 
-    if domain:
-        d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
-        if USE_FORMPLAYER.enabled(domain):
-            url = settings.FORMPLAYER_URL + "/" + d["action"]
-        else:
-            url = settings.XFORMS_PLAYER_URL
-    else:
-        # just default to old server for now
-        url = settings.XFORMS_PLAYER_URL
+    with experiment.control() as c:
+        c.record(post_data_helper(d, auth, content_type, settings.XFORMS_PLAYER_URL))
+    with experiment.candidate() as c:
+        d["session_id"] = FormplayerExperiment.session_id_mapping.get(d["session_id"])
+        c.record(post_data_helper(d, auth, content_type, settings.FORMPLAYER_URL + "/" + d["action"]))
 
-    data = json.dumps(d)
+    objects = experiment.run()
 
-    up = urlparse(url)
-    headers = {}
-    headers["content-type"] = content_type
-    headers["content-length"] = len(data)
-    conn = httplib.HTTPConnection(up.netloc)
-    conn.request('POST', up.path, data, headers)
-    resp = conn.getresponse()
-    results = resp.read()
-
-    return results
+    return objects
 
 
 def get_response(data, auth=None):
