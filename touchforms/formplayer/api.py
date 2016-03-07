@@ -263,9 +263,12 @@ def post_data(data, auth=None, content_type="application/json"):
 
     domain = d.get("domain")
 
-    if domain and USE_FORMPLAYER.enabled(domain):
+    if domain:
         d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
-        url = settings.FORMPLAYER_URL + "/" + d["action"]
+        if USE_FORMPLAYER.enabled(domain):
+            url = settings.FORMPLAYER_URL + "/" + d["action"]
+        else:
+            url = settings.XFORMS_PLAYER_URL
     else:
         # just default to old server for now
         url = settings.XFORMS_PLAYER_URL
