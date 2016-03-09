@@ -165,19 +165,7 @@ class ParentClosedTests(unittest.TestCase):
         }
 
     def test_filter_cases(self):
-        filter_expr = "[@case_type='tech_issue'][@status='open']"
-
-        resp = touchcare.filter_cases(
-            filter_expr,
-            {},
-            self.session_data,
-            restore_xml=self.restore,
-            uses_sqlite=True,
-        )
-
-        self.assertEqual(len(resp['cases']), 2)
-
-        filter_expr = "[@case_type='tech_issue'][@status='closed']"
+        filter_expr = "[@case_type='tech_issue']"
 
         resp = touchcare.filter_cases(
             filter_expr,
