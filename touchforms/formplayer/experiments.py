@@ -7,6 +7,7 @@ import logging
 diff_csv_filename = 'formplayer_diff.csv'
 timing_csv_filename = 'formplayer_timing.csv'
 
+
 class FormplayerExperiment(laboratory.Experiment):
     logging = logging.getLogger(__name__)
     session_id_mapping = {}
@@ -31,6 +32,7 @@ class FormplayerExperiment(laboratory.Experiment):
         if not formplayer_compare(control_value, candidate_value):
             emit_diff_csv(control_value, candidate_value, self.context)
 
+
 def emit_diff_csv(control_value, candidate_value, context):
     action = context['action']
     request = context['request']
@@ -44,6 +46,7 @@ def emit_diff_csv(control_value, candidate_value, context):
             candidate_value
         ]
         csvwriter.writerow(row)
+
 
 def emit_timing_csv(control, candidate, action):
     with open(timing_csv_filename, 'a') as csvfile:
