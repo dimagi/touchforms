@@ -1,9 +1,14 @@
 import laboratory
 import json
+import csv
+import datetime
+import logging
 
+diff_csv_filename = 'formplayer_diff.csv'
+timing_csv_filename = 'formplayer_timing.csv'
 
 class FormplayerExperiment(laboratory.Experiment):
-
+    logging = logging.getLogger(__name__)
     session_id_mapping = {}
 
     def publish(self, result):
@@ -18,18 +23,38 @@ class FormplayerExperiment(laboratory.Experiment):
         # We're only ever returning one of these (I think)
         candidate = result.observations[0]
 
-        # TODO: How to use this data?
-        print "Control took ", control.duration
-        print "Candidate took ", candidate.duration
+        emit_timing_csv(control, candidate, self.name)
 
         control_value = json.loads(result.control.value)
         candidate_value = json.loads(result.observations[0].value)
 
-        if formplayer_compare(control_value, candidate_value):
-            print "Equal!"
-        else:
-            # TODO: How best to store these?
-            print "Not Equal :("
+        if not formplayer_compare(control_value, candidate_value):
+            emit_diff_csv(control_value, candidate_value, self.context)
+
+def emit_diff_csv(control_value, candidate_value, context):
+    action = context['action']
+    request = context['request']
+    with open(diff_csv_filename, 'a') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        row = [
+            datetime.datetime.now(),
+            action,
+            request,
+            control_value,
+            candidate_value
+        ]
+        csvwriter.writerow(row)
+
+def emit_timing_csv(control, candidate, action):
+    with open(timing_csv_filename, 'a') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        row = [
+            datetime.datetime.now(),
+            action,
+            control.duration,
+            candidate.duration
+        ]
+        csvwriter.writerow(row)
 
 
 def compare_list(control, candidate):
@@ -80,5 +105,5 @@ def formplayer_string_compare(control, candidate, current_key=None):
     else:
         ret = control == candidate
     if not ret:
-        print "Mismatch with key %s between control %s and candidate %s" % (current_key, control, candidate)
+        logging.log("Mismatch with key %s between control %s and candidate %s" % (current_key, control, candidate))
     return ret

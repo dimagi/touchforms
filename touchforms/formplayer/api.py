@@ -289,7 +289,7 @@ def post_data(data, auth=None, content_type="application/json"):
 
 
 def perform_experiment(d, auth, content_type):
-    experiment = FormplayerExperiment(name=d["action"])
+    experiment = FormplayerExperiment(name=d["action"], context={'request': d})
     with experiment.control() as c:
         c.record(post_data_helper(d, auth, content_type, settings.XFORMS_PLAYER_URL))
     with experiment.candidate() as c:
