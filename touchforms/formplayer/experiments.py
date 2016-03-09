@@ -3,9 +3,12 @@ import json
 import csv
 import datetime
 import logging
+from django.conf import settings
+import os
 
-diff_csv_filename = 'formplayer_diff.csv'
-timing_csv_filename = 'formplayer_timing.csv'
+diff_csv_filename = os.path.join(settings.FORMPLAYER_EXPERIMENT_DIRECTORY, 'formplayer_diff.csv')
+timing_csv_filename = os.path.join(settings.FORMPLAYER_EXPERIMENT_DIRECTORY, 'formplayer_timing.csv')
+
 
 
 class FormplayerExperiment(laboratory.Experiment):
@@ -13,6 +16,9 @@ class FormplayerExperiment(laboratory.Experiment):
     session_id_mapping = {}
 
     def publish(self, result):
+
+        if not os.path.exists(os.path.dirname(settings.FORMPLAYER_EXPERIMENT_DIRECTORY)):
+            os.makedirs(os.path.dirname(settings.FORMPLAYER_EXPERIMENT_DIRECTORY))
 
         # if we're starting a new form, we need to store the mapping between session_ids so we can use later
         if (self.name == "new-form"):
@@ -34,8 +40,8 @@ class FormplayerExperiment(laboratory.Experiment):
 
 
 def emit_diff_csv(control_value, candidate_value, context):
-    action = context['action']
     request = context['request']
+    action = request['action']
     with open(diff_csv_filename, 'a') as csvfile:
         csvwriter = csv.writer(csvfile)
         row = [
@@ -93,6 +99,9 @@ def formplayer_compare(control, candidate, current_key=None):
 def formplayer_string_compare(control, candidate, current_key=None):
     if current_key == "session_id":
         # clearly these will be different
+        return True
+    elif current_key == "output":
+        # don't have any way to compare the XML output at the moment, esp. considering uuids and times
         return True
     elif current_key == "ix":
         # trim whitespace - Java adds spacing
