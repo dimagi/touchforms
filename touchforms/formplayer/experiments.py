@@ -10,7 +10,6 @@ diff_csv_filename = os.path.join(settings.FORMPLAYER_EXPERIMENT_DIRECTORY, 'form
 timing_csv_filename = os.path.join(settings.FORMPLAYER_EXPERIMENT_DIRECTORY, 'formplayer_timing.csv')
 
 
-
 class FormplayerExperiment(laboratory.Experiment):
     logging = logging.getLogger(__name__)
     session_id_mapping = {}
