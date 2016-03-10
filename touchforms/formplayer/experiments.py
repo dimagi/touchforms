@@ -6,16 +6,12 @@ import logging
 from django.conf import settings
 import os
 
-diff_csv_filename = os.path.join(settings.FORMPLAYER_EXPERIMENT_DIRECTORY, 'formplayer_diff.csv')
-timing_csv_filename = os.path.join(settings.FORMPLAYER_EXPERIMENT_DIRECTORY, 'formplayer_timing.csv')
-
-
 class FormplayerExperiment(laboratory.Experiment):
-    logging = logging.getLogger(__name__)
     session_id_mapping = {}
 
-    def publish(self, result):
+    logger = logging.getLogger('formplayer')
 
+    def publish(self, result):
         if not os.path.exists(os.path.dirname(settings.FORMPLAYER_EXPERIMENT_DIRECTORY)):
             os.makedirs(os.path.dirname(settings.FORMPLAYER_EXPERIMENT_DIRECTORY))
 
@@ -29,40 +25,37 @@ class FormplayerExperiment(laboratory.Experiment):
         # We're only ever returning one of these (I think)
         candidate = result.observations[0]
 
-        emit_timing_csv(control, candidate, self.name)
+        self.emit_timing_csv(control, candidate)
 
         control_value = json.loads(result.control.value)
         candidate_value = json.loads(result.observations[0].value)
 
         if not formplayer_compare(control_value, candidate_value):
-            emit_diff_csv(control_value, candidate_value, self.context)
+            self.emit_diff_csv(control_value, candidate_value)
 
 
-def emit_diff_csv(control_value, candidate_value, context):
-    request = context['request']
-    action = request['action']
-    with open(diff_csv_filename, 'a') as csvfile:
-        csvwriter = csv.writer(csvfile)
-        row = [
-            datetime.datetime.now(),
-            action,
-            request,
-            control_value,
-            candidate_value
-        ]
-        csvwriter.writerow(row)
+    def emit_diff_csv(self, control_value, candidate_value):
+        request = self.context['request']
+        action = request['action']
+        self.logger.info(
+            "MSG",
+            extra={
+                'asctime': datetime.datetime.now(),
+                'action': action,
+                'request': request,
+                'control': control_value,
+                'candidate': candidate_value
+            })
 
-
-def emit_timing_csv(control, candidate, action):
-    with open(timing_csv_filename, 'a') as csvfile:
-        csvwriter = csv.writer(csvfile)
-        row = [
-            datetime.datetime.now(),
-            action,
-            control.duration,
-            candidate.duration
-        ]
-        csvwriter.writerow(row)
+    def emit_timing_csv(self, control, candidate):
+        self.logger.info(
+            "MSG",
+            extra={
+                'asctime': datetime.datetime.now(),
+                'action': self.action,
+                'control_duration': control.duration,
+                'candidate_duration': candidate.duration
+            })
 
 
 def compare_list(control, candidate):
@@ -102,9 +95,6 @@ def formplayer_string_compare(control, candidate, current_key=None):
     elif current_key == "output":
         # don't have any way to compare the XML output at the moment, esp. considering uuids and times
         return True
-    elif current_key == "ix":
-        # trim whitespace - Java adds spacing
-        ret = (control == candidate.replace(' ', ''))
     elif current_key == "repeatable":
         # These end up as '0' and '1' in python world, despite being set to True and False in xformplayer.py
         if control == 0:
