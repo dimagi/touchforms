@@ -1,17 +1,18 @@
 import laboratory
 import json
-import csv
-import datetime
 import logging
 from django.conf import settings
 import os
 
+diff_logger = logging.getLogger('formplayer_diff')
+timing_logger = logging.getLogger('formplayer_timing')
+
+
 class FormplayerExperiment(laboratory.Experiment):
     session_id_mapping = {}
 
-    logger = logging.getLogger('formplayer')
-
     def publish(self, result):
+        # make sure logging dir exists
         if not os.path.exists(os.path.dirname(settings.FORMPLAYER_EXPERIMENT_DIRECTORY)):
             os.makedirs(os.path.dirname(settings.FORMPLAYER_EXPERIMENT_DIRECTORY))
 
@@ -33,14 +34,11 @@ class FormplayerExperiment(laboratory.Experiment):
         if not formplayer_compare(control_value, candidate_value):
             self.emit_diff_csv(control_value, candidate_value)
 
-
     def emit_diff_csv(self, control_value, candidate_value):
         request = self.context['request']
         action = request['action']
-        self.logger.info(
-            "MSG",
+        diff_logger.info(
             extra={
-                'asctime': datetime.datetime.now(),
                 'action': action,
                 'request': request,
                 'control': control_value,
@@ -48,11 +46,10 @@ class FormplayerExperiment(laboratory.Experiment):
             })
 
     def emit_timing_csv(self, control, candidate):
-        self.logger.info(
+        timing_logger.info(
             "MSG",
             extra={
-                'asctime': datetime.datetime.now(),
-                'action': self.action,
+                'action': self.name,
                 'control_duration': control.duration,
                 'candidate_duration': candidate.duration
             })
