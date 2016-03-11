@@ -1,6 +1,6 @@
 from customhandlers import TouchformsFunctionHandler
 from java.text import SimpleDateFormat
-
+from java.util import TimeZone
 class StaticFunctionHandler(TouchformsFunctionHandler):
     """
     A function handler that lets you register a static value associated with a function.
@@ -65,5 +65,7 @@ class StaticDateFunctionHandler(StaticFunctionHandler):
                 # remove microseconds if necessary
                 if len(value) == 27:
                     value = '%sZ' % value[:19]
-                parsed_value = SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss'Z'").parse(value)
+                sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+                sdf.setTimeZone(TimeZone.getTimeZone("UTC"))
+                parsed_value = sdf.parse(value)
             self._value = parsed_value
