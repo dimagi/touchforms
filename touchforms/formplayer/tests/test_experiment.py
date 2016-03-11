@@ -1,7 +1,5 @@
-import os
 from django.test import SimpleTestCase
 from touchforms.formplayer.experiments import formplayer_string_compare, formplayer_compare
-import json
 
 
 class ExperimentTest(SimpleTestCase):
