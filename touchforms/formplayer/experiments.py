@@ -103,5 +103,5 @@ def formplayer_string_compare(control, candidate, current_key=None):
     else:
         ret = control == candidate
     if not ret:
-        logging.log("Mismatch with key %s between control %s and candidate %s" % (current_key, control, candidate))
+        logging.info("Mismatch with key %s between control %s and candidate %s" % (current_key, control, candidate))
     return ret
