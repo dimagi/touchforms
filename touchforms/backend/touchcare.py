@@ -55,7 +55,6 @@ class CCInstances(CommCareInstanceInitializer):
         self.vars = sessionvars
         self.auth = auth
         self.uses_sqlite = uses_sqlite
-
         if self.uses_sqlite:
             self.username = sessionvars['username'] + '@' + sessionvars['domain']
             self.sandbox = SqlSandboxUtils.getStaticStorage(self.username, settings.SQLITE_DBS_DIRECTORY)
@@ -73,8 +72,9 @@ class CCInstances(CommCareInstanceInitializer):
 
     def clear_tables(self):
         db_name = self.username + ".db"
-        if os.path.isfile(db_name):
-            os.remove(db_name)
+        full_path = os.path.join(settings.SQLITE_DBS_DIRECTORY, db_name)
+        if os.path.isfile(full_path):
+            os.remove(full_path)
         self.sandbox = SqlSandboxUtils.getStaticStorage(self.username, settings.SQLITE_DBS_DIRECTORY)
         persistence.postgres_drop_sqlite(self.username)
 
