@@ -139,6 +139,7 @@ def load_form(xform, instance=None, extensions=None, session_data=None,
     """
     extensions = extensions or []
     session_data = session_data or {}
+    is_editing = session_data.get("is_editing", False)
 
     form = XFormParser(StringReader(xform)).parse()
     if instance is not None:
@@ -157,7 +158,7 @@ def load_form(xform, instance=None, extensions=None, session_data=None,
             'use_cache': 'true',
             'hsph_hack': session_data.get('case_id', None)
         })
-        form.initialize(instance is None, CCInstances(session_data,
+        form.initialize(instance is None, is_editing, CCInstances(session_data,
                                                       api_auth,
                                                       form_context=form_context,
                                                       uses_sqlite=uses_sql_backend))
@@ -167,7 +168,7 @@ def load_form(xform, instance=None, extensions=None, session_data=None,
         # that that case appears in the universe of cases. Therefore we first attempt to use the cached version
         # of the case id list, and in the event that we cannot find a case, we try again, but do not use the cache.
         session_data.get('additional_filters', {}).update({'use_cache': 'false'})
-        form.initialize(instance is None, CCInstances(session_data,
+        form.initialize(instance is None, is_editing, CCInstances(session_data,
                                                       api_auth,
                                                       form_context=form_context,
                                                       uses_sqlite=uses_sql_backend))
