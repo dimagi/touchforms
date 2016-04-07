@@ -12,10 +12,6 @@ class FormplayerExperiment(laboratory.Experiment):
     session_id_mapping = {}
 
     def publish(self, result):
-        # make sure logging dir exists
-        if not os.path.exists(os.path.dirname(settings.FORMPLAYER_EXPERIMENT_DIRECTORY)):
-            os.makedirs(os.path.dirname(settings.FORMPLAYER_EXPERIMENT_DIRECTORY))
-
         # if we're starting a new form, we need to store the mapping between session_ids so we can use later
         if (self.name == "new-form"):
             control_session_id = json.loads(result.control.value)["session_id"]
