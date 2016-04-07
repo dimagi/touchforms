@@ -1,8 +1,6 @@
 import laboratory
 import json
 import logging
-from django.conf import settings
-import os
 
 diff_logger = logging.getLogger('formplayer_diff')
 timing_logger = logging.getLogger('formplayer_timing')
