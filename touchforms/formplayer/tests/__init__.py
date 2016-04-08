@@ -1,6 +1,5 @@
 import logging
 try:
-    from touchforms.formplayer.tests.test_basic import *
     from touchforms.formplayer.tests.test_experiment import *
 except ImportError, e:
     # for some reason the test harness squashes these so log them here for clarity
