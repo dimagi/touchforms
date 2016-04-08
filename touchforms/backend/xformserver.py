@@ -223,14 +223,7 @@ def handle_request(content, server):
 
         elif action == xformplayer.Actions.CURRENT:
             ensure_required_params(['session-id'], action, content)
-            override_state = None
-            # override api_auth with the current auth to avoid issues with expired django sessions
-            # when editing saved forms
-            hq_auth = content.get('hq_auth')
-            if hq_auth:
-                override_state = {
-                    'api_auth': hq_auth,
-                }
+            override_state = _get_override_state(content)
             return xformplayer.current_question(content['session-id'], override_state=override_state)
 
         elif action == xformplayer.Actions.HEARTBEAT:
@@ -291,22 +284,43 @@ def handle_request(content, server):
         return {'error': 'session is locked by another request'}
     finally:
         delta = (time.time() - start) * 1000
-        domain = '<unknown>'
-        if content.get('session-id', None) and xformplayer.global_state:
-            xfsess = xformplayer.global_state.get_session(session_id)
-            domain = xfsess.orig_params['session_data'].get('domain', '<unknown>')
-        elif content.get('session-data', None):
-            domain = content['session-data'].get('domain', '<unknown>')
-        elif content.get('session_data', None):
-            domain = content['session_data'].get('domain', '<unknown>')
+        _log_action(action, content, delta, session_id)
 
-        logger.info("Finished processing action %s in %s ms for session %s in domain '%s'" % (
-            action, delta, session_id, domain
-        ))
-        datadog_logger.info(
-            'event=processed action=%s domain=%s unit=ms' % (action, domain),
-            extra={'value': delta, 'metric_type': 'gauge', 'timestamp': int(time.time()), 'metric': 'timings'}
-        )
+
+def _get_override_state(content):
+    override_state = None
+    # override api_auth with the current auth to avoid issues with expired django sessions
+    # when editing saved forms
+    hq_auth = content.get('hq_auth')
+    if hq_auth:
+        override_state = {
+            'api_auth': hq_auth,
+        }
+    return override_state
+
+
+def _log_action(action, content, delta, session_id):
+    domain = '<unknown>'
+    if content.get('domain'):
+        domain = content['domain']
+    elif content.get('session-data', None):
+        domain = content['session-data'].get('domain', '<unknown>')
+    elif content.get('session_data', None):
+        domain = content['session_data'].get('domain', '<unknown>')
+    elif content.get('session-id', None) and xformplayer.global_state:
+        override_state = _get_override_state(content)
+        try:
+            xfsess = xformplayer.global_state.get_session(session_id, override_state=override_state)
+            domain = xfsess.orig_params['session_data'].get('domain', '<unknown>')
+        except:
+            pass
+    logger.info("Finished processing action %s in %s ms for session %s in domain '%s'" % (
+        action, delta, session_id, domain
+    ))
+    datadog_logger.info(
+        'event=processed action=%s domain=%s unit=ms' % (action, domain),
+        extra={'value': delta, 'metric_type': 'gauge', 'timestamp': int(time.time()), 'metric': 'timings'}
+    )
 
 
 class Purger(threading.Thread):
