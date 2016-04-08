@@ -223,14 +223,7 @@ def handle_request(content, server):
 
         elif action == xformplayer.Actions.CURRENT:
             ensure_required_params(['session-id'], action, content)
-            override_state = None
-            # override api_auth with the current auth to avoid issues with expired django sessions
-            # when editing saved forms
-            hq_auth = content.get('hq_auth')
-            if hq_auth:
-                override_state = {
-                    'api_auth': hq_auth,
-                }
+            override_state = _get_override_state(content)
             return xformplayer.current_question(content['session-id'], override_state=override_state)
 
         elif action == xformplayer.Actions.HEARTBEAT:
@@ -294,6 +287,18 @@ def handle_request(content, server):
         _log_action(action, content, delta, session_id)
 
 
+def _get_override_state(content):
+    override_state = None
+    # override api_auth with the current auth to avoid issues with expired django sessions
+    # when editing saved forms
+    hq_auth = content.get('hq_auth')
+    if hq_auth:
+        override_state = {
+            'api_auth': hq_auth,
+        }
+    return override_state
+
+
 def _log_action(action, content, delta, session_id):
     domain = '<unknown>'
     if content.get('domain'):
@@ -303,8 +308,9 @@ def _log_action(action, content, delta, session_id):
     elif content.get('session_data', None):
         domain = content['session_data'].get('domain', '<unknown>')
     elif content.get('session-id', None) and xformplayer.global_state:
+        override_state = _get_override_state(content)
         try:
-            xfsess = xformplayer.global_state.get_session(session_id)
+            xfsess = xformplayer.global_state.get_session(session_id, override_state=override_state)
             domain = xfsess.orig_params['session_data'].get('domain', '<unknown>')
         except:
             pass
