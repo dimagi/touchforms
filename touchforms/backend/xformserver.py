@@ -291,27 +291,30 @@ def handle_request(content, server):
         return {'error': 'session is locked by another request'}
     finally:
         delta = (time.time() - start) * 1000
-        domain = '<unknown>'
-        if content.get('domain'):
-            domain = content['domain']
-        elif content.get('session-data', None):
-            domain = content['session-data'].get('domain', '<unknown>')
-        elif content.get('session_data', None):
-            domain = content['session_data'].get('domain', '<unknown>')
-        elif content.get('session-id', None) and xformplayer.global_state:
-            try:
-                xfsess = xformplayer.global_state.get_session(session_id)
-                domain = xfsess.orig_params['session_data'].get('domain', '<unknown>')
-            except:
-                pass
+        _log_action(action, content, delta, session_id)
 
-        logger.info("Finished processing action %s in %s ms for session %s in domain '%s'" % (
-            action, delta, session_id, domain
-        ))
-        datadog_logger.info(
-            'event=processed action=%s domain=%s unit=ms' % (action, domain),
-            extra={'value': delta, 'metric_type': 'gauge', 'timestamp': int(time.time()), 'metric': 'timings'}
-        )
+
+def _log_action(action, content, delta, session_id):
+    domain = '<unknown>'
+    if content.get('domain'):
+        domain = content['domain']
+    elif content.get('session-data', None):
+        domain = content['session-data'].get('domain', '<unknown>')
+    elif content.get('session_data', None):
+        domain = content['session_data'].get('domain', '<unknown>')
+    elif content.get('session-id', None) and xformplayer.global_state:
+        try:
+            xfsess = xformplayer.global_state.get_session(session_id)
+            domain = xfsess.orig_params['session_data'].get('domain', '<unknown>')
+        except:
+            pass
+    logger.info("Finished processing action %s in %s ms for session %s in domain '%s'" % (
+        action, delta, session_id, domain
+    ))
+    datadog_logger.info(
+        'event=processed action=%s domain=%s unit=ms' % (action, domain),
+        extra={'value': delta, 'metric_type': 'gauge', 'timestamp': int(time.time()), 'metric': 'timings'}
+    )
 
 
 class Purger(threading.Thread):
