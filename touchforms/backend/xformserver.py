@@ -292,13 +292,18 @@ def handle_request(content, server):
     finally:
         delta = (time.time() - start) * 1000
         domain = '<unknown>'
-        if content.get('session-id', None) and xformplayer.global_state:
-            xfsess = xformplayer.global_state.get_session(session_id)
-            domain = xfsess.orig_params['session_data'].get('domain', '<unknown>')
+        if content.get('domain'):
+            domain = content['domain']
         elif content.get('session-data', None):
             domain = content['session-data'].get('domain', '<unknown>')
         elif content.get('session_data', None):
             domain = content['session_data'].get('domain', '<unknown>')
+        elif content.get('session-id', None) and xformplayer.global_state:
+            try:
+                xfsess = xformplayer.global_state.get_session(session_id)
+                domain = xfsess.orig_params['session_data'].get('domain', '<unknown>')
+            except:
+                pass
 
         logger.info("Finished processing action %s in %s ms for session %s in domain '%s'" % (
             action, delta, session_id, domain
