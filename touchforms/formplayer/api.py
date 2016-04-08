@@ -5,7 +5,8 @@ import httplib
 import logging
 import socket
 from touchforms.formplayer.exceptions import BadDataError
-from corehq.toggles import TF_USES_SQLITE_BACKEND, USE_FORMPLAYER
+from corehq.toggles import TF_USES_SQLITE_BACKEND, USE_FORMPLAYER, FORMPLAYER_EXPERIMENT
+from experiments import FormplayerExperiment
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
 backend for various sets of tasks.
@@ -249,7 +250,19 @@ class XformsResponse(object):
         return XformsResponse({"status": "http-error",
                                "error": "No response from server. Please "
                                         "contact your administrator for help."})
-    
+
+
+def post_data_helper(d, auth, content_type, url):
+    data = json.dumps(d)
+    up = urlparse(url)
+    headers = {}
+    headers["content-type"] = content_type
+    headers["content-length"] = len(data)
+    conn = httplib.HTTPConnection(up.netloc)
+    conn.request('POST', up.path, data, headers)
+    resp = conn.getresponse()
+    results = resp.read()
+    return results
             
 def post_data(data, auth=None, content_type="application/json"):
 
@@ -260,31 +273,34 @@ def post_data(data, auth=None, content_type="application/json"):
 
     if auth:
         d['hq_auth'] = auth.to_dict()
-
     domain = d.get("domain")
 
     if domain:
         d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
+        # see if we want to experiment or do it LIVE
         if USE_FORMPLAYER.enabled(domain):
-            url = settings.FORMPLAYER_URL + "/" + d["action"]
-        else:
-            url = settings.XFORMS_PLAYER_URL
-    else:
-        # just default to old server for now
-        url = settings.XFORMS_PLAYER_URL
+            return post_data_helper(d, auth, content_type, settings.FORMPLAYER_URL + "/" + d["action"])
+        elif FORMPLAYER_EXPERIMENT.enabled(domain):
+            return perform_experiment(d, auth, content_type)
+    # just default to old server for now
+    url = settings.XFORMS_PLAYER_URL
+    return post_data_helper(d, auth, content_type, url)
 
-    data = json.dumps(d)
 
-    up = urlparse(url)
-    headers = {}
-    headers["content-type"] = content_type
-    headers["content-length"] = len(data)
-    conn = httplib.HTTPConnection(up.netloc)
-    conn.request('POST', up.path, data, headers)
-    resp = conn.getresponse()
-    results = resp.read()
-
-    return results
+def perform_experiment(d, auth, content_type):
+    experiment = FormplayerExperiment(name=d["action"], context={'request': d})
+    with experiment.control() as c:
+        c.record(post_data_helper(d, auth, content_type, settings.XFORMS_PLAYER_URL))
+    with experiment.candidate() as c:
+        # If we should already have a session, look up its ID in the experiment mapping. it better be there.
+        # This is terrible, but we use both in different places.
+        if "session_id" in d:
+            d["session_id"] = FormplayerExperiment.session_id_mapping.get(d["session_id"])
+        if "session-id" in d:
+            d["session-id"] = FormplayerExperiment.session_id_mapping.get(d["session-id"])
+        c.record(post_data_helper(d, auth, content_type, settings.FORMPLAYER_URL + "/" + d["action"]))
+    objects = experiment.run()
+    return objects
 
 
 def get_response(data, auth=None):
