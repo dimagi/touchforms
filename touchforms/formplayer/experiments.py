@@ -20,15 +20,15 @@ class FormplayerExperiment(laboratory.Experiment):
         # We're only ever returning one of these (I think)
         candidate = result.observations[0]
 
-        self.emit_timing_csv(control, candidate)
+        self.log_timing(control, candidate)
 
         control_value = json.loads(result.control.value)
         candidate_value = json.loads(result.observations[0].value)
 
         if not formplayer_compare(control_value, candidate_value):
-            self.emit_diff_csv(control_value, candidate_value)
+            self.log_diff(control_value, candidate_value)
 
-    def emit_diff_csv(self, control_value, candidate_value):
+    def log_diff(self, control_value, candidate_value):
         request = self.context['request']
         action = request['action']
         diff_logger.info(
@@ -39,7 +39,7 @@ class FormplayerExperiment(laboratory.Experiment):
                 'candidate': candidate_value
             })
 
-    def emit_timing_csv(self, control, candidate):
+    def log_timing(self, control, candidate):
         timing_logger.info(
             "MSG",
             extra={
@@ -50,21 +50,21 @@ class FormplayerExperiment(laboratory.Experiment):
 
 
 def compare_list(control, candidate):
-    are_equal = True
+    is_equal = True
     for first_item, second_item in zip(control, candidate):
         if not formplayer_compare(first_item, second_item):
-            are_equal = False
-    return are_equal
+            is_equal = False
+    return is_equal
 
 
 def compare_dict(control, candidate):
-    are_equal = True
+    is_equal = True
     for key in control:
         if key not in candidate:
-            are_equal = False
+            is_equal = False
         if not formplayer_compare(control.get(key), candidate.get(key), key):
-            are_equal = False
-    return are_equal
+            is_equal = False
+    return is_equal
 
 
 def formplayer_compare(control, candidate, current_key=None):
