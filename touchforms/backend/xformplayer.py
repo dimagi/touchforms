@@ -744,6 +744,7 @@ def set_locale(xform_session, lang):
 
 @require_xform_session
 def current_question(xform_session, override_state=None):
+    """override_state kwarg used by require_xform_session decorator"""
     extra = {'lang': xform_session.get_lang()}
     extra.update(init_context(xform_session))
     return xform_session.response(extra, xform_session.cur_event)
