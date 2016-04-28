@@ -308,13 +308,12 @@
             <label>
                 <input data-bind="
                     checked: $parent.rawAnswer,
-                    value: $index() + 1,
+                    checkedValue: $index() + 1,
                     attr: {
                         id: 'group-' + $parent.entryId + '-choice-' + $index(),
                         type: $parent.isMulti ? 'checkbox' : 'radio',
                         name: $parent.entryId,
                         class: 'group-' + $parent.entryId,
-                        checked: $parent.isChecked($index() + 1)
                     }
                 "/>
                 <span data-bind="text: $data"></span>

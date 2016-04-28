@@ -47,9 +47,7 @@ Entry.prototype.onPreProcess = function(newValue) {
 EntryArrayAnswer = function(question, options) {
     var self = this;
     Entry.call(self, question, options);
-    self.rawAnswer = ko.observableArray(_.map(question.answer(), function(d) {
-        return '' + d;
-    }));
+    self.rawAnswer = ko.observableArray(_.clone(question.answer()));
 
     self.rawAnswer.subscribe(self.onPreProcess.bind(self));
     self.previousAnswer = self.answer()
@@ -89,7 +87,7 @@ EntrySingleAnswer = function(question, options) {
     var self = this;
     Entry.call(self, question, options);
     if (question.answer()) {
-        self.rawAnswer = ko.observable('' + question.answer());
+        self.rawAnswer = ko.observable(question.answer());
     } else {
         self.rawAnswer = ko.observable(Formplayer.Const.NO_ANSWER);
     }

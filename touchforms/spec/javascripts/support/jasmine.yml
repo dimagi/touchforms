@@ -12,7 +12,7 @@
 #   - dist/**/*.js
 #
 src_files:
-  - script/test_vendor/knockout-3.1.0.min.js
+  - script/test_vendor/knockout-3.3.0.js
   - script/test_vendor/knockout_mapping.ko.min.js
   - script/test_vendor/underscore.js
   - script/vendor/jquery-1.8.3.min.js
