@@ -249,10 +249,6 @@ function MultiSelectEntry(question, options) {
     self.isValid = function(rawAnswer) {
         return _.isArray(rawAnswer);
     }
-
-    self.isChecked = function(value) {
-        return _.indexOf(self.rawAnswer(), '' + value) !== -1;
-    };
 }
 MultiSelectEntry.prototype = Object.create(EntryArrayAnswer.prototype);
 MultiSelectEntry.prototype.constructor = EntryArrayAnswer;
@@ -269,9 +265,6 @@ function SingleSelectEntry(question, options) {
     self.isMulti = false;
     self.onClear = function() { self.rawAnswer(Formplayer.Const.NO_ANSWER); };
     self.isValid = function() { return true };
-    self.isChecked = function(value) {
-        return '' + value === self.rawAnswer();
-    };
 }
 SingleSelectEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 SingleSelectEntry.prototype.constructor = EntrySingleAnswer;
