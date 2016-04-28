@@ -90,15 +90,15 @@ describe('Entries', function() {
         expect(entry instanceof MultiSelectEntry).toBe(true);
         expect(entry.templateType).toBe('select');
         expect(entry.answer()).toEqual([1]);
-        expect(entry.rawAnswer()).toEqual(['1']);
+        expect(entry.rawAnswer()).toEqual([1]);
 
         // Did not change answer, do not call change
-        entry.rawAnswer(['1']);
+        entry.rawAnswer([1]);
         this.clock.tick(1000);
         expect(spy.callCount).toEqual(0);
         expect(entry.answer()).toEqual([1]);
 
-        entry.rawAnswer(['2']);
+        entry.rawAnswer([2]);
         expect(spy.calledOnce).toEqual(true);
         expect(entry.answer()).toEqual([2]);
     });
@@ -111,9 +111,9 @@ describe('Entries', function() {
         entry = (new Question(questionJSON)).entry;
         expect(entry instanceof SingleSelectEntry).toBe(true);
         expect(entry.templateType).toBe('select');
-        expect(entry.rawAnswer()).toBe('1');
+        expect(entry.rawAnswer()).toBe(1);
 
-        entry.rawAnswer('2');
+        entry.rawAnswer(2);
         this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
         expect(entry.answer()).toBe(2);
