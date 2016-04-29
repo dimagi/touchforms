@@ -60,14 +60,6 @@ function WebFormSession(params) {
     self.formContext = params.formContext;
     self.domain = params.domain;
 
-    if (params.form_uid) {
-        self.formSpec = {type: 'form-name', val: params.form_uid};
-    } else if (params.form_content) {
-        self.formSpec = {type: 'form-content', val: params.form_content};
-    } else if (params.form_url) {
-        self.formSpec = {type: 'form-url', val: params.form_url};
-    }
-
     self.applyListeners();
 
     self.resourceMap = params.resourceMap;
@@ -237,7 +229,6 @@ WebFormSession.prototype.loadForm = function($form, initLang) {
         'nav': 'fao',
         'uses-sqlite': this.uses_sqlite
     };
-    args[this.formSpec.type] = this.formSpec.val;
 
     // handle preloaders (deprecated) for backwards compatibilty
     if (args['session-data'] && args['session-data'].preloaders) {
