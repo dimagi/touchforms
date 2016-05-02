@@ -20,27 +20,31 @@ function TaskQueue() {
  * Executes the queue in a FIFO action. If name is supplied, will execute the first
  * task for that name.
  */
-TaskQueue.prototype.execute = function(name) {
+TaskQueue.prototype.execute = function (name) {
     var task,
         idx;
     if (name) {
         idx = _.indexOf(_.pluck(this.queue, 'name'), name);
-        if (idx === -1) { return; }
+        if (idx === -1) {
+            return;
+        }
         task = this.queue.splice(idx, 1)[0];
     } else {
         task = this.queue.shift();
     }
-    if (!task) { return; }
+    if (!task) {
+        return;
+    }
     task.fn.apply(task.thisArg, task.parameters);
 };
 
 TaskQueue.prototype.addTask = function (name, fn, parameters, thisArg) {
-    var task = { name: name, fn: fn, parameters: parameters, thisArg: thisArg };
+    var task = {name: name, fn: fn, parameters: parameters, thisArg: thisArg};
     this.queue.push(task);
     return task;
 };
 
-TaskQueue.prototype.clearTasks = function(name) {
+TaskQueue.prototype.clearTasks = function (name) {
     var idx;
     if (name) {
         idx = _.indexOf(_.pluck(this.queue, 'name'), name);
@@ -105,7 +109,7 @@ function WebFormSession(params) {
     });
 }
 
-WebFormSession.prototype.load = function($form, initLang) {
+WebFormSession.prototype.load = function ($form, initLang) {
     if (this.session_id) {
         this.resumeForm($form, this.session_id);
     } else {
@@ -139,14 +143,19 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
 
     this.numPendingRequests++;
     this.onLoading();
+    debugger;
     $.ajax({
             type: 'POST',
             url: url,
             data: JSON.stringify(requestParams),
             dataType: "text"  // we don't use JSON because of a weird bug: http://manage.dimagi.com/default.asp?190983
         })
-        .success(function(resp) { self.handleSuccess(JSON.parse(resp), callback); })
-        .fail(function (resp, textStatus) { self.handleFailure(JSON.parse(resp), textStatus); });
+        .success(function (resp) {
+            self.handleSuccess(JSON.parse(resp), callback);
+        })
+        .fail(function (resp, textStatus) {
+            self.handleFailure(JSON.parse(resp), textStatus);
+        });
 };
 
 /*
@@ -154,7 +163,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
  * @param {Object} response - touchforms response object
  * @param {function} callback - callback to be called if no errors occured
  */
-WebFormSession.prototype.handleSuccess = function(resp, callback) {
+WebFormSession.prototype.handleSuccess = function (resp, callback) {
     var self = this;
     if (resp.status === 'error' || resp.error) {
         self.onerror(resp);
@@ -185,7 +194,7 @@ WebFormSession.prototype.handleSuccess = function(resp, callback) {
     }
 };
 
-WebFormSession.prototype.handleFailure = function(resp, textStatus) {
+WebFormSession.prototype.handleFailure = function (resp, textStatus) {
     var errorMessage;
     if (textStatus === 'timeout') {
         errorMessage = Formplayer.Errors.TIMEOUT_ERROR;
@@ -201,7 +210,7 @@ WebFormSession.prototype.handleFailure = function(resp, textStatus) {
 /*
  * Subscribes to form action events which then get directed to a response to touchforms
  */
-WebFormSession.prototype.applyListeners = function() {
+WebFormSession.prototype.applyListeners = function () {
     var self = this;
     $.unsubscribe([
         'formplayer.' + Formplayer.Const.ANSWER,
@@ -210,24 +219,24 @@ WebFormSession.prototype.applyListeners = function() {
         'formplayer.' + Formplayer.Const.EVALUATE_XPATH,
         'formplayer.' + Formplayer.Const.SUBMIT,
     ].join(' '));
-    $.subscribe('formplayer.' + Formplayer.Const.SUBMIT, function(e, form) {
+    $.subscribe('formplayer.' + Formplayer.Const.SUBMIT, function (e, form) {
         self.submitForm(form);
     });
-    $.subscribe('formplayer.' + Formplayer.Const.ANSWER, function(e, question) {
+    $.subscribe('formplayer.' + Formplayer.Const.ANSWER, function (e, question) {
         self.answerQuestion(question);
     });
-    $.subscribe('formplayer.' + Formplayer.Const.DELETE_REPEAT, function(e, group) {
+    $.subscribe('formplayer.' + Formplayer.Const.DELETE_REPEAT, function (e, group) {
         self.deleteRepeat(group);
     });
-    $.subscribe('formplayer.' + Formplayer.Const.NEW_REPEAT, function(e, repeat) {
+    $.subscribe('formplayer.' + Formplayer.Const.NEW_REPEAT, function (e, repeat) {
         self.newRepeat(repeat);
     });
-    $.subscribe('formplayer.' + Formplayer.Const.EVALUATE_XPATH, function(e, xpath, callback) {
+    $.subscribe('formplayer.' + Formplayer.Const.EVALUATE_XPATH, function (e, xpath, callback) {
         self.evaluateXPath(xpath, callback);
     });
 };
 
-WebFormSession.prototype.loadForm = function($form, initLang) {
+WebFormSession.prototype.loadForm = function ($form, initLang) {
     var args = {
         'action': Formplayer.Const.NEW_FORM,
         'instance-content': this.instance_xml,
@@ -235,7 +244,7 @@ WebFormSession.prototype.loadForm = function($form, initLang) {
         'session-data': this.session_data,
         'domain': this.session_data.domain,
         'nav': 'fao',
-        'uses-sqlite': this.uses_sqlite
+        'uses-sqlite': this.uses_sqlite,
     };
     args[this.formSpec.type] = this.formSpec.val;
 
@@ -250,7 +259,7 @@ WebFormSession.prototype.loadForm = function($form, initLang) {
     this.initForm(args, $form);
 };
 
-WebFormSession.prototype.resumeForm = function($form, session_id) {
+WebFormSession.prototype.resumeForm = function ($form, session_id) {
     var args = {
         "action": Formplayer.Const.CURRENT
     };
@@ -258,7 +267,7 @@ WebFormSession.prototype.resumeForm = function($form, session_id) {
     this.initForm(args, $form);
 };
 
-WebFormSession.prototype.answerQuestion = function(q) {
+WebFormSession.prototype.answerQuestion = function (q) {
     var self = this;
     var ix = getIx(q);
     var answer = q.answer();
@@ -268,7 +277,7 @@ WebFormSession.prototype.answerQuestion = function(q) {
             'ix': ix,
             'answer': answer
         },
-        function(resp) {
+        function (resp) {
             $.publish('session.reconcile', [resp, q]);
             if (self.answerCallback !== undefined) {
                 self.answerCallback(self.session_id);
@@ -276,28 +285,28 @@ WebFormSession.prototype.answerQuestion = function(q) {
         });
 };
 
-WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
+WebFormSession.prototype.evaluateXPath = function (xpath, callback) {
     this.serverRequest({
             'action': Formplayer.Const.EVALUATE_XPATH,
             'xpath': xpath
         },
-        function(resp) {
+        function (resp) {
             callback(resp.output, resp.status);
         });
 };
 
-WebFormSession.prototype.newRepeat = function(repeat) {
+WebFormSession.prototype.newRepeat = function (repeat) {
     this.serverRequest({
             'action': Formplayer.Const.NEW_REPEAT,
             'ix': getIx(repeat)
         },
-        function(resp) {
+        function (resp) {
             $.publish('session.reconcile', [resp, repeat]);
         },
         true);
 };
 
-WebFormSession.prototype.deleteRepeat = function(repetition) {
+WebFormSession.prototype.deleteRepeat = function (repetition) {
     var juncture = getIx(repetition.parent);
     var rep_ix = +(repetition.rel_ix().split(":").slice(-1)[0]);
     this.serverRequest({
@@ -305,31 +314,31 @@ WebFormSession.prototype.deleteRepeat = function(repetition) {
             'ix': rep_ix,
             'form_ix': juncture
         },
-        function(resp) {
+        function (resp) {
             $.publish('session.reconcile', [resp, repetition]);
         },
         true);
 };
 
-WebFormSession.prototype.switchLanguage = function(lang) {
+WebFormSession.prototype.switchLanguage = function (lang) {
     this.serverRequest({
             'action': Formplayer.Const.SET_LANG,
             'lang': lang
         },
-        function(resp) {
+        function (resp) {
             $.publish('session.reconcile', [resp, lang]);
         });
 };
 
-WebFormSession.prototype.submitForm = function(form) {
+WebFormSession.prototype.submitForm = function (form) {
     var self = this,
         answers = {},
         accumulate_answers,
         prevalidated = true;
 
-    accumulate_answers = function(o) {
+    accumulate_answers = function (o) {
         if (ko.utils.unwrapObservable(o.type) !== 'question') {
-            if(o.hasOwnProperty("children")) {
+            if (o.hasOwnProperty("children")) {
                 $.each(o.children(), function (i, val) {
                     accumulate_answers(val);
                 });
@@ -349,12 +358,12 @@ WebFormSession.prototype.submitForm = function(form) {
             'answers': answers,
             'prevalidated': prevalidated
         },
-        function(resp) {
+        function (resp) {
             if (resp.status == 'success') {
                 form.submitting();
                 self.onsubmit(resp.output);
             } else {
-                $.each(resp.errors, function(ix, error) {
+                $.each(resp.errors, function (ix, error) {
                     self.serverError(getForIx(form, ix), error);
                 });
                 alert('There are errors in this form; they must be corrected before the form can be submitted.');
@@ -363,7 +372,7 @@ WebFormSession.prototype.submitForm = function(form) {
         true);
 };
 
-WebFormSession.prototype.serverError = function(q, resp) {
+WebFormSession.prototype.serverError = function (q, resp) {
     if (resp.type === "required") {
         q.serverError("An answer is required");
     } else if (resp.type === "constraint") {
@@ -371,12 +380,19 @@ WebFormSession.prototype.serverError = function(q, resp) {
     }
 };
 
-WebFormSession.prototype.initForm = function(args, $form) {
+WebFormSession.prototype.initForm = function (args, $form) {
     var self = this;
-    this.serverRequest(args, function(resp) {
+    this.serverRequest(args, function (resp) {
+        debugger;
         self.session_id = self.session_id || resp.session_id;
-
         self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
         self.onload(self, resp);
     });
 };
+WebFormSession.prototype.loadDirect = function (resp, $form, initLang) {
+    var self = this;
+    self.session_id = self.session_id || resp.session_id;
+    self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
+    self.onload(self, resp);
+};
+
