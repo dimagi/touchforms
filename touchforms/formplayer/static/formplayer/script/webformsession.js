@@ -143,7 +143,6 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
 
     this.numPendingRequests++;
     this.onLoading();
-    debugger;
     $.ajax({
             type: 'POST',
             url: url,
@@ -361,7 +360,7 @@ WebFormSession.prototype.submitForm = function (form) {
         function (resp) {
             if (resp.status == 'success') {
                 form.submitting();
-                self.onsubmit(resp.output);
+                self.onsubmit(resp);
             } else {
                 $.each(resp.errors, function (ix, error) {
                     self.serverError(getForIx(form, ix), error);
@@ -383,7 +382,6 @@ WebFormSession.prototype.serverError = function (q, resp) {
 WebFormSession.prototype.initForm = function (args, $form) {
     var self = this;
     this.serverRequest(args, function (resp) {
-        debugger;
         self.session_id = self.session_id || resp.session_id;
         self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
         self.onload(self, resp);
