@@ -11,11 +11,10 @@ from org.javarosa.core.services.storage import IStorageUtilityIndexed
 from org.javarosa.core.services.storage import IStorageIterator
 from org.commcare.cases.instance import CaseInstanceTreeElement
 from org.commcare.cases.ledger.instance import LedgerInstanceTreeElement
-from org.commcare.cases.instance import CaseDataInstance
 from org.commcare.core.process import CommCareInstanceInitializer
 from org.commcare.cases.model import Case
 from org.commcare.cases.ledger import Ledger
-from org.commcare.session import CommCareSession
+from org.commcare.session import CommCareSession, SessionInstanceBuilder
 from org.javarosa.xml import TreeElementParser
 from org.javarosa.xpath.expr import XPathFuncExpr
 from org.javarosa.xpath import XPathParseTool, XPathException
@@ -26,6 +25,7 @@ from org.commcare.api.persistence import SqlSandboxUtils
 from org.commcare.core.sandbox import SandboxUtils
 from org.commcare.modern.process import FormRecordProcessorHelper as FormRecordProcessor
 from org.commcare.modern.parse import ParseUtilsHelper as ParseUtils
+from org.commcare.util.mocks import MockDataUtils
 from org.kxml2.io import KXmlParser
 import persistence
 from java.io import File
@@ -156,7 +156,7 @@ class CCInstances(CommCareInstanceInitializer):
         elif 'session' in ref:
             meta_keys = ['device_id', 'app_version', 'username', 'user_id']
             exclude_keys = ['additional_filters', 'user_data']
-            sess = CommCareSession(None)  # will not passing a CCPlatform cause problems later?
+            sess = CommCareSession()  # will not passing a CCPlatform cause problems later?
             for k, v in self.vars.iteritems():
                 if k not in meta_keys \
                         and k not in exclude_keys:
@@ -168,8 +168,9 @@ class CCInstances(CommCareInstanceInitializer):
             for k, v in self.vars.get('user_data', {}).iteritems():
                 clean_user_data[k] = unicode(v if v is not None else '', errors='replace')
 
-            return from_bundle(sess.getSessionInstance(*([self.vars.get(k, '') for k in meta_keys] +
-                                                         [to_hashtable(clean_user_data)])))
+            form_instance = SessionInstanceBuilder.getSessionInstance(sess.getFrame(), *([self.vars.get(k, '') for k in meta_keys] +
+                                                     [to_hashtable(clean_user_data)]))
+            return from_bundle(form_instance)
 
     def _get_fixture(self, user_id, fixture_id):
         query_url = '%(base)s/%(user)s/%(fixture)s' % {"base": settings.FIXTURE_API_URL,
@@ -198,9 +199,12 @@ def process_form_file(auth, submission_file, session_data=None):
     FormRecordProcessor.processFile(sandbox, File(submission_file))
 
 
-def process_form_xml(auth, submission_xml, session_data=None):
-    ccInstances = CCInstances(session_data, auth, uses_sqlite=True)
-    sandbox = ccInstances.sandbox
+def process_form_xml(auth, submission_xml, uses_sqlite, session_data=None):
+    if uses_sqlite:
+        ccInstances = CCInstances(session_data, auth, uses_sqlite=True)
+        sandbox = ccInstances.sandbox
+    else:
+        sandbox = MockDataUtils.getStaticStorage()
     FormRecordProcessor.processXML(sandbox, submission_xml)
 
 
