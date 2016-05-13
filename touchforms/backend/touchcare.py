@@ -181,11 +181,14 @@ class CCInstances(CommCareInstanceInitializer):
         except (HTTPError, URLError), e:
             fixture_name = query_url[query_url.rfind('/') + 1:]
             if "user-group" in fixture_name:
-                raise TouchFormsNotFound('This form requires that the user be in a case sharing group but one could not be found.')
+                raise TouchFormsNotFound('This form requires that the user be in a case sharing group '
+                                         'but one could not be found.')
             elif "commtrack:locations" in fixture_name:
-                raise TouchFormsNotFound('This form requires that the user be assigned to a location but one could not be found.')
+                raise TouchFormsNotFound('This form requires that the user be assigned to a location '
+                                         'but one could not be found.')
             else:
-                raise TouchFormsNotFound('Unable to fetch fixture %s. Ensure the logged in user has access to this fixture.' % fixture_name)
+                raise TouchFormsNotFound('Unable to fetch fixture %s. '
+                                         'Ensure the logged in user has access to this fixture.' % fixture_name)
         parser = KXmlParser()
         parser.setInput(to_input_stream(results), "UTF-8")
         parser.setFeature(KXmlParser.FEATURE_PROCESS_NAMESPACES, True)
