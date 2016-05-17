@@ -70,3 +70,4 @@ class StaticDateFunctionHandler(StaticFunctionHandler):
                 sdf.setTimeZone(TimeZone.getTimeZone("UTC"))
                 parsed_value = sdf.parse(value)
             self._value = parsed_value
+            
