@@ -64,6 +64,14 @@ function WebFormSession(params) {
     self.formContext = params.formContext;
     self.domain = params.domain;
 
+    if (params.form_uid) {
+        self.formSpec = {type: 'form-name', val: params.form_uid};
+    } else if (params.form_content) {
+        self.formSpec = {type: 'form-content', val: params.form_content};
+    } else if (params.form_url) {
+        self.formSpec = {type: 'form-url', val: params.form_url};
+    }
+
     self.applyListeners();
 
     self.resourceMap = params.resourceMap;
