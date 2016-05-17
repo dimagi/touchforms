@@ -238,6 +238,8 @@ WebFormSession.prototype.loadForm = function($form, initLang) {
         'uses-sqlite': this.uses_sqlite
     };
 
+    args[this.formSpec.type] = this.formSpec.val;
+
     // handle preloaders (deprecated) for backwards compatibilty
     if (args['session-data'] && args['session-data'].preloaders) {
         if (args['session-data'] === null) {
