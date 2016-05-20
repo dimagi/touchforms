@@ -375,14 +375,12 @@ WebFormSession.prototype.serverError = function(q, resp) {
 WebFormSession.prototype.initForm = function(args, $form) {
     var self = this;
     this.serverRequest(args, function(resp) {
-        self.session_id = self.session_id || resp.session_id;
-
-        self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
+        WebFormSession.prototype.renderFormXml(resp, $form);
         self.onload(self, resp);
     });
 };
 
-WebFormSession.prototype.loadDirect = function (resp, $form, initLang) {
+WebFormSession.prototype.renderFormXml = function (resp, $form) {
     var self = this;
     self.session_id = self.session_id || resp.session_id;
     self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
