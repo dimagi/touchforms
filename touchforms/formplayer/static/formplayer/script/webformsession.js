@@ -375,7 +375,7 @@ WebFormSession.prototype.serverError = function(q, resp) {
 WebFormSession.prototype.initForm = function(args, $form) {
     var self = this;
     this.serverRequest(args, function(resp) {
-        WebFormSession.prototype.renderFormXml(resp, $form);
+        self.renderFormXml(resp, $form);
         self.onload(self, resp);
     });
 };
