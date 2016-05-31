@@ -188,7 +188,8 @@ class CCInstances(CommCareInstanceInitializer):
                                          'but one could not be found.')
             else:
                 raise TouchFormsNotFound('Unable to fetch lookup table %s. '
-                                         'Ensure the logged in user has access to this lookup table.' % fixture_name)
+                                         'Ensure the logged in user has access '
+                                         'to this lookup table.' % fixture_name)
         parser = KXmlParser()
         parser.setInput(to_input_stream(results), "UTF-8")
         parser.setFeature(KXmlParser.FEATURE_PROCESS_NAMESPACES, True)
