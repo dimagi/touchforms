@@ -186,9 +186,16 @@ class CCInstances(CommCareInstanceInitializer):
             elif "commtrack:locations" in fixture_name:
                 raise TouchFormsNotFound('This form requires that the user be assigned to a location '
                                          'but one could not be found.')
+            elif "item-list" in fixture_name:
+                raise TouchFormsNotFound('Unable to fetch lookup table %s. '
+                                         'Ensure the logged in user has access '
+                                         'to this lookup table.' % fixture_name)
+            elif "commtrack:products" in fixture_name:
+                raise TouchFormsNotFound('Unable to retrieve the product list for this user. Ensure '
+                                         'the logged in user is assigned a product list.')
             else:
-                raise TouchFormsNotFound('Unable to fetch fixture %s. '
-                                         'Ensure the logged in user has access to this fixture.' % fixture_name)
+                raise TouchFormsNotFound('Unable to fetch fixture %s. Ensure the logged in user has access '
+                                         'to this fixture.' % fixture_name)
         parser = KXmlParser()
         parser.setInput(to_input_stream(results), "UTF-8")
         parser.setFeature(KXmlParser.FEATURE_PROCESS_NAMESPACES, True)
