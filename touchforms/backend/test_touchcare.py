@@ -125,6 +125,7 @@ class TouchcareLedgerTest(unittest.TestCase):
 class SubmissionTest(unittest.TestCase):
 
     def setUp(self):
+        super(SubmissionTest, self).setUp()
         self.form = os.path.join(CUR_DIR, 'test_files/simple_submission.xml')
         self.restore = os.path.join(CUR_DIR, 'test_files/restores/simple_restore.xml')
 
