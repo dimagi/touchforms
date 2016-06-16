@@ -79,7 +79,7 @@ describe('WebForm', function() {
                 params.xform_url,
                 [200,
                 { 'Content-Type': 'application/json' },
-                '{ "status": "success" }']);
+                '{ "status": "success", "session_id": "my-session" }']);
 
             // Setup server constants
             window.XFORM_URL = 'dummy';
@@ -195,6 +195,17 @@ describe('WebForm', function() {
             expect(sess.onerror.calledWith({
                 human_readable_message: Formplayer.Errors.TIMEOUT_ERROR
             })).toBe(true);
+        });
+
+        it('Should ensure session id is set', function() {
+            var sess = new WebFormSession(params),
+                spy = sinon.spy(WebFormSession.prototype, 'renderFormXml');
+            sess.loadForm($('div'), 'en');
+            expect(sess.session_id).toBe(null);
+
+            server.respond();
+            expect(sess.session_id).toBe('my-session');
+            WebFormSession.prototype.renderFormXml.restore();
         });
     });
 });
