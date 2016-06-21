@@ -222,7 +222,6 @@ def player_proxy(request):
     """
     Proxy to an xform player, to avoid cross-site scripting issues
     """
-
     data = request.body
     auth_cookie = request.COOKIES.get('sessionid')
     try:
