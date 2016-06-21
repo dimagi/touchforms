@@ -16,6 +16,7 @@
 .debugger {
   width: 800px;
   position: fixed;
+  z-index: 10;
   bottom: 0;
   background-color: white;
 
@@ -58,8 +59,6 @@
   line-height: 18px;
   color: white;
   background-color: #004ebc;
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
   border-bottom: #ddd solid 4px;
   padding: 6px;
   cursor: pointer;

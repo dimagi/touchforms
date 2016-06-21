@@ -56,7 +56,8 @@ class CCInstances(CommCareInstanceInitializer):
         self.auth = auth
         self.uses_sqlite = uses_sqlite
         if self.uses_sqlite:
-            self.username = sessionvars['username'] + '@' + sessionvars['domain']
+            username = sessionvars['username']
+            self.username = username + '@' + sessionvars['domain'] if '@' not in username else username
             self.sandbox = SqlSandboxUtils.getStaticStorage(self.username, settings.SQLITE_DBS_DIRECTORY)
             self.host = settings.URL_HOST
             self.domain = sessionvars['domain']
@@ -180,7 +181,23 @@ class CCInstances(CommCareInstanceInitializer):
         try:
             results = q(query_url)
         except (HTTPError, URLError), e:
-            raise TouchFormsNotFound('Unable to fetch fixture at %s: %s' % (query_url, str(e)))
+            fixture_name = query_url[query_url.rfind('/') + 1:]
+            if "user-group" in fixture_name:
+                raise TouchFormsNotFound('This form requires that the user be in a case sharing group '
+                                         'but one could not be found.')
+            elif "commtrack:locations" in fixture_name:
+                raise TouchFormsNotFound('This form requires that the user be assigned to a location '
+                                         'but one could not be found.')
+            elif "item-list" in fixture_name:
+                raise TouchFormsNotFound('Unable to fetch lookup table %s. '
+                                         'Ensure the logged in user has access '
+                                         'to this lookup table.' % fixture_name)
+            elif "commtrack:products" in fixture_name:
+                raise TouchFormsNotFound('Unable to retrieve the product list for this user. Ensure '
+                                         'the logged in user is assigned a product list.')
+            else:
+                raise TouchFormsNotFound('Unable to fetch fixture %s. Ensure the logged in user has access '
+                                         'to this fixture.' % fixture_name)
         parser = KXmlParser()
         parser.setInput(to_input_stream(results), "UTF-8")
         parser.setFeature(KXmlParser.FEATURE_PROCESS_NAMESPACES, True)

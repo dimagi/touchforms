@@ -80,7 +80,7 @@ function WebFormSession(params) {
     }
 
     self.onsubmit = params.onsubmit;
-    self.uses_sqlite = params.uses_sqlite_backend || false;
+    self.uses_sql_backend = params.uses_sql_backend || false;
 
     // onload/onlanginfo
     self.onload = params.onload;
@@ -235,8 +235,9 @@ WebFormSession.prototype.loadForm = function($form, initLang) {
         'session-data': this.session_data,
         'domain': this.session_data.domain,
         'nav': 'fao',
-        'uses-sqlite': this.uses_sqlite
+        'uses_sql_backend': this.uses_sql_backend
     };
+
     args[this.formSpec.type] = this.formSpec.val;
 
     // handle preloaders (deprecated) for backwards compatibilty
@@ -299,7 +300,7 @@ WebFormSession.prototype.newRepeat = function(repeat) {
 
 WebFormSession.prototype.deleteRepeat = function(repetition) {
     var juncture = getIx(repetition.parent);
-    var rep_ix = +(repetition.rel_ix().split(":").slice(-1)[0]);
+    var rep_ix = +(repetition.rel_ix().replace('_',':').split(":").slice(-1)[0]);
     this.serverRequest({
             'action': Formplayer.Const.DELETE_REPEAT,
             'ix': rep_ix,
@@ -352,7 +353,7 @@ WebFormSession.prototype.submitForm = function(form) {
         function(resp) {
             if (resp.status == 'success') {
                 form.submitting();
-                self.onsubmit(resp.output);
+                self.onsubmit(resp);
             } else {
                 $.each(resp.errors, function(ix, error) {
                     self.serverError(getForIx(form, ix), error);
@@ -374,9 +375,13 @@ WebFormSession.prototype.serverError = function(q, resp) {
 WebFormSession.prototype.initForm = function(args, $form) {
     var self = this;
     this.serverRequest(args, function(resp) {
-        self.session_id = self.session_id || resp.session_id;
-
-        self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
+        self.renderFormXml(resp, $form);
         self.onload(self, resp);
     });
+};
+
+WebFormSession.prototype.renderFormXml = function (resp, $form) {
+    var self = this;
+    self.session_id = self.session_id || resp.session_id;
+    self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
 };
