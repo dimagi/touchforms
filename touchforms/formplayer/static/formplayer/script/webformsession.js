@@ -59,6 +59,7 @@ function WebFormSession(params) {
     self.taskQueue = new TaskQueue();
     self.formContext = params.formContext;
     self.domain = params.domain;
+    self.formplayerEnabled = params.formplayerEnabled;
 
     if (params.form_uid) {
         self.formSpec = {type: 'form-name', val: params.form_uid};
@@ -139,14 +140,33 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
 
     this.numPendingRequests++;
     this.onLoading();
-    $.ajax({
-            type: 'POST',
-            url: url,
-            data: JSON.stringify(requestParams),
-            dataType: "text"  // we don't use JSON because of a weird bug: http://manage.dimagi.com/default.asp?190983
-        })
-        .success(function(resp) { self.handleSuccess(JSON.parse(resp), callback); })
-        .fail(function (resp, textStatus) { self.handleFailure(JSON.parse(resp), textStatus); });
+
+    if(self.formplayerEnabled){
+        $.ajax({
+                type: 'POST',
+                url: 'http://localhost:8090/' + requestParams.action,
+                data: JSON.stringify(requestParams),
+                contentType: "application/json",
+                dataType: "json",
+                crossDomain: {crossDomain: true},
+                xhrFields: {withCredentials: true},
+            })
+            .success(function (resp) {
+                self.handleSuccess(resp, callback);
+            })
+            .fail(function (resp, textStatus) {
+                self.handleFailure(JSON.parse(resp), textStatus);
+            });
+    } else{
+        $.ajax({
+                type: 'POST',
+                url: url,
+                data: JSON.stringify(requestParams),
+                dataType: "text"  // we don't use JSON because of a weird bug: http://manage.dimagi.com/default.asp?190983
+            })
+            .success(function(resp) { self.handleSuccess(JSON.parse(resp), callback); })
+            .fail(function (resp, textStatus) { self.handleFailure(JSON.parse(resp), textStatus); });
+    }
 };
 
 /*
