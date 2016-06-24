@@ -75,11 +75,8 @@ $(document).ready(function() {
       args.session_data = {{ session_data|safe }};
       args.instance_xml = {{ instance_xml|safe }};
     }
-    {% if request|toggle_enabled:"TF_USES_SQLITE_BACKEND" %}
-      args.uses_sqlite_backend = true
-    {% else %}
-      args.uses_sqlite_backend = false
-    {% endif %}
+
+    args.uses_sqlite_backend = {{ use_sqlite_backend|JSON }};
 
     var sess = new WebFormSession(args);
 

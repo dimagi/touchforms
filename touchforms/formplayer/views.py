@@ -3,6 +3,8 @@ from django.http.response import HttpResponseServerError, Http404
 from django.shortcuts import get_object_or_404
 from django.conf import settings
 from django.views.decorators.http import require_POST
+
+from corehq.form_processor.utils.general import use_sqlite_backend
 from touchforms.formplayer.models import XForm, EntrySession
 from touchforms.formplayer.autocomplete import autocompletion, DEFAULT_NUM_SUGGESTIONS
 from django.http import HttpResponseRedirect, HttpResponse,\
@@ -158,6 +160,7 @@ def _form_entry_new(request, xform, instance_xml, session_data, input_mode,
             "lang": request.GET.get('lang'),
             'session_id': request.GET.get('sess'),
             'maps_api_key': settings.GMAPS_API_KEY,
+            'use_sqlite_backend': hasattr(request, 'domain') and use_sqlite_backend(request.domain),
         }, context_instance=RequestContext(request))
 
 def _form_entry_abort(request, xform, callback):
