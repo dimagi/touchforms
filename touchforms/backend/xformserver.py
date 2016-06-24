@@ -260,8 +260,10 @@ def handle_request(content, server):
             return {"output": result['output'], "status": result['status']}
         elif action == xformplayer.Actions.SYNC_USER_DB:
             ensure_required_params(['username', 'hq_auth'], action, content)
-            trimmed_username = content['username'][:content['username'].index('.')]
-            result = touchcare.force_ota_restore(trimmed_username, auth=content['hq_auth'])
+            username = content['username']
+            if username.endswith('commcarehq.org'):
+                username = content['username'][:content['username'].index('.')]
+            result = touchcare.force_ota_restore(username, auth=content['hq_auth'])
             return result
         # Touchcare routes
         elif action == touchcare.Actions.FILTER_CASES:
