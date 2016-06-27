@@ -318,7 +318,7 @@ def sync_db(username, domain=None, auth=None):
     data = {
         "action":"sync-db",
         "username": username,
-        "domain:": domain
+        "domain": domain
     }
 
     response = post_data(json.dumps(data), auth)
