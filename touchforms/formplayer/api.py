@@ -314,7 +314,7 @@ def get_response(data, auth=None):
         raise e
 
 
-def sync_db(username, domain=None, auth=None):
+def sync_db(username, domain, auth):
     data = {
         "action":"sync-db",
         "username": username,
