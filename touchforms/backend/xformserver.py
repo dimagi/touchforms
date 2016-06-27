@@ -261,8 +261,7 @@ def handle_request(content, server):
         elif action == xformplayer.Actions.SYNC_USER_DB:
             ensure_required_params(['username', 'hq_auth', 'domain'], action, content)
             trimmed_username = content['username'].split('@')[0]
-            result = touchcare.force_ota_restore(trimmed_username, content['domain'], auth=content['hq_auth'])
-            return result
+            return touchcare.force_ota_restore(trimmed_username, content['domain'], auth=content['hq_auth'])
         # Touchcare routes
         elif action == touchcare.Actions.FILTER_CASES:
             ensure_required_params(['hq_auth', 'filter_expr'], action, content)
