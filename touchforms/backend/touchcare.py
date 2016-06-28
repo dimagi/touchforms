@@ -40,9 +40,7 @@ def get_restore_url(criteria=None):
     return query_url
 
 
-def force_ota_restore(domained_username, auth):
-    username = domained_username.split("@")[0]
-    domain = domained_username.split("@")[1]
+def force_ota_restore(username, domain, auth):
     CCInstances({"username": username, "domain": domain, "host": settings.URL_HOST},
                 auth, force_sync=True, uses_sqlite=True)
     result = {'status': 'OK'}
