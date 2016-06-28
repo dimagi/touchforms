@@ -259,9 +259,13 @@ def handle_request(content, server):
             result = xfsess.evaluate_xpath(content['xpath'])
             return {"output": result['output'], "status": result['status']}
         elif action == xformplayer.Actions.SYNC_USER_DB:
-            ensure_required_params(['username', 'hq_auth'], action, content)
-            trimmed_username = content['username'][:content['username'].index('.')]
-            result = touchcare.force_ota_restore(trimmed_username, auth=content['hq_auth'])
+            ensure_required_params(['username', 'domain', 'hq_auth'], action, content)
+            username = content['username']
+            domain = content['domain']
+            # if a mobile user, we only want the username up to the @{domain}.{host} portion
+            if username.endswith('commcarehq.org'):
+                username = content['username'][:content['username'].index('@')]
+            result = touchcare.force_ota_restore(username, domain, auth=content['hq_auth'])
             return result
         # Touchcare routes
         elif action == touchcare.Actions.FILTER_CASES:

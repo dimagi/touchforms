@@ -314,11 +314,11 @@ def get_response(data, auth=None):
         raise e
 
 
-def sync_db(username, domain=None, auth=None):
+def sync_db(username, domain, auth):
     data = {
         "action":"sync-db",
         "username": username,
-        "domain:": domain
+        "domain": domain
     }
 
     response = post_data(json.dumps(data), auth)
