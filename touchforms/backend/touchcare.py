@@ -50,12 +50,10 @@ def force_ota_restore(username, domain, auth):
 class CCInstances(CommCareInstanceInitializer):
     def __init__(self, sessionvars, auth, restore_xml=None,
                  force_sync=False, form_context=None, uses_sqlite=False):
-        print "CCinstances"
         self.vars = sessionvars
         self.auth = auth
         self.uses_sqlite = uses_sqlite
         if self.uses_sqlite:
-            print "Uses SQLite"
             username = sessionvars['username']
             self.username = username + '@' + sessionvars['domain'] if '@' not in username else username
             self.sandbox = SqlSandboxUtils.getStaticStorage(self.username, settings.SQLITE_DBS_DIRECTORY)
@@ -66,7 +64,6 @@ class CCInstances(CommCareInstanceInitializer):
             CommCareInstanceInitializer.__init__(self, self.sandbox)
 
             if force_sync or self.needs_sync():
-                print "Force sync: ", force_sync, ", neeeds sync: ", self.needs_sync()
                 self.perform_ota_restore(restore_xml)
         else:
             self.fixtures = {}
