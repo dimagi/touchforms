@@ -4,8 +4,10 @@ from urlparse import urlparse
 import httplib
 import logging
 import socket
+
+from corehq.form_processor.utils.general import use_sqlite_backend
 from touchforms.formplayer.exceptions import BadDataError
-from corehq.toggles import TF_USES_SQLITE_BACKEND, USE_FORMPLAYER, FORMPLAYER_EXPERIMENT
+from corehq.toggles import USE_FORMPLAYER, FORMPLAYER_EXPERIMENT
 from experiments import FormplayerExperiment
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
@@ -276,7 +278,7 @@ def post_data(data, auth=None, content_type="application/json"):
     domain = d.get("domain")
 
     if domain:
-        d['uses_sql_backend'] = TF_USES_SQLITE_BACKEND.enabled(domain)
+        d['uses_sql_backend'] = use_sqlite_backend(domain)
         # see if we want to experiment or do it LIVE
         if USE_FORMPLAYER.enabled(domain):
             return post_data_helper(d, auth, content_type, settings.FORMPLAYER_URL + "/" + d["action"])
