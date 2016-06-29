@@ -144,7 +144,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     if(self.formplayerEnabled){
         $.ajax({
                 type: 'POST',
-                url: 'http://localhost:8090/' + requestParams.action,
+                url: url + "/" + requestParams.action,
                 data: JSON.stringify(requestParams),
                 contentType: "application/json",
                 dataType: "json",
