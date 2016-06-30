@@ -224,7 +224,7 @@ def perform_restore(auth, session_data=None, restore_xml=None):
 
 
 def filter_cases(filter_expr, api_auth, session_data=None, form_context=None,
-                 restore_xml=None, force_sync=True, uses_sqlite=False):
+                 restore_xml=None, force_sync=False, uses_sqlite=False):
     session_data = session_data or {}
     form_context = form_context or {}
 
