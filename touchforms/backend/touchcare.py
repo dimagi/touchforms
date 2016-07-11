@@ -40,9 +40,7 @@ def get_restore_url(criteria=None):
     return query_url
 
 
-def force_ota_restore(domained_username, auth):
-    username = domained_username.split("@")[0]
-    domain = domained_username.split("@")[1]
+def force_ota_restore(username, domain, auth):
     CCInstances({"username": username, "domain": domain, "host": settings.URL_HOST},
                 auth, force_sync=True, uses_sqlite=True)
     result = {'status': 'OK'}
@@ -230,7 +228,7 @@ def perform_restore(auth, session_data=None, restore_xml=None):
 
 
 def filter_cases(filter_expr, api_auth, session_data=None, form_context=None,
-                 restore_xml=None, force_sync=True, uses_sqlite=False):
+                 restore_xml=None, force_sync=False, uses_sqlite=False):
     session_data = session_data or {}
     form_context = form_context or {}
 
