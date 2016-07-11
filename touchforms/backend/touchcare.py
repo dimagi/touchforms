@@ -219,6 +219,8 @@ def process_form_xml(auth, submission_xml, uses_sqlite, session_data=None):
         ccInstances = CCInstances(session_data, auth, uses_sqlite=True)
         sandbox = ccInstances.sandbox
     else:
+        # we need to mock this so that we can run the submission against a DB
+        # and then bubble up and catch any XML errors
         sandbox = MockDataUtils.getStaticStorage()
     FormRecordProcessor.processXML(sandbox, submission_xml)
 
