@@ -143,12 +143,12 @@ describe('Entries', function() {
 
     it('Should correctly handle different timezones', function() {
         // Late at night in LA (10 pm)
-        var LAdate = moment.tz("2016-12-01T22:00:00", "America/Los_Angeles")
+        var LAdate = moment.tz("2016-12-01T22:00:00", "America/Los_Angeles");
         expect(LAdate.format(DateEntry.serverFormat)).toBe('2016-12-01');
 
         // Since it's 10pm in LA that means on conversion to UTC, it should be the next day
         expect(DateEntry.convertToUTCAnswer(LAdate.toDate())).toBe('2016-12-02');
-    })
+    });
 
     it('Should return TimeEntry', function() {
         questionJSON.datatype = Formplayer.Const.TIME;

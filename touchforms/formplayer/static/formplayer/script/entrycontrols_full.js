@@ -322,7 +322,7 @@ DateEntry.convertToUTCAnswer = function(rawDate) {
         return null;
     }
     return moment.utc(rawDate).format(DateEntry.serverFormat);
-}
+};
 
 
 function TimeEntry(question, options) {
