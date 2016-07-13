@@ -1,6 +1,10 @@
 describe('Entries', function() {
     var questionJSON,
-        spy;
+        spy,
+        zones = [
+            "America/Los_Angeles|PST PDT PWT PPT|80 70 70 70|010102301010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010|-261q0 1nX0 11B0 1nX0 SgN0 8x10 iy0 5Wp0 1Vb0 3dB0 WL0 1qN0 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1qN0 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1qN0 WL0 1qN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1a10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1cN0 1cL0 1cN0 1cL0 s10 1Vz0 LB0 1BX0 1cN0 1fz0 1a10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1a10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0|15e6",
+        ];
+    moment.tz.add(zones);
 
 
     beforeEach(function() {
@@ -136,6 +140,15 @@ describe('Entries', function() {
         var clientDate = DateEntry.parseServerDateToClientDate('2015-10-08');
         expect(clientDate).toBe('10/08/2015');
     });
+
+    it('Should correctly handle different timezones', function() {
+        // Late at night in LA (10 pm)
+        var LAdate = moment.tz("2016-12-01T22:00:00", "America/Los_Angeles")
+        expect(LAdate.format(DateEntry.serverFormat)).toBe('2016-12-01');
+
+        // Since it's 10pm in LA that means on conversion to UTC, it should be the next day
+        expect(DateEntry.convertToUTCAnswer(LAdate.toDate())).toBe('2016-12-02');
+    })
 
     it('Should return TimeEntry', function() {
         questionJSON.datatype = Formplayer.Const.TIME;
