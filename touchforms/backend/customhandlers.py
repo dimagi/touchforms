@@ -28,6 +28,8 @@ def attach_handlers(form, extensions, context, preload_data=None):
     # not break touchforms
     form.getPreloader().addPreloadHandler(StaticPreloadHandler('property', {}))
 
+    form.exprEvalContext.addFunctionHandler(FormatForDateFunctionHandler())
+
     # NOTE: PRELOADERS ARE DEPRECATED
     for key, data_dict in preload_data.iteritems():
         handler = StaticPreloadHandler(key, data_dict)
@@ -57,6 +59,29 @@ def attach_handlers(form, extensions, context, preload_data=None):
                         handler = obj(**item)
                         logger.info('adding handler [%s / %s] from module [%s]' % (name, handler.getName(), ext))
                         form.exprEvalContext.addFunctionHandler(handler)
+
+
+class FormatForDateFunctionHandler(IFunctionHandler):
+
+    @classmethod
+    def slug(self):
+        raise NotImplementedError()
+
+    def getPrototypes(self):
+        return to_vect([jarray.array([java.util.Date, java.lang.String], java.lang.Class)])
+
+    def rawArgs(self):
+        return False
+
+    def realTime(self):
+        return False
+
+    def getName(self):
+        return "format-date-for-calendar"
+
+    def eval(self, args, ec):
+        print "Eval args: ", args
+        return args[0]
 
 
 class TouchformsFunctionHandler(IFunctionHandler):
