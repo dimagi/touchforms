@@ -60,7 +60,7 @@ def attach_handlers(form, extensions, context, preload_data=None):
                         logger.info('adding handler [%s / %s] from module [%s]' % (name, handler.getName(), ext))
                         form.exprEvalContext.addFunctionHandler(handler)
 
-
+# Temporary hack to not break until real fix gets merged, just return Roman date
 class FormatForDateFunctionHandler(IFunctionHandler):
 
     @classmethod
@@ -80,7 +80,6 @@ class FormatForDateFunctionHandler(IFunctionHandler):
         return "format-date-for-calendar"
 
     def eval(self, args, ec):
-        print "Eval args: ", args
         return args[0]
 
 
