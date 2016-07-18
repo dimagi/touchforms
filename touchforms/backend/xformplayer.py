@@ -14,7 +14,7 @@ from java.io import StringReader
 
 import customhandlers
 from util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect, to_arr, index_from_str
-    
+
 from setup import init_classpath, init_jr_engine
 import logging
 init_classpath()
@@ -720,6 +720,13 @@ def submit_form(xform_session, answers, prevalidated):
         filter(lambda resp: resp[1]['status'] != 'success',
             ((_ix, xform_session.answer_question(answer, _ix)) for _ix, answer in answers.iteritems()))
     )
+
+    if errors or not prevalidated:
+        resp = {'status': 'validation-error', 'errors': errors}
+    else:
+        resp = form_completion(xform_session)
+        resp['status'] = 'success'
+
     xml = xform_session.output()
     process_form_xml(
         xform_session.orig_params['api_auth'],
@@ -727,12 +734,6 @@ def submit_form(xform_session, answers, prevalidated):
         xform_session.uses_sql_backend,
         xform_session.orig_params['session_data']
     )
-
-    if errors or not prevalidated:
-        resp = {'status': 'validation-error', 'errors': errors}
-    else:
-        resp = form_completion(xform_session)
-        resp['status'] = 'success'
 
     return xform_session.response(resp, no_next=True)
 
