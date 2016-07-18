@@ -81,7 +81,7 @@ class FormatForDateFunctionHandler(IFunctionHandler):
         return "format-date-for-calendar"
 
     def eval(self, args, ec):
-        return args[0]
+        return args[0].toString()
 
 
 class TouchformsFunctionHandler(IFunctionHandler):
