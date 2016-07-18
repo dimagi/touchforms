@@ -79,6 +79,9 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         except TouchFormsNotFound, e:
             self.send_error(404, str(e))
             return
+        except urllib2.HTTPError, e:
+            self.send_error(e.code, e.read() or e.msg)
+            return
         except (Exception, java.lang.Exception), e:
             msg = ''
             if isinstance(e, java.lang.Exception):
