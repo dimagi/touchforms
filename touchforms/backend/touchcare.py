@@ -6,7 +6,6 @@ from copy import copy
 import settings
 import os
 
-from org.javarosa.core.model.instance import InstanceInitializationFactory
 from org.javarosa.core.services.storage import IStorageUtilityIndexed
 from org.javarosa.core.services.storage import IStorageIterator
 from org.commcare.cases.instance import CaseInstanceTreeElement
@@ -25,7 +24,6 @@ from org.commcare.api.persistence import SqlSandboxUtils
 from org.commcare.core.sandbox import SandboxUtils
 from org.commcare.modern.process import FormRecordProcessorHelper as FormRecordProcessor
 from org.commcare.modern.parse import ParseUtilsHelper as ParseUtils
-from org.commcare.util.mocks import MockDataUtils
 from org.kxml2.io import KXmlParser
 import persistence
 from java.io import File
