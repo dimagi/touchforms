@@ -731,7 +731,6 @@ def submit_form(xform_session, answers, prevalidated):
     process_form_xml(
         xform_session.orig_params['api_auth'],
         xml,
-        xform_session.uses_sql_backend,
         xform_session.orig_params['session_data']
     )
 
