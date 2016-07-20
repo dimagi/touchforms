@@ -290,7 +290,7 @@ function DateEntry(question, options) {
         self.$picker.datepicker({
             changeMonth: true,
             changeYear: true,
-            dateFormat: 'mm/dd/yy',  // This is jquery datepicker's formatting. Elsewhere we use momentjs
+            dateFormat: DateEntry.clientFormat,
             yearRange: "" + (thisYear - 100) + ":" + (thisYear + 10),
         });
         if (self.answer()) {
@@ -298,30 +298,22 @@ function DateEntry(question, options) {
         }
         self.$picker.change(function() {
             var raw = self.$picker.datepicker('getDate');
-            self.answer(DateEntry.convertToUTCAnswer(raw));
+            self.answer(raw ? $.datepicker.formatDate(DateEntry.serverFormat, raw) : null);
         });
     }
 };
 DateEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 DateEntry.prototype.constructor = EntrySingleAnswer;
 // The datepicker's formatter uses yy to mean four-digit year.
-DateEntry.clientFormat = 'MM/DD/YYYY';
-DateEntry.serverFormat = 'YYYY-MM-DD';
+DateEntry.clientFormat = 'mm/dd/yy';
+DateEntry.serverFormat = 'yy-mm-dd';
 
 /*
  * On initial load, ensure that the server date is parsed into a proper client date format.
- * Server date is assumed to be in UTC.
  */
 DateEntry.parseServerDateToClientDate = function(serverDate) {
-    var date = moment.utc(serverDate, DateEntry.serverFormat);
-    return date.format(DateEntry.clientFormat);
-};
-
-DateEntry.convertToUTCAnswer = function(rawDate) {
-    if (!rawDate) {
-        return null;
-    }
-    return moment.utc(rawDate).format(DateEntry.serverFormat);
+    var date = $.datepicker.parseDate(DateEntry.serverFormat, serverDate);
+    return $.datepicker.formatDate(DateEntry.clientFormat, date);
 };
 
 
