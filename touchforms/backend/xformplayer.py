@@ -14,7 +14,7 @@ from java.io import StringReader
 
 import customhandlers
 from util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect, to_arr, index_from_str
-    
+
 from setup import init_classpath, init_jr_engine
 import logging
 init_classpath()
@@ -726,15 +726,13 @@ def submit_form(xform_session, answers, prevalidated):
     else:
         resp = form_completion(xform_session)
         resp['status'] = 'success'
-        xml = xform_session.output()
-        if xform_session.uses_sql_backend:
-            # After submission, update user's SQL case database so that they do not
-            # have to restore on every form submit
-            process_form_xml(
-                xform_session.orig_params['api_auth'],
-                xml,
-                xform_session.orig_params['session_data'],
-            )
+
+    xml = xform_session.output()
+    process_form_xml(
+        xform_session.orig_params['api_auth'],
+        xml,
+        xform_session.orig_params['session_data']
+    )
 
     return xform_session.response(resp, no_next=True)
 
