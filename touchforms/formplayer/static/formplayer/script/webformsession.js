@@ -357,14 +357,15 @@ WebFormSession.prototype.submitForm = function(form) {
             }
         } else {
             if (o.isValid()) {
-                answers[getIx(o)] = ko.utils.unwrapObservable(o.answer);
+                if(ko.utils.unwrapObservable(o.datatype) !== "info") {
+                    answers[getIx(o)] = ko.utils.unwrapObservable(o.answer);
+                }
             } else {
                 prevalidated = false;
             }
         }
     };
     accumulate_answers(form);
-
     this.serverRequest({
             'action': Formplayer.Const.SUBMIT,
             'answers': answers,
