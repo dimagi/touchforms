@@ -206,7 +206,7 @@ describe('Entries', function() {
         questionJSON.style = { raw: 'numeric' };
 
         entry = (new Question(questionJSON)).entry;
-        entry.rawAnswer('123.4');
-        expect(entry.answer()).toBe('123.4');
+        entry.rawAnswer('-123.4');
+        expect(entry.answer()).toBe('-123.4');
     });
 });
