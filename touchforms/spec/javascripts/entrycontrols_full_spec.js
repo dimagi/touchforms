@@ -208,5 +208,11 @@ describe('Entries', function() {
         entry = (new Question(questionJSON)).entry;
         entry.rawAnswer('-123.4');
         expect(entry.answer()).toBe('-123.4');
+
+        entry.rawAnswer('-+123');
+        expect(entry.question.error()).toBeTruthy();
+
+        entry.rawAnswer('...123');
+        expect(entry.question.error()).toBeTruthy();
     });
 });
