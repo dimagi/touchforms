@@ -200,4 +200,19 @@ describe('Entries', function() {
         entry.rawAnswer('')
         expect(entry.answer()).toBe(Formplayer.Const.NO_ANSWER);
     });
+
+    it('Should allow decimals in a PhoneEntry', function() {
+        questionJSON.datatype = Formplayer.Const.STRING;
+        questionJSON.style = { raw: 'numeric' };
+
+        entry = (new Question(questionJSON)).entry;
+        entry.rawAnswer('-123.4');
+        expect(entry.answer()).toBe('-123.4');
+
+        entry.rawAnswer('-+123');
+        expect(entry.question.error()).toBeTruthy();
+
+        entry.rawAnswer('...123');
+        expect(entry.question.error()).toBeTruthy();
+    });
 });

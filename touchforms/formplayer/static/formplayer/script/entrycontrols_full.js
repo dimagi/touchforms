@@ -201,7 +201,7 @@ function PhoneEntry(question, options) {
 
     this.getErrorMessage = function(rawAnswer) {
         if (rawAnswer === '') { return null; }
-        return (!(/^\+?[0-9]+$/.test(rawAnswer)) ? "This does not appear to be a valid phone/numeric number" : null);
+        return (!(/^[+\-]?\d*(\.\d+)?$/.test(rawAnswer)) ? "This does not appear to be a valid phone/numeric number" : null);
     };
 
     this.helpText = function() {
