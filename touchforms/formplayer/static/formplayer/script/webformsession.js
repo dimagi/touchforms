@@ -60,6 +60,7 @@ function WebFormSession(params) {
     self.formContext = params.formContext;
     self.domain = params.domain;
     self.formplayerEnabled = params.formplayerEnabled;
+    self.post_url = params.post_url;
 
     if (params.form_uid) {
         self.formSpec = {type: 'form-name', val: params.form_uid};
@@ -255,7 +256,8 @@ WebFormSession.prototype.loadForm = function($form, initLang) {
         'session-data': this.session_data,
         'domain': this.session_data.domain,
         'nav': 'fao',
-        'uses_sql_backend': this.uses_sql_backend
+        'uses_sql_backend': this.uses_sql_backend,
+        'post_url': this.post_url,
     };
 
     args[this.formSpec.type] = this.formSpec.val;
