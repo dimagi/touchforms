@@ -156,7 +156,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
                 self.handleSuccess(resp, callback);
             })
             .fail(function (resp, textStatus) {
-                self.handleFailure(JSON.parse(resp), textStatus);
+                self.handleFailure(resp, textStatus);
             });
     } else{
         $.ajax({
@@ -216,7 +216,7 @@ WebFormSession.prototype.handleFailure = function(resp, textStatus) {
     this.onerror({
         human_readable_message: errorMessage
     });
-    this.onLoadingComplete(true);
+    this.onLoadingComplete();
 };
 
 /*
