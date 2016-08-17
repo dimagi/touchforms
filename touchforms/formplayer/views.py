@@ -142,7 +142,6 @@ def _form_entry_new(request, xform, instance_xml, session_data, input_mode,
         templ = {
             'touch': 'touchforms/touchscreen.html',
             'type': 'typeforms.html',
-            'full': 'fullform.html',
         }[input_mode]
     if offline_mode:
         touchforms_url = 'http://localhost:%d' % settings.OFFLINE_TOUCHFORMS_PORT
