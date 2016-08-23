@@ -355,9 +355,9 @@ function MultiSelectEntry (args) {
     return function () {
       var cbox = $('#ch-' + i);
       if (cbox.is(':checked')) {
-        cbox.removeAttr('checked');
+        cbox.prop('checked', false);
       } else {
-        cbox.attr('checked', true);
+        cbox.prop('checked', true);
       }
       cbox.focus();
     }
