@@ -142,31 +142,35 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     this.numPendingRequests++;
     this.onLoading();
 
-    if(self.formplayerEnabled){
+    if (self.formplayerEnabled){
         $.ajax({
-                type: 'POST',
-                url: url + "/" + requestParams.action,
-                data: JSON.stringify(requestParams),
-                contentType: "application/json",
-                dataType: "json",
-                crossDomain: {crossDomain: true},
-                xhrFields: {withCredentials: true},
-            })
-            .success(function (resp) {
+            type: 'POST',
+            url: url + "/" + requestParams.action,
+            data: JSON.stringify(requestParams),
+            contentType: "application/json",
+            dataType: "json",
+            crossDomain: {crossDomain: true},
+            xhrFields: {withCredentials: true},
+            success: function(resp) {
                 self.handleSuccess(resp, callback);
-            })
-            .fail(function (resp, textStatus) {
+            },
+            error: function(resp, textStatus) {
                 self.handleFailure(resp, textStatus);
-            });
-    } else{
+            },
+        });
+    } else {
         $.ajax({
-                type: 'POST',
-                url: url,
-                data: JSON.stringify(requestParams),
-                dataType: "text"  // we don't use JSON because of a weird bug: http://manage.dimagi.com/default.asp?190983
-            })
-            .success(function(resp) { self.handleSuccess(JSON.parse(resp), callback); })
-            .fail(function (resp, textStatus) { self.handleFailure(JSON.parse(resp), textStatus); });
+            type: 'POST',
+            url: url,
+            data: JSON.stringify(requestParams),
+            dataType: "text"  // we don't use JSON because of a weird bug: http://manage.dimagi.com/default.asp?190983
+            success: function(resp) {
+                self.handleSuccess(JSON.parse(resp), callback);
+            },
+            error: function(resp, textStatus) {
+                self.handleFailure(JSON.parse(resp), textStatus);
+            },
+        });
     }
 };
 
