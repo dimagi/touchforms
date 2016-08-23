@@ -163,7 +163,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
             type: 'POST',
             url: url,
             data: JSON.stringify(requestParams),
-            dataType: "text"  // we don't use JSON because of a weird bug: http://manage.dimagi.com/default.asp?190983
+            dataType: "text",  // we don't use JSON because of a weird bug: http://manage.dimagi.com/default.asp?190983
             success: function(resp) {
                 self.handleSuccess(JSON.parse(resp), callback);
             },
