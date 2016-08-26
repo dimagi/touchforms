@@ -60,8 +60,8 @@ function ajaxActivate() {
   
   return function() {
     clearTimeout(waitingTimer);
-    $('#next').removeAttr('disabled');
-    $('#back').removeAttr('disabled');
+    $('#next').prop('disabled', false);
+    $('#back').prop('disabled', false);
     $('#question').show();
     $('#waiting').hide();
   };
