@@ -24,18 +24,13 @@
   transition: height 0.5s;
 }
 
-.debugger .debugger-container {
-  height: 365px;
-  padding: 20px;
-  padding-bottom: 0;
-  border-left: 1px solid #ddd;
-  border-right: 1px solid #ddd;
-}
-
 .debugger .debugger-content {
   overflow-y: auto;
   margin-top: 12px;
   height: 300px;
+  height: 335px;
+  padding: 5px;
+  padding-bottom: 0;
 }
 
 .debugger.debugger-minimized {
