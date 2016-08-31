@@ -376,67 +376,6 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
     };
 };
 
-
-Formplayer.ViewModels.WebformsNavigator = function (form) {
-    var self = this;
-    console.log('we have a navigator');
-    console.log(form);
-    self.currentQuestion = ko.observable(0);
-    self.total = ko.observable(100);
-    self.isViewingSubmit = ko.observable(false);
-    self.form = form;
-
-    self.initNavigation = function () {
-        $('#js-question-0').fadeIn();
-        self.total($('#webforms .q').length);
-    };
-
-    self.progressStyle = ko.computed(function () {
-        var style = 'width: ' + ((self.currentQuestion())/self.total()) * 100 + '%';
-        if (self.isViewingSubmit()) {
-            style = 'width: 100%';
-        }
-        return style;
-    });
-
-    self.previous = function () {
-        if (self.isViewingSubmit()) {
-            $('#webforms .form-actions').hide("scale");
-            $('#js-webforms-container').removeClass('webforms-container-submit');
-            self.isViewingSubmit(false);
-        }
-        if (self.hasPrevious()) {
-            $('#js-question-' + self.currentQuestion()).hide("slide", { direction: "right"}, 400);
-            self.currentQuestion(self.currentQuestion() - 1);
-            $('#js-question-' + self.currentQuestion()).show("slide", { direction: "left"}, 400);
-        }
-    };
-    
-    self.hasPrevious = ko.computed(function () {
-        return self.currentQuestion() > 0;
-    });
-    
-    self.next = function () {
-        if (self.isLast()) {
-            $('#webforms .form-actions').show("scale");
-            $('#js-webforms-container').addClass('webforms-container-submit');
-            self.isViewingSubmit(true);
-        } else if (self.hasNext()) {
-            $('#js-question-' + self.currentQuestion()).hide("slide", { direction: "left"}, 400);
-            self.currentQuestion(self.currentQuestion() + 1);
-            $('#js-question-' + self.currentQuestion()).show("slide", { direction: "right"}, 400);
-        }
-    };
-
-    self.hasNext = ko.computed(function () {
-        return self.currentQuestion() < (self.total() - 1);
-    });
-
-    self.isLast = ko.computed(function () {
-        return self.currentQuestion() === (self.total() - 1);
-    });
-};
-
 Formplayer.ViewModels.EvaluateXPath = function() {
     var self = this;
     self.xpath = ko.observable('');
@@ -580,9 +519,7 @@ Formplayer.Utils.answersEqual = function(answer1, answer2) {
 Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
     var form = new Form(formJSON),
         $debug = $('#cloudcare-debugger'),
-        $inFormNav = $('#webforms-navigation'),
-        cloudCareDebugger,
-        webformsNavigator;
+        cloudCareDebugger;
     Formplayer.resourceMap = resourceMap;
     ko.cleanNode($div[0]);
     $div.koApplyBindings(form);
@@ -593,20 +530,6 @@ Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
         $debug.koApplyBindings(cloudCareDebugger);
     }
 
-    if ($inFormNav.length) {
-        webformsNavigator = new Formplayer.ViewModels.WebformsNavigator(form);
-        ko.cleanNode($inFormNav[0]);
-        $inFormNav.koApplyBindings(webformsNavigator);
-
-    }
-
     return form;
 };
-
-FormplayerFrontend.on("webforms:clearForm", function () {
-    var $inFormNav = $('#webforms-navigation');
-    if ($inFormNav.length) {
-        $inFormNav.html("");
-    }
-});
 
