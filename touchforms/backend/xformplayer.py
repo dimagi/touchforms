@@ -322,11 +322,9 @@ class XFormSession(object):
             evt = self.__parse_event(form_ix)
             evt['relevant'] = relevant
             if evt['type'] == 'sub-group':
-                presentation_group = (evt['caption'] != None)
-                if presentation_group:
-                    siblings.append(evt)
-                    evt['children'] = []
-                form_ix = self._walk(form_ix, evt['children'] if presentation_group else siblings)
+                siblings.append(evt)
+                evt['children'] = []
+                form_ix = self._walk(form_ix, evt['children'])
             elif evt['type'] == 'repeat-juncture':
                 siblings.append(evt)
                 evt['children'] = []
