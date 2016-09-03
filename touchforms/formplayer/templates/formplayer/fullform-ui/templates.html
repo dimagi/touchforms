@@ -25,11 +25,17 @@
             </div>
             <form class="form form-horizontal" data-bind="submit: submitForm">
                 <div data-bind="template: { name: childTemplate, foreach: $data.children }"/>
-                <div class="form-actions">
+                <div class="form-actions form-group">
                     <div data-bind="css: Formplayer.Const.LABEL_OFFSET + ' ' + Formplayer.Const.CONTROL_WIDTH">
-                        <button class="submit btn btn-primary"
-                                type="submit"
-                                data-bind="text: submitText">Submit Form</button>
+                        <input class="submit btn btn-primary"
+                            type="submit"
+                            value="Submit"
+                            data-bind="
+                                attr: {
+                                    value: submitText
+                                }
+                                "
+                            />
                     </div>
                 </div>
             </form>
@@ -159,8 +165,7 @@
             css: {
                 error: error,
                 required: $data.required,
-            },
-            attr: { id: 'js-question-' + $index() }
+            }
         ">
         <label class="caption control-label" data-bind="
             html: caption_markdown() || caption(),
