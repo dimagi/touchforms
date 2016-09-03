@@ -372,6 +372,10 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
             $body = $('body'),
             margin = 10;
 
+        // On a mobile device or preview mode
+        if ($body.width() < 768) {
+            margin = 0;
+        }
         $debug.width($body.width() - $debug.offset().left - margin);
     };
 };
