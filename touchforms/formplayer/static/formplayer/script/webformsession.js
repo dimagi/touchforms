@@ -59,6 +59,7 @@ function WebFormSession(params) {
     self.taskQueue = new TaskQueue();
     self.formContext = params.formContext;
     self.domain = params.domain;
+    self.username = params.username;
     self.formplayerEnabled = params.formplayerEnabled;
     self.post_url = params.post_url;
 
@@ -130,6 +131,7 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
 
     requestParams.form_context = self.formContext;
     requestParams.domain = self.domain;
+    requestParams.username = self.username;
     requestParams['session-id'] = self.session_id;
     // stupid hack for now to make up for both being used in different requests
     requestParams['session_id'] = self.session_id;
