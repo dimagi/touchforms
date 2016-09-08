@@ -59,7 +59,7 @@ function WebFormSession(params) {
     self.taskQueue = new TaskQueue();
     self.formContext = params.formContext;
     self.domain = params.domain;
-    self.username = params.username
+    self.username = params.username;
     self.formplayerEnabled = params.formplayerEnabled;
     self.post_url = params.post_url;
 
