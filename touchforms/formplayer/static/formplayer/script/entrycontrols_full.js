@@ -278,24 +278,28 @@ SingleSelectEntry.prototype.onPreProcess = function(newValue) {
     }
 };
 
-
-function DateEntry(question, options) {
+/**
+ * Base class for DateEntry, TimeEntry, and DateTimeEntry. Shares the same
+ * date picker between the three types of Entry.
+ */
+function DateTimeEntryBase(question, options) {
     var self = this,
         thisYear = new Date().getFullYear(),
         minDate,
         maxDate;
 
     EntrySingleAnswer.call(self, question, options);
+    // Set max date to 10 years in the future
     maxDate = moment(thisYear + 10, 'YYYY').toDate();
+    // Set max date to 100 years in the past
     minDate = moment(thisYear - 100, 'YYYY').toDate();
-    self.templateType = 'date';
-
     self.afterRender = function() {
         self.$picker = $('#' + self.entryId);
         self.$picker.datetimepicker({
-            timepicker: false,
+            timepicker: self.timepicker,
+            datepicker: self.datepicker,
             value: self.answer(),
-            format: DateEntry.clientFormat,
+            format: self.clientFormat,
             maxDate: maxDate,
             minDate: minDate,
             onChangeDateTime: function(newDate) {
@@ -303,74 +307,56 @@ function DateEntry(question, options) {
                     self.answer(Formplayer.Const.NO_ANSWER)
                     return;
                 }
-                self.answer(moment(newDate).format(DateEntry.serverFormat));
+                self.answer(moment(newDate).format(self.serverFormat));
             }
         });
     };
-};
-DateEntry.prototype = Object.create(EntrySingleAnswer.prototype);
-DateEntry.prototype.constructor = EntrySingleAnswer;
-// This is format equates to 31/12/2016 and is used by the datetimepicker
-DateEntry.clientFormat = 'd/m/Y';
-DateEntry.serverFormat = 'YYYY-MM-DD';
+}
+DateTimeEntryBase.prototype = Object.create(EntrySingleAnswer.prototype);
+DateTimeEntryBase.prototype.constructor = EntrySingleAnswer;
 
-/*
- * On initial load, ensure that the server date is parsed into a proper client date format.
- */
-DateEntry.parseServerDateToClientDate = function(serverDate) {
-    var date = $.datepicker.parseDate(DateEntry.serverFormat, serverDate);
-    return $.datepicker.formatDate(DateEntry.clientFormat, date);
+// Format for time or date or datetime for the browser. Defaults to ISO.
+// Formatting string should be in datetimepicker format: http://xdsoft.net/jqplugins/datetimepicker/
+DateTimeEntryBase.prototype.clientFormat = undefined
+
+// Format for time or date or datetime for the server. Defaults to ISO.
+// Formatting string should be in momentjs format: http://momentjs.com/docs/#/parsing/string-format/
+DateTimeEntryBase.prototype.serverFormat = undefined
+
+
+function DateEntry(question, options) {
+    this.templateType = 'date';
+    this.timepicker = false;
+    this.datepicker = true;
+    DateTimeEntryBase.call(this, question, options);
 };
+DateEntry.prototype = Object.create(DateTimeEntryBase.prototype);
+DateEntry.prototype.constructor = DateTimeEntryBase;
+// This is format equates to 31/12/2016 and is used by the datetimepicker
+DateEntry.prototype.clientFormat = 'd/m/Y';
+DateEntry.prototype.serverFormat = 'YYYY-MM-DD';
+
 
 function DateTimeEntry(question, options) {
-    var self = this;
-    EntrySingleAnswer.call(self, question, options);
-    self.templateType = 'datetime';
-
-    self.afterRender = function() {
-        self.$picker = $('#' + self.entryId);
-        self.$picker.datetimepicker({
-            value: self.answer(),
-            onChangeDateTime: function(newDate) {
-                if (!newDate) {
-                    self.answer(Formplayer.Const.NO_ANSWER)
-                    return;
-                }
-                self.answer(moment(newDate).format());
-            }
-        })
-    }
-
+    this.templateType = 'datetime';
+    this.timepicker = true;
+    this.datepicker = true;
+    DateTimeEntryBase.call(this, question, options);
 };
-DateTimeEntry.prototype = Object.create(EntrySingleAnswer.prototype);
-DateTimeEntry.prototype.constructor = EntrySingleAnswer;
+DateTimeEntry.prototype = Object.create(DateTimeEntryBase.prototype);
+DateTimeEntry.prototype.constructor = DateTimeEntryBase;
 
 function TimeEntry(question, options) {
-    var self = this;
-    EntrySingleAnswer.call(self, question, options);
-    self.templateType = 'time';
-
-    self.afterRender = function() {
-        self.$picker = $('#' + self.entryId);
-        self.$picker.datetimepicker({
-            datepicker: false,
-            value: self.answer(),
-            format: TimeEntry.clientFormat,
-            onChangeDateTime: function(newDate) {
-                if (!newDate) {
-                    self.answer(Formplayer.Const.NO_ANSWER)
-                    return;
-                }
-                self.answer(moment(newDate).format(TimeEntry.serverFormat));
-            }
-        })
-    }
+    this.templateType = 'time';
+    this.timepicker = true;
+    this.datepicker = false;
+    DateTimeEntryBase.call(this, question, options);
 }
 TimeEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 TimeEntry.prototype.constructor = EntrySingleAnswer;
 
-TimeEntry.clientFormat = 'H:i';
-TimeEntry.serverFormat = 'HH:mm';
+TimeEntry.prototype.clientFormat = 'H:i';
+TimeEntry.prototype.serverFormat = 'HH:mm';
 
 
 function GeoPointEntry(question, options) {
