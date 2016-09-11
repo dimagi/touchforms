@@ -304,7 +304,7 @@ function DateTimeEntryBase(question, options) {
             minDate: minDate,
             onChangeDateTime: function(newDate) {
                 if (!newDate) {
-                    self.answer(Formplayer.Const.NO_ANSWER)
+                    self.answer(Formplayer.Const.NO_ANSWER);
                     return;
                 }
                 self.answer(moment(newDate).format(self.serverFormat));
@@ -317,11 +317,11 @@ DateTimeEntryBase.prototype.constructor = EntrySingleAnswer;
 
 // Format for time or date or datetime for the browser. Defaults to ISO.
 // Formatting string should be in datetimepicker format: http://xdsoft.net/jqplugins/datetimepicker/
-DateTimeEntryBase.prototype.clientFormat = undefined
+DateTimeEntryBase.prototype.clientFormat = undefined;
 
 // Format for time or date or datetime for the server. Defaults to ISO.
 // Formatting string should be in momentjs format: http://momentjs.com/docs/#/parsing/string-format/
-DateTimeEntryBase.prototype.serverFormat = undefined
+DateTimeEntryBase.prototype.serverFormat = undefined;
 
 
 function DateEntry(question, options) {
@@ -329,7 +329,7 @@ function DateEntry(question, options) {
     this.timepicker = false;
     this.datepicker = true;
     DateTimeEntryBase.call(this, question, options);
-};
+}
 DateEntry.prototype = Object.create(DateTimeEntryBase.prototype);
 DateEntry.prototype.constructor = DateTimeEntryBase;
 // This is format equates to 31/12/2016 and is used by the datetimepicker
@@ -342,7 +342,7 @@ function DateTimeEntry(question, options) {
     this.timepicker = true;
     this.datepicker = true;
     DateTimeEntryBase.call(this, question, options);
-};
+}
 DateTimeEntry.prototype = Object.create(DateTimeEntryBase.prototype);
 DateTimeEntry.prototype.constructor = DateTimeEntryBase;
 

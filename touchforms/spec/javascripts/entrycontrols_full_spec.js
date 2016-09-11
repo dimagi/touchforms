@@ -147,7 +147,7 @@ describe('Entries', function() {
 
     it('Should return DateTimeEntry', function() {
         questionJSON.datatype = Formplayer.Const.DATETIME;
-        questionJSON.answer = null
+        questionJSON.answer = null;
 
         entry = (new Question(questionJSON)).entry;
         expect(entry instanceof DateTimeEntry).toBe(true);
