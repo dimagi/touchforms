@@ -485,6 +485,22 @@ Formplayer.Const = {
     SET_LANG: 'set-lang',
     SUBMIT: 'submit-all',
 
+    // Control values. See commcare/javarosa/src/main/java/org/javarosa/core/model/Constants.java
+    CONTROL_UNTYPED: -1,
+    CONTROL_INPUT: 1,
+    CONTROL_SELECT_ONE: 2,
+    CONTROL_SELECT_MULTI: 3,
+    CONTROL_TEXTAREA: 4,
+    CONTROL_SECRET: 5,
+    CONTROL_RANGE: 6,
+    CONTROL_UPLOAD: 7,
+    CONTROL_SUBMIT: 8,
+    CONTROL_TRIGGER: 9,
+    CONTROL_IMAGE_CHOOSE: 10,
+    CONTROL_LABEL: 11,
+    CONTROL_AUDIO_CAPTURE: 12,
+    CONTROL_VIDEO_CAPTURE: 13,
+
 };
 
 Formplayer.Errors = {
