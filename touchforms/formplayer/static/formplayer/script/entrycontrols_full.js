@@ -280,33 +280,39 @@ SingleSelectEntry.prototype.onPreProcess = function(newValue) {
 
 
 function DateEntry(question, options) {
-    var self = this;
+    var self = this,
+        thisYear = new Date().getFullYear(),
+        minDate,
+        maxDate;
+
     EntrySingleAnswer.call(self, question, options);
-    var thisYear = new Date().getFullYear() + 1;
+    maxDate = moment(thisYear + 10, 'YYYY').toDate();
+    minDate = moment(thisYear - 100, 'YYYY').toDate();
     self.templateType = 'date';
 
     self.afterRender = function() {
         self.$picker = $('#' + self.entryId);
-        self.$picker.datepicker({
-            changeMonth: true,
-            changeYear: true,
-            dateFormat: DateEntry.clientFormat,
-            yearRange: "" + (thisYear - 100) + ":" + (thisYear + 10),
+        self.$picker.datetimepicker({
+            timepicker: false,
+            value: self.answer(),
+            format: DateEntry.clientFormat,
+            maxDate: maxDate,
+            minDate: minDate,
+            onChangeDateTime: function(newDate) {
+                if (!newDate) {
+                    self.answer(Formplayer.Const.NO_ANSWER)
+                    return;
+                }
+                self.answer(moment(newDate).format(DateEntry.serverFormat));
+            }
         });
-        if (self.answer()) {
-            self.$picker.datepicker('setDate', DateEntry.parseServerDateToClientDate(self.answer()));
-        }
-        self.$picker.change(function() {
-            var raw = self.$picker.datepicker('getDate');
-            self.answer(raw ? $.datepicker.formatDate(DateEntry.serverFormat, raw) : null);
-        });
-    }
+    };
 };
 DateEntry.prototype = Object.create(EntrySingleAnswer.prototype);
 DateEntry.prototype.constructor = EntrySingleAnswer;
-// The datepicker's formatter uses yy to mean four-digit year.
-DateEntry.clientFormat = 'mm/dd/yy';
-DateEntry.serverFormat = 'yy-mm-dd';
+// This is format equates to 31/12/2016 and is used by the datetimepicker
+DateEntry.clientFormat = 'd/m/Y';
+DateEntry.serverFormat = 'YYYY-MM-DD';
 
 /*
  * On initial load, ensure that the server date is parsed into a proper client date format.
