@@ -316,6 +316,28 @@ DateEntry.parseServerDateToClientDate = function(serverDate) {
     return $.datepicker.formatDate(DateEntry.clientFormat, date);
 };
 
+function DateTimeEntry(question, options) {
+    var self = this;
+    EntrySingleAnswer.call(self, question, options);
+    self.templateType = 'datetime';
+
+    self.afterRender = function() {
+        self.$picker = $('#' + self.entryId);
+        self.$picker.datetimepicker({
+            value: self.answer(),
+            onChangeDateTime: function(newDate) {
+                if (!newDate) {
+                    self.answer(Formplayer.Const.NO_ANSWER)
+                    return;
+                }
+                self.answer(moment(newDate).format());
+            }
+        })
+    }
+
+};
+DateTimeEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+DateTimeEntry.prototype.constructor = EntrySingleAnswer;
 
 function TimeEntry(question, options) {
     var self = this;
@@ -479,6 +501,9 @@ function getEntry(question) {
             break;
         case Formplayer.Const.TIME:
             entry = new TimeEntry(question, {});
+            break;
+        case Formplayer.Const.DATETIME:
+            entry = new DateTimeEntry(question, {});
             break;
         case Formplayer.Const.GEO:
             entry = new GeoPointEntry(question, {});
