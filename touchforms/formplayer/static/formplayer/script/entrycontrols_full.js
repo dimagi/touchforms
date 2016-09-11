@@ -347,52 +347,30 @@ DateTimeEntry.prototype.constructor = EntrySingleAnswer;
 
 function TimeEntry(question, options) {
     var self = this;
-    FreeTextEntry.call(self, question, options);
+    EntrySingleAnswer.call(self, question, options);
     self.templateType = 'time';
 
-    self.getErrorMessage = function(rawAnswer) {
-        if (rawAnswer === '') { return null; }
-        var timeParts = self.parseAnswer(rawAnswer);
-        if (timeParts === null ||
-                timeParts.hour < 0 || timeParts.hour >= 24 ||
-                timeParts.min < 0 || timeParts.min >= 60) {
-            return "Not a valid time (00:00 - 23:59)";
-        }
-        return null;
-    };
-
-    self.parseAnswer = function(answer) {
-        var match = /^([0-9]{1,2})\:([0-9]{2})$/.exec($.trim(answer));
-        if (!match) { return null; }
-        return {
-            hour: +match[1],
-            min: +match[2]
-        };
-    };
-
-    self.helpText = function() {
-        return 'hh:mm';
-    };
-}
-TimeEntry.prototype = Object.create(FreeTextEntry.prototype);
-TimeEntry.prototype.constructor = FreeTextEntry;
-
-TimeEntry.prototype.onPreProcess = function(newValue) {
-    var self = this,
-        timeParts = self.parseAnswer(newValue),
-        processed;
-    if (self.isValid(newValue)) {
-        if (newValue === '') { self.answer(Formplayer.Const.NO_ANSWER); }
-
-        if (timeParts) {
-            processed = intpad(timeParts.hour, 2) + ':' + intpad(timeParts.min, 2);
-            if (!Formplayer.Utils.answersEqual(processed, self.answer())) {
-                self.answer(processed);
+    self.afterRender = function() {
+        self.$picker = $('#' + self.entryId);
+        self.$picker.datetimepicker({
+            datepicker: false,
+            value: self.answer(),
+            format: TimeEntry.clientFormat,
+            onChangeDateTime: function(newDate) {
+                if (!newDate) {
+                    self.answer(Formplayer.Const.NO_ANSWER)
+                    return;
+                }
+                self.answer(moment(newDate).format(TimeEntry.serverFormat));
             }
-        }
+        })
     }
-    self.question.error(self.getErrorMessage(newValue));
 }
+TimeEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+TimeEntry.prototype.constructor = EntrySingleAnswer;
+
+TimeEntry.clientFormat = 'H:i';
+TimeEntry.serverFormat = 'HH:mm';
 
 
 function GeoPointEntry(question, options) {
