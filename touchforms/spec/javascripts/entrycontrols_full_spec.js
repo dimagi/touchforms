@@ -132,11 +132,6 @@ describe('Entries', function() {
         expect(spy.calledOnce).toBe(true);
     });
 
-    it('Should parse serverDate to clientDate', function() {
-        var clientDate = DateEntry.parseServerDateToClientDate('2015-10-08');
-        expect(clientDate).toBe('10/08/2015');
-    });
-
     it('Should return TimeEntry', function() {
         questionJSON.datatype = Formplayer.Const.TIME;
         questionJSON.answer = '12:30';
@@ -148,13 +143,17 @@ describe('Entries', function() {
         entry.rawAnswer('12:45');
         this.clock.tick(1000);
         expect(spy.calledOnce).toBe(true);
-
-        entry.rawAnswer('12:451');  // Invalid time
-        expect(spy.calledOnce).toBe(true);
-
-        entry.rawAnswer('');
-        expect(entry.answer()).toBe(Formplayer.Const.NO_ANSWER);
     });
+
+    it('Should return DateTimeEntry', function() {
+        questionJSON.datatype = Formplayer.Const.DATETIME;
+        questionJSON.answer = null
+
+        entry = (new Question(questionJSON)).entry;
+        expect(entry instanceof DateTimeEntry).toBe(true);
+        expect(entry.templateType).toBe('datetime');
+    });
+
 
     it('Should return InfoEntry', function() {
         questionJSON.datatype = Formplayer.Const.INFO;
