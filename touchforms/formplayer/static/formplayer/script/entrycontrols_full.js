@@ -131,7 +131,7 @@ UnsupportedEntry.prototype.constructor = Entry;
 function FreeTextEntry(question, options) {
     var self = this;
     EntrySingleAnswer.call(self, question, options);
-    var isPassword = question.control() === Formplayer.Const.CONTROL_SECRET;
+    var isPassword = ko.utils.unwrapObservable(question.control) === Formplayer.Const.CONTROL_SECRET;
     if (isPassword) {
         self.templateType = 'password';
     } else {
