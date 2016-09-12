@@ -15,6 +15,7 @@ src_files:
   - script/test_vendor/knockout-3.3.0.js
   - script/test_vendor/knockout_mapping.ko.min.js
   - script/test_vendor/underscore.js
+  - script/test_vendor/moment.min.js
   - script/vendor/jquery-1.8.3.min.js
   - script/vendor/jquery-ui.min.js
   - script/vendor/ba-tiny-pubsub.min.js

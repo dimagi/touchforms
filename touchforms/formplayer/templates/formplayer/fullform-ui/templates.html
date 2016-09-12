@@ -358,14 +358,21 @@
 <script type="text/html" id="date-entry-ko-template">
     <div class="input-group">
         <input type="text" class="form-control" data-bind="attr: { id: entryId } "/>
-        <span class="input-group-addon">mm/dd/yy</span>
+        <span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+    </div>
+</script>
+
+<script type="text/html" id="datetime-entry-ko-template">
+    <div class="input-group">
+        <input type="text" class="form-control" data-bind="attr: { id: entryId }"/>
+        <span class="input-group-addon"><i class="fcc fcc-fd-datetime"></i></span>
     </div>
 </script>
 
 <script type="text/html" id="time-entry-ko-template">
     <div class="input-group">
-        <input type="text" class="form-control" data-bind="value: $data.rawAnswer"/>
-        <span class="input-group-addon" data-bind="text: helpText()"></span>
+        <input type="text" class="form-control" data-bind="attr: { id: entryId }"/>
+        <span class="input-group-addon"><i class="fa fa-clock-o"></i></span>
     </div>
     <span class="help-block">24-hour clock</span>
 </script>

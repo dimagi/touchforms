@@ -427,7 +427,6 @@ class XFormSession(object):
                     Constants.DATATYPE_GEOPOINT: 'geo',
 
                     # not supported yet
-                    Constants.DATATYPE_DATE_TIME: 'datetime',
                     Constants.DATATYPE_BARCODE: 'barcode',
                     Constants.DATATYPE_BINARY: 'binary',
                 }[q.getDataType()]

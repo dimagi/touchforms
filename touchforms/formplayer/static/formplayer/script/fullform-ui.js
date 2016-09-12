@@ -463,6 +463,7 @@ Formplayer.Const = {
     MULTI_SELECT: 'multiselect',
     DATE: 'date',
     TIME: 'time',
+    DATETIME: 'datetime',
     GEO: 'geo',
     INFO: 'info',
 

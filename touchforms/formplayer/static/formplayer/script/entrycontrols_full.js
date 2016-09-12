@@ -283,93 +283,85 @@ SingleSelectEntry.prototype.onPreProcess = function(newValue) {
     }
 };
 
+/**
+ * Base class for DateEntry, TimeEntry, and DateTimeEntry. Shares the same
+ * date picker between the three types of Entry.
+ */
+function DateTimeEntryBase(question, options) {
+    var self = this,
+        thisYear = new Date().getFullYear(),
+        minDate,
+        maxDate;
 
-function DateEntry(question, options) {
-    var self = this;
     EntrySingleAnswer.call(self, question, options);
-    var thisYear = new Date().getFullYear() + 1;
-    self.templateType = 'date';
-
+    // Set max date to 10 years in the future
+    maxDate = moment(thisYear + 10, 'YYYY').toDate();
+    // Set max date to 100 years in the past
+    minDate = moment(thisYear - 100, 'YYYY').toDate();
     self.afterRender = function() {
         self.$picker = $('#' + self.entryId);
-        self.$picker.datepicker({
-            changeMonth: true,
-            changeYear: true,
-            dateFormat: DateEntry.clientFormat,
-            yearRange: "" + (thisYear - 100) + ":" + (thisYear + 10),
+        self.$picker.datetimepicker({
+            timepicker: self.timepicker,
+            datepicker: self.datepicker,
+            value: self.answer(),
+            format: self.clientFormat,
+            maxDate: maxDate,
+            minDate: minDate,
+            onChangeDateTime: function(newDate) {
+                if (!newDate) {
+                    self.answer(Formplayer.Const.NO_ANSWER);
+                    return;
+                }
+                self.answer(moment(newDate).format(self.serverFormat));
+            }
         });
-        if (self.answer()) {
-            self.$picker.datepicker('setDate', DateEntry.parseServerDateToClientDate(self.answer()));
-        }
-        self.$picker.change(function() {
-            var raw = self.$picker.datepicker('getDate');
-            self.answer(raw ? $.datepicker.formatDate(DateEntry.serverFormat, raw) : null);
-        });
-    }
-};
-DateEntry.prototype = Object.create(EntrySingleAnswer.prototype);
-DateEntry.prototype.constructor = EntrySingleAnswer;
-// The datepicker's formatter uses yy to mean four-digit year.
-DateEntry.clientFormat = 'mm/dd/yy';
-DateEntry.serverFormat = 'yy-mm-dd';
+    };
+}
+DateTimeEntryBase.prototype = Object.create(EntrySingleAnswer.prototype);
+DateTimeEntryBase.prototype.constructor = EntrySingleAnswer;
 
-/*
- * On initial load, ensure that the server date is parsed into a proper client date format.
- */
-DateEntry.parseServerDateToClientDate = function(serverDate) {
-    var date = $.datepicker.parseDate(DateEntry.serverFormat, serverDate);
-    return $.datepicker.formatDate(DateEntry.clientFormat, date);
-};
+// Format for time or date or datetime for the browser. Defaults to ISO.
+// Formatting string should be in datetimepicker format: http://xdsoft.net/jqplugins/datetimepicker/
+DateTimeEntryBase.prototype.clientFormat = undefined;
 
+// Format for time or date or datetime for the server. Defaults to ISO.
+// Formatting string should be in momentjs format: http://momentjs.com/docs/#/parsing/string-format/
+DateTimeEntryBase.prototype.serverFormat = undefined;
+
+
+function DateEntry(question, options) {
+    this.templateType = 'date';
+    this.timepicker = false;
+    this.datepicker = true;
+    DateTimeEntryBase.call(this, question, options);
+}
+DateEntry.prototype = Object.create(DateTimeEntryBase.prototype);
+DateEntry.prototype.constructor = DateTimeEntryBase;
+// This is format equates to 31/12/2016 and is used by the datetimepicker
+DateEntry.prototype.clientFormat = 'd/m/Y';
+DateEntry.prototype.serverFormat = 'YYYY-MM-DD';
+
+
+function DateTimeEntry(question, options) {
+    this.templateType = 'datetime';
+    this.timepicker = true;
+    this.datepicker = true;
+    DateTimeEntryBase.call(this, question, options);
+}
+DateTimeEntry.prototype = Object.create(DateTimeEntryBase.prototype);
+DateTimeEntry.prototype.constructor = DateTimeEntryBase;
 
 function TimeEntry(question, options) {
-    var self = this;
-    FreeTextEntry.call(self, question, options);
-    self.templateType = 'time';
-
-    self.getErrorMessage = function(rawAnswer) {
-        if (rawAnswer === '') { return null; }
-        var timeParts = self.parseAnswer(rawAnswer);
-        if (timeParts === null ||
-                timeParts.hour < 0 || timeParts.hour >= 24 ||
-                timeParts.min < 0 || timeParts.min >= 60) {
-            return "Not a valid time (00:00 - 23:59)";
-        }
-        return null;
-    };
-
-    self.parseAnswer = function(answer) {
-        var match = /^([0-9]{1,2})\:([0-9]{2})$/.exec($.trim(answer));
-        if (!match) { return null; }
-        return {
-            hour: +match[1],
-            min: +match[2]
-        };
-    };
-
-    self.helpText = function() {
-        return 'hh:mm';
-    };
+    this.templateType = 'time';
+    this.timepicker = true;
+    this.datepicker = false;
+    DateTimeEntryBase.call(this, question, options);
 }
-TimeEntry.prototype = Object.create(FreeTextEntry.prototype);
-TimeEntry.prototype.constructor = FreeTextEntry;
+TimeEntry.prototype = Object.create(EntrySingleAnswer.prototype);
+TimeEntry.prototype.constructor = EntrySingleAnswer;
 
-TimeEntry.prototype.onPreProcess = function(newValue) {
-    var self = this,
-        timeParts = self.parseAnswer(newValue),
-        processed;
-    if (self.isValid(newValue)) {
-        if (newValue === '') { self.answer(Formplayer.Const.NO_ANSWER); }
-
-        if (timeParts) {
-            processed = intpad(timeParts.hour, 2) + ':' + intpad(timeParts.min, 2);
-            if (!Formplayer.Utils.answersEqual(processed, self.answer())) {
-                self.answer(processed);
-            }
-        }
-    }
-    self.question.error(self.getErrorMessage(newValue));
-}
+TimeEntry.prototype.clientFormat = 'H:i';
+TimeEntry.prototype.serverFormat = 'HH:mm';
 
 
 function GeoPointEntry(question, options) {
@@ -484,6 +476,9 @@ function getEntry(question) {
             break;
         case Formplayer.Const.TIME:
             entry = new TimeEntry(question, {});
+            break;
+        case Formplayer.Const.DATETIME:
+            entry = new DateTimeEntry(question, {});
             break;
         case Formplayer.Const.GEO:
             entry = new GeoPointEntry(question, {});
