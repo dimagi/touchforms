@@ -296,7 +296,7 @@ function DateTimeEntryBase(question, options) {
     EntrySingleAnswer.call(self, question, options);
     // Set max date to 10 years in the future
     maxDate = moment(thisYear + 10, 'YYYY').toDate();
-    // Set max date to 100 years in the past
+    // Set min date to 100 years in the past
     minDate = moment(thisYear - 100, 'YYYY').toDate();
     self.afterRender = function() {
         self.$picker = $('#' + self.entryId);
