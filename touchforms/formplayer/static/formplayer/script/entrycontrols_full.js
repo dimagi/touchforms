@@ -131,7 +131,12 @@ UnsupportedEntry.prototype.constructor = Entry;
 function FreeTextEntry(question, options) {
     var self = this;
     EntrySingleAnswer.call(self, question, options);
-    self.templateType = 'text';
+    var isPassword = ko.utils.unwrapObservable(question.control) === Formplayer.Const.CONTROL_SECRET;
+    if (isPassword) {
+        self.templateType = 'password';
+    } else {
+        self.templateType = 'text';
+    }
     self.domain = question.domain ? question.domain() : 'full';
     self.lengthLimit = options.lengthLimit || 100000;
     self.prose = question.domain_meta ? question.domain_meta().longtext : false;
@@ -149,7 +154,7 @@ function FreeTextEntry(question, options) {
     };
 
     self.helpText = function() {
-        return 'Free response';
+        return isPassword ? 'Password' : 'Free response';
     };
 }
 FreeTextEntry.prototype = Object.create(EntrySingleAnswer.prototype);
