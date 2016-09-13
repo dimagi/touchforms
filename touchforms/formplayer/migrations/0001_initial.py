@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 ('session_name', models.CharField(max_length=100)),
                 ('created_date', models.DateTimeField(default=datetime.datetime.utcnow)),
                 ('last_activity_date', models.DateTimeField(null=True)),
-                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)),
             ],
             options={
             },

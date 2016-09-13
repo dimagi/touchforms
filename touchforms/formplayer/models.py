@@ -32,7 +32,7 @@ class Session(models.Model):
 
 class EntrySession(models.Model):
     session_id = models.CharField(max_length=100, primary_key=True)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     form = models.CharField(max_length=255)  # url of cloudcare form
     app_id = models.CharField(max_length=32, null=True, blank=True)  # HQ app ID, if relevant
     session_name = models.CharField(max_length=100)
