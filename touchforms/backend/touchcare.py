@@ -22,7 +22,7 @@ from org.javarosa.core.model.condition import EvaluationContext
 from org.javarosa.core.model.instance import ExternalDataInstance
 from org.commcare.api.persistence import SqlSandboxUtils
 from org.commcare.core.sandbox import SandboxUtils
-from org.commcare.modern.process import FormRecordProcessorHelper as FormRecordProcessor
+from org.commcare.api.process import FormRecordProcessorHelper as FormRecordProcessor
 from org.commcare.modern.parse import ParseUtilsHelper as ParseUtils
 from org.kxml2.io import KXmlParser
 import persistence
