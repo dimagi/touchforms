@@ -104,10 +104,10 @@ describe('WebForm', function() {
 
             sinon.spy(sess.taskQueue, 'execute');
 
-            expect(!!$('input#submit').attr('disabled')).toBe(false);
+            expect(!!$('input#submit').prop('disabled')).toBe(false);
             expect(sess.taskQueue.execute.calledOnce).toBe(false);
             server.respond();
-            expect(!!$('input#submit').attr('disabled')).toBe(false);
+            expect(!!$('input#submit').prop('disabled')).toBe(false);
             expect(sess.taskQueue.execute.calledOnce).toBe(true);
         });
 
