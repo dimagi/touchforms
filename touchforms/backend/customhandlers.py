@@ -63,7 +63,7 @@ def attach_handlers(form, extensions, context, preload_data=None):
                         form.exprEvalContext.addFunctionHandler(handler)
 
 
-# We need this for old CloudCare, which doesn't have localizations 
+# We need this for old CloudCare, which doesn't have localizations
 class HardCodedArrayDataSource(ArrayDataSource):
     def getArray(self, key):
         if (key == "nepali_months"):
