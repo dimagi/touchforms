@@ -9,6 +9,8 @@ init_classpath()
 from org.javarosa.core.model.utils import IPreloadHandler
 from org.javarosa.core.model.condition import IFunctionHandler
 from org.javarosa.core.model.data import StringData
+from org.commcare.util import ArrayDataSource
+from org.javarosa.xform.util import CalendarUtils
 
 logger = logging.getLogger('formplayer.customhandlers')
 
@@ -28,7 +30,7 @@ def attach_handlers(form, extensions, context, preload_data=None):
     # not break touchforms
     form.getPreloader().addPreloadHandler(StaticPreloadHandler('property', {}))
 
-    form.exprEvalContext.addFunctionHandler(FormatForDateFunctionHandler())
+    CalendarUtils.setArrayDataSource(HardCodedArrayDataSource())
 
     # NOTE: PRELOADERS ARE DEPRECATED
     for key, data_dict in preload_data.iteritems():
@@ -61,30 +63,15 @@ def attach_handlers(form, extensions, context, preload_data=None):
                         form.exprEvalContext.addFunctionHandler(handler)
 
 
-# Temporary hack to not break until real fix gets merged, just return Roman date
-class FormatForDateFunctionHandler(IFunctionHandler):
-
-    @classmethod
-    def slug(self):
-        raise NotImplementedError()
-
-    def getPrototypes(self):
-        return to_vect([jarray.array([java.util.Date, java.lang.String], java.lang.Class)])
-
-    def rawArgs(self):
-        return False
-
-    def realTime(self):
-        return False
-
-    def getName(self):
-        return "format-date-for-calendar"
-
-    def eval(self, args, ec):
-        if isinstance(args[0], java.util.Date):
-            return args[0].toString()
-        return args[0]
-
+# We need this for old CloudCare, which doesn't have localizations
+class HardCodedArrayDataSource(ArrayDataSource):
+    def getArray(self, key):
+        if (key == "nepali_months"):
+            return ["Baishakh", "Jestha", "Ashadh", "Shrawan", "Bhadra", "Ashwin", "Kartik",
+                    "Mangsir", "Poush", "Magh", "Falgun", "Chaitra"]
+        if (key == "ethiopian_months"):
+            return ["Meskerem", "Tikimt", "Hidar", "Tahsas", "Tir", "Yekatit", "Megabit",
+                    "Miazia", "Ginbot", "Senie", "Hamlie", "Nehasie", "Pagumien"]
 
 class TouchformsFunctionHandler(IFunctionHandler):
 
