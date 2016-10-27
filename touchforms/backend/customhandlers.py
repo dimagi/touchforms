@@ -62,6 +62,8 @@ def attach_handlers(form, extensions, context, preload_data=None):
                         logger.info('adding handler [%s / %s] from module [%s]' % (name, handler.getName(), ext))
                         form.exprEvalContext.addFunctionHandler(handler)
 
+
+# We need this for old CloudCare, which doesn't have localizations 
 class HardCodedArrayDataSource(ArrayDataSource):
     def getArray(self, key):
         if (key == "nepali_months"):
