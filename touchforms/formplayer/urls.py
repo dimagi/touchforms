@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import url
 from touchforms.formplayer.models import XForm
 from touchforms.formplayer.views import (
     xform_list,
@@ -14,7 +14,7 @@ xform_info = {
     "queryset" : XForm.objects.order_by('namespace'),
 }
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^$', xform_list, name="xform_list"),
     url(r'^enter/(?P<xform_id>.*)$', enter_form, name='xform_play'),
     url(r'^enterkb/(?P<xform_id>.*)$', enter_form, {'input_mode': 'type'}, name='xform_play_kb'),
@@ -26,4 +26,4 @@ urlpatterns = patterns('',
     url(r'^api/preload/$', api_preload_provider, name='xform_preloader'),
     url(r'^api/autocomplete/$', api_autocomplete, name='touchforms_autocomplete'),
     url(r'^player-abort/$', player_abort, name='touchforms_force_abort'),
-)
+]
