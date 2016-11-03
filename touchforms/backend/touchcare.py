@@ -87,7 +87,7 @@ class CCInstances(CommCareInstanceInitializer):
 
     def get_restore_xml(self):
         payload = self.query_func(self.query_url)
-        return payload
+        return payload.decode('utf-8')
 
     def needs_sync(self):
         try:
