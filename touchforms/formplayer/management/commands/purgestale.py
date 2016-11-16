@@ -8,7 +8,7 @@ import json
 class Command(BaseCommand):
     args = '<stale threshold age>'
     help = 'enter age as suitable for timedelta(), e.g., minutes=30'
-    option_list = BaseCommand.option_list + (
+    option_list = (
         make_option('-s', dest='server_url', help='url of formplayer server', default='127.0.0.1:4444/'),
     )
 
