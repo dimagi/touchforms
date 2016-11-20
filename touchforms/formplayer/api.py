@@ -7,8 +7,7 @@ import socket
 
 from corehq.form_processor.utils.general import use_sqlite_backend
 from touchforms.formplayer.exceptions import BadDataError
-from corehq.toggles import USE_FORMPLAYER, FORMPLAYER_EXPERIMENT
-from experiments import FormplayerExperiment
+from corehq.toggles import USE_FORMPLAYER
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
 backend for various sets of tasks.
@@ -279,30 +278,11 @@ def post_data(data, auth=None, content_type="application/json"):
 
     if domain:
         d['uses_sql_backend'] = use_sqlite_backend(domain)
-        # see if we want to experiment or do it LIVE
         if USE_FORMPLAYER.enabled(domain):
             return post_data_helper(d, auth, content_type, settings.FORMPLAYER_URL + "/" + d["action"])
-        elif FORMPLAYER_EXPERIMENT.enabled(domain):
-            return perform_experiment(d, auth, content_type)
     # just default to old server for now
     url = settings.XFORMS_PLAYER_URL
     return post_data_helper(d, auth, content_type, url)
-
-
-def perform_experiment(d, auth, content_type):
-    experiment = FormplayerExperiment(name=d["action"], context={'request': d})
-    with experiment.control() as c:
-        c.record(post_data_helper(d, auth, content_type, settings.XFORMS_PLAYER_URL))
-    with experiment.candidate() as c:
-        # If we should already have a session, look up its ID in the experiment mapping. it better be there.
-        # This is terrible, but we use both in different places.
-        if "session_id" in d:
-            d["session_id"] = FormplayerExperiment.session_id_mapping.get(d["session_id"])
-        if "session-id" in d:
-            d["session-id"] = FormplayerExperiment.session_id_mapping.get(d["session-id"])
-        c.record(post_data_helper(d, auth, content_type, settings.FORMPLAYER_URL + "/" + d["action"]))
-    objects = experiment.run()
-    return objects
 
 
 def get_response(data, auth=None):
