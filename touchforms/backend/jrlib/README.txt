@@ -1,11 +1,6 @@
-Last updated: 12/10/2014
+Last updated: Nov 7, 2016
 
-commcare-libararies.jar
-[CommCare 2.17] CommCare Application	revision 935c68f2992a
-Build #341746
-http://build.dimagi.com:250/viewLog.html?buildId=314793&tab=artifacts&buildTypeId=bt108
-
-javarosa-libraries.jar
-[CommCare 2.17] JavaRosa Core	        revision a579ae65ef3a
-Build #2
-http://build.dimagi.com:250/viewLog.html?buildId=314785&tab=artifacts&buildTypeId=bt109
+commcare-api.jar
+[CommCare 2.31.0] CommCare API's	revision 5e281e7b1644ec4bf18ce5e64cd2e2047512b002 
+Build #374203
+https://jenkins.dimagi.com/job/commcare-core-2.31/374203/
