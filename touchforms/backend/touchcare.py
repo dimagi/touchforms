@@ -53,7 +53,11 @@ class CCInstances(CommCareInstanceInitializer):
         self.uses_sqlite = uses_sqlite
         if self.uses_sqlite:
             username = sessionvars['username']
-            self.username = username + '@' + sessionvars['domain'] if '@' not in username else username
+            if '@' not in username:
+                self.username = username + '@' + sessionvars['domain'] + '.commcarehq.org'
+            else:
+                # Web User
+                self.username = username
             self.sandbox = SqlSandboxUtils.getStaticStorage(self.username, settings.SQLITE_DBS_DIRECTORY)
             self.host = settings.URL_HOST
             self.domain = sessionvars['domain']
