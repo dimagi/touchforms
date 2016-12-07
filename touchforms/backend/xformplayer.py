@@ -441,7 +441,7 @@ class XFormSession(object):
             value = q.getAnswerValue()
             if value == None:
                 event['answer'] = None
-            elif event['datatype'] in ('int', 'float', 'str', 'longint'):
+            elif event['datatype'] in ('int', 'float', 'str', 'longint', 'barcode'):
                 event['answer'] = value.getValue()
             elif event['datatype'] == 'date':
                 event['answer'] = to_pdate(value.getValue())
@@ -507,7 +507,7 @@ class XFormSession(object):
             ans = LongData(int(answer))
         elif datatype == 'float':
             ans = DecimalData(float(answer))
-        elif datatype == 'str' or datatype == 'info':
+        elif datatype == 'str' or datatype == 'info' or datatype == 'barcode':
             ans = StringData(str(answer))
         elif datatype == 'date':
             ans = DateData(to_jdate(datetime.strptime(str(answer), '%Y-%m-%d').date()))
