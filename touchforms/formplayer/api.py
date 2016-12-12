@@ -7,7 +7,6 @@ import socket
 
 from corehq.form_processor.utils.general import use_sqlite_backend
 from touchforms.formplayer.exceptions import BadDataError
-from corehq.toggles import USE_FORMPLAYER
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
 backend for various sets of tasks.
@@ -278,11 +277,9 @@ def post_data(data, auth=None, content_type="application/json"):
 
     if domain:
         d['uses_sql_backend'] = use_sqlite_backend(domain)
-        if USE_FORMPLAYER.enabled(domain):
-            return post_data_helper(d, auth, content_type, settings.FORMPLAYER_URL + "/" + d["action"])
     # just default to old server for now
     url = settings.XFORMS_PLAYER_URL
-    return post_data_helper(d, auth, content_type, url)
+    return post_data_helper(d, auth, content_type, settings.XFORMS_PLAYER_URL)
 
 
 def get_response(data, auth=None):
