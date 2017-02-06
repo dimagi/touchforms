@@ -9,7 +9,7 @@ import os
 from org.javarosa.core.services.storage import IStorageUtilityIndexed
 from org.javarosa.core.services.storage import IStorageIterator
 from org.commcare.cases.instance import CaseInstanceTreeElement
-from org.commcare.cases.ledger.instance import LedgerInstanceTreeElement
+from org.commcare.cases.instance import LedgerInstanceTreeElement
 from org.commcare.core.process import CommCareInstanceInitializer
 from org.commcare.cases.model import Case
 from org.commcare.cases.ledger import Ledger
