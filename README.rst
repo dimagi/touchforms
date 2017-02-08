@@ -1,4 +1,8 @@
 ================
+ Now Deprecated. Please use https://github.com/dimagi/formplayer
+================
+
+================
  A django-based web XForms Player for touchscreens
 ================
 .. image:: https://travis-ci.org/dimagi/touchforms.svg?branch=master
