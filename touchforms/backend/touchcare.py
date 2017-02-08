@@ -65,8 +65,7 @@ class CCInstances(CommCareInstanceInitializer):
             self.query_url = get_restore_url({'as': self.username, 'version': '2.0'})
             CommCareInstanceInitializer.__init__(self, self.sandbox)
 
-            if force_sync or self.needs_sync():
-                self.perform_ota_restore(restore_xml)
+            self.perform_ota_restore(restore_xml)
         else:
             self.fixtures = {}
             self.form_context = form_context or {}
