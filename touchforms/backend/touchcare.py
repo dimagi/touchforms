@@ -128,8 +128,7 @@ class CCInstances(CommCareInstanceInitializer):
                 )
             return CaseInstanceTreeElement(
                 instance.getBase(),
-                case_storage,
-                False
+                case_storage
             )
         elif 'fixture' in ref:
             fixture_id = ref.split('/')[-1]
