@@ -1,23 +1,24 @@
-from django.core.management.base import BaseCommand, CommandError
-from optparse import make_option
-from django.conf import settings
-from datetime import datetime, timedelta
+from django.core.management.base import BaseCommand
 import urllib2
 import json
 
+
 class Command(BaseCommand):
-    args = '<stale threshold age>'
     help = 'enter age as suitable for timedelta(), e.g., minutes=30'
-    option_list = (
-        make_option('-s', dest='server_url', help='url of formplayer server', default='127.0.0.1:4444/'),
-    )
 
-    def handle(self, *args, **options):
-        try:
-            timespec = args[0]
-        except IndexError:
-            raise ValueError('time spec required')
+    def add_arguments(self, parser):
+        parser.add_argument(
+            'stale_threshold_age',
+            dest='timespec',
+        )
+        parser.add_argument(
+            '-s',
+            dest='server_url',
+            help='url of formplayer server',
+            default='127.0.0.1:4444/',
+        )
 
+    def handle(self, timespec, **options):
         server = options['server_url']
         if not server.startswith('http://') and not server.startswith('https://'):
             server = 'http://' + server
@@ -29,6 +30,7 @@ class Command(BaseCommand):
 
         resp = urllib2.urlopen(server, json.dumps(payload))
         print resp.read()
-        
+
+
 def sdelt(delta):
     return 86400. * delta.days + delta.seconds + 1.0e-6 * delta.microseconds
