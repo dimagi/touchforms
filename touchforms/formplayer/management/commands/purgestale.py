@@ -8,8 +8,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'stale_threshold_age',
-            dest='timespec',
+            'timespec',
         )
         parser.add_argument(
             '-s',
