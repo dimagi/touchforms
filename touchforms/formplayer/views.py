@@ -9,7 +9,7 @@ from touchforms.formplayer.models import XForm, EntrySession
 from touchforms.formplayer.autocomplete import autocompletion, DEFAULT_NUM_SUGGESTIONS
 from django.http import HttpResponseRedirect, HttpResponse,\
     HttpResponseNotFound
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 import logging
 import json
 from collections import defaultdict
