@@ -9,7 +9,7 @@ import os
 from org.javarosa.core.services.storage import IStorageUtilityIndexed
 from org.javarosa.core.services.storage import IStorageIterator
 from org.commcare.cases.instance import CaseInstanceTreeElement
-from org.commcare.cases.ledger.instance import LedgerInstanceTreeElement
+from org.commcare.cases.instance import LedgerInstanceTreeElement
 from org.commcare.core.process import CommCareInstanceInitializer
 from org.commcare.cases.model import Case
 from org.commcare.cases.ledger import Ledger
@@ -127,8 +127,7 @@ class CCInstances(CommCareInstanceInitializer):
                 )
             return CaseInstanceTreeElement(
                 instance.getBase(),
-                case_storage,
-                False
+                case_storage
             )
         elif 'fixture' in ref:
             fixture_id = ref.split('/')[-1]

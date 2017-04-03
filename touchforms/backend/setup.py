@@ -22,6 +22,23 @@ def init_classpath():
                 sys.path.append(os.path.join(jardir, jar))
         initialized = True
 
+
 def init_jr_engine():
-    from org.javarosa.model.xform import XFormsModule
-    XFormsModule().registerModule()
+    classes = [
+        "org.javarosa.model.xform.XPathReference",
+        "org.javarosa.xpath.XPathConditional",
+        "org.javarosa.xpath.expr.XPathArithExpr",
+        "org.javarosa.xpath.expr.XPathBoolExpr",
+        "org.javarosa.xpath.expr.XPathCmpExpr",
+        "org.javarosa.xpath.expr.XPathEqExpr",
+        "org.javarosa.xpath.expr.XPathFilterExpr",
+        "org.javarosa.xpath.expr.XPathNumericLiteral",
+        "org.javarosa.xpath.expr.XPathNumNegExpr",
+        "org.javarosa.xpath.expr.XPathPathExpr",
+        "org.javarosa.xpath.expr.XPathStringLiteral",
+        "org.javarosa.xpath.expr.XPathUnionExpr",
+        "org.javarosa.xpath.expr.XPathVariableReference"
+    ]
+
+    from org.javarosa.core.services import PrototypeManager
+    PrototypeManager.registerPrototypes(classes)
