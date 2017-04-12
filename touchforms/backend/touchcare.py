@@ -135,6 +135,7 @@ class CCInstances(CommCareInstanceInitializer):
             user_id = self.vars['user_id']
             if self.uses_sqlite:
                 fixture = SandboxUtils.loadFixture(self.sandbox, fixture_id, user_id)
+                print "Fixture ", fixture
                 root = fixture.getRoot()
             else:
                 root = self._get_fixture(user_id, fixture_id)
