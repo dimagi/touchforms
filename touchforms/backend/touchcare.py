@@ -357,6 +357,7 @@ class TouchformsStorageUtility(IStorageUtilityIndexed):
 
         if self.form_context.get('case_model', None):
             case_model = self.form_context['case_model']
+            logger.info('caching %s' % case_model['case_id'])
             self.cached_lookups[('case-id', case_model['case_id'])] = [case_from_json(case_model)]
 
         self._objects = {}
@@ -404,7 +405,9 @@ class TouchformsStorageUtility(IStorageUtilityIndexed):
 
     def read_object(self, object_id):
         logger.debug('read object %s' % object_id)
+        logger.info('read object %s' % object_id)
         if object_id not in self._objects:
+            logger.info('fetching object %s' % object_id)
             self.put_object(self.fetch_object(object_id))
         try:
             return self._objects[object_id]
@@ -428,7 +431,9 @@ class CaseDatabase(TouchformsStorageUtility):
 
     def fetch_object(self, case_id):
         if ('case-id', case_id) in self.cached_lookups:
+            logger.info('cache hit')
             return self.cached_lookups[('case-id', case_id)][0]
+        logger.info('cache miss!')
         return query_case(self.query_func, case_id)
 
     def load_all_objects(self):
