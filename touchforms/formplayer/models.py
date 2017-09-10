@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from django.db import models
 from django.core.files import File
 from datetime import datetime
-from xml.etree import ElementTree
+from xml.etree import cElementTree as ElementTree
 import re
 import os
 import hashlib
