@@ -90,10 +90,13 @@ class XFormsConfig(object):
                 ("instance-content", self.instance_content),
                 ("preloader-data", self.preloader_data),
                 ("session-data", self.session_data),
-                ("lang", self.language))
+                ("lang", self.language),
+                ("form-url", self.form_path))
         
         # only include anything with a value, or touchforms gets mad
-        return dict(filter(lambda x: x[1], vals))
+        ret = dict(filter(lambda x: x[1], vals))
+        ret.update(self.session_data)
+        return ret
         
     def start_session(self):
         """
@@ -258,6 +261,10 @@ def post_data_helper(d, auth, content_type, url):
     headers = {}
     headers["content-type"] = content_type
     headers["content-length"] = len(data)
+    headers["Set-Cookie"] = 'sessionid=rl5dzcd02npn2qhn6aw732q17t7oc5rf'
+    headers["_cookie"] = 'sessionid=rl5dzcd02npn2qhn6aw732q17t7oc5rf'
+    headers["Cookie"] = 'sessionid=rl5dzcd02npn2qhn6aw732q17t7oc5rf'
+
     conn = httplib.HTTPConnection(up.netloc)
     conn.request('POST', up.path, data, headers)
     resp = conn.getresponse()
@@ -265,7 +272,8 @@ def post_data_helper(d, auth, content_type, url):
     return results
             
 def post_data(data, auth=None, content_type="application/json"):
-
+    logging.info("Data:")
+    logging.info(data)
     try:
         d = json.loads(data)
     except TypeError:
@@ -278,11 +286,13 @@ def post_data(data, auth=None, content_type="application/json"):
     if domain:
         d['uses_sql_backend'] = use_sqlite_backend(domain)
     # just default to old server for now
-    url = settings.XFORMS_PLAYER_URL
-    return post_data_helper(d, auth, content_type, settings.XFORMS_PLAYER_URL)
+    url = settings.XFORMS_PLAYER_URL + '/' + d['action']
+    return post_data_helper(d, auth, content_type, url)
 
 
 def get_response(data, auth=None):
+    logging.info('Posting data')
+    logging.info(data)
     try:
         response = post_data(data, auth=auth)
     except socket.error, e:
