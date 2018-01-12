@@ -143,7 +143,7 @@ def query_factory(host='', domain='', auth=None, format="json"):
             opener = urllib2.build_opener(handler)
             req = lambda url: opener.open(url)
 
-        logger.info('making external call: %s' % url)
+        logger.info('api_query: %s' % url)
         return req(url).read()
 
     def json_query(_url):
