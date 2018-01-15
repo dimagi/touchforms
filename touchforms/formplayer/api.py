@@ -264,7 +264,7 @@ def post_data_helper(d, auth, content_type, url):
     headers["Set-Cookie"] = 'sessionid=rl5dzcd02npn2qhn6aw732q17t7oc5rf'
     headers["_cookie"] = 'sessionid=rl5dzcd02npn2qhn6aw732q17t7oc5rf'
     headers["Cookie"] = 'sessionid=rl5dzcd02npn2qhn6aw732q17t7oc5rf'
-
+    logging.info('Post AUTH %s' % auth)
     conn = httplib.HTTPConnection(up.netloc)
     conn.request('POST', up.path, data, headers)
     resp = conn.getresponse()
@@ -282,6 +282,7 @@ def post_data(data, auth=None, content_type="application/json"):
     if auth:
         d['hq_auth'] = auth.to_dict()
     domain = d.get("domain")
+    d['restoreAs'] = d['username']
 
     if domain:
         d['uses_sql_backend'] = use_sqlite_backend(domain)
