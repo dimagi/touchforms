@@ -14,6 +14,7 @@ class FormplayerExperiment(laboratory.Experiment):
         if (self.name == "new-form"):
             control_session_id = json.loads(result.control.value)["session_id"]
             candidate_session_id = json.loads(result.observations[0].value)["session_id"]
+            logging.info("Mapping control id %s to candidate id %s")
             FormplayerExperiment.session_id_mapping[control_session_id] = candidate_session_id
 
         control = result.control
@@ -59,6 +60,8 @@ def compare_list(control, candidate):
 
 def compare_dict(control, candidate):
     is_equal = True
+    if control is not None and candidate is None:
+        return False
     for key in control:
         if key not in candidate:
             is_equal = False
@@ -68,6 +71,7 @@ def compare_dict(control, candidate):
 
 
 def formplayer_compare(control, candidate, current_key=None):
+    logging.info("Formplayer Compare control %s to candidate %s" % (control, candidate))
     if isinstance(control, dict):
         are_equal = compare_dict(control, candidate)
     elif isinstance(control, list):
