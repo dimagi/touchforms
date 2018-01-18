@@ -169,7 +169,7 @@ def handle_request(content, server):
         session_id = content['session-id']
 
     action = content['action']
-    logger.info('Received action %s for session %s' % (action, session_id))
+    logger.info('Received action %s for session %s and content %s' % (action, session_id, content))
     datadog_logger.info(
         'event=received action=%s unit=request' % (action),
         extra={'value': 1, 'metric_type': 'counter', 'timestamp': int(time.time()), 'metric': 'actions'}
