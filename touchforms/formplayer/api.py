@@ -265,11 +265,12 @@ def post_data_helper(d, auth, content_type, url):
     headers["Set-Cookie"] = 'sessionid=rl5dzcd02npn2qhn6aw732q17t7oc5rf'
     headers["_cookie"] = 'sessionid=rl5dzcd02npn2qhn6aw732q17t7oc5rf'
     headers["Cookie"] = 'sessionid=rl5dzcd02npn2qhn6aw732q17t7oc5rf'
-    logging.info('Post AUTH %s' % auth)
     conn = httplib.HTTPConnection(up.netloc)
     conn.request('POST', up.path, data, headers)
     resp = conn.getresponse()
     results = resp.read()
+    logging.info("Url: %s" % url)
+    logging.info("Results: %s" % results)
     return results
             
 def post_data(data, auth=None, content_type="application/json"):
@@ -283,10 +284,8 @@ def post_data(data, auth=None, content_type="application/json"):
     if auth:
         d['hq_auth'] = auth.to_dict()
     domain = d.get("domain")
-    d['restoreAs'] = d['username']
-
-    if domain:
-        d['uses_sql_backend'] = use_sqlite_backend(domain)
+    if 'username' in d:
+        d['restoreAs'] = d['username']
     # just default to old server for now
     return perform_experiment(d, auth, content_type)
 
@@ -300,8 +299,11 @@ def perform_experiment(d, auth, content_type):
         # This is terrible, but we use both in different places.
         if "session_id" in d:
             d["session_id"] = FormplayerExperiment.session_id_mapping.get(d["session_id"])
+            d["session-id"] = FormplayerExperiment.session_id_mapping.get(d["session_id"])
         if "session-id" in d:
             d["session-id"] = FormplayerExperiment.session_id_mapping.get(d["session-id"])
+            d["session_id"] = FormplayerExperiment.session_id_mapping.get(d["session-id"])
+        d['oneQuestionPerScreen'] = True
         c.record(post_data_helper(d, auth, content_type, settings.FORMPLAYER_URL + "/" + d["action"]))
     objects = experiment.run()
     return objects
