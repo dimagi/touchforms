@@ -33,6 +33,7 @@ class FormplayerExperiment(laboratory.Experiment):
         request = self.context['request']
         action = request['action']
         diff_logger.info(
+            "MSG",
             extra={
                 'action': action,
                 'request': request,
@@ -71,7 +72,7 @@ def compare_dict(control, candidate):
 
 
 def formplayer_compare(control, candidate, current_key=None):
-    logging.info("Formplayer Compare control %s to candidate %s" % (control, candidate))
+    logging.info("Formplayer Compare Control %s \n Candidate %s" % (control, candidate))
     if isinstance(control, dict):
         are_equal = compare_dict(control, candidate)
     elif isinstance(control, list):

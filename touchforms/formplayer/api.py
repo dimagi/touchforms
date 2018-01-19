@@ -257,6 +257,7 @@ class XformsResponse(object):
 
 
 def post_data_helper(d, auth, content_type, url):
+    d['nav_mode'] = 'prompt'
     data = json.dumps(d)
     up = urlparse(url)
     headers = {}
