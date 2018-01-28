@@ -1,13 +1,15 @@
+from __future__ import absolute_import
+import six
 class TouchFormsException(Exception):
     def __unicode__(self):
         if len(self.args) == 1:
-            return unicode(self.args[0], errors="replace")
+            return six.text_type(self.args[0], errors="replace")
         else:
-            return unicode(self.args)
+            return six.text_type(self.args)
 
     def __str__(self):
         if len(self.args) == 1:
-            if isinstance(self.args[0], unicode):
+            if isinstance(self.args[0], six.text_type):
                 return self.args[0].encode("ascii", "xmlcharrefreplace")
             return str(self.args[0])
         return repr(self.args)

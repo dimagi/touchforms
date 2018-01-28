@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 import os
 import unittest
-import xformplayer
-import touchcare
+from . import xformplayer
+from . import touchcare
 
 CUR_DIR = os.path.dirname(__file__)
 

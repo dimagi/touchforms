@@ -10,6 +10,8 @@ import threading
 from django.core.cache import cache
 from django.conf import settings
 from touchforms.formplayer.util import get_autocomplete_dir
+import six
+from six.moves import range
 
 DEFAULT_NUM_SUGGESTIONS = 12
 
@@ -35,7 +37,7 @@ def groupby(it, keyfunc=identity, valfunc=identity, reducefunc=identity):
         if key not in grouped:
             grouped[key] = []
         grouped[key].append(valfunc(e))
-    return dict((k, reducefunc(vs)) for k, vs in grouped.iteritems())
+    return dict((k, reducefunc(vs)) for k, vs in six.iteritems(grouped))
 
 def autocompletion(domain, key, max_results):
     if domain == 'firstname':
@@ -50,13 +52,13 @@ def merge_autocompletes(max_results, *responses):
 
     all_suggestions = itertools.chain(*(r['suggestions'] for r in responses))
     grouped_suggestions = groupby(all_suggestions, lambda m: m['name'], lambda m: m['p'], sum)
-    suggestions = [{'name': k, 'p': v} for k, v in grouped_suggestions.iteritems()]
+    suggestions = [{'name': k, 'p': v} for k, v in six.iteritems(grouped_suggestions)]
     response['suggestions'] = sorted(suggestions, key=lambda m: -m['p'])[:max_results]
 
     hint_responses = [r['hinting'] for r in responses if 'hinting' in r]
     if hint_responses:
         freqs = [h['nextchar_freq'] for h in hint_responses]
-        raw_freq_all = itertools.chain(*(fr.iteritems() for fr in freqs))
+        raw_freq_all = itertools.chain(*(six.iteritems(fr) for fr in freqs))
         freq_consolidated = groupby(raw_freq_all, lambda e: e[0], lambda e: e[1], sum)
         response['hinting'] = {'nextchar_freq': freq_consolidated}
 
@@ -112,7 +114,7 @@ def init_cache(domain, data):
 
     for i in range(CACHE_PREFIX_LEN + 1):
         subdata = groupby(data, lambda e: e['name'][:i])
-        for key, records in subdata.iteritems():
+        for key, records in six.iteritems(subdata):
             #needed for very short names
             if len(key) != i:
                 continue
@@ -174,14 +176,14 @@ def load_domain_data(domain):
     for e in data:
         e['name'] = fixname(e['name'])
 
-    data = [{'name': k, 'p': v} for k, v in groupby(data, lambda e: e['name'], lambda e: e['p'], sum).iteritems()]
+    data = [{'name': k, 'p': v} for k, v in six.iteritems(groupby(data, lambda e: e['name'], lambda e: e['p'], sum))]
     data.sort(key=lambda e: -e['p'])
     return data
 
 def csv_loader(path, pcol=2, has_header=True):
     reader = csv.reader(open(path))
     if has_header:
-        reader.next()
+        next(reader)
     for row in reader:
         sp = row[pcol - 1]
         yield {'name': row[0], 'p': float(sp) if sp else None}

@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 import os
 import unittest
-import xformplayer
+from . import xformplayer
 
 CUR_DIR = os.path.dirname(__file__)
 

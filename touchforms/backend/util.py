@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from java.util import Date
 from java.util import Vector
 from java.util import Hashtable
@@ -6,8 +7,10 @@ import jarray
 
 from datetime import datetime, date, time
 
-from setup import init_classpath
-import urllib2
+from .setup import init_classpath
+import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
+import six
+from functools import reduce
 init_classpath()
 import com.xhaus.jyson.JysonCodec as json
 
@@ -20,7 +23,7 @@ FormIndex.__json__ = lambda self: json.dumps(str(self))
 FormIndex.__str__ = lambda self: str_form_index(self)
 FormIndex.__repr__ = FormIndex.__json__
 
-import settings
+from . import settings
 import logging
 
 logger = logging.getLogger('formplayer.util')
@@ -122,24 +125,24 @@ def query_factory(host='', domain='', auth=None, format="json"):
             'DOMAIN': domain,
         }
         return reduce(lambda url, (placeholder, val): val.join(url.split('{{%s}}' % placeholder)),
-                      placeholders.iteritems(), url)
+                      six.iteritems(placeholders), url)
 
     def api_query(_url):
         url = build_url(_url, host, domain)
         if not auth:
-            req = lambda url: urllib2.urlopen(url)
+            req = lambda url: six.moves.urllib.request.urlopen(url)
         elif auth['type'] == 'django-session':
-            opener = urllib2.build_opener()
+            opener = six.moves.urllib.request.build_opener()
             opener.addheaders.append(('Cookie', 'sessionid=%s' % auth['key']))
             req = lambda url: opener.open(url)
         elif auth['type'] in ('http', 'http-digest'):
-            password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            password_mgr = six.moves.urllib.request.HTTPPasswordMgrWithDefaultRealm()
             password_mgr.add_password(None, url, auth['username'], auth['key'])
             handler = {
-                'http':        urllib2.HTTPBasicAuthHandler,
-                'http-digest': urllib2.HTTPDigestAuthHandler,
+                'http':        six.moves.urllib.request.HTTPBasicAuthHandler,
+                'http-digest': six.moves.urllib.request.HTTPDigestAuthHandler,
             }[auth['type']](password_mgr)
-            opener = urllib2.build_opener(handler)
+            opener = six.moves.urllib.request.build_opener(handler)
             req = lambda url: opener.open(url)
 
         logger.info('making external call: %s' % url)

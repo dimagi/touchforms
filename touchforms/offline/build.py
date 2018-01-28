@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from optparse import OptionParser
 import os.path
 import os
@@ -16,7 +18,7 @@ def _path(*relpath):
 def run(cmd, echo=True):
     """execute a command"""
     if echo:
-        print '>>', cmd
+        print('>>', cmd)
     p = Popen(cmd, shell=True)
     p.communicate()
     if p.returncode:
@@ -32,7 +34,7 @@ JYTHON_JAR = _path('jython-standalone-2.5.2.jar')
 def mkdir(path):
     """create directory if needed (all ancestor dirs must exist)"""
     if not os.path.exists(path):
-        print '** mkdir', path
+        print('** mkdir', path)
         os.mkdir(path)
 
 def wipedir(path):
@@ -59,7 +61,7 @@ def register_deps():
 def build_jars():
     """run maven build script"""
     wipedir(TF_INST_DIR)
-    print 'copying touchforms code into jar resources'
+    print('copying touchforms code into jar resources')
     copy_pattern(os.path.join(TF_SRC_DIR, '*.py'), TF_INST_DIR)
     run('mvn package')
 
@@ -91,7 +93,7 @@ def load_maven_properties():
 
 def sign_jar(jar):
     """sign jar with dimagi javarosa key"""
-    print 'signing %s' % jar
+    print('signing %s' % jar)
     props = load_maven_properties()
     props['jar'] = jar
     run('jarsigner -keystore "%(keystore.path)s" -storepass %(keystore.password)s -keypass %(keystore.password)s %(jar)s %(keystore.alias)s' % props, False)
@@ -105,7 +107,7 @@ def external_jars(distdir, fullpath=True):
 
 def make_jnlp(distdir, root_url):
     """create jnlp file for web start deployment"""
-    print 'creating jnlp file'
+    print('creating jnlp file')
     with open(_path('template.jnlp')) as f:
         template = Template(f.read())
     with open(os.path.join(distdir, 'offline-cloudcare.jnlp'), 'w') as f:
@@ -116,7 +118,7 @@ def make_jnlp(distdir, root_url):
 
 def package(mode, root_url):
     """package up jar (and any dependencies) for deployment via web start"""
-    print 'packaging for [%s]' % mode
+    print('packaging for [%s]' % mode)
     DIST = os.path.join(DIST_DIR, mode)
     mkdir(DIST)
     shutil.copyfile(get_built_jar(mode), os.path.join(DIST, 'offline-cloudcare.jar'))

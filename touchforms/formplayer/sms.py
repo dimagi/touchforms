@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from touchforms.formplayer.api import answer_question, next
 from touchforms.formplayer.signals import sms_form_complete
 

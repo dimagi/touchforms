@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from customhandlers import TouchformsFunctionHandler
 from java.text import SimpleDateFormat
 from java.util import TimeZone

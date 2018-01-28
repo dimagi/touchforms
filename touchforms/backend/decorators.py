@@ -1,9 +1,10 @@
 from __future__ import with_statement
+from __future__ import absolute_import
 from functools import wraps
 
 
 def require_xform_session(fn):
-    from xformplayer import GlobalStateManager
+    from .xformplayer import GlobalStateManager
 
     @wraps(fn)
     def inner(session_id, *args, **kwargs):

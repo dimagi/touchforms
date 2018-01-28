@@ -1,5 +1,6 @@
+from __future__ import absolute_import
 import django # for verison sniffing
-import util
+from . import util
 
 DEBUG = True
 

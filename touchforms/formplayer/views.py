@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from functools import wraps
 from django.http.response import HttpResponseServerError, Http404
 from django.shortcuts import get_object_or_404
@@ -52,7 +53,7 @@ def xform_list(request):
                 tmp_file.close()
                 XForm.from_file(tmp_file_path, str(file))
                 notice = "Created form: %s " % file
-            except Exception, e:
+            except Exception as e:
                 logging.error("Problem creating xform from %s: %s" % (file, e))
                 success = False
                 notice = "Problem creating xform from %s: %s" % (file, e)

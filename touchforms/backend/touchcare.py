@@ -1,9 +1,10 @@
-import urllib
-from urllib2 import HTTPError, URLError
+from __future__ import absolute_import
+import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
+from six.moves.urllib.error import HTTPError, URLError
 import logging
 from datetime import datetime
 from copy import copy
-import settings
+from . import settings
 import os
 
 from org.javarosa.core.services.storage import IStorageUtilityIndexed
@@ -25,16 +26,17 @@ from org.commcare.core.sandbox import SandboxUtils
 from org.commcare.api.process import FormRecordProcessorHelper as FormRecordProcessor
 from org.commcare.modern.parse import ParseUtilsHelper as ParseUtils
 from org.kxml2.io import KXmlParser
-import persistence
+from . import persistence
 from java.io import File
-from util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
-from xcp import TouchFormsUnauthorized, TouchcareInvalidXPath, TouchFormsNotFound, CaseNotFound
+from .util import to_vect, to_jdate, to_hashtable, to_input_stream, query_factory
+from .xcp import TouchFormsUnauthorized, TouchcareInvalidXPath, TouchFormsNotFound, CaseNotFound
+import six
 
 logger = logging.getLogger('formplayer.touchcare')
 
 
 def get_restore_url(criteria=None):
-    query_url = '%s?%s' % (settings.RESTORE_URL, urllib.urlencode(criteria))
+    query_url = '%s?%s' % (settings.RESTORE_URL, six.moves.urllib.parse.urlencode(criteria))
     return query_url
 
 
@@ -157,16 +159,16 @@ class CCInstances(CommCareInstanceInitializer):
             meta_keys = ['device_id', 'app_version', 'username', 'user_id']
             exclude_keys = ['additional_filters', 'user_data']
             sess = CommCareSession()  # will not passing a CCPlatform cause problems later?
-            for k, v in self.vars.iteritems():
+            for k, v in six.iteritems(self.vars):
                 if k not in meta_keys \
                         and k not in exclude_keys:
                     # com.xhaus.jyson.JysonCodec returns data as byte strings
                     # in unknown encoding (possibly ISO-8859-1)
-                    sess.setDatum(k, unicode(v, errors='replace'))
+                    sess.setDatum(k, six.text_type(v, errors='replace'))
 
             clean_user_data = {}
-            for k, v in self.vars.get('user_data', {}).iteritems():
-                clean_user_data[k] = unicode(v if v is not None else '', errors='replace')
+            for k, v in six.iteritems(self.vars.get('user_data', {})):
+                clean_user_data[k] = six.text_type(v if v is not None else '', errors='replace')
 
             form_instance = SessionInstanceBuilder.getSessionInstance(sess.getFrame(), *([self.vars.get(k, '') for k in meta_keys] +
                                                      [to_hashtable(clean_user_data)]))
@@ -179,7 +181,7 @@ class CCInstances(CommCareInstanceInitializer):
         q = query_factory(self.vars.get('host'), self.vars['domain'], self.auth, format="raw")
         try:
             results = q(query_url)
-        except (HTTPError, URLError), e:
+        except (HTTPError, URLError) as e:
             fixture_name = query_url[query_url.rfind('/') + 1:]
             if "user-group" in fixture_name:
                 raise TouchFormsNotFound('This form requires that the user be in a case sharing group '
@@ -200,7 +202,7 @@ class CCInstances(CommCareInstanceInitializer):
         parser = KXmlParser()
         parser.setInput(to_input_stream(results), "UTF-8")
         parser.setFeature(KXmlParser.FEATURE_PROCESS_NAMESPACES, True)
-        parser.next()
+        next(parser)
         return TreeElementParser(parser, 0, fixture_id).parse()
 
 
@@ -243,7 +245,7 @@ def filter_cases(filter_expr, api_auth, session_data=None, form_context=None,
 
     try:
         caseInstance.initialize(ccInstances, "casedb")
-    except (HTTPError, URLError), e:
+    except (HTTPError, URLError) as e:
         raise TouchFormsUnauthorized('Unable to connect to HQ: %s' % str(e))
 
     instances = to_hashtable({"casedb": caseInstance})
@@ -258,20 +260,20 @@ def filter_cases(filter_expr, api_auth, session_data=None, form_context=None,
         case_list = XPathFuncExpr.toString(
             XPathParseTool.parseXPath(modified_xpath).eval(
                 EvaluationContext(None, instances)))
-        return {'cases': filter(lambda x: x, case_list.split(","))}
-    except (XPathException, XPathSyntaxException), e:
+        return {'cases': [x for x in case_list.split(",") if x]}
+    except (XPathException, XPathSyntaxException) as e:
         raise TouchcareInvalidXPath('Error querying cases with xpath %s: %s' % (filter_expr, str(e)))
 
 
 def query_case_ids(q, criteria=None):
     criteria = copy(criteria) or {}  # don't modify the passed in dict
     criteria["ids_only"] = 'true'
-    query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria))
+    query_url = '%s?%s' % (settings.CASE_API_URL, six.moves.urllib.parse.urlencode(criteria))
     return [id for id in q(query_url)]
 
 
 def query_cases(q, criteria=None):
-    query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria)) \
+    query_url = '%s?%s' % (settings.CASE_API_URL, six.moves.urllib.parse.urlencode(criteria)) \
         if criteria else settings.CASE_API_URL
     return [case_from_json(cj) for cj in q(query_url)]
 
@@ -298,21 +300,21 @@ def case_from_json(data):
     owner_id = data['properties']['owner_id'] or data['user_id'] or ""
     c.setUserId(owner_id)  # according to clayton "there is no user_id, only owner_id"
 
-    for k, v in data['properties'].iteritems():
+    for k, v in six.iteritems(data['properties']):
         if v is not None and k not in ['case_name', 'case_type', 'date_opened']:
             c.setProperty(k, v)
 
-    for k, v in data['indices'].iteritems():
+    for k, v in six.iteritems(data['indices']):
         c.setIndex(k, v['case_type'], v['case_id'])
 
-    for k, v in data['attachments'].iteritems():
+    for k, v in six.iteritems(data['attachments']):
         c.updateAttachment(k, v['url'])
 
     return c
 
 
 def query_ledger_for_case(q, case_id):
-    query_string = urllib.urlencode({'case_id': case_id})
+    query_string = six.moves.urllib.parse.urlencode({'case_id': case_id})
     query_url = '%s?%s' % (settings.LEDGER_API_URL, query_string)
     return ledger_from_json(q(query_url))
 
@@ -419,7 +421,7 @@ class TouchformsStorageUtility(IStorageUtilityIndexed):
         return len(self.ids)
 
     def iterate(self):
-        return StaticIterator(self.ids.keys())
+        return StaticIterator(list(self.ids.keys()))
 
 
 class CaseDatabase(TouchformsStorageUtility):
@@ -433,7 +435,7 @@ class CaseDatabase(TouchformsStorageUtility):
 
     def load_all_objects(self):
         if self.form_context.get('cases', None):
-            cases = map(lambda c: case_from_json(c), self.form_context.get('cases'))
+            cases = [case_from_json(c) for c in self.form_context.get('cases')]
         else:
             cases = query_cases(self.query_func,
                                 criteria=self.additional_filters)
@@ -476,7 +478,7 @@ class CaseDatabase(TouchformsStorageUtility):
             self.cached_lookups[(field_name, value)] = cases
 
         cases = self.cached_lookups[(field_name, value)]
-        id_map = dict((v, k) for k, v in self.ids.iteritems())
+        id_map = dict((v, k) for k, v in six.iteritems(self.ids))
         try:
             return to_vect(id_map[c.getCaseId()] for c in cases)
         except KeyError:
@@ -511,7 +513,7 @@ class LedgerDatabase(TouchformsStorageUtility):
         else:
             ledgers = self.cached_lookups[(field_name, value)]
 
-        id_map = dict((v, k) for k, v in self.ids.iteritems())
+        id_map = dict((v, k) for k, v in six.iteritems(self.ids))
         return to_vect(id_map[l.getEntiyId()] for l in ledgers)
 
 

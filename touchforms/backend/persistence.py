@@ -1,11 +1,12 @@
 from __future__ import with_statement
-import settings
+from __future__ import absolute_import
+from . import settings
 import tempfile
 from com.xhaus.jyson import JSONDecodeError
-from xcp import EmptyCacheFileException
+from .xcp import EmptyCacheFileException
 import com.xhaus.jyson.JysonCodec as json
 from com.ziclix.python.sql import zxJDBC
-import classPathHacker
+from . import classPathHacker
 import os
 from datetime import datetime
 

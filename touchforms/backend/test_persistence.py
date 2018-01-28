@@ -1,8 +1,9 @@
 from __future__ import with_statement
+from __future__ import absolute_import
 import unittest
 import os
-import persistence
-from setup import init_classpath
+from . import persistence
+from .setup import init_classpath
 init_classpath()
 
 CUR_DIR = os.path.dirname(__file__)

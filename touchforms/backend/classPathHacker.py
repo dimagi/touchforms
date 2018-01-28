@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import java.lang.reflect.Method 
 import java.lang.ClassLoader as javaClassLoader 
 from java.lang import Object as javaObject 

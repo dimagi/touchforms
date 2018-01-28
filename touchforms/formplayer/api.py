@@ -1,7 +1,8 @@
+from __future__ import absolute_import
 import json
 from django.conf import settings
-from urlparse import urlparse
-import httplib
+from six.moves.urllib.parse import urlparse
+import six.moves.http_client
 import logging
 import socket
 
@@ -93,7 +94,7 @@ class XFormsConfig(object):
                 ("lang", self.language))
         
         # only include anything with a value, or touchforms gets mad
-        return dict(filter(lambda x: x[1], vals))
+        return dict([x for x in vals if x[1]])
         
     def start_session(self):
         """
@@ -258,7 +259,7 @@ def post_data_helper(d, auth, content_type, url):
     headers = {}
     headers["content-type"] = content_type
     headers["content-length"] = len(data)
-    conn = httplib.HTTPConnection(up.netloc)
+    conn = six.moves.http_client.HTTPConnection(up.netloc)
     conn.request('POST', up.path, data, headers)
     resp = conn.getresponse()
     results = resp.read()
@@ -285,11 +286,11 @@ def post_data(data, auth=None, content_type="application/json"):
 def get_response(data, auth=None):
     try:
         response = post_data(data, auth=auth)
-    except socket.error, e:
+    except socket.error as e:
         return XformsResponse.server_down()
     try:
         return XformsResponse(json.loads(response))
-    except Exception, e:
+    except Exception as e:
         raise e
 
 

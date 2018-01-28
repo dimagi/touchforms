@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import logging.handlers
 import sys
 import os
@@ -58,7 +59,7 @@ formats = {
 
 
 try:
-    from localsettings import *
+    from .localsettings import *
 except ImportError:
     pass
 

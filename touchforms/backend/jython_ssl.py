@@ -1,4 +1,5 @@
 # Copied from http://tech.pedersen-live.com/2010/10/trusting-all-certificates-in-jython/
+from __future__ import absolute_import
 import sys
 
 # Check if running in Jython

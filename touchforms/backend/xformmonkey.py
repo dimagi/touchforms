@@ -1,4 +1,6 @@
-import urllib2
+from __future__ import absolute_import
+from __future__ import print_function
+import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 import json
 import random
 import math
@@ -12,6 +14,7 @@ import os.path
 from StringIO import StringIO
 import logging
 import logging.handlers
+from six.moves import range
 
 #how often to click the 'back' button
 BACK_FREQ = .05
@@ -35,7 +38,7 @@ MIN_DELAY = .01 #s
 VALIDATION_BACKOFF = .25
 
 def request(server, payload):
-    conn = urllib2.urlopen('http://' + server, json.dumps(payload))
+    conn = six.moves.urllib.request.urlopen('http://' + server, json.dumps(payload))
     return json.loads(conn.read())
 
 def monkey_loop(form_id):
@@ -85,7 +88,7 @@ def random_answer(datatype, num_choices):
         # as-select1
         how_many = [(i, 1./i**.5) for i in range(1, num_choices + 1)]
         how_many.append((0, .3))
-        return random.sample(xrange(1, num_choices + 1), choose_weighted(how_many))
+        return random.sample(range(1, num_choices + 1), choose_weighted(how_many))
 
 def rand_date(max_range, max_rel_likelihood):
     return date.today() + timedelta(days=exp_dist(-max_range, max_rel_likelihood))
@@ -115,7 +118,7 @@ def repeat_juncture(evt):
     if num_reps == 0:
         del actions['edit']
 
-    action = choose_weighted(actions.items())
+    action = choose_weighted(list(actions.items()))
     if action == 'done':
         return ('next', {})
     elif action == 'add':
@@ -208,7 +211,7 @@ class runner(threading.Thread):
             output = run_monkey(monkey_loop(self.form_id), self.server_url, self.delay)
 
             if self.output_dir is None:
-                print output
+                print(output)
             else:
                 filename = os.path.join(self.output_dir, '%s.%s.xml' % (datetime.now().strftime('%Y%m%d%H%M%S'), hash_tag(5)))
                 with open(filename, 'w') as f:

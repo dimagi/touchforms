@@ -1,13 +1,14 @@
 from __future__ import with_statement
+from __future__ import absolute_import
 import unittest
 import os
 
-from setup import init_classpath
+from .setup import init_classpath
 init_classpath()
-import touchcare
-import persistence
+from . import touchcare
+from . import persistence
 import datetime
-from xcp import TouchcareInvalidXPath, TouchFormsUnauthorized
+from .xcp import TouchcareInvalidXPath, TouchFormsUnauthorized
 from org.javarosa.core.util.externalizable import PrototypeFactory
 from org.javarosa.core.api import ClassNameHasher
 

@@ -1,4 +1,5 @@
 from __future__ import with_statement
+from __future__ import absolute_import
 import sys
 import os
 from datetime import datetime
@@ -12,11 +13,14 @@ from java.util import Date
 from java.util import Vector
 from java.io import StringReader
 
-import customhandlers
-from util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect, to_arr, index_from_str
+from . import customhandlers
+from .util import to_jdate, to_pdate, to_jtime, to_ptime, to_vect, to_arr, index_from_str
 
-from setup import init_classpath, init_jr_engine
+from .setup import init_classpath, init_jr_engine
 import logging
+import six
+from six.moves import range
+from six.moves import zip
 init_classpath()
 init_jr_engine()
 
@@ -32,12 +36,12 @@ from org.commcare.suite.model import Text as JRText
 from java.util import Hashtable as JHashtable
 from org.javarosa.xpath import XPathException
 
-from touchcare import CCInstances, process_form_xml
-from util import query_factory
-from decorators import require_xform_session
-from xcp import CaseNotFound
-import persistence
-import settings
+from .touchcare import CCInstances, process_form_xml
+from .util import query_factory
+from .decorators import require_xform_session
+from .xcp import CaseNotFound
+from . import persistence
+from . import settings
 
 logger = logging.getLogger('formplayer.xformplayer')
 
@@ -253,7 +257,7 @@ class XFormSession(object):
             'seq_id': self.seq_id,
         })
         # prune entries with null value, so that defaults will take effect when the session is re-created
-        state = dict((k, v) for k, v in state.iteritems() if v is not None)
+        state = dict((k, v) for k, v in six.iteritems(state) if v is not None)
         return state
 
     def get_xmlns(self):
@@ -277,7 +281,7 @@ class XFormSession(object):
             m_text = JRText.XPathText(xpath, args)
             result['status'] = 'success'
             result['output'] = m_text.evaluate(evaluation_context)
-        except XPathException, e:
+        except XPathException as e:
             result['status'] = 'failure'
             result['output'] = e.getMessage()
 
@@ -289,7 +293,7 @@ class XFormSession(object):
             pass
 
         instance_bytes = FormSerializer().serializeInstance(self.form.getInstance())
-        return unicode(''.join(chr(b) for b in instance_bytes.tolist()), 'utf-8')
+        return six.text_type(''.join(chr(b) for b in instance_bytes.tolist()), 'utf-8')
 
     def walk(self):
         form_ix = FormIndex.createBeginningOfFormIndex()
@@ -499,7 +503,7 @@ class XFormSession(object):
         if answer == None or str(answer).strip() == '' or answer == []:
             ans = None
         elif datatype == 'int':
-            if isinstance(int(answer), long):
+            if isinstance(int(answer), int):
                 ans = LongData(int(answer))
             else:
                 ans = IntegerData(int(answer))
@@ -644,12 +648,12 @@ def open_form(form_spec, inst_spec=None, **kwargs):
 
     try:
         xform_xml = get_loader(form_spec, **kwargs)()
-    except Exception, e:
+    except Exception as e:
         return {'error': 'There was a problem downloading the XForm: %s' % str(e)}
 
     try:
         instance_xml = get_loader(inst_spec, **kwargs)()
-    except Exception, e:
+    except Exception as e:
         return {'error': 'There was a problem downloading the XForm instance: %s' % str(e)}
 
     xfsess = XFormSession(xform_xml, instance_xml, **kwargs)
@@ -714,8 +718,7 @@ def go_back(xform_session):
 @require_xform_session
 def submit_form(xform_session, answers, prevalidated):
     errors = dict(
-        filter(lambda resp: resp[1]['status'] != 'success',
-            ((_ix, xform_session.answer_question(answer, _ix)) for _ix, answer in answers.iteritems()))
+        [resp for resp in ((_ix, xform_session.answer_question(answer, _ix)) for _ix, answer in six.iteritems(answers)) if resp[1]['status'] != 'success']
     )
 
     if errors or not prevalidated:
@@ -773,7 +776,7 @@ def save_form(xfsess):
 
 
 def form_completion(xfsess):
-    return dict(zip(('save-id', 'output'), save_form(xfsess)))
+    return dict(list(zip(('save-id', 'output'), save_form(xfsess))))
 
 
 def get_caption(prompt):

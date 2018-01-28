@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 import unittest
 import sys
-from xcp import InvalidRequestException
-import xformserver
-import xformplayer
+from .xcp import InvalidRequestException
+from . import xformserver
+from . import xformplayer
 
 
 class DummyServer(xformserver.XFormHTTPGateway):
@@ -21,7 +22,7 @@ class XFormServerTest(unittest.TestCase):
         }
         try:
             xformserver.handle_request(content, self.server)
-        except InvalidRequestException, e:
+        except InvalidRequestException as e:
             self.assertTrue('session' in e.message)
         else:
             self.fail()
@@ -33,7 +34,7 @@ class XFormServerTest(unittest.TestCase):
         }
         try:
             xformserver.handle_request(content, self.server)
-        except InvalidRequestException, e:
+        except InvalidRequestException as e:
             self.assertTrue('answer' in e.message)
         else:
             self.fail()
@@ -42,7 +43,7 @@ class XFormServerTest(unittest.TestCase):
         content = {}
         try:
             xformserver.handle_request(content, self.server)
-        except InvalidRequestException, e:
+        except InvalidRequestException as e:
             self.assertTrue('All actions' in e.message)
         else:
             self.fail()
@@ -54,7 +55,7 @@ class XFormServerTest(unittest.TestCase):
         }
         try:
             xformserver.handle_request(content, self.server)
-        except InvalidRequestException, e:
+        except InvalidRequestException as e:
             self.assertTrue('action' in e.message)
         else:
             self.fail()
@@ -66,7 +67,7 @@ class XFormServerTest(unittest.TestCase):
         }
         try:
             xformserver.handle_request(content, self.server)
-        except InvalidRequestException, e:
+        except InvalidRequestException as e:
             self.assertTrue('hq_auth' in e.message)
         else:
             self.fail(str(e))
@@ -77,7 +78,7 @@ class XFormServerTest(unittest.TestCase):
         }
         try:
             xformserver.handle_request(content, self.server)
-        except InvalidRequestException, e:
+        except InvalidRequestException as e:
             self.assertTrue('filter_expr' in e.message)
         else:
             self.fail(str(e))

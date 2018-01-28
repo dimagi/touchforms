@@ -1,21 +1,23 @@
+from __future__ import absolute_import
 import sys
-from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
-from SocketServer import ThreadingMixIn
+from six.moves.BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
+from six.moves.socketserver import ThreadingMixIn
 import threading
 import logging
-import xformplayer
-import touchcare
+from . import xformplayer
+from . import touchcare
 import java.lang
 import time
-import urllib2
+import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 from optparse import OptionParser
 from datetime import datetime, timedelta
-import settings
+from . import settings
 
-from setup import init_classpath
+from .setup import init_classpath
+import six
 init_classpath()
 import com.xhaus.jyson.JysonCodec as json
-from xcp import (
+from .xcp import (
     InvalidRequestException,
     TouchFormsUnauthorized,
     TouchFormsBadRequest,
@@ -70,23 +72,23 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         try:
             data_out = handle_request(data_in, self.server)
             reply = json.dumps(data_out)
-        except TouchFormsBadRequest, e:
+        except TouchFormsBadRequest as e:
             self.send_error(400, str(e))
             return
-        except TouchFormsUnauthorized, e:
+        except TouchFormsUnauthorized as e:
             self.send_error(401, str(e))
             return
-        except TouchFormsNotFound, e:
+        except TouchFormsNotFound as e:
             self.send_error(404, str(e))
             return
-        except urllib2.HTTPError, e:
+        except six.moves.urllib.error.HTTPError as e:
             self.send_error(e.code, e.read() or e.msg)
             return
-        except (Exception, java.lang.Exception), e:
+        except (Exception, java.lang.Exception) as e:
             msg = ''
             if isinstance(e, java.lang.Exception):
                 e.printStackTrace()  # todo: log the java stacktrace
-            elif isinstance(e, urllib2.HTTPError):
+            elif isinstance(e, six.moves.urllib.error.HTTPError):
                 if e.headers.get("content-type", "") == "text/plain":
                     msg = e.read()
 
@@ -95,8 +97,8 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
             self.send_error(
                 500,
                 u'internal error handling request: %s: %s%s' % (
-                    type(e), unicode(e), u": %s" % msg if msg else ""),
-                unicode(info[0]),
+                    type(e), six.text_type(e), u": %s" % msg if msg else ""),
+                six.text_type(info[0]),
                 msg if msg else None,
             )
             return
@@ -117,14 +119,14 @@ class XFormRequestHandler(BaseHTTPRequestHandler):
         # but had to override due to html escaping messing up
         # the json format of the message
         try:
-            short, long = self.responses[code]
+            short, int = self.responses[code]
         except KeyError:
-            short, long = '???', '???'
+            short, int = '???', '???'
         if message is None:
             message = short
         if human_readable_message is None:
             human_readable_message = message
-        explain = long
+        explain = int
         logger.exception("Status Code: %d, Message %s" % (code, message))
         content = json.dumps({'status': 'error',
                               'error_type': error_type,
@@ -180,7 +182,7 @@ def handle_request(content, server):
         if action == xformplayer.Actions.NEW_FORM:
             form_fields = {'form-name': 'uid', 'form-content': 'raw', 'form-url': 'url'}
             form_spec = None
-            for k, v in form_fields.iteritems():
+            for k, v in six.iteritems(form_fields):
                 try:
                     form_spec = (v, content[k])
                     break

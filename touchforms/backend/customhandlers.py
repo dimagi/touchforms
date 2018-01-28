@@ -1,9 +1,11 @@
+from __future__ import absolute_import
 import logging
 import jarray
 import java.lang
 
-from util import to_vect
-from setup import init_classpath
+from .util import to_vect
+from .setup import init_classpath
+import six
 init_classpath()
 
 from org.javarosa.core.model.utils import IPreloadHandler
@@ -33,7 +35,7 @@ def attach_handlers(form, extensions, context, preload_data=None):
     CalendarUtils.setArrayDataSource(HardCodedArrayDataSource())
 
     # NOTE: PRELOADERS ARE DEPRECATED
-    for key, data_dict in preload_data.iteritems():
+    for key, data_dict in six.iteritems(preload_data):
         handler = StaticPreloadHandler(key, data_dict)
         logger.info("Adding preloader for %s data: %s" % (key, data_dict))
         form.getPreloader().addPreloadHandler(handler)
