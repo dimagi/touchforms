@@ -263,9 +263,7 @@ def post_data_helper(d, auth, content_type, url):
     headers = {}
     headers["content-type"] = content_type
     headers["content-length"] = len(data)
-    headers["Set-Cookie"] = 'sessionid=rl5dzcd02npn2qhn6aw732q17t7oc5rf'
-    headers["_cookie"] = 'sessionid=rl5dzcd02npn2qhn6aw732q17t7oc5rf'
-    headers["Cookie"] = 'sessionid=rl5dzcd02npn2qhn6aw732q17t7oc5rf'
+    headers["Cookie"] = 'sessionid=%s' % settings.FORMPLAYER_INTERNAL_AUTH_KEY
     conn = httplib.HTTPConnection(up.netloc)
     conn.request('POST', up.path, data, headers)
     resp = conn.getresponse()
