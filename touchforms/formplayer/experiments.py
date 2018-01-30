@@ -74,12 +74,15 @@ def compare_dict(control, candidate):
 def formplayer_compare(control, candidate, current_key=None):
     logging.info("Formplayer Compare Control %s \n Candidate %s" % (control, candidate))
     if isinstance(control, dict):
-        are_equal = compare_dict(control, candidate)
+        if not(isinstance(candidate, dict)):
+            return False
+        return compare_dict(control, candidate)
     elif isinstance(control, list):
-        are_equal = compare_list(control, candidate)
+        if not(isinstance(candidate, list)):
+            return False
+        return compare_list(control, candidate)
     else:
-        are_equal = formplayer_string_compare(control, candidate, current_key)
-    return are_equal
+        return formplayer_string_compare(control, candidate, current_key)
 
 
 ## Here are a bunch of exceptions for things that are currently different between servers. We should decide what is
