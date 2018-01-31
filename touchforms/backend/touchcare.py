@@ -264,7 +264,6 @@ def filter_cases(filter_expr, api_auth, session_data=None, form_context=None,
 
 
 def query_case_ids(q, criteria=None):
-    logging.info('query case id %s' % criteria)
     criteria = copy(criteria) or {}  # don't modify the passed in dict
     criteria["ids_only"] = 'true'
     query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria))
@@ -272,14 +271,12 @@ def query_case_ids(q, criteria=None):
 
 
 def query_cases(q, criteria=None):
-    logging.info('query cases %s' % criteria)
     query_url = '%s?%s' % (settings.CASE_API_URL, urllib.urlencode(criteria)) \
         if criteria else settings.CASE_API_URL
     return [case_from_json(cj) for cj in q(query_url)]
 
 
 def query_case(q, case_id):
-    logging.info('query case %s' % case_id)
     cases = query_cases(q, {'case_id': case_id})
     try:
         return cases[0]

@@ -126,7 +126,6 @@ def query_factory(host='', domain='', auth=None, format="json"):
 
     def api_query(_url):
         url = build_url(_url, host, domain)
-        print "Built url" + url + " from domain " + domain
         if not auth:
             req = lambda url: urllib2.urlopen(url)
         elif auth['type'] == 'django-session':
@@ -143,7 +142,7 @@ def query_factory(host='', domain='', auth=None, format="json"):
             opener = urllib2.build_opener(handler)
             req = lambda url: opener.open(url)
 
-        logger.info('api_query: %s' % url)
+        logger.info('making external call: %s' % url)
         return req(url).read()
 
     def json_query(_url):
