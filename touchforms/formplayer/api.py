@@ -268,13 +268,9 @@ def post_data_helper(d, auth, content_type, url):
     conn.request('POST', up.path, data, headers)
     resp = conn.getresponse()
     results = resp.read()
-    logging.info("Url: %s" % url)
-    logging.info("Results: %s" % results)
     return results
             
 def post_data(data, auth=None, content_type="application/json"):
-    logging.info("Data:")
-    logging.info(data)
     try:
         d = json.loads(data)
     except TypeError:
@@ -309,8 +305,6 @@ def perform_experiment(d, auth, content_type):
 
 
 def get_response(data, auth=None):
-    logging.info('Posting data')
-    logging.info(data)
     try:
         response = post_data(data, auth=auth)
     except socket.error, e:
