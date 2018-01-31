@@ -108,7 +108,7 @@ def index_from_str(s_ix, form):
                 mult = -1
         return (i, mult)
 
-    ix = reduce(lambda cur, (i, mult): FormIndex(cur, i, mult, None),
+    ix = reduce(lambda cur, i_mult: FormIndex(cur, i_mult[0], i_mult[1], None),
                 (step_from_str(step) for step in reversed(s_ix.split(','))),
                 None)
     ix.assignRefs(form)
