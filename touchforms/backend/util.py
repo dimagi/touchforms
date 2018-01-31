@@ -124,7 +124,7 @@ def query_factory(host='', domain='', auth=None, format="json"):
             'HOST': host,
             'DOMAIN': domain,
         }
-        return reduce(lambda url, (placeholder, val): val.join(url.split('{{%s}}' % placeholder)),
+        return reduce(lambda url, placeholder_val: placeholder_val[1].join(url.split('{{%s}}' % placeholder_val[0])),
                       six.iteritems(placeholders), url)
 
     def api_query(_url):
