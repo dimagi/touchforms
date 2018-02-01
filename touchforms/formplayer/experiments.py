@@ -11,10 +11,9 @@ class FormplayerExperiment(laboratory.Experiment):
 
     def publish(self, result):
         # if we're starting a new form, we need to store the mapping between session_ids so we can use later
-        if (self.name == "new-form"):
+        if self.name == "new-form":
             control_session_id = json.loads(result.control.value)["session_id"]
             candidate_session_id = json.loads(result.observations[0].value)["session_id"]
-            logging.info("Mapping control id %s to candidate id %s")
             FormplayerExperiment.session_id_mapping[control_session_id] = candidate_session_id
 
         control = result.control
@@ -27,6 +26,7 @@ class FormplayerExperiment(laboratory.Experiment):
         candidate_value = json.loads(result.observations[0].value)
 
         if not formplayer_compare(control_value, candidate_value):
+            logging.info('diff between control %s and candidate %s' %(control_value, candidate_value))
             self.log_diff(control_value, candidate_value)
 
     def log_diff(self, control_value, candidate_value):
@@ -59,42 +59,43 @@ def compare_list(control, candidate):
     return is_equal
 
 
-def compare_dict(control, candidate):
+def compare_dict(control, candidate, current_key):
     is_equal = True
     if control is not None and candidate is None:
+        logging.info('Key %s has null candidate but real control %s' % (current_key, control))
         return False
     for key in control:
+        if check_skip_key(key):
+            return True
         if key not in candidate:
+            logging.info('Key %s in control %s but not candidate %s' % (key, control, candidate))
             is_equal = False
         if not formplayer_compare(control.get(key), candidate.get(key), key):
             is_equal = False
     return is_equal
 
 
-def formplayer_compare(control, candidate, current_key=None):
-    logging.info("Formplayer Compare Control %s \n Candidate %s" % (control, candidate))
+def formplayer_compare(control, candidate, key=None):
+    if check_skip_key(key):
+        return True
     if isinstance(control, dict):
         if not(isinstance(candidate, dict)):
+            logging.info('For key %s: Candidate %s is not a dict, but control %s is' % (key, candidate, control))
             return False
-        return compare_dict(control, candidate)
+        return compare_dict(control, candidate, key)
     elif isinstance(control, list):
         if not(isinstance(candidate, list)):
+            logging.info('For key %s: Candidate %s is not a list, but control %s is' % (key, candidate,
+                                                                                        control))
             return False
         return compare_list(control, candidate)
     else:
-        return formplayer_string_compare(control, candidate, current_key)
+        return formplayer_string_compare(control, candidate, key)
 
 
-## Here are a bunch of exceptions for things that are currently different between servers. We should decide what is
-## right and wrong.
-def formplayer_string_compare(control, candidate, current_key=None):
-    if current_key == "session_id":
-        # clearly these will be different
-        return True
-    elif current_key == "output":
-        # don't have any way to compare the XML output at the moment, esp. considering uuids and times
-        return True
-    elif current_key == "repeatable":
+## Mappings between what Formplayer and Touchforms can safely disagree on
+def formplayer_string_compare(control, candidate, key=None):
+    if key == "repeatable":
         # These end up as '0' and '1' in python world, despite being set to True and False in xformplayer.py
         if control == 0:
             ret = candidate == "false"
@@ -106,5 +107,32 @@ def formplayer_string_compare(control, candidate, current_key=None):
         ret = control == candidate
     if not ret:
         logging.info("Mismatch with key %s between control %s and candidate %s"
-                     % (current_key, control, candidate))
+                     % (key, control, candidate))
     return ret
+
+## Keys that SMS doesn't use or that we otherwise can skip
+def check_skip_key(key):
+    if key == "session_id":
+        # clearly these will be different
+        return True
+    elif key == "output":
+        # don't have any way to compare the XML output at the moment, esp. considering uuids and times
+        return True
+    elif key == "seq_id":
+        # SMS doesn't use this value so doesn't matter that the indexing is different
+        return True
+    elif key == "style":
+        # SMS doesn't use this value because SMS has no style!
+        return True
+    elif key == "lang":
+        # SMS doesn't use this value in the response
+        return True
+    elif key == "langs":
+        # SMS doesn't use this value in the response
+        return True
+    elif key == "save-id":
+        # No one uses this
+        return True
+    elif key == "style":
+        # SMS doesn't use this value because SMS has no style!
+        return True
