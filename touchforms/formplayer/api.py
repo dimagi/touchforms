@@ -4,6 +4,8 @@ from urlparse import urlparse
 import httplib
 import logging
 import socket
+from django.core.cache\
+    import cache
 
 from corehq.form_processor.utils.general import use_sqlite_backend
 from touchforms.formplayer.exceptions import BadDataError
@@ -279,6 +281,8 @@ def post_data(data, auth=None, content_type="application/json"):
     if auth:
         d['hq_auth'] = auth.to_dict()
     domain = d.get("domain")
+    if domain:
+        d['uses_sql_backend'] = use_sqlite_backend(domain)
     if 'username' in d:
         d['restoreAs'] = d['username']
     # just default to old server for now
@@ -293,11 +297,17 @@ def perform_experiment(d, auth, content_type):
         # If we should already have a session, look up its ID in the experiment mapping. it better be there.
         # This is terrible, but we use both in different places.
         if "session_id" in d:
-            d["session_id"] = FormplayerExperiment.session_id_mapping.get(d["session_id"])
-            d["session-id"] = FormplayerExperiment.session_id_mapping.get(d["session_id"])
+            control_session_id = d["session_id"]
+            candidate_session_id = cache.get('touchforms-to-formplayer-session-id-%s' % control_session_id)
+            d["session_id"] = candidate_session_id
+            d["session-id"] = candidate_session_id
+            logging.info("Got candidate %s from control %s" % (candidate_session_id, control_session_id))
         if "session-id" in d:
-            d["session-id"] = FormplayerExperiment.session_id_mapping.get(d["session-id"])
-            d["session_id"] = FormplayerExperiment.session_id_mapping.get(d["session-id"])
+            control_session_id = d["session-id"]
+            candidate_session_id = cache.get('touchforms-to-formplayer-session-id-%s' % control_session_id)
+            d["session-id"] = candidate_session_id
+            d["session_id"] = candidate_session_id
+            logging.info("Got candidate %s from control %s" % (candidate_session_id, control_session_id))
         d['oneQuestionPerScreen'] = True
         c.record(post_data_helper(d, auth, content_type, settings.FORMPLAYER_URL + "/" + d["action"]))
     objects = experiment.run()

@@ -1,20 +1,20 @@
 import laboratory
 import json
 import logging
+from django.core.cache import cache
 
 diff_logger = logging.getLogger('formplayer_diff')
 timing_logger = logging.getLogger('formplayer_timing')
 
 
 class FormplayerExperiment(laboratory.Experiment):
-    session_id_mapping = {}
 
     def publish(self, result):
         # if we're starting a new form, we need to store the mapping between session_ids so we can use later
         if self.name == "new-form":
             control_session_id = json.loads(result.control.value)["session_id"]
             candidate_session_id = json.loads(result.observations[0].value)["session_id"]
-            FormplayerExperiment.session_id_mapping[control_session_id] = candidate_session_id
+            cache.set('touchforms-to-formplayer-session-id-%s' % control_session_id, candidate_session_id)
 
         control = result.control
         # We're only ever returning one of these (I think)
