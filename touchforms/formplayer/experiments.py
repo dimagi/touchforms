@@ -10,26 +10,37 @@ timing_logger = logging.getLogger('formplayer_timing')
 class FormplayerExperiment(laboratory.Experiment):
 
     def publish(self, result):
+
+        control = result.control
+        candidate = result.observations[0]
+
+        if not candidate:
+            logging.info('Empty control %s for candidate %s' %(control, candidate))
+            self.log_diff(control, candidate)
+            return
+
         # if we're starting a new form, we need to store the mapping between session_ids so we can use later
         if self.name == "new-form":
             cache = get_redis_client()
-            control_session_id = json.loads(result.control.value)["session_id"]
-            candidate_session_id = json.loads(result.observations[0].value)["session_id"]
+            control_dict = json.loads(result.control.value)
+            candidate_dict = json.loads(candidate.value)
+            control_session_id = control_dict["session_id"]
+            candidate_session_id = candidate_dict["session_id"]
             cache.set('touchforms-to-formplayer-session-id-%s' % control_session_id, candidate_session_id)
             cache.expire('touchforms-to-formplayer-session-id-%s' % control_session_id, 7 * 24 * 60 * 60)
 
-        control = result.control
         # We're only ever returning one of these (I think)
-        candidate = result.observations[0]
 
         self.log_timing(control, candidate)
-
-        control_value = json.loads(result.control.value)
-        candidate_value = json.loads(result.observations[0].value)
-
-        if not formplayer_compare(control_value, candidate_value):
-            logging.info('diff between control %s and candidate %s' %(control_value, candidate_value))
-            self.log_diff(control_value, candidate_value)
+        if candidate:
+            control_value = json.loads(result.control.value)
+            candidate_value = json.loads(candidate.value)
+            if not formplayer_compare(control_value, candidate_value):
+                logging.info('diff between control %s and candidate %s' %(control_value, candidate_value))
+                self.log_diff(control_value, candidate_value)
+        else:
+            logging.info('Empty control %s for candidate %s' %(control, candidate))
+            self.log_diff(control, candidate)
 
     def log_diff(self, control_value, candidate_value):
         request = self.context['request']
