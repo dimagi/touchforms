@@ -4,8 +4,7 @@ from urlparse import urlparse
 import httplib
 import logging
 import socket
-from django.core.cache\
-    import cache
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.form_processor.utils.general import use_sqlite_backend
 from touchforms.formplayer.exceptions import BadDataError
@@ -296,6 +295,7 @@ def perform_experiment(d, auth, content_type):
     with experiment.candidate() as c:
         # If we should already have a session, look up its ID in the experiment mapping. it better be there.
         # This is terrible, but we use both in different places.
+        cache = get_redis_client()
         if "session_id" in d:
             control_session_id = d["session_id"]
             candidate_session_id = cache.get('touchforms-to-formplayer-session-id-%s' % control_session_id)

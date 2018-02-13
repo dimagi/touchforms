@@ -1,7 +1,7 @@
 import laboratory
 import json
 import logging
-from django.core.cache import cache
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 diff_logger = logging.getLogger('formplayer_diff')
 timing_logger = logging.getLogger('formplayer_timing')
@@ -12,6 +12,7 @@ class FormplayerExperiment(laboratory.Experiment):
     def publish(self, result):
         # if we're starting a new form, we need to store the mapping between session_ids so we can use later
         if self.name == "new-form":
+            cache = get_redis_client()
             control_session_id = json.loads(result.control.value)["session_id"]
             candidate_session_id = json.loads(result.observations[0].value)["session_id"]
             cache.set('touchforms-to-formplayer-session-id-%s' % control_session_id, candidate_session_id)
