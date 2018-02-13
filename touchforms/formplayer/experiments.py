@@ -53,6 +53,8 @@ class FormplayerExperiment(laboratory.Experiment):
 
 def compare_list(control, candidate):
     is_equal = True
+    if len(control) != len(candidate):
+        logging.info("Length of control %s is different than candidate %s" % (control, candidate))
     for first_item, second_item in zip(control, candidate):
         if not formplayer_compare(first_item, second_item):
             is_equal = False
@@ -61,9 +63,6 @@ def compare_list(control, candidate):
 
 def compare_dict(control, candidate, current_key):
     is_equal = True
-    if control is not None and candidate is None:
-        logging.info('Key %s has null candidate but real control %s' % (current_key, control))
-        return False
     for key in control:
         if check_skip_key(key):
             return True
@@ -96,7 +95,7 @@ def formplayer_compare(control, candidate, key=None):
 ## Mappings between what Formplayer and Touchforms can safely disagree on
 def formplayer_string_compare(control, candidate, key=None):
     if key == "repeatable":
-        # These end up as '0' and '1' in python world, despite being set to True and False in xformplayer.py
+        # These end up as 0 and 1 in python world, despite being set to True and False in xformplayer.py
         if control == 0:
             ret = candidate == "false"
         elif control == 1:

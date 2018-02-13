@@ -7,6 +7,9 @@ class ExperimentTest(SimpleTestCase):
     control = {}
     candidate = {}
 
+    def setup(self):
+        self.reset()
+
     def testExperimentStringCompare(self):
         # session_id will never be equal, should be ignored
         self.assertTrue(formplayer_string_compare("123", "234", current_key="session_id"))
@@ -19,9 +22,6 @@ class ExperimentTest(SimpleTestCase):
         self.assertTrue(formplayer_string_compare(0, "true", current_key="repeatable"))
 
     def testExperimentDictCompare(self):
-
-        self.reset()
-
         self.assertTrue(formplayer_compare(self.control, self.candidate))
 
         self.candidate['random_key'] = 'wrong_value'
