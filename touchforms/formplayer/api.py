@@ -260,6 +260,7 @@ class XformsResponse(object):
 def post_data_helper(d, auth, content_type, url):
     d['nav_mode'] = 'prompt'
     data = json.dumps(d)
+    logging.info("posting data %s " % data)
     up = urlparse(url)
     headers = {}
     headers["content-type"] = content_type
@@ -280,8 +281,6 @@ def post_data(data, auth=None, content_type="application/json"):
     if auth:
         d['hq_auth'] = auth.to_dict()
     domain = d.get("domain")
-    if domain:
-        d['uses_sql_backend'] = use_sqlite_backend(domain)
     if 'username' in d:
         d['restoreAs'] = d['username']
     # just default to old server for now
