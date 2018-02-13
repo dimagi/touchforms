@@ -16,6 +16,7 @@ class FormplayerExperiment(laboratory.Experiment):
             control_session_id = json.loads(result.control.value)["session_id"]
             candidate_session_id = json.loads(result.observations[0].value)["session_id"]
             cache.set('touchforms-to-formplayer-session-id-%s' % control_session_id, candidate_session_id)
+            cache.expire('touchforms-to-formplayer-session-id-%s' % control_session_id, 7 * 24 * 60 * 60)
 
         control = result.control
         # We're only ever returning one of these (I think)
