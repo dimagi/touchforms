@@ -88,7 +88,7 @@ def compare_dict(control, candidate):
         if check_skip_key(key):
             logging.info("Skipping %s" % key)
             continue
-        if not formplayer_compare(control.get(key), candidate.get(key)):
+        if not formplayer_compare(control.get(key), candidate.get(key), key):
             is_equal = False
     return is_equal
 
@@ -111,6 +111,10 @@ def formplayer_compare(control, candidate, key=None):
 
 ## Mappings between what Formplayer and Touchforms can safely disagree on
 def formplayer_string_compare(control, candidate, key=None):
+
+    if check_skip_key(key):
+        return True
+
     if key == "repeatable":
         # These end up as 0 and 1 in python world, despite being set to True and False in xformplayer.py
         if control == 0:
