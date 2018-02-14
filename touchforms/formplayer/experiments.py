@@ -88,11 +88,12 @@ def compare_list(control, candidate):
 def compare_dict(control, candidate):
     is_equal = True
     for key in control:
+        if check_skip_key(key):
+            continue
         if key not in candidate:
             logging.info('Key %s in control %s but not candidate %s' % (key, control, candidate))
             is_equal = False
-        if check_skip_key(key):
-            logging.info("Skipping %s" % key)
+        if check_skip_content(key):
             continue
         if not formplayer_compare(control.get(key), candidate.get(key), key):
             is_equal = False
@@ -118,7 +119,7 @@ def formplayer_compare(control, candidate, key=None):
 ## Mappings between what Formplayer and Touchforms can safely disagree on
 def formplayer_string_compare(control, candidate, key=None):
 
-    if check_skip_key(key):
+    if check_skip_key(key) or check_skip_content(key):
         return True
 
     if key == "repeatable":
@@ -136,15 +137,18 @@ def formplayer_string_compare(control, candidate, key=None):
                      % (key, control, candidate))
     return ret
 
-## Keys that SMS doesn't use or that we otherwise can skip
-def check_skip_key(key):
+## Keys that we can't test the content of, but want to be present in the candidate
+def check_skip_content(key):
     if key == "session_id":
         # clearly these will be different
         return True
     elif key == "output":
         # don't have any way to compare the XML output at the moment, esp. considering uuids and times
         return True
-    elif key == "seq_id":
+
+## Keys that SMS doesn't use so we don't care that they're not in the candidate
+def check_skip_key(key):
+    if key == "seq_id":
         # SMS doesn't use this value so doesn't matter that the indexing is different
         return True
     elif key == "style":

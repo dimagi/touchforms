@@ -4,6 +4,7 @@ from urlparse import urlparse
 import httplib
 import logging
 import socket
+import copy
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.form_processor.utils.general import use_sqlite_backend
@@ -279,43 +280,52 @@ def post_data(data, auth=None, content_type="application/json"):
 
     if auth:
         d['hq_auth'] = auth.to_dict()
-    domain = d.get("domain")
     if 'username' in d:
         d['restoreAs'] = d['username']
     # just default to old server for now
     return perform_experiment(d, auth, content_type)
 
 
-def perform_experiment(d, auth, content_type):
-    experiment = FormplayerExperiment(name=d["action"], context={'request': d})
+def get_candidate_session_data(control_data):
+    candidate_data = copy.deepcopy(control_data)
+    candidate_data['oneQuestionPerScreen'] = True
+    if "session_id" in control_data:
+        control_session_id = control_data["session_id"]
+    elif "session-id" in control_data:
+        control_session_id = control_data["session-id"]
+    else:
+        return True, candidate_data
+
+    cache = get_redis_client()
+    candidate_session_id = cache.get('touchforms-to-formplayer-session-id-%s' % control_session_id)
+
+    if candidate_session_id is None:
+        logging.info("Could not get Formplayer session_id for Touchforms session_id %s" % control_session_id)
+        return (False, None)
+
+    candidate_data["session_id"] = candidate_session_id
+    candidate_data["session-id"] = candidate_session_id
+    return True, candidate_data
+
+
+def perform_experiment(data, auth, content_type):
+
+    should_experiment, candidate_data = get_candidate_session_data(data)
+
+    if not should_experiment:
+        return post_data_helper(data, auth, content_type, settings.XFORMS_PLAYER_URL)
+
+    experiment = FormplayerExperiment(name=data["action"], context={'request': data})
+
     with experiment.control() as c:
-        c.record(post_data_helper(d, auth, content_type, settings.XFORMS_PLAYER_URL))
+        c.record(post_data_helper(data, auth, content_type, settings.XFORMS_PLAYER_URL))
+
     with experiment.candidate() as c:
-        perform_candidate_experiment(c, d, auth, content_type)
+        c.record(post_data_helper(candidate_data, auth, content_type, settings.FORMPLAYER_URL + "/" + data["action"]))
+
     objects = experiment.run()
     return objects
 
-def perform_candidate_experiment(c, d, auth, content_type):
-    # If we should already have a session, look up its ID in the experiment mapping. it better be there.
-    # This is terrible, but we use both in different places.
-    control_session_id = None
-
-    if "session_id" in d:
-        control_session_id = d["session_id"]
-    if "session-id" in d:
-        control_session_id = d["session-id"]
-
-    if control_session_id is not None:
-        cache = get_redis_client()
-        candidate_session_id = cache.get('touchforms-to-formplayer-session-id-%s' % control_session_id)
-        if candidate_session_id is None:
-            logging.info("Could not get Formplayer session_id for Touchforms session_id %s" % control_session_id)
-            return
-        d["session_id"] = candidate_session_id
-        d["session-id"] = candidate_session_id
-
-    d['oneQuestionPerScreen'] = True
-    c.record(post_data_helper(d, auth, content_type, settings.FORMPLAYER_URL + "/" + d["action"]))
 
 def get_response(data, auth=None):
     try:
