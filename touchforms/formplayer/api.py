@@ -293,19 +293,20 @@ def perform_experiment(d, auth, content_type):
     with experiment.candidate() as c:
         # If we should already have a session, look up its ID in the experiment mapping. it better be there.
         # This is terrible, but we use both in different places.
-        cache = get_redis_client()
+        control_session_id = None
+
         if "session_id" in d:
             control_session_id = d["session_id"]
-            candidate_session_id = cache.get('touchforms-to-formplayer-session-id-%s' % control_session_id)
-            d["session_id"] = candidate_session_id
-            d["session-id"] = candidate_session_id
-            logging.info("Got candidate %s from control %s" % (candidate_session_id, control_session_id))
         if "session-id" in d:
             control_session_id = d["session-id"]
+
+        if control_session_id is not None:
+            cache = get_redis_client()
             candidate_session_id = cache.get('touchforms-to-formplayer-session-id-%s' % control_session_id)
-            d["session-id"] = candidate_session_id
-            d["session_id"] = candidate_session_id
-            logging.info("Got candidate %s from control %s" % (candidate_session_id, control_session_id))
+            if candidate_session_id is not None:
+                d["session_id"] = candidate_session_id
+                d["session-id"] = candidate_session_id
+
         d['oneQuestionPerScreen'] = True
         c.record(post_data_helper(d, auth, content_type, settings.FORMPLAYER_URL + "/" + d["action"]))
     objects = experiment.run()
