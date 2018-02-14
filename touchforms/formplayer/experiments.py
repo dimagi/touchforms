@@ -78,7 +78,7 @@ def compare_dict(control, candidate, current_key):
     is_equal = True
     for key in control:
         if check_skip_key(key):
-            return True
+            break
         if key not in candidate:
             logging.info('Key %s in control %s but not candidate %s' % (key, control, candidate))
             is_equal = False
@@ -148,3 +148,4 @@ def check_skip_key(key):
     elif key == "style":
         # SMS doesn't use this value because SMS has no style!
         return True
+    return False
