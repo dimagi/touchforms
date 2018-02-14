@@ -291,27 +291,31 @@ def perform_experiment(d, auth, content_type):
     with experiment.control() as c:
         c.record(post_data_helper(d, auth, content_type, settings.XFORMS_PLAYER_URL))
     with experiment.candidate() as c:
-        # If we should already have a session, look up its ID in the experiment mapping. it better be there.
-        # This is terrible, but we use both in different places.
-        control_session_id = None
-
-        if "session_id" in d:
-            control_session_id = d["session_id"]
-        if "session-id" in d:
-            control_session_id = d["session-id"]
-
-        if control_session_id is not None:
-            cache = get_redis_client()
-            candidate_session_id = cache.get('touchforms-to-formplayer-session-id-%s' % control_session_id)
-            if candidate_session_id is not None:
-                d["session_id"] = candidate_session_id
-                d["session-id"] = candidate_session_id
-
-        d['oneQuestionPerScreen'] = True
-        c.record(post_data_helper(d, auth, content_type, settings.FORMPLAYER_URL + "/" + d["action"]))
+        perform_candidate_experiment(c, d, auth, content_type)
     objects = experiment.run()
     return objects
 
+def perform_candidate_experiment(c, d, auth, content_type):
+    # If we should already have a session, look up its ID in the experiment mapping. it better be there.
+    # This is terrible, but we use both in different places.
+    control_session_id = None
+
+    if "session_id" in d:
+        control_session_id = d["session_id"]
+    if "session-id" in d:
+        control_session_id = d["session-id"]
+
+    if control_session_id is not None:
+        cache = get_redis_client()
+        candidate_session_id = cache.get('touchforms-to-formplayer-session-id-%s' % control_session_id)
+        if candidate_session_id is None:
+            logging.info("Could not get Formplayer session_id for Touchforms session_id %s" % control_session_id)
+            return
+        d["session_id"] = candidate_session_id
+        d["session-id"] = candidate_session_id
+
+    d['oneQuestionPerScreen'] = True
+    c.record(post_data_helper(d, auth, content_type, settings.FORMPLAYER_URL + "/" + d["action"]))
 
 def get_response(data, auth=None):
     try:

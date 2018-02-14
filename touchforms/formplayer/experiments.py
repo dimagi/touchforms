@@ -12,6 +12,11 @@ class FormplayerExperiment(laboratory.Experiment):
     def publish(self, result):
 
         control = result.control
+
+        if not len(result.observations) > 0:
+            logging.info('No candidate experiment for control %s' % control)
+            return
+
         candidate = result.observations[0]
 
         if not candidate:
