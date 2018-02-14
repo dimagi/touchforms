@@ -15,7 +15,7 @@ class FormplayerExperiment(laboratory.Experiment):
         candidate = result.observations[0]
 
         if not candidate:
-            logging.info('Empty control %s for candidate %s' %(control, candidate))
+            logging.info('Empty candidate %s for control %s' %(candidate, control))
             self.log_diff(control, candidate)
             return
 
@@ -23,7 +23,12 @@ class FormplayerExperiment(laboratory.Experiment):
         if self.name == "new-form":
             cache = get_redis_client()
             control_dict = json.loads(result.control.value)
-            candidate_dict = json.loads(candidate.value)
+            try:
+                candidate_dict = json.loads(candidate.value)
+            except ValueError:
+                logging.info('Non-JSON candidate %s for control %s' %(candidate, control))
+                self.log_diff(control_dict, candidate)
+                return
             control_session_id = control_dict["session_id"]
             candidate_session_id = candidate_dict["session_id"]
             cache.set('touchforms-to-formplayer-session-id-%s' % control_session_id, candidate_session_id)
@@ -74,27 +79,26 @@ def compare_list(control, candidate):
     return is_equal
 
 
-def compare_dict(control, candidate, current_key):
+def compare_dict(control, candidate):
     is_equal = True
     for key in control:
-        if check_skip_key(key):
-            break
         if key not in candidate:
             logging.info('Key %s in control %s but not candidate %s' % (key, control, candidate))
             is_equal = False
-        if not formplayer_compare(control.get(key), candidate.get(key), key):
+        if check_skip_key(key):
+            logging.info("Skipping %s" % key)
+            continue
+        if not formplayer_compare(control.get(key), candidate.get(key)):
             is_equal = False
     return is_equal
 
 
 def formplayer_compare(control, candidate, key=None):
-    if check_skip_key(key):
-        return True
     if isinstance(control, dict):
         if not(isinstance(candidate, dict)):
             logging.info('For key %s: Candidate %s is not a dict, but control %s is' % (key, candidate, control))
             return False
-        return compare_dict(control, candidate, key)
+        return compare_dict(control, candidate)
     elif isinstance(control, list):
         if not(isinstance(candidate, list)):
             logging.info('For key %s: Candidate %s is not a list, but control %s is' % (key, candidate,
