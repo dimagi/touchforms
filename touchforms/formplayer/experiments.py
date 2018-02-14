@@ -73,6 +73,7 @@ def compare_list(control, candidate):
     is_equal = True
     if len(control) != len(candidate):
         logging.info("Length of control %s is different than candidate %s" % (control, candidate))
+        is_equal = False
     for first_item, second_item in zip(control, candidate):
         if not formplayer_compare(first_item, second_item):
             is_equal = False
