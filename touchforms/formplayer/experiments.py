@@ -13,7 +13,7 @@ class FormplayerExperiment(laboratory.Experiment):
 
         control = result.control
 
-        if not len(result.observations) > 0:
+        if len(result.observations) == 0:
             logging.info('No candidate experiment for control %s' % control)
             return
 
@@ -145,6 +145,7 @@ def check_skip_content(key):
     elif key == "output":
         # don't have any way to compare the XML output at the moment, esp. considering uuids and times
         return True
+    return False
 
 ## Keys that SMS doesn't use so we don't care that they're not in the candidate
 def check_skip_key(key):

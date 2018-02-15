@@ -301,7 +301,7 @@ def get_candidate_session_data(control_data):
 
     if candidate_session_id is None:
         logging.info("Could not get Formplayer session_id for Touchforms session_id %s" % control_session_id)
-        return (False, None)
+        return False, None
 
     candidate_data["session_id"] = candidate_session_id
     candidate_data["session-id"] = candidate_session_id
