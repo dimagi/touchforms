@@ -98,8 +98,14 @@ class XFormsConfig(object):
         
         # only include anything with a value, or touchforms gets mad
         ret = dict(filter(lambda x: x[1], vals))
-        ret.update(self.session_data)
+        self.add_key_helper('username', ret)
+        self.add_key_helper('domain', ret)
+        self.add_key_helper('app_id', ret)
         return ret
+
+    def add_key_helper(self, key, ret):
+        if key in self.session_data:
+            ret[key] = self.session_data[key]
         
     def start_session(self):
         """
