@@ -65,7 +65,7 @@ class XFormsConfig(object):
     
     def __init__(self, form_path=None, form_content=None, language="", 
                  session_data=None, preloader_data={}, instance_content=None,
-                 touchforms_url=None, auth=None):
+                 touchforms_url=None, auth=None, restore_as=None, restore_as_case_id=None):
         
         if bool(form_path) == bool(form_content):
             raise XFormsConfigException\
@@ -80,6 +80,8 @@ class XFormsConfig(object):
         self.instance_content = instance_content
         self.touchforms_url = touchforms_url or settings.XFORMS_PLAYER_URL
         self.auth = auth
+        self.restore_as = restore_as
+        self.restore_as_case_id = restore_as_case_id
         
     def get_touchforms_dict(self):
         """
@@ -101,6 +103,17 @@ class XFormsConfig(object):
         self.add_key_helper('username', ret)
         self.add_key_helper('domain', ret)
         self.add_key_helper('app_id', ret)
+
+        if self.restore_as_case_id:
+            # The contact starting the survey is a case who will be
+            # filling out the form for itself.
+            ret['restoreAsCaseId'] = self.restore_as_case_id
+        elif self.restore_as:
+            # The contact starting the survey is a user.
+            ret['restoreAs'] = self.restore_as
+        else:
+            raise ValueError("Unable to determine 'restore as' contact for formplayer")
+
         return ret
 
     def add_key_helper(self, key, ret):
@@ -286,8 +299,6 @@ def post_data(data, auth=None, content_type="application/json"):
 
     if auth:
         d['hq_auth'] = auth.to_dict()
-    if 'username' in d:
-        d['restoreAs'] = d['username']
     # just default to old server for now
     return perform_experiment(d, auth, content_type)
 
