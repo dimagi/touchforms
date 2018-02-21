@@ -30,8 +30,8 @@ class FormplayerExperiment(laboratory.Experiment):
             control_dict = json.loads(result.control.value)
             try:
                 candidate_dict = json.loads(candidate.value)
-            except ValueError:
-                logging.info('Non-JSON candidate %s for control %s' %(candidate, control))
+            except Exception as e:
+                logging.info('Exception %s processing candidate %s for control %s' %(e, candidate, control))
                 self.log_diff(control_dict, candidate)
                 return
             control_session_id = control_dict["session_id"]
