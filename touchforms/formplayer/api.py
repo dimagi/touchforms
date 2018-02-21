@@ -4,9 +4,12 @@ from urlparse import urlparse
 import httplib
 import logging
 import socket
+import copy
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.form_processor.utils.general import use_sqlite_backend
 from touchforms.formplayer.exceptions import BadDataError
+from experiments import FormplayerExperiment
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
 backend for various sets of tasks.
@@ -62,7 +65,7 @@ class XFormsConfig(object):
     
     def __init__(self, form_path=None, form_content=None, language="", 
                  session_data=None, preloader_data={}, instance_content=None,
-                 touchforms_url=None, auth=None):
+                 touchforms_url=None, auth=None, restore_as=None, restore_as_case_id=None):
         
         if bool(form_path) == bool(form_content):
             raise XFormsConfigException\
@@ -77,6 +80,8 @@ class XFormsConfig(object):
         self.instance_content = instance_content
         self.touchforms_url = touchforms_url or settings.XFORMS_PLAYER_URL
         self.auth = auth
+        self.restore_as = restore_as
+        self.restore_as_case_id = restore_as_case_id
         
     def get_touchforms_dict(self):
         """
@@ -90,10 +95,30 @@ class XFormsConfig(object):
                 ("instance-content", self.instance_content),
                 ("preloader-data", self.preloader_data),
                 ("session-data", self.session_data),
-                ("lang", self.language))
+                ("lang", self.language),
+                ("form-url", self.form_path))
         
         # only include anything with a value, or touchforms gets mad
-        return dict(filter(lambda x: x[1], vals))
+        ret = dict(filter(lambda x: x[1], vals))
+        self.add_key_helper('username', ret)
+        self.add_key_helper('domain', ret)
+        self.add_key_helper('app_id', ret)
+
+        if self.restore_as_case_id:
+            # The contact starting the survey is a case who will be
+            # filling out the form for itself.
+            ret['restoreAsCaseId'] = self.restore_as_case_id
+        elif self.restore_as:
+            # The contact starting the survey is a user.
+            ret['restoreAs'] = self.restore_as
+        else:
+            raise ValueError("Unable to determine 'restore as' contact for formplayer")
+
+        return ret
+
+    def add_key_helper(self, key, ret):
+        if key in self.session_data:
+            ret[key] = self.session_data[key]
         
     def start_session(self):
         """
@@ -253,11 +278,13 @@ class XformsResponse(object):
 
 
 def post_data_helper(d, auth, content_type, url):
+    d['nav_mode'] = 'prompt'
     data = json.dumps(d)
     up = urlparse(url)
     headers = {}
     headers["content-type"] = content_type
     headers["content-length"] = len(data)
+    headers["Cookie"] = 'sessionid=%s' % settings.FORMPLAYER_INTERNAL_AUTH_KEY
     conn = httplib.HTTPConnection(up.netloc)
     conn.request('POST', up.path, data, headers)
     resp = conn.getresponse()
@@ -265,7 +292,6 @@ def post_data_helper(d, auth, content_type, url):
     return results
             
 def post_data(data, auth=None, content_type="application/json"):
-
     try:
         d = json.loads(data)
     except TypeError:
@@ -273,13 +299,49 @@ def post_data(data, auth=None, content_type="application/json"):
 
     if auth:
         d['hq_auth'] = auth.to_dict()
-    domain = d.get("domain")
-
-    if domain:
-        d['uses_sql_backend'] = use_sqlite_backend(domain)
     # just default to old server for now
-    url = settings.XFORMS_PLAYER_URL
-    return post_data_helper(d, auth, content_type, settings.XFORMS_PLAYER_URL)
+    return perform_experiment(d, auth, content_type)
+
+
+def get_candidate_session_data(control_data):
+    candidate_data = copy.deepcopy(control_data)
+    candidate_data['oneQuestionPerScreen'] = True
+    if "session_id" in control_data:
+        control_session_id = control_data["session_id"]
+    elif "session-id" in control_data:
+        control_session_id = control_data["session-id"]
+    else:
+        return True, candidate_data
+
+    cache = get_redis_client()
+    candidate_session_id = cache.get('touchforms-to-formplayer-session-id-%s' % control_session_id)
+
+    if candidate_session_id is None:
+        logging.info("Could not get Formplayer session_id for Touchforms session_id %s" % control_session_id)
+        return False, None
+
+    candidate_data["session_id"] = candidate_session_id
+    candidate_data["session-id"] = candidate_session_id
+    return True, candidate_data
+
+
+def perform_experiment(data, auth, content_type):
+
+    should_experiment, candidate_data = get_candidate_session_data(data)
+
+    if not should_experiment:
+        return post_data_helper(data, auth, content_type, settings.XFORMS_PLAYER_URL)
+
+    experiment = FormplayerExperiment(name=data["action"], context={'request': data})
+
+    with experiment.control() as c:
+        c.record(post_data_helper(data, auth, content_type, settings.XFORMS_PLAYER_URL))
+
+    with experiment.candidate() as c:
+        c.record(post_data_helper(candidate_data, auth, content_type, settings.FORMPLAYER_URL + "/" + data["action"]))
+
+    objects = experiment.run()
+    return objects
 
 
 def get_response(data, auth=None):

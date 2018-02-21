@@ -104,6 +104,8 @@ XFORMS_PLAYER_URL = "http://localhost:4444/"
 OFFLINE_TOUCHFORMS_PORT = 4444
 TOUCHFORMS_AUTOCOMPL_DATA_DIR = os.path.join(ROOT_DIR, 'static', 'census')
 
+FORMPLAYER_INTERNAL_AUTH_KEY = 'secretkey'
+
 LOG_FILE = os.path.join(ROOT_DIR, 'touchforms.log')
 init_logging = lambda: util.default_logging(LOG_FILE)
 
