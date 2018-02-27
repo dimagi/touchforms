@@ -342,7 +342,8 @@ def perform_experiment(data, auth, content_type):
         c.record(post_data_helper(data, auth, content_type, settings.XFORMS_PLAYER_URL))
 
     with experiment.candidate() as c:
-        c.record(post_data_helper(candidate_data, auth, content_type, settings.FORMPLAYER_URL + "/" + data["action"], True))
+        c.record(post_data_helper(candidate_data, auth,
+                                  content_type, settings.FORMPLAYER_URL + "/" + data["action"], True))
 
     objects = experiment.run()
     return objects
