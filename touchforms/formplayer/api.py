@@ -277,7 +277,7 @@ class XformsResponse(object):
                                         "contact your administrator for help."})
 
 
-def post_data_helper(d, auth, content_type, url):
+def post_data_helper(d, auth, content_type, url, log=False):
     d['nav_mode'] = 'prompt'
     data = json.dumps(d)
     up = urlparse(url)
@@ -288,7 +288,11 @@ def post_data_helper(d, auth, content_type, url):
     conn = httplib.HTTPConnection(up.netloc)
     conn.request('POST', up.path, data, headers)
     resp = conn.getresponse()
+    if log:
+        logging.info("Response: %s" % resp)
     results = resp.read()
+    if log:
+        logging.info("Results: %s" % results)
     return results
             
 def post_data(data, auth=None, content_type="application/json"):
@@ -338,7 +342,7 @@ def perform_experiment(data, auth, content_type):
         c.record(post_data_helper(data, auth, content_type, settings.XFORMS_PLAYER_URL))
 
     with experiment.candidate() as c:
-        c.record(post_data_helper(candidate_data, auth, content_type, settings.FORMPLAYER_URL + "/" + data["action"]))
+        c.record(post_data_helper(candidate_data, auth, content_type, settings.FORMPLAYER_URL + "/" + data["action"], True))
 
     objects = experiment.run()
     return objects
