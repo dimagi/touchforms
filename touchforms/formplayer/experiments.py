@@ -24,6 +24,9 @@ class FormplayerExperiment(laboratory.Experiment):
             self.log_diff(control, candidate)
             return
 
+        if candidate.failure:
+            logging.info("Candidate %s failed with exception %s" % (candidate, candidate.exception))
+
         # if we're starting a new form, we need to store the mapping between session_ids so we can use later
         if self.name == "new-form":
             cache = get_redis_client()
