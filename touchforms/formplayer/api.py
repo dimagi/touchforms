@@ -282,6 +282,8 @@ def post_data_helper(d, auth, content_type, url, log=False):
     d['nav_mode'] = 'prompt'
     data = json.dumps(d)
     up = urlparse(url)
+    if log:
+        logging.info("Request to url: %s" % up)
     headers = {}
     headers["content-type"] = content_type
     headers["content-length"] = len(data)
