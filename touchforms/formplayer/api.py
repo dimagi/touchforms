@@ -5,7 +5,6 @@ import httplib
 import logging
 import socket
 import copy
-
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.form_processor.utils.general import use_sqlite_backend
