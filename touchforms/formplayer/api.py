@@ -283,7 +283,7 @@ def post_data_helper(d, auth, content_type, url, log=False):
     data = json.dumps(d)
     up = urlparse(url)
     if log:
-        logging.info("Request to url: %s" % up)
+        logging.info("Request to url: %s%s" % (up.netloc, up.path))
     headers = {}
     headers["content-type"] = content_type
     headers["content-length"] = len(data)
