@@ -298,7 +298,6 @@ def formplayer_post_data_helper(d, auth, content_type, url):
     up = urlparse(url)
     logging.info("Request to url: %s" % up.geturl())
     headers = {}
-    headers["content-type"] = content_type
     headers["Content-Type"] = content_type
     headers["content-length"] = len(data)
     headers["Cookie"] = 'sessionid=%s' % settings.FORMPLAYER_INTERNAL_AUTH_KEY
