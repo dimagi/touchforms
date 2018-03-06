@@ -11,6 +11,7 @@ from corehq.form_processor.utils.general import use_sqlite_backend
 from touchforms.formplayer.exceptions import BadDataError
 from experiments import FormplayerExperiment
 from corehq.apps.nimbus_api.utils import get_nimbus_url
+import requests
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
 backend for various sets of tasks.
@@ -279,24 +280,36 @@ class XformsResponse(object):
 
 
 def post_data_helper(d, auth, content_type, url, log=False):
-    d['nav_mode'] = 'prompt'
     data = json.dumps(d)
     up = urlparse(url)
-    if log:
-        logging.info("Request to url: %s" % up.geturl())
     headers = {}
     headers["content-type"] = content_type
     headers["content-length"] = len(data)
-    headers["Cookie"] = 'sessionid=%s' % settings.FORMPLAYER_INTERNAL_AUTH_KEY
     conn = httplib.HTTPConnection(up.netloc)
     conn.request('POST', up.path, data, headers)
     resp = conn.getresponse()
-    if log:
-        logging.info("Response: %s" % resp)
     results = resp.read()
-    if log:
-        logging.info("Results: %s" % results)
     return results
+
+
+def formplayer_post_data_helper(d, auth, content_type, url):
+    d['nav_mode'] = 'prompt'
+    data = json.dumps(d)
+    up = urlparse(url)
+    logging.info("Request to url: %s" % up.geturl())
+    headers = {}
+    headers["Content-Type"] = content_type
+    headers["content-length"] = len(data)
+    headers["Cookie"] = 'sessionid=%s' % settings.FORMPLAYER_INTERNAL_AUTH_KEY
+    response = requests.post(
+            url,
+            data=data,
+            headers=headers
+    )
+    response_json = response.json()
+    logging.info("Response: %s" % response)
+    logging.info("Results: %s" % response_json)
+    return response.text
             
 def post_data(data, auth=None, content_type="application/json"):
     try:
@@ -346,8 +359,8 @@ def perform_experiment(data, auth, content_type):
 
     with experiment.candidate() as c:
         formplayer_url = get_nimbus_url()
-        c.record(post_data_helper(candidate_data, auth,
-                                  content_type, formplayer_url + "/" + data["action"], True))
+        c.record(formplayer_post_data_helper(candidate_data, auth,
+                                             content_type, formplayer_url + "/" + data["action"]))
 
     objects = experiment.run()
     return objects
