@@ -324,7 +324,7 @@ def post_data(data, auth=None, content_type="application/json"):
     # just default to old server for now
 
     if toggles.SMS_USE_FORMPLAYER:
-        return formplayer_post_data_helper(d, auth, content_type, url)
+        return formplayer_post_data_helper(d, auth, content_type, get_nimbus_url() + "/" + data["action"])
 
     return perform_experiment(d, auth, content_type)
 
