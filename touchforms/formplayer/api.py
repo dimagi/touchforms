@@ -11,6 +11,7 @@ from corehq.form_processor.utils.general import use_sqlite_backend
 from touchforms.formplayer.exceptions import BadDataError
 from experiments import FormplayerExperiment
 from corehq.apps.nimbus_api.utils import get_nimbus_url
+from corehq import toggles
 import requests
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
@@ -294,6 +295,7 @@ def post_data_helper(d, auth, content_type, url, log=False):
 
 def formplayer_post_data_helper(d, auth, content_type, url):
     d['nav_mode'] = 'prompt'
+    d['oneQuestionPerScreen'] = True
     data = json.dumps(d)
     up = urlparse(url)
     logging.info("Request to url: %s" % up.geturl())
@@ -320,6 +322,10 @@ def post_data(data, auth=None, content_type="application/json"):
     if auth:
         d['hq_auth'] = auth.to_dict()
     # just default to old server for now
+
+    if toggles.SMS_USE_FORMPLAYER:
+        return formplayer_post_data_helper(d, auth, content_type, url)
+
     return perform_experiment(d, auth, content_type)
 
 
