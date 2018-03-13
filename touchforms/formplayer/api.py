@@ -294,8 +294,7 @@ def post_data_helper(d, auth, content_type, url, log=False):
 
 
 def formplayer_post_data_helper(d, auth, content_type, url):
-    d['nav_mode'] = 'prompt'
-    d['oneQuestionPerScreen'] = True
+    d = get_formplayer_session_data(d)
     data = json.dumps(d)
     up = urlparse(url)
     logging.info("Request to url: %s" % up.geturl())
@@ -327,6 +326,27 @@ def post_data(data, auth=None, content_type="application/json"):
         return formplayer_post_data_helper(d, auth, content_type, get_nimbus_url() + "/" + data["action"])
 
     return perform_experiment(d, auth, content_type)
+
+
+def get_formplayer_session_data(data):
+    data['oneQuestionPerScreen'] = True
+    data['nav_mode'] = 'prompt'
+    if "session_id" in data:
+        session_id = data["session_id"]
+    elif "session-id" in data:
+        session_id = data["session-id"]
+    else:
+        return data
+
+    # See if we need to map from Touchforms to Formplayer session_id
+    cache = get_redis_client()
+    redis_key = 'touchforms-to-formplayer-session-id-%s' % session_id
+    if cache.has_key(redis_key):
+        session_id = cache.get('touchforms-to-formplayer-session-id-%s' % session_id)
+
+    data["session_id"] = session_id
+    data["session-id"] = session_id
+    return data
 
 
 def get_candidate_session_data(control_data):
