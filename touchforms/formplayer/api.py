@@ -294,7 +294,6 @@ def post_data_helper(d, auth, content_type, url, log=False):
 
 
 def formplayer_post_data_helper(d, auth, content_type, url):
-    d = get_formplayer_session_data(d)
     data = json.dumps(d)
     up = urlparse(url)
     logging.info("Request to url: %s" % up.geturl())
@@ -322,7 +321,8 @@ def post_data(data, auth=None, content_type="application/json"):
         d['hq_auth'] = auth.to_dict()
     # just default to old server for now
 
-    if toggles.SMS_USE_FORMPLAYER:
+    if toggles.SMS_USE_FORMPLAYER.enabled():
+        d = get_formplayer_session_data(d)
         return formplayer_post_data_helper(d, auth, content_type, get_nimbus_url() + "/" + data["action"])
 
     return perform_experiment(d, auth, content_type)
