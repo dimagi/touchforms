@@ -310,7 +310,8 @@ def formplayer_post_data_helper(d, auth, content_type, url):
     logging.info("Response: %s" % response)
     logging.info("Results: %s" % response_json)
     return response.text
-            
+
+
 def post_data(data, auth=None, content_type="application/json"):
     try:
         d = json.loads(data)
@@ -320,8 +321,9 @@ def post_data(data, auth=None, content_type="application/json"):
     if auth:
         d['hq_auth'] = auth.to_dict()
     # just default to old server for now
-
-    if toggles.SMS_USE_FORMPLAYER.enabled():
+    domain = d.get("domain")
+    if domain and toggles.SMS_USE_FORMPLAYER.enabled(domain):
+        logging.info("Making request to formplayer endpoint %s in domain %s" % (data["action"], domain))
         d = get_formplayer_session_data(d)
         return formplayer_post_data_helper(d, auth, content_type, get_nimbus_url() + "/" + data["action"])
 
@@ -476,5 +478,6 @@ def next(session_id, domain=None, auth=None):
     Moves to the next question.
     """
     data = {"action": "next",
-            "session-id": session_id}
+            "session-id": session_id,
+            "domain": domain}
     return get_response(json.dumps(data), auth)
