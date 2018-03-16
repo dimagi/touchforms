@@ -10,7 +10,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.form_processor.utils.general import use_sqlite_backend
 from touchforms.formplayer.exceptions import BadDataError
 from experiments import FormplayerExperiment
-from corehq.apps.nimbus_api.utils import get_nimbus_url
+from corehq.apps.formplayer_api.utils import get_formplayer_url
 import requests
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
@@ -358,7 +358,7 @@ def perform_experiment(data, auth, content_type):
         c.record(post_data_helper(data, auth, content_type, settings.XFORMS_PLAYER_URL))
 
     with experiment.candidate() as c:
-        formplayer_url = get_nimbus_url()
+        formplayer_url = get_formplayer_url()
         c.record(formplayer_post_data_helper(candidate_data, auth,
                                              content_type, formplayer_url + "/" + data["action"]))
 
