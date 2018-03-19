@@ -10,8 +10,8 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.form_processor.utils.general import use_sqlite_backend
 from touchforms.formplayer.exceptions import BadDataError
 from experiments import FormplayerExperiment
-from corehq.apps.nimbus_api.utils import get_nimbus_url
 from corehq import toggles
+from corehq.apps.formplayer_api.utils import get_formplayer_url
 import requests
 """
 A set of wrappers that return the JSON bodies you use to interact with the formplayer
@@ -325,7 +325,7 @@ def post_data(data, auth=None, content_type="application/json"):
     if domain and toggles.SMS_USE_FORMPLAYER.enabled(domain):
         logging.info("Making request to formplayer endpoint %s in domain %s" % (data["action"], domain))
         d = get_formplayer_session_data(d)
-        return formplayer_post_data_helper(d, auth, content_type, get_nimbus_url() + "/" + data["action"])
+        return formplayer_post_data_helper(d, auth, content_type, get_formplayer_url() + "/" + data["action"])
 
     return perform_experiment(d, auth, content_type)
 
@@ -386,7 +386,7 @@ def perform_experiment(data, auth, content_type):
         c.record(post_data_helper(data, auth, content_type, settings.XFORMS_PLAYER_URL))
 
     with experiment.candidate() as c:
-        formplayer_url = get_nimbus_url()
+        formplayer_url = get_formplayer_url()
         c.record(formplayer_post_data_helper(candidate_data, auth,
                                              content_type, formplayer_url + "/" + data["action"]))
 
