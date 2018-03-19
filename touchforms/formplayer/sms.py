@@ -36,7 +36,7 @@ def _next_responses(xformsresponse, session_id, domain, auth=None):
     if xformsresponse.is_error:
         yield xformsresponse
     elif xformsresponse.event.type == "sub-group":
-        response = next(session_id, auth)
+        response = next(session_id, domain, auth)
         for additional_resp in _next_responses(response, session_id, domain, auth):
             yield additional_resp
     elif xformsresponse.event.type == "question":
