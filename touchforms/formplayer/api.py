@@ -68,7 +68,7 @@ class XFormsConfig(object):
     
     def __init__(self, form_path=None, form_content=None, language="", 
                  session_data=None, preloader_data={}, instance_content=None,
-                 touchforms_url=None, auth=None, restore_as=None, restore_as_case_id=None):
+                 touchforms_url=None, auth=None, domain=None, restore_as=None, restore_as_case_id=None):
         
         if bool(form_path) == bool(form_content):
             raise XFormsConfigException\
@@ -85,6 +85,7 @@ class XFormsConfig(object):
         self.auth = auth
         self.restore_as = restore_as
         self.restore_as_case_id = restore_as_case_id
+        self.domain = domain
         
     def get_touchforms_dict(self):
         """
@@ -322,6 +323,7 @@ def post_data(data, auth=None, content_type="application/json"):
         d['hq_auth'] = auth.to_dict()
     # just default to old server for now
     domain = d.get("domain")
+
     if domain and toggles.SMS_USE_FORMPLAYER.enabled(domain):
         logging.info("Making request to formplayer endpoint %s in domain %s" % (data["action"], domain))
         d = get_formplayer_session_data(d)
@@ -452,7 +454,7 @@ def start_form_session(form_path, content=None, language="", session_data={}):
                         language=language).start_session()
 
 
-def answer_question(session_id, answer, domain=None, auth=None):
+def answer_question(session_id, answer, domain, auth=None):
     """
     Answer a question. 
     """
@@ -463,7 +465,7 @@ def answer_question(session_id, answer, domain=None, auth=None):
     return get_response(json.dumps(data), auth)
 
 
-def current_question(session_id, domain=None, auth=None):
+def current_question(session_id, domain, auth=None):
     """
     Retrieves information about the current question.
     """
@@ -473,7 +475,7 @@ def current_question(session_id, domain=None, auth=None):
     return get_response(json.dumps(data), auth)
 
 
-def next(session_id, domain=None, auth=None):
+def next(session_id, domain, auth=None):
     """
     Moves to the next question.
     """
