@@ -356,6 +356,7 @@ def get_formplayer_session_data(data):
 def get_candidate_session_data(control_data):
     candidate_data = copy.deepcopy(control_data)
     candidate_data['oneQuestionPerScreen'] = True
+    candidate_data['nav_mode'] = 'prompt'
     if "session_id" in control_data:
         control_session_id = control_data["session_id"]
     elif "session-id" in control_data:
