@@ -10,6 +10,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.form_processor.utils.general import use_sqlite_backend
 from touchforms.formplayer.exceptions import BadDataError
 from experiments import FormplayerExperiment
+from corehq import toggles
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 import requests
 """
@@ -67,7 +68,7 @@ class XFormsConfig(object):
     
     def __init__(self, form_path=None, form_content=None, language="", 
                  session_data=None, preloader_data={}, instance_content=None,
-                 touchforms_url=None, auth=None, restore_as=None, restore_as_case_id=None):
+                 touchforms_url=None, auth=None, domain=None, restore_as=None, restore_as_case_id=None):
         
         if bool(form_path) == bool(form_content):
             raise XFormsConfigException\
@@ -84,6 +85,7 @@ class XFormsConfig(object):
         self.auth = auth
         self.restore_as = restore_as
         self.restore_as_case_id = restore_as_case_id
+        self.domain = domain
         
     def get_touchforms_dict(self):
         """
@@ -293,7 +295,6 @@ def post_data_helper(d, auth, content_type, url, log=False):
 
 
 def formplayer_post_data_helper(d, auth, content_type, url):
-    d['nav_mode'] = 'prompt'
     data = json.dumps(d)
     up = urlparse(url)
     logging.info("Request to url: %s" % up.geturl())
@@ -310,7 +311,8 @@ def formplayer_post_data_helper(d, auth, content_type, url):
     logging.info("Response: %s" % response)
     logging.info("Results: %s" % response_json)
     return response.text
-            
+
+
 def post_data(data, auth=None, content_type="application/json"):
     try:
         d = json.loads(data)
@@ -320,12 +322,41 @@ def post_data(data, auth=None, content_type="application/json"):
     if auth:
         d['hq_auth'] = auth.to_dict()
     # just default to old server for now
+    domain = d.get("domain")
+
+    if domain and toggles.SMS_USE_FORMPLAYER.enabled(domain):
+        logging.info("Making request to formplayer endpoint %s in domain %s" % (data["action"], domain))
+        d = get_formplayer_session_data(d)
+        return formplayer_post_data_helper(d, auth, content_type, get_formplayer_url() + "/" + data["action"])
+
     return perform_experiment(d, auth, content_type)
+
+
+def get_formplayer_session_data(data):
+    data['oneQuestionPerScreen'] = True
+    data['nav_mode'] = 'prompt'
+    if "session_id" in data:
+        session_id = data["session_id"]
+    elif "session-id" in data:
+        session_id = data["session-id"]
+    else:
+        return data
+
+    # See if we need to map from Touchforms to Formplayer session_id
+    cache = get_redis_client()
+    redis_key = 'touchforms-to-formplayer-session-id-%s' % session_id
+    if cache.has_key(redis_key):
+        session_id = cache.get('touchforms-to-formplayer-session-id-%s' % session_id)
+
+    data["session_id"] = session_id
+    data["session-id"] = session_id
+    return data
 
 
 def get_candidate_session_data(control_data):
     candidate_data = copy.deepcopy(control_data)
     candidate_data['oneQuestionPerScreen'] = True
+    candidate_data['nav_mode'] = 'prompt'
     if "session_id" in control_data:
         control_session_id = control_data["session_id"]
     elif "session-id" in control_data:
@@ -424,7 +455,7 @@ def start_form_session(form_path, content=None, language="", session_data={}):
                         language=language).start_session()
 
 
-def answer_question(session_id, answer, domain=None, auth=None):
+def answer_question(session_id, answer, domain, auth=None):
     """
     Answer a question. 
     """
@@ -435,7 +466,7 @@ def answer_question(session_id, answer, domain=None, auth=None):
     return get_response(json.dumps(data), auth)
 
 
-def current_question(session_id, domain=None, auth=None):
+def current_question(session_id, domain, auth=None):
     """
     Retrieves information about the current question.
     """
@@ -445,10 +476,11 @@ def current_question(session_id, domain=None, auth=None):
     return get_response(json.dumps(data), auth)
 
 
-def next(session_id, domain=None, auth=None):
+def next(session_id, domain, auth=None):
     """
     Moves to the next question.
     """
     data = {"action": "next",
-            "session-id": session_id}
+            "session-id": session_id,
+            "domain": domain}
     return get_response(json.dumps(data), auth)
