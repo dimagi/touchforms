@@ -325,9 +325,9 @@ def post_data(data, auth=None, content_type="application/json"):
     domain = d.get("domain")
 
     if domain and toggles.SMS_USE_FORMPLAYER.enabled(domain):
-        logging.info("Making request to formplayer endpoint %s in domain %s" % (data["action"], domain))
+        logging.info("Making request to formplayer endpoint %s in domain %s" % (d["action"], domain))
         d = get_formplayer_session_data(d)
-        return formplayer_post_data_helper(d, auth, content_type, get_formplayer_url() + "/" + data["action"])
+        return formplayer_post_data_helper(d, auth, content_type, get_formplayer_url() + "/" + d["action"])
 
     return perform_experiment(d, auth, content_type)
 
