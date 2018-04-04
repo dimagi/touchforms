@@ -245,7 +245,7 @@ class XformsResponse(object):
         self._dict = datadict
         self.is_error = False
         self.error = None
-        if "event" in datadict:
+        if "event" in datadict and datadict["event"] is not None:
             self.event = XformsEvent(datadict["event"])
             self.text_prompt = self.event.text_prompt
         else:
