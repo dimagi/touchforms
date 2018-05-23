@@ -28,7 +28,10 @@ def start_session(config):
     return SessionStartInfo(xformsresponse, config.domain)
 
 def next_responses(session_id, answer, domain, auth=None):
-    xformsresponse = answer_question(session_id, _tf_format(answer), domain, auth)
+    if answer:
+        xformsresponse = answer_question(session_id, _tf_format(answer), domain, auth)
+    else:
+        xformsresponse = next(session_id, domain, auth)
     for resp in _next_responses(xformsresponse, session_id, domain, auth):
         yield resp
 
