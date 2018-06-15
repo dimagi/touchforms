@@ -307,9 +307,9 @@ def formplayer_post_data_helper(d, auth, content_type, url):
         data
     )
     response = requests.post(
-            url,
-            data=data,
-            headers=headers
+        url,
+        data=data,
+        headers=headers
     )
     response_json = response.json()
     return response.text
