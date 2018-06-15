@@ -298,7 +298,6 @@ def post_data_helper(d, auth, content_type, url, log=False):
 def formplayer_post_data_helper(d, auth, content_type, url):
     data = json.dumps(d).encode('utf-8')
     up = urlparse(url)
-    logging.info("Request to url: %s" % up.geturl())
     headers = {}
     headers["Content-Type"] = content_type
     headers["content-length"] = len(data)
@@ -313,8 +312,6 @@ def formplayer_post_data_helper(d, auth, content_type, url):
             headers=headers
     )
     response_json = response.json()
-    logging.info("Response: %s" % response)
-    logging.info("Results: %s" % response_json)
     return response.text
 
 
