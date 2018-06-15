@@ -302,10 +302,7 @@ def formplayer_post_data_helper(d, auth, content_type, url):
     headers["Content-Type"] = content_type
     headers["content-length"] = len(data)
     headers["Cookie"] = 'sessionid=%s' % settings.FORMPLAYER_INTERNAL_AUTH_KEY
-    headers["X-MAC-DIGEST"] = get_hmac_digest(
-        convert_to_bytestring_if_unicode(settings.FORMPLAYER_INTERNAL_AUTH_KEY),
-        data
-    )
+    headers["X-MAC-DIGEST"] = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data)
     response = requests.post(
         url,
         data=data,
