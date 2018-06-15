@@ -8,6 +8,7 @@ import copy
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.form_processor.utils.general import use_sqlite_backend
+from corehq.util.hmac_request import get_hmac_digest, convert_to_bytestring_if_unicode
 from touchforms.formplayer.exceptions import BadDataError
 from experiments import FormplayerExperiment
 from corehq import toggles
@@ -295,21 +296,20 @@ def post_data_helper(d, auth, content_type, url, log=False):
 
 
 def formplayer_post_data_helper(d, auth, content_type, url):
-    data = json.dumps(d)
+    data = json.dumps(d).encode('utf-8')
     up = urlparse(url)
-    logging.info("Request to url: %s" % up.geturl())
     headers = {}
     headers["Content-Type"] = content_type
     headers["content-length"] = len(data)
+    # Remove Cookie header once formplayer supports mac digest header for auth
     headers["Cookie"] = 'sessionid=%s' % settings.FORMPLAYER_INTERNAL_AUTH_KEY
+    headers["X-MAC-DIGEST"] = get_hmac_digest(settings.FORMPLAYER_INTERNAL_AUTH_KEY, data)
     response = requests.post(
-            url,
-            data=data,
-            headers=headers
+        url,
+        data=data,
+        headers=headers
     )
     response_json = response.json()
-    logging.info("Response: %s" % response)
-    logging.info("Results: %s" % response_json)
     return response.text
 
 
